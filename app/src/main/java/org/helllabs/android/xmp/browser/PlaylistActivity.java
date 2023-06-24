@@ -3,8 +3,6 @@ package org.helllabs.android.xmp.browser;
 import android.graphics.drawable.NinePatchDrawable;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.Menu;
@@ -12,17 +10,20 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.h6ah4i.android.widget.advrecyclerview.animator.GeneralItemAnimator;
 import com.h6ah4i.android.widget.advrecyclerview.animator.RefactoredDefaultItemAnimator;
 import com.h6ah4i.android.widget.advrecyclerview.decoration.ItemShadowDecorator;
 import com.h6ah4i.android.widget.advrecyclerview.decoration.SimpleListDividerDecorator;
 import com.h6ah4i.android.widget.advrecyclerview.draggable.RecyclerViewDragDropManager;
 import com.h6ah4i.android.widget.advrecyclerview.utils.WrapperAdapterUtils;
-import com.pluscubed.recyclerfastscroll.RecyclerFastScroller;
 
 import org.helllabs.android.xmp.R;
 import org.helllabs.android.xmp.browser.playlist.Playlist;
 import org.helllabs.android.xmp.browser.playlist.PlaylistAdapter;
+import org.helllabs.android.xmp.pluscubed.recyclerfastscroll.RecyclerFastScroller;
 import org.helllabs.android.xmp.preferences.Preferences;
 import org.helllabs.android.xmp.util.Log;
 

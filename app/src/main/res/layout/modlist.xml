@@ -55,19 +55,19 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
 
-                <android.support.v4.widget.SwipeRefreshLayout
+                <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
                     android:id="@+id/swipeContainer"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent">
 
-                    <android.support.v7.widget.RecyclerView
+                    <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/modlist_listview"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"/>
 
-                </android.support.v4.widget.SwipeRefreshLayout>
+                </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-                <com.pluscubed.recyclerfastscroll.RecyclerFastScroller
+                <org.helllabs.android.xmp.pluscubed.recyclerfastscroll.RecyclerFastScroller
                     android:id="@+id/fast_scroller"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
@@ -76,7 +76,7 @@
             </FrameLayout>
 
             <TextView
-                android:id="@id/android:empty"
+                android:id="@android:id/empty"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="top"

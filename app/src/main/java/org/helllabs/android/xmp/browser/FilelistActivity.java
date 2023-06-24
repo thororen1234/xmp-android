@@ -10,6 +10,7 @@ import org.helllabs.android.xmp.R;
 import org.helllabs.android.xmp.browser.playlist.PlaylistAdapter;
 import org.helllabs.android.xmp.browser.playlist.PlaylistItem;
 import org.helllabs.android.xmp.browser.playlist.PlaylistUtils;
+import org.helllabs.android.xmp.pluscubed.recyclerfastscroll.RecyclerFastScroller;
 import org.helllabs.android.xmp.preferences.Preferences;
 import org.helllabs.android.xmp.util.Crossfader;
 import org.helllabs.android.xmp.util.FileUtils;
@@ -21,8 +22,6 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.view.ContextMenu;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -31,8 +30,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.h6ah4i.android.widget.advrecyclerview.decoration.SimpleListDividerDecorator;
-import com.pluscubed.recyclerfastscroll.RecyclerFastScroller;
 
 public class FilelistActivity extends BasePlaylistActivity implements PlaylistAdapter.OnItemClickListener {
 	private static final String TAG = "BasePlaylistActivity";

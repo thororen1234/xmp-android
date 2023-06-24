@@ -12,14 +12,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.RecyclerView.OnItemTouchListener;
-import android.support.v7.widget.Toolbar;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,6 +19,14 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import org.helllabs.android.xmp.R;
 import org.helllabs.android.xmp.browser.playlist.Playlist;
@@ -97,7 +97,7 @@ public class PlaylistMenu extends AppCompatActivity implements PlaylistAdapter.O
 
 		final RecyclerView recyclerView = (RecyclerView)findViewById(R.id.plist_menu_list);
 
-		recyclerView.addOnItemTouchListener(new OnItemTouchListener() {
+		recyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
 			@Override
 			public boolean onInterceptTouchEvent(final RecyclerView rv, final MotionEvent e) {
 				if (e.getAction() == MotionEvent.ACTION_DOWN) {
@@ -212,9 +212,10 @@ public class PlaylistMenu extends AppCompatActivity implements PlaylistAdapter.O
 	
 	@Override
 	public void onNewIntent(final Intent intent) {
-		
+		super.onNewIntent(intent);
+
 		// If we launch from launcher and we're playing a module, go straight to the player activity
-		
+
 		if ((intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK) != 0) {
 			startPlayerActivity();
 		}
@@ -421,17 +422,18 @@ public class PlaylistMenu extends AppCompatActivity implements PlaylistAdapter.O
 
 	@Override
 	protected void onActivityResult(final int requestCode, final int resultCode, final Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
 		switch (requestCode) {
-		case SETTINGS_REQUEST:
-			if (resultCode == RESULT_OK) {
+			case SETTINGS_REQUEST:
+				if (resultCode == RESULT_OK) {
+					updateList();
+				}
+				break;
+			case PLAYLIST_REQUEST:
 				updateList();
-			}
-			break;
-		case PLAYLIST_REQUEST:
-			updateList();
-			break;
-		default:
-			break;
+				break;
+			default:
+				break;
 		}
 	}
 
@@ -450,28 +452,21 @@ public class PlaylistMenu extends AppCompatActivity implements PlaylistAdapter.O
 
 	@Override
 	public boolean onOptionsItemSelected(final MenuItem item) {
-		switch(item.getItemId()) {
-		case android.R.id.home:
+		int itemId = item.getItemId();
+		if (itemId == android.R.id.home) {
 			startPlayerActivity();
-			break;
-		case R.id.menu_new_playlist:
+		} else if (itemId == R.id.menu_new_playlist) {
 			PlaylistUtils.newPlaylistDialog(this, new Runnable() {
 				public void run() {
 					updateList();
 				}
 			});
-			break;
-		case R.id.menu_prefs:		
+		} else if (itemId == R.id.menu_prefs) {
 			startActivityForResult(new Intent(this, Preferences.class), SETTINGS_REQUEST);
-			break;
-		case R.id.menu_refresh:
+		} else if (itemId == R.id.menu_refresh) {
 			updateList();
-			break;
-		case R.id.menu_download:
+		} else if (itemId == R.id.menu_download) {
 			startActivity(new Intent(this, Search.class));
-			break;
-		default:
-			break;
 		}
 		return super.onOptionsItemSelected(item);
 	}
