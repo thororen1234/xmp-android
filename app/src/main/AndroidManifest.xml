@@ -29,6 +29,7 @@
         <activity
             android:name=".browser.PlaylistMenu"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -39,6 +40,7 @@
         <activity
             android:name=".player.PlayerActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
+            android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
@@ -149,7 +151,7 @@
         <activity
             android:name=".modarchive.SearchError"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:theme="@style/AppTheme.NoActionBar"></activity>
+            android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".modarchive.result.TitleResult"
             android:configChanges="keyboardHidden|orientation|screenSize">
@@ -190,6 +192,7 @@
 
         <activity
             android:name=".preferences.about.ListFormats"
+            android:exported="false"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="org.helllabs.android.xmp.LIST_FORMATS" />
@@ -199,6 +202,7 @@
         </activity>
         <activity
             android:name=".preferences.about.About"
+            android:exported="false"
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="org.helllabs.android.xmp.ABOUT" />
@@ -214,14 +218,16 @@
 
         <receiver
             android:name=".service.receiver.MediaButtonsReceiver"
-            android:enabled="true">
+            android:enabled="true"
+            android:exported="false">
             <intent-filter android:priority="2147483647">
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
         <receiver
             android:name=".service.receiver.RemoteControlReceiver"
-            android:enabled="true">
+            android:enabled="true"
+            android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>

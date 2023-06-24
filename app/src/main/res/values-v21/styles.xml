@@ -1,7 +1,5 @@
 <resources>
 
-    <style name="AppTheme.Preferences" parent="AppTheme">
-
-    </style>
+    <style name="AppTheme.Preferences" parent="AppTheme" />
 
 </resources>
