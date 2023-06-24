@@ -26,6 +26,10 @@ android {
         buildConfigField("String", "API_KEY", apiKey)
     }
 
+    buildFeatures {
+        aidl = true
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
