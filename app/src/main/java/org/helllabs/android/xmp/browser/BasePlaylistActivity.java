@@ -102,7 +102,7 @@ public abstract class BasePlaylistActivity extends AppCompatActivity {
 		}
 
 		public void onServiceDisconnected(final ComponentName className) {
-			mModPlayer = null;    // NOPMD
+			mModPlayer = null;    
 		}
 	};
 

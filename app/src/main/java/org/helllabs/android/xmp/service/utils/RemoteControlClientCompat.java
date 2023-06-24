@@ -96,7 +96,7 @@ public class RemoteControlClientCompat {
 					sRemoteControlClientClass.getConstructor(PendingIntent.class)
 					.newInstance(pendingIntent);
 		} catch (Exception e) {
-			throw new RuntimeException(e);	// NOPMD
+			throw new RuntimeException(e);	
 		}
 	}
 
@@ -152,7 +152,7 @@ public class RemoteControlClientCompat {
 					mClearMethod = metadataEditorClass.getMethod("clear");
 					mApplyMethod = metadataEditorClass.getMethod("apply");
 				} catch (Exception e) {
-					throw new RuntimeException(e.getMessage(), e);	// NOPMD
+					throw new RuntimeException(e.getMessage(), e);	
 				}
 			}
 			mActualMetadataEditor = actualMetadataEditor;
@@ -184,7 +184,7 @@ public class RemoteControlClientCompat {
 				try {
 					mPutStringMethod.invoke(mActualMetadataEditor, key, value);
 				} catch (Exception e) {
-					throw new RuntimeException(e.getMessage(), e);	// NOPMD
+					throw new RuntimeException(e.getMessage(), e);	
 				}
 			}
 			return this;
@@ -205,7 +205,7 @@ public class RemoteControlClientCompat {
 				try {
 					mPutBitmapMethod.invoke(mActualMetadataEditor, key, bitmap);
 				} catch (Exception e) {
-					throw new RuntimeException(e.getMessage(), e);	// NOPMD
+					throw new RuntimeException(e.getMessage(), e);	
 				}
 			}
 			return this;
@@ -231,7 +231,7 @@ public class RemoteControlClientCompat {
 				try {
 					mPutLongMethod.invoke(mActualMetadataEditor, key, value);
 				} catch (Exception e) {
-					throw new RuntimeException(e.getMessage(), e);	// NOPMD
+					throw new RuntimeException(e.getMessage(), e);	
 				}
 			}
 			return this;
@@ -246,7 +246,7 @@ public class RemoteControlClientCompat {
 				try {
 					mClearMethod.invoke(mActualMetadataEditor, (Object[]) null);
 				} catch (Exception e) {
-					throw new RuntimeException(e.getMessage(), e);	// NOPMD
+					throw new RuntimeException(e.getMessage(), e);	
 				}
 			}
 		}
@@ -262,7 +262,7 @@ public class RemoteControlClientCompat {
 				try {
 					mApplyMethod.invoke(mActualMetadataEditor, (Object[]) null);
 				} catch (Exception e) {
-					throw new RuntimeException(e.getMessage(), e);	// NOPMD
+					throw new RuntimeException(e.getMessage(), e);	
 				}
 			}
 		}
@@ -281,7 +281,7 @@ public class RemoteControlClientCompat {
 				metadataEditor = sRCCEditMetadataMethod.invoke(mActualRemoteControlClient,
 						startEmpty);
 			} catch (Exception e) {
-				throw new RuntimeException(e);	// NOPMD
+				throw new RuntimeException(e);	
 			}
 		} else {
 			metadataEditor = null;
@@ -307,7 +307,7 @@ public class RemoteControlClientCompat {
 			try {
 				sRCCSetPlayStateMethod.invoke(mActualRemoteControlClient, state);
 			} catch (Exception e) {
-				throw new RuntimeException(e);	// NOPMD
+				throw new RuntimeException(e);	
 			}
 		}
 	}
@@ -330,7 +330,7 @@ public class RemoteControlClientCompat {
 				sRCCSetTransportControlFlags.invoke(mActualRemoteControlClient,
 						transportControlFlags);
 			} catch (Exception e) {
-				throw new RuntimeException(e);	// NOPMD
+				throw new RuntimeException(e);	
 			}
 		}
 	}

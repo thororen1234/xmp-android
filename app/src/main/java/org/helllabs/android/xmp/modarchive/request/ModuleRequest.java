@@ -55,18 +55,18 @@ public class ModuleRequest extends ModArchiveRequest {
 			int event = myparser.getEventType();
 			String text = "";
 			while (event != XmlPullParser.END_DOCUMENT)	{
-				switch (event){		// NOPMD
+				switch (event){		
 				case XmlPullParser.START_TAG:
 					final String start = myparser.getName();
 					switch (start) {
 						case "module":
-							module = new Module(); // NOPMD
+							module = new Module(); 
 							break;
 						case "artist_info":
 							inArtistInfo = true;
 							break;
 						case "sponsor":
-							sponsor = new Sponsor();    // NOPMD
+							sponsor = new Sponsor();    
 							break;
 					}
 					break;
@@ -86,7 +86,7 @@ public class ModuleRequest extends ModArchiveRequest {
 								break;
 							case "sponsor":
 								moduleList.setSponsor(sponsor);
-								sponsor = null; // NOPMD
+								sponsor = null; 
 								break;
 						}
 					} else if (end.equals("error")) {

@@ -44,6 +44,6 @@ public abstract class Result extends AppCompatActivity {
 	}
 	
 	protected void handleQueryError() {
-		handleError(new Throwable("Bad search string. "));	// NOPMD
+		handleError(new Throwable("Bad search string. "));	
 	}
 }

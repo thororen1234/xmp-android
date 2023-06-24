@@ -262,7 +262,7 @@ public class PlaylistMenu extends AppCompatActivity implements PlaylistAdapter.O
 		playlistAdapter.add(browserItem);
 
 		for (final String name : PlaylistUtils.listNoSuffix()) {
-			final PlaylistItem item = new PlaylistItem(PlaylistItem.TYPE_PLAYLIST, name, Playlist.readComment(this, name));	// NOPMD
+			final PlaylistItem item = new PlaylistItem(PlaylistItem.TYPE_PLAYLIST, name, Playlist.readComment(this, name));	
 			item.setImageRes(R.drawable.list);
 			playlistAdapter.add(item);
 		}

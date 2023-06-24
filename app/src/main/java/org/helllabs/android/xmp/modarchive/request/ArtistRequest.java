@@ -51,9 +51,9 @@ public class ArtistRequest extends ModArchiveRequest {
 				case XmlPullParser.START_TAG: {
 					final String start = myparser.getName();
 					if (start.equals("item")) {
-						artist = new Artist(); // NOPMD
+						artist = new Artist(); 
 					} else if (start.equals("sponsor")) {
-						sponsor = new Sponsor();	// NOPMD
+						sponsor = new Sponsor();	
 					}
 					break;
 				}
@@ -72,7 +72,7 @@ public class ArtistRequest extends ModArchiveRequest {
 								break;
 							case "sponsor":
 								artistList.setSponsor(sponsor);
-								sponsor = null;    // NOPMD
+								sponsor = null;    
 								break;
 						}
 					} else {

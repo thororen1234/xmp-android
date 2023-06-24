@@ -31,11 +31,11 @@ class MediaButtons {
     
 	private static void initializeRegistrationMethods() {
 		try {
-			if (registerMediaButtonEventReceiver == null) {		// NOPMD
+			if (registerMediaButtonEventReceiver == null) {		
 				registerMediaButtonEventReceiver = AudioManager.class
 						.getMethod("registerMediaButtonEventReceiver", ComponentName.class);
 			}
-			if (unregisterMediaButtonEventReceiver == null) {	// NOPMD
+			if (unregisterMediaButtonEventReceiver == null) {	
 				unregisterMediaButtonEventReceiver = AudioManager.class
 						.getMethod("unregisterMediaButtonEventReceiver", ComponentName.class);
 			}
@@ -63,7 +63,7 @@ class MediaButtons {
 				throw (Error) cause;
 			} else {
 				// unexpected checked exception; wrap and re-throw
-				throw new RuntimeException(ite);	// NOPMD
+				throw new RuntimeException(ite);	
 			}
 		} catch (IllegalAccessException ie) {
 			Log.e(TAG, "Unexpected " + ie);
@@ -85,7 +85,7 @@ class MediaButtons {
 				throw (Error) cause;
 			} else {
 				// unexpected checked exception; wrap and re-throw
-				throw new RuntimeException(ite);	// NOPMD
+				throw new RuntimeException(ite);	
 			}
 		} catch (IllegalAccessException ie) {
 			Log.e(TAG, "Unexpected " + ie);

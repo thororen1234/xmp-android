@@ -26,7 +26,7 @@ public class MediaButtonsReceiver extends BroadcastReceiver {
 			}
 
 			int code;
-			switch (code = event.getKeyCode()) {	// NOPMD
+			switch (code = event.getKeyCode()) {	
 			case KeyEvent.KEYCODE_MEDIA_NEXT:
 			case KeyEvent.KEYCODE_MEDIA_PREVIOUS:
 			case KeyEvent.KEYCODE_MEDIA_STOP:

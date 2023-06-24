@@ -290,8 +290,8 @@ public class Playlist {
 	    		final String comment = fields.length > 1 ? fields[1] : "";
 	    		final String title = fields.length > 2 ? fields[2] : "";
 	    		if (InfoCache.fileExists(filename)) {
-	    			final PlaylistItem item = new PlaylistItem(PlaylistItem.TYPE_FILE, title, comment);	// NOPMD
-	    			item.setFile(new File(filename));	// NOPMD
+	    			final PlaylistItem item = new PlaylistItem(PlaylistItem.TYPE_FILE, title, comment);	
+	    			item.setFile(new File(filename));	
 	    			item.setImageRes(R.drawable.grabber);
 	    			mList.add(item);
 	    		} else {

@@ -23,7 +23,7 @@ public class XmpApplication extends Application {
         mInstance = instance;
     }
 	
-	public static synchronized XmpApplication getInstance() {	// NOPMD
+	public static synchronized XmpApplication getInstance() {	
         return mInstance;
     }
 	
@@ -36,7 +36,7 @@ public class XmpApplication extends Application {
 	}
 	
 	public void clearFileList() {
-		mFileList = null;	// NOPMD
+		mFileList = null;	
 	}
 	
 	public RequestQueue getRequestQueue() {
