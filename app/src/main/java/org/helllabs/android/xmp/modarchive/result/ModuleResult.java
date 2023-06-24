@@ -6,6 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.helllabs.android.xmp.BuildConfig;
 import org.helllabs.android.xmp.R;
 import org.helllabs.android.xmp.XmpApplication;
 import org.helllabs.android.xmp.modarchive.Downloader;
@@ -89,7 +90,7 @@ public class ModuleResult extends Result implements ModuleRequest.OnResponseList
 	}
 
 	protected void makeRequest(final String query) {
-		final String key = getString(R.string.modarchive_apikey);
+		final String key = BuildConfig.API_KEY;
 		try {
 			final ModuleRequest request = new ModuleRequest(key, ModuleRequest.MODULE, query);
 			request.setOnResponseListener(this).send();

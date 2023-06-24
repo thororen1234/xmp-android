@@ -19,6 +19,11 @@ android {
         vectorDrawables.useSupportLibrary = true
 
         ndk.abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+
+        // ModArchive API Key
+        // Must be in your global gradle.properties. ex: C:\Users\<name>\.gradle
+        val apiKey = project.property("modArchiveApiKey") as String
+        buildConfigField("String", "API_KEY", apiKey)
     }
 
     buildTypes {

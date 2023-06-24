@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.modarchive.result;
 
+import org.helllabs.android.xmp.BuildConfig;
 import org.helllabs.android.xmp.R;
 import org.helllabs.android.xmp.modarchive.request.ModuleRequest;
 
@@ -14,7 +15,7 @@ public class RandomResult extends ModuleResult implements ModuleRequest.OnRespon
 	
 	@Override
 	protected void makeRequest(final String query) {
-		final String key = getString(R.string.modarchive_apikey);
+		final String key = BuildConfig.API_KEY;
 		final ModuleRequest request = new ModuleRequest(key, ModuleRequest.RANDOM);
 		request.setOnResponseListener(this).send();
 	}

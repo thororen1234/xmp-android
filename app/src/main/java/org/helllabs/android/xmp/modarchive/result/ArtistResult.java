@@ -2,6 +2,7 @@ package org.helllabs.android.xmp.modarchive.result;
 
 import java.io.UnsupportedEncodingException;
 
+import org.helllabs.android.xmp.BuildConfig;
 import org.helllabs.android.xmp.R;
 import org.helllabs.android.xmp.modarchive.Search;
 import org.helllabs.android.xmp.modarchive.adapter.ArtistArrayAdapter;
@@ -38,7 +39,7 @@ public class ArtistResult extends Result implements ArtistRequest.OnResponseList
 		errorMessage = (TextView)findViewById(R.id.error_message);
 
 		final String searchText = getIntent().getStringExtra(Search.SEARCH_TEXT);
-		final String key = getString(R.string.modarchive_apikey);
+		final String key = BuildConfig.API_KEY;
 
 		try {
 			final ArtistRequest request = new ArtistRequest(key, ModArchiveRequest.ARTIST, searchText);
