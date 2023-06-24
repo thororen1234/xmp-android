@@ -1,6 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jlleitschuh.gradle.ktlint") version "11.4.2"
 }
 
 android {
@@ -43,6 +44,21 @@ android {
     externalNativeBuild.ndkBuild {
         path = file("src/main/jni/Android.mk")
     }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
 }
 
 dependencies {
@@ -69,4 +85,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/androidx.swiperefreshlayout/swiperefreshlayout
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // https://mvnrepository.com/artifact/androidx.preference/preference-ktx
+    implementation("androidx.preference:preference-ktx:1.2.0")
 }
