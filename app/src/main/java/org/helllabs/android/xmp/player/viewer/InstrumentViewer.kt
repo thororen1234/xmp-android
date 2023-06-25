@@ -6,111 +6,124 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
-import android.os.RemoteException
+import androidx.core.graphics.ColorUtils
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.service.ModInterface
-import org.helllabs.android.xmp.util.Log.e
+import org.helllabs.android.xmp.Xmp
+import timber.log.Timber
 
-class InstrumentViewer(ctx: Context) : Viewer(ctx) {
+@Suppress("ViewConstructor")
+class InstrumentViewer(context: Context, val background: Int) : Viewer(context, background) {
 
-    private val barPaint: Array<Paint?> = arrayOfNulls(8)
+    private val startBlue: Int
+        get() = resources.getColor(R.color.accent, null)
+
+    private lateinit var insName: Array<String>
+    private val barPaint = arrayListOf<Paint>()
     private val fontHeight: Int
     private val fontSize: Int = resources.getDimensionPixelSize(R.dimen.instrumentview_font_size)
     private val fontWidth: Int
-    private val insPaint: Array<Paint?> = arrayOfNulls(8)
+    private val insPaint = arrayListOf<Paint>()
     private val rect = Rect()
-    private var insName: Array<String>? = null
+
+    // Draw Loop Variables
+    private var chn: Int = 0
+    private var drawWidth: Int = 0
+    private var drawX: Int = 0
+    private var drawY: Int = 0
+    private var ins: Int = 0
+    private var maxVol: Int = 0
+    private var vol: Int = 0
 
     init {
-        for (i in 0..7) {
-            val `val` = 120 + 10 * i
-            insPaint[i] = Paint()
-            insPaint[i]!!.setARGB(255, `val`, `val`, `val`)
-            insPaint[i]!!.typeface = Typeface.MONOSPACE
-            insPaint[i]!!.textSize = fontSize.toFloat()
-            insPaint[i]!!.isAntiAlias = true
+        // White text volume shades
+        for (i in 0..SHADE_STEPS) {
+            val value = (i / SHADE_STEPS.toFloat())
+            // Timber.d("Text Value $i: $value")
+            insPaint.add(
+                Paint().apply {
+                    color = ColorUtils.blendARGB(Color.GRAY, Color.WHITE, value)
+                    alpha = 255
+                    typeface = Typeface.MONOSPACE
+                    textSize = fontSize.toFloat()
+                    isAntiAlias = true
+                }
+            )
         }
 
-        for (i in 0..7) {
-            val `val` = 15 * i
-            barPaint[i] = Paint()
-            barPaint[i]!!.setARGB(255, `val` / 4, `val` / 2, `val`)
+        // Blue bar volume shades
+        for (i in SHADE_STEPS downTo 0) {
+            val value = (i / SHADE_STEPS.toFloat())
+            // Timber.d("Bar Value $i: $value")
+            barPaint.add(
+                Paint().apply {
+                    color = ColorUtils.blendARGB(startBlue, background, value)
+                    alpha = 255
+                }
+            )
         }
 
-        fontWidth = insPaint[0]!!.measureText("X").toInt()
+        fontWidth = insPaint[0].measureText("X").toInt()
         fontHeight = fontSize * 14 / 10
     }
 
-    override fun setup(modPlayer: ModInterface, modVars: IntArray) {
-        super.setup(modPlayer, modVars)
-        val insNum = modVars[4]
-        try {
-            insName = modPlayer.instruments
-        } catch (e: RemoteException) {
-            e(TAG, "Can't get instrument name")
-        }
-        setMaxY(insNum * fontHeight + fontHeight / 2)
+    override fun setup(modVars: IntArray) {
+        super.setup(modVars)
+        Timber.d("Viewer Setup")
+
+        insName = Xmp.getInstruments() ?: arrayOf()
+        setMaxY(modVars[4] * fontHeight + fontHeight / 2)
     }
 
     override fun update(info: Info?, paused: Boolean) {
         super.update(info, paused)
-        var canvas: Canvas? = null
-        try {
-            canvas = surfaceHolder.lockCanvas(null)
-            if (canvas != null) {
-                synchronized(surfaceHolder) { doDraw(canvas, modPlayer!!, info) }
-            }
-        } finally {
-            // do this in a finally so that if an exception is thrown
-            // during the above, we don't leave the Surface in an
-            // inconsistent state
-            if (canvas != null) {
-                surfaceHolder.unlockCanvasAndPost(canvas)
-            }
+
+        requestCanvasLock { canvas ->
+            doDraw(canvas, info)
         }
     }
 
-    @Suppress("UNUSED_PARAMETER")
-    private fun doDraw(canvas: Canvas, modPlayer: ModInterface, info: Info?) {
-        val chn = modVars[3]
-        val ins = modVars[4]
+    private fun doDraw(canvas: Canvas, info: Info?) {
+        chn = modVars[3]
+        ins = modVars[4]
 
         // Clear screen
-        canvas.drawColor(Color.BLACK)
+        canvas.drawColor(bgColor)
+
         for (i in 0 until ins) {
-            val y = (i + 1) * fontHeight - posY.toInt()
-            val width = (canvasWidth - 3 * fontWidth) / chn
-            var maxVol: Int
+            drawY = (i + 1) * fontHeight - posY.toInt()
+            drawWidth = (canvasWidth - 3 * fontWidth) / chn
+            maxVol = 0
 
             // Don't draw if not visible
-            if (y < 0 || y > canvasHeight + fontHeight) {
+            if (drawY < 0 || drawY > canvasHeight + fontHeight) {
                 continue
             }
-            maxVol = 0
+
             for (j in 0 until chn) {
                 if (isMuted[j]) {
                     continue
                 }
                 if (info!!.instruments[j] == i) {
-                    val x = 3 * fontWidth + width * j
-                    var vol = info.volumes[j] / 8
-                    if (vol > 7) {
-                        vol = 7
+                    drawX = 3 * fontWidth + drawWidth * j
+                    vol = info.volumes[j] / 2
+
+                    // Clamp
+                    if (vol > SHADE_STEPS) {
+                        vol = SHADE_STEPS
                     }
-                    rect[x, y - fontSize + 1, x + width * 8 / 10] = y + 1
-                    canvas.drawRect(rect, barPaint[vol]!!)
+
+                    rect.set(drawX, drawY - fontSize + 4, drawX + drawWidth * 8 / 10, drawY + 8)
+                    canvas.drawRect(rect, barPaint[vol])
                     if (vol > maxVol) {
                         maxVol = vol
                     }
                 }
             }
-            if (insName != null) {
-                canvas.drawText(insName!![i], 0f, y.toFloat(), insPaint[maxVol]!!)
-            }
+            canvas.drawText(insName[i], 0f, drawY.toFloat(), insPaint[maxVol])
         }
     }
 
     companion object {
-        private const val TAG = "InstrumentViewer"
+        private const val SHADE_STEPS = 32
     }
 }

@@ -7,12 +7,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.content.res.Configuration
-import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.RemoteException
+import android.provider.OpenableColumns
 import android.util.TypedValue
 import android.view.Display
 import android.view.Menu
@@ -26,8 +26,12 @@ import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
 import android.widget.ViewFlipper
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.content.res.ResourcesCompat
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
+import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.browser.PlaylistMenu
 import org.helllabs.android.xmp.player.viewer.ChannelViewer
@@ -38,9 +42,13 @@ import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerCallback
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.util.FileUtils.basename
-import org.helllabs.android.xmp.util.Log
 import org.helllabs.android.xmp.util.Message.toast
 import org.helllabs.android.xmp.util.Message.yesNoDialog
+import timber.log.Timber
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
 
 class PlayerActivity : Activity() {
 
@@ -85,14 +93,14 @@ class PlayerActivity : Activity() {
 
     private val connection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            Log.i(TAG, "Service connected")
+            Timber.i(TAG, "Service connected")
             synchronized(playerLock) {
                 modPlayer = ModInterface.Stub.asInterface(service)
                 flipperPage = 0
                 try {
                     modPlayer!!.registerCallback(playerCallback)
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't register player callback")
+                    Timber.e(TAG, "Can't register player callback")
                 }
                 if (fileList != null && fileList!!.isNotEmpty()) {
                     // Start new queue
@@ -107,7 +115,7 @@ class PlayerActivity : Activity() {
                             unpause()
                         }
                     } catch (e: RemoteException) {
-                        Log.e(TAG, "Can't get module file name")
+                        Timber.e(TAG, "Can't get module file name")
                     }
                 }
             }
@@ -118,7 +126,7 @@ class PlayerActivity : Activity() {
             synchronized(playerLock) {
                 stopUpdate = true
                 // modPlayer = null;
-                Log.i(TAG, "Service disconnected")
+                Timber.i(TAG, "Service disconnected")
                 finish()
             }
         }
@@ -127,7 +135,7 @@ class PlayerActivity : Activity() {
         @Throws(RemoteException::class)
         override fun newModCallback() {
             synchronized(playerLock) {
-                Log.d(TAG, "newModCallback: show module data")
+                Timber.d(TAG, "newModCallback: show module data")
                 showNewMod()
                 canChangeViewer = true
             }
@@ -136,7 +144,7 @@ class PlayerActivity : Activity() {
         @Throws(RemoteException::class)
         override fun endModCallback() {
             synchronized(playerLock) {
-                Log.d(TAG, "endModCallback: end of module")
+                Timber.d(TAG, "endModCallback: end of module")
                 stopUpdate = true
                 canChangeViewer = false
             }
@@ -145,7 +153,7 @@ class PlayerActivity : Activity() {
         @Throws(RemoteException::class)
         override fun endPlayCallback(result: Int) {
             synchronized(playerLock) {
-                Log.d(TAG, "endPlayCallback: End progress thread")
+                Timber.d(TAG, "endPlayCallback: End progress thread")
                 stopUpdate = true
                 if (result != PlayerService.RESULT_OK) {
                     runOnUiThread {
@@ -160,7 +168,7 @@ class PlayerActivity : Activity() {
                     try {
                         progressThread!!.join()
                     } catch (e: InterruptedException) {
-                        Log.w(TAG, e.localizedMessage.orEmpty())
+                        Timber.w(TAG, e.localizedMessage.orEmpty())
                     }
                 }
                 if (!isFinishing) {
@@ -171,14 +179,14 @@ class PlayerActivity : Activity() {
 
         @Throws(RemoteException::class)
         override fun pauseCallback() {
-            Log.d(TAG, "pauseCallback")
+            Timber.d(TAG, "pauseCallback")
             handler.post(setPauseStateRunnable)
         }
 
         @Throws(RemoteException::class)
         override fun newSequenceCallback() {
             synchronized(playerLock) {
-                Log.d(TAG, "newSequenceCallback: show new sequence")
+                Timber.d(TAG, "newSequenceCallback: show new sequence")
                 showNewSequence()
             }
         }
@@ -194,7 +202,7 @@ class PlayerActivity : Activity() {
                         unpause()
                     }
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't get pause status")
+                    Timber.e(TAG, "Can't get pause status")
                 }
             }
         }
@@ -224,7 +232,7 @@ class PlayerActivity : Activity() {
                             info!!.time = modPlayer!!.time() / 1000
                             modPlayer!!.getChannelData(
                                 info!!.volumes,
-                                info!!.finalvols,
+                                info!!.finalVols,
                                 info!!.pans,
                                 info!!.instruments,
                                 info!!.keys,
@@ -295,14 +303,15 @@ class PlayerActivity : Activity() {
 
     private inner class ProgressThread : Thread() {
         override fun run() {
-            Log.i(TAG, "Start progress thread")
-            val frameTime = (1000000000 / FRAME_RATE).toLong()
+            Timber.i(TAG, "Start progress thread")
+            val frameStartTime = System.nanoTime()
+            val frameTime = (System.nanoTime() - frameStartTime) / 1000000
             var lastTimer = System.nanoTime()
             var now: Long
             playTime = 0
             do {
                 if (stopUpdate) {
-                    Log.i(TAG, "Stop update")
+                    Timber.i(TAG, "Stop update")
                     break
                 }
                 synchronized(playerLock) {
@@ -317,26 +326,20 @@ class PlayerActivity : Activity() {
                 if (screenOn) {
                     handler.post(updateInfoRunnable)
                 }
-                try {
-                    while (System.nanoTime()
-                        .also { now = it } - lastTimer < frameTime && !stopUpdate
-                    ) {
-                        sleep(10)
-                    }
-                    lastTimer = now
-                } catch (e: InterruptedException) {
-                    Log.w(TAG, e.localizedMessage.orEmpty())
+
+                if (frameTime < FRAME_RATE && !stopUpdate) {
+                    sleep(FRAME_RATE - frameTime)
                 }
             } while (playTime >= 0)
             handler.removeCallbacksAndMessages(null)
             handler.post {
                 synchronized(playerLock) {
                     if (modPlayer != null) {
-                        Log.i(TAG, "Flush interface update")
+                        Timber.i(TAG, "Flush interface update")
                         try {
                             modPlayer!!.allowRelease() // finished playing, we can release the module
                         } catch (e: RemoteException) {
-                            Log.e(TAG, "Can't allow module release")
+                            Timber.e(TAG, "Can't allow module release")
                         }
                     }
                 }
@@ -364,19 +367,44 @@ class PlayerActivity : Activity() {
     override fun onNewIntent(intent: Intent) {
         var reconnect = false
         var fromHistory = false
-        Log.i(TAG, "New intent")
+        Timber.i(TAG, "New intent")
         if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) {
-            Log.i(TAG, "Player started from history")
+            Timber.i(TAG, "Player started from history")
             fromHistory = true
         }
+
         var path: String? = null
         if (intent.data != null) {
-            path = intent.data!!.path
+            path = if (intent.action == Intent.ACTION_VIEW) {
+                val cursor = this.contentResolver.query(intent.data!!, null, null, null, null)!!
+                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                cursor.moveToFirst()
+                val name = cursor.getString(nameIndex)
+
+                cursor.close()
+
+                val dest = File(this.cacheDir, name)
+                try {
+                    this.contentResolver.openInputStream(intent.data!!).use { ins ->
+                        dest.outputStream().use { out ->
+                            ins!!.copyTo(out)
+                            out.flush()
+                            out.close()
+                        }
+                    }
+                } catch (ex: Exception) {
+                    Timber.e("URI Get File: ${ex.message}")
+                    ex.printStackTrace()
+                }
+                dest.path
+            } else {
+                intent.data!!.path
+            }
         }
 
         // fileArray = null;
         if (path != null) { // from intent filter
-            Log.i(TAG, "Player started from intent filter")
+            Timber.i(TAG, "Player started from intent filter")
             fileList = mutableListOf()
             fileList!!.add(path)
             shuffleMode = false
@@ -386,7 +414,7 @@ class PlayerActivity : Activity() {
         } else if (fromHistory) {
             // Oops. We don't want to start service if launched from history and service is not running
             // so run the browser instead.
-            Log.i(TAG, "Start file browser")
+            Timber.i(TAG, "Start file browser")
             val browserIntent = Intent(this, PlaylistMenu::class.java)
             browserIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
             startActivity(browserIntent)
@@ -409,19 +437,49 @@ class PlayerActivity : Activity() {
         }
         val service = Intent(this, PlayerService::class.java)
         if (!reconnect) {
-            Log.i(TAG, "Start service")
+            Timber.i(TAG, "Start service")
             startService(service)
         }
         if (!bindService(service, connection, 0)) {
-            Log.e(TAG, "Can't bind to service")
+            Timber.e(TAG, "Can't bind to service")
             finish()
         }
     }
 
-    // private void setFont(final TextView name, final String path, final int res) {
-    //    final Typeface typeface = Typeface.createFromAsset(this.getAssets(), path);
-    //    name.setTypeface(typeface);
-    // }
+    private fun handleIntentAction(intent: Intent): String? {
+        Timber.d(TAG, "Handing incoming intent")
+        val uri = intent.data
+        val uriString: String = (uri?.toString() ?: return null)
+        val fileName = "temp." + uriString.substring(uriString.lastIndexOf('.') + 1)
+        val output = File(this.externalCacheDir, fileName)
+
+        // Lets delete  the temp file to ensure a clean copy.
+        if (output.exists()) {
+            if (output.delete()) {
+                Timber.d(TAG, "Temp file deleted.")
+            } else {
+                Timber.e(TAG, "Failed to delete temp file!")
+            }
+        }
+
+        try {
+            val inputStream = contentResolver.openInputStream(uri)
+            val outputStream: OutputStream = FileOutputStream(output)
+            val buffer = ByteArray(1024)
+            var length: Int
+            while (inputStream!!.read(buffer).also { length = it } > 0) {
+                outputStream.write(buffer, 0, length)
+            }
+            outputStream.close()
+            inputStream.close()
+        } catch (e: IOException) {
+            Timber.e(TAG, "Error creating temp file --Check Trace--")
+            e.printStackTrace()
+            return null
+        }
+        return output.path
+    }
+
     private fun changeViewer() {
         currentViewer++
         currentViewer %= 3
@@ -435,7 +493,7 @@ class PlayerActivity : Activity() {
                         2 -> viewer = patternViewer
                     }
                     viewerLayout!!.addView(viewer)
-                    viewer!!.setup(modPlayer!!, modVars)
+                    viewer!!.setup(modVars)
                     viewer!!.setRotation(display!!.rotation)
                 }
             }
@@ -449,7 +507,7 @@ class PlayerActivity : Activity() {
                 try {
                     return modPlayer!!.toggleAllSequences()
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't toggle all sequences status")
+                    Timber.e(TAG, "Can't toggle all sequences status")
                 }
             }
             return false
@@ -462,7 +520,7 @@ class PlayerActivity : Activity() {
                 try {
                     return modPlayer!!.allSequences
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't get all sequences status")
+                    Timber.e(TAG, "Can't get all sequences status")
                 }
             }
             return false
@@ -479,15 +537,15 @@ class PlayerActivity : Activity() {
                         loopButton!!.setImageResource(R.drawable.loop_off)
                     }
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't get loop status")
+                    Timber.e(TAG, "Can't get loop status")
                 }
             }
         }
     }
 
     fun playButtonListener(view: View?) {
-        synchronized(this) {
-            Log.d(TAG, "Play/pause button pressed (paused=$paused)")
+        synchronized(playerLock) {
+            Timber.d(TAG, "Play/pause button pressed (paused=$paused)")
             if (modPlayer != null) {
                 try {
                     modPlayer!!.pause()
@@ -497,7 +555,7 @@ class PlayerActivity : Activity() {
                         pause()
                     }
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't pause/unpause module")
+                    Timber.e(TAG, "Can't pause/unpause module")
                 }
             }
         }
@@ -506,12 +564,12 @@ class PlayerActivity : Activity() {
     fun stopButtonListener(view: View?) {
         // Debug.stopMethodTracing();
         synchronized(playerLock) {
-            Log.d(TAG, "Stop button pressed")
+            Timber.d(TAG, "Stop button pressed")
             if (modPlayer != null) {
                 try {
                     modPlayer!!.stop()
                 } catch (e1: RemoteException) {
-                    Log.e(TAG, "Can't stop module")
+                    Timber.e(TAG, "Can't stop module")
                 }
             }
         }
@@ -526,7 +584,7 @@ class PlayerActivity : Activity() {
 
     fun backButtonListener(view: View?) {
         synchronized(playerLock) {
-            Log.d(TAG, "Back button pressed")
+            Timber.d(TAG, "Back button pressed")
             if (modPlayer != null) {
                 try {
                     if (modPlayer!!.time() > 3000) {
@@ -540,7 +598,7 @@ class PlayerActivity : Activity() {
                     }
                     unpause()
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't go to previous module")
+                    Timber.e(TAG, "Can't go to previous module")
                 }
             }
         }
@@ -548,13 +606,13 @@ class PlayerActivity : Activity() {
 
     fun forwardButtonListener(view: View?) {
         synchronized(playerLock) {
-            Log.d(TAG, "Next button pressed")
+            Timber.d(TAG, "Next button pressed")
             if (modPlayer != null) {
                 try {
                     modPlayer!!.nextSong()
                     unpause()
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't go to next module")
+                    Timber.e(TAG, "Can't go to next module")
                 }
             }
         }
@@ -567,7 +625,7 @@ class PlayerActivity : Activity() {
         sidebar = Sidebar(this)
         activity = this
         display = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay
-        Log.i(TAG, "Create player interface")
+        Timber.i(TAG, "Create player interface")
 
         // INITIALIZE RECEIVER by jwei512
         val filter = IntentFilter(Intent.ACTION_SCREEN_ON)
@@ -590,7 +648,9 @@ class PlayerActivity : Activity() {
         elapsedTime = findViewById(R.id.elapsed_time)
         titleFlipper = findViewById(R.id.title_flipper)
         viewerLayout = findViewById(R.id.viewer_layout)
-        viewer = InstrumentViewer(this)
+
+        viewer = InstrumentViewer(this, Color(red = 28, green = 27, blue = 31).toArgb())
+
         viewerLayout!!.addView(viewer)
         viewerLayout!!.setOnClickListener {
             synchronized(playerLock) {
@@ -602,7 +662,7 @@ class PlayerActivity : Activity() {
         if (PrefManager.keepScreenOn) {
             titleFlipper!!.keepScreenOn = true
         }
-        val font = Typeface.createFromAsset(this.assets, "fonts/Michroma.ttf")
+        val font = ResourcesCompat.getFont(this, R.font.font_michroma)
         for (i in 0..1) {
             infoName[i]!!.typeface = font
             infoName[i]!!.includeFontPadding = false
@@ -634,15 +694,17 @@ class PlayerActivity : Activity() {
                         modPlayer!!.seek(s.progress * 100)
                         playTime = modPlayer!!.time() / 100
                     } catch (e: RemoteException) {
-                        Log.e(TAG, "Can't seek to time")
+                        Timber.e(TAG, "Can't seek to time")
                     }
                 }
                 seeking = false
             }
         })
-        instrumentViewer = InstrumentViewer(this)
-        channelViewer = ChannelViewer(this)
-        patternViewer = PatternViewer(this)
+
+        val color = Color(red = 28, green = 27, blue = 31).toArgb()
+        instrumentViewer = InstrumentViewer(this, color)
+        channelViewer = ChannelViewer(this, color)
+        patternViewer = PatternViewer(this, color)
     }
 
     private fun saveAllSeqPreference() {
@@ -652,11 +714,11 @@ class PlayerActivity : Activity() {
                     // Write our all sequences button status to shared prefs
                     val allSeq = modPlayer!!.allSequences
                     if (allSeq != PrefManager.allSequences) {
-                        Log.w(TAG, "Write all sequences preference")
+                        Timber.d(TAG, "Write all sequences preference")
                         PrefManager.allSequences = allSeq
                     }
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't save all sequences preference")
+                    Timber.e(TAG, "Can't save all sequences preference")
                 }
             }
         }
@@ -672,16 +734,16 @@ class PlayerActivity : Activity() {
                 try {
                     modPlayer!!.unregisterCallback(playerCallback)
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't unregister player callback")
+                    Timber.e(TAG, "Can't unregister player callback")
                 }
             }
         }
         unregisterReceiver(screenReceiver)
         try {
             unbindService(connection)
-            Log.i(TAG, "Unbind service")
+            Timber.i(TAG, "Unbind service")
         } catch (e: IllegalArgumentException) {
-            Log.i(TAG, "Can't unbind unregistered service")
+            Timber.i(TAG, "Can't unbind unregistered service")
         }
         super.onDestroy()
     }
@@ -708,10 +770,10 @@ class PlayerActivity : Activity() {
         synchronized(playerLock) {
             if (modPlayer != null) {
                 try {
-                    Log.i(TAG, "Set sequence $num")
+                    Timber.i(TAG, "Set sequence $num")
                     modPlayer!!.setSequence(num)
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't set sequence $num")
+                    Timber.e(TAG, "Can't set sequence $num")
                 }
             }
         }
@@ -723,7 +785,7 @@ class PlayerActivity : Activity() {
                 try {
                     modPlayer!!.getModVars(modVars)
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't get new sequence data")
+                    Timber.e(TAG, "Can't get new sequence data")
                 }
                 handler.post(showNewSequenceRunnable)
             }
@@ -751,7 +813,7 @@ class PlayerActivity : Activity() {
     }
 
     private val showNewModRunnable = Runnable {
-        Log.i(TAG, "Show new module")
+        Timber.i(TAG, "Show new module")
         synchronized(playerLock) {
             if (modPlayer != null) {
                 playTime = try {
@@ -759,7 +821,7 @@ class PlayerActivity : Activity() {
                     modPlayer!!.getSeqVars(seqVars)
                     modPlayer!!.time() / 100
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't get module data")
+                    Timber.e(TAG, "Can't get module data")
                     return@Runnable
                 }
                 var name: String
@@ -779,7 +841,7 @@ class PlayerActivity : Activity() {
                     type = ""
                     allSeq = false
                     loop = false
-                    Log.e(TAG, "Can't get module name and type")
+                    Timber.e(TAG, "Can't get module name and type")
                 }
                 val time = modVars[0]
                 /*int len = vars[1]; */
@@ -810,16 +872,11 @@ class PlayerActivity : Activity() {
                 }
                 skipToPrevious = false
                 titleFlipper!!.showNext()
-                viewer!!.setup(modPlayer!!, modVars)
+                viewer!!.setup(modVars)
                 viewer!!.setRotation(display!!.rotation)
 
-                /*infoMod.setText(String.format("Channels: %d\n" +
-		       			"Length: %d, Patterns: %d\n" +
-		       			"Instruments: %d, Samples: %d\n" +
-		       			"Estimated play time: %dmin%02ds",
-		       			chn, len, pat, ins, smp,
-		       			((time + 500) / 60000), ((time + 500) / 1000) % 60));*/info =
-                    Viewer.Info()
+                info = Viewer.Info()
+                info!!.type = Xmp.getModType()
                 stopUpdate = false
                 if (progressThread == null || !progressThread!!.isAlive) {
                     progressThread = ProgressThread()
@@ -835,7 +892,7 @@ class PlayerActivity : Activity() {
                 try {
                     modPlayer!!.play(fileList, start, shuffleMode, loopListMode, keepFirst)
                 } catch (e: RemoteException) {
-                    Log.e(TAG, "Can't play module")
+                    Timber.e(TAG, "Can't play module")
                 }
             }
         }
@@ -875,8 +932,13 @@ class PlayerActivity : Activity() {
         const val PARM_LOOP = "loop"
         const val PARM_START = "start"
         const val PARM_KEEPFIRST = "keepFirst"
-        private const val FRAME_RATE = 25
         private var stopUpdate = false // this MUST be static (volatile doesn't work!)
         private var canChangeViewer = false
+
+        // Phone CPU's are more than capable enough to do more work with drawing.
+        // With android O+, we can use hardware rendering on the canvas, if supported.
+        private val newWaveform: Boolean
+            get() = PrefManager.useBetterWaveform
+        private val FRAME_RATE: Int = 1000 / if (newWaveform) 50 else 30
     }
 }

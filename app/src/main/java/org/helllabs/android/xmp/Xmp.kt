@@ -63,13 +63,21 @@ object Xmp {
     )
 
     external fun getComment(): String?
-    external fun getFormats(): Array<String?>?
-    external fun getInstruments(): Array<String?>?
+    external fun getFormats(): Array<String>?
+    external fun getInstruments(): Array<String>?
     external fun getLoopCount(): Int
     external fun getModName(): String
     external fun getModType(): String
     external fun getModVars(vars: IntArray?)
-    external fun getPatternRow(pat: Int, row: Int, rowNotes: ByteArray?, rowInstruments: ByteArray?)
+
+    external fun getPatternRow(
+        pat: Int,
+        row: Int,
+        rowNotes: ByteArray,
+        rowInstruments: ByteArray,
+        rowFxType: IntArray,
+        rowFxParm: IntArray
+    )
 
     external fun getSampleData(
         trigger: Boolean,
@@ -82,7 +90,7 @@ object Xmp {
     )
 
     external fun getSeqVars(vars: IntArray?)
-    external fun getVersion(): String?
+    external fun getVersion(): String
     external fun getVolume(): Int
     external fun nextPosition(): Int
     external fun prevPosition(): Int

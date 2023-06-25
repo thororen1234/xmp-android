@@ -2,6 +2,9 @@ package org.helllabs.android.xmp.player.viewer
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Configuration
+import android.graphics.Canvas
+import android.os.Build
 import android.os.RemoteException
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -10,58 +13,210 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
 import android.view.View.OnTouchListener
-import org.helllabs.android.xmp.player.ScreenSizeHelper
-import org.helllabs.android.xmp.service.ModInterface
-import org.helllabs.android.xmp.util.Log.e
-import org.helllabs.android.xmp.util.Log.i
+import org.helllabs.android.xmp.Xmp
+import timber.log.Timber
 import kotlin.math.abs
 
-open class Viewer(
-    protected val ctx: Context
-) : SurfaceView(ctx), SurfaceHolder.Callback, View.OnClickListener {
+// http://developer.android.com/guide/topics/graphics/2d-graphics.html
+// http://www.independent-software.com/android-speeding-up-canvas-drawbitmap.html
+// https://androidpedia.net/en/tutorial/3754/canvas-drawing-using-surfaceview
+// https://stackoverflow.com/a/8289516
+abstract class Viewer(context: Context, color: Int) :
+    SurfaceView(context),
+    SurfaceHolder.Callback,
+    View.OnClickListener {
 
-    private val gestureDetector: GestureDetector
-    protected lateinit var isMuted: BooleanArray
-    protected lateinit var modVars: IntArray
-    protected val screenSize: Int
-    protected var canvasHeight = 0
-    protected var canvasWidth = 0
-    protected var modPlayer: ModInterface? = null
-    protected var surfaceHolder: SurfaceHolder
-    protected var viewerRotation = 0
+    // Background Color
+    protected var bgColor: Int = color
+        private set
+
+    internal lateinit var isMuted: BooleanArray
+    internal lateinit var modVars: IntArray
+    internal val screenSize: Int
+    internal var canvasHeight = 0
+    internal var canvasWidth = 0
+    internal var rotation: Int = 0
+    private lateinit var gestureDetector: GestureDetector
+    private var canvas: Canvas? = null
+    private var surfaceHolder: SurfaceHolder
 
     // Touch tracking
+    internal var posX: Float
+    internal var posY: Float
+    internal var velX = 0f
+    internal var velY = 0f
     private var maxX = 0
     private var maxY = 0
-    private var isDown: Boolean
-    protected var posX: Float
-    protected var posY: Float
-    protected var velX = 0f
-    protected var velY = 0f
 
     class Info {
         var time = 0
         val values = IntArray(7) // order pattern row num_rows frame speed bpm
         val volumes = IntArray(64)
-        val finalvols = IntArray(64)
+        val finalVols = IntArray(64)
         val pans = IntArray(64)
         val instruments = IntArray(64)
         val keys = IntArray(64)
         val periods = IntArray(64)
+        var type = ""
+    }
+
+    init {
+        // register our interest in hearing about changes to our surface
+        @Suppress("LeakingThis") // Its because it's in the init block.
+        holder.addCallback(this)
+
+        surfaceHolder = holder
+
+        posY = 0f
+        posX = posY
+
+        initGestureListener()
+        screenSize = resources.configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun initGestureListener() {
+        // Gesture detection
+        gestureDetector = GestureDetector(context, MyGestureDetector())
+        val gestureListener = OnTouchListener { _, event -> gestureDetector.onTouchEvent(event) }
+        setOnClickListener(this@Viewer)
+        setOnTouchListener(gestureListener)
+    }
+
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        setSurfaceSize(width, height)
+    }
+
+    override fun surfaceCreated(holder: SurfaceHolder) {
+        Timber.d("Creating Surface")
+        surfaceHolder = holder
+    }
+
+    override fun surfaceDestroyed(holder: SurfaceHolder) {
+        Timber.d("Destroying Surface")
+        surfaceHolder.surface.release()
+    }
+
+    override fun onClick(view: View) {
+        // do nothing
+    }
+
+    protected open fun onClick(x: Int, y: Int) {
+        val parent: View = parent as View
+        parent.performClick()
+    }
+
+    protected open fun onLongClick(x: Int, y: Int) {
+        // do nothing until overridden
+    }
+
+    open fun setRotation(value: Int) {
+        rotation = value
+    }
+
+    open fun update(info: Info?, paused: Boolean) {
+        updateScroll()
+    }
+
+    open fun setup(modVars: IntArray) {
+        Timber.d("Viewer setup")
+        val chn = modVars[3]
+        this.modVars = modVars
+        isMuted = BooleanArray(chn)
+
+        for (i in 0 until chn) {
+            try {
+                isMuted[i] = Xmp.mute(i, -1) == 1
+            } catch (e: RemoteException) {
+                Timber.w("Can't read channel mute status")
+            }
+        }
+
+        posY = 0f
+        posX = posY
     }
 
     private fun limitPosition() {
         if (posX > maxX - canvasWidth) {
             posX = (maxX - canvasWidth).toFloat()
         }
+
         if (posX < 0) {
             posX = 0f
         }
+
         if (posY > maxY - canvasHeight) {
             posY = (maxY - canvasHeight).toFloat()
         }
+
         if (posY < 0) {
             posY = 0f
+        }
+    }
+
+    // Hmpf, reinventing the wheel instead of using Scroller
+    private fun updateScroll() {
+        posX -= velX
+        posY -= velY
+        limitPosition()
+
+        velX *= 0.9f
+        if (abs(velX) < 0.5) {
+            velX = 0f
+        }
+
+        velY *= 0.9f
+        if (abs(velY) < 0.5) {
+            velY = 0f
+        }
+    }
+
+    /* Callback invoked when the surface dimensions change. */
+    private fun setSurfaceSize(width: Int, height: Int) {
+        // synchronized to make sure these all change atomically
+        synchronized(surfaceHolder) {
+            canvasWidth = width
+            canvasHeight = height
+        }
+    }
+
+    internal fun setMaxX(x: Int) {
+        synchronized(this) { maxX = x }
+    }
+
+    internal fun setMaxY(y: Int) {
+        synchronized(this) { maxY = y }
+    }
+
+    fun requestCanvasLock(draw: (canvas: Canvas) -> Unit) {
+        // Check if the surface is valid. Stops it from being silly.
+        if (surfaceHolder.surface.isValid) {
+            try {
+                canvas = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    try {
+                        // Try and use hardware-accelerated canvas
+                        surfaceHolder.lockHardwareCanvas()
+                    } catch (e: IllegalStateException) {
+                        // The device must not support hardware-accelerated canvas.
+                        surfaceHolder.lockCanvas()
+                    }
+                } else {
+                    surfaceHolder.lockCanvas()
+                }
+
+                draw(canvas!!)
+            } catch (e: Exception) {
+                Timber.w("Canvas error: $e")
+            } finally {
+                // do this in a finally so that if an exception is thrown
+                // during the above, we don't leave the Surface in an
+                // inconsistent state
+                if (canvas != null) {
+                    surfaceHolder.unlockCanvasAndPost(canvas)
+                }
+            }
+        } else {
+            Timber.w("Surface not valid")
         }
     }
 
@@ -88,9 +243,15 @@ open class Viewer(
             velocityX: Float,
             velocityY: Float
         ): Boolean {
-            velX = velocityX / 25
-            velY = velocityY / 25
-            return true
+            // Register a fling after a certain velocity.
+            if (velocityX >= FLING || velocityY >= FLING) {
+                synchronized(this) {
+                    velX = velocityX / 25
+                    velY = velocityY / 25
+                }
+                return true
+            }
+            return false
         }
 
         override fun onSingleTapUp(e: MotionEvent): Boolean {
@@ -109,112 +270,7 @@ open class Viewer(
         }
     }
 
-    // Hmpf, reinventing the wheel instead of using Scroller
-    private fun updateScroll() {
-        posX -= velX
-        posY -= velY
-        limitPosition()
-        velX *= 0.9.toFloat()
-        if (abs(velX) < 0.5) {
-            velX = 0f
-        }
-        velY *= 0.9.toFloat()
-        if (abs(velY) < 0.5) {
-            velY = 0f
-        }
-    }
-
-    init {
-
-        // register our interest in hearing about changes to our surface
-        val holder = holder
-        holder.addCallback(this)
-        surfaceHolder = holder
-        posY = 0f
-        posX = posY
-        isDown = false
-
-        // Gesture detection
-        gestureDetector = GestureDetector(ctx, MyGestureDetector())
-
-        @SuppressLint("ClickableViewAccessibility")
-        val gestureListener = OnTouchListener { _, event ->
-            gestureDetector.onTouchEvent(event)
-        }
-        setOnClickListener(this@Viewer)
-        setOnTouchListener(gestureListener)
-
-        val screenSizeHelper = ScreenSizeHelper()
-        screenSize = screenSizeHelper.getScreenSize(ctx)
-    }
-
-    override fun onClick(view: View) {
-        // do nothing
-    }
-
-    protected open fun onClick(x: Int, y: Int) {
-        (parent as View).performClick()
-    }
-
-    protected open fun onLongClick(x: Int, y: Int) {
-        // do nothing
-    }
-
-    open fun setRotation(value: Int) {
-        viewerRotation = value
-    }
-
-    open fun update(info: Info?, paused: Boolean) {
-        updateScroll()
-    }
-
-    open fun setup(modPlayer: ModInterface, modVars: IntArray) {
-        i(TAG, "Viewer setup")
-        val chn = modVars[3]
-        this.modVars = modVars
-        this.modPlayer = modPlayer
-        isMuted = BooleanArray(chn)
-        for (i in 0 until chn) {
-            try {
-                isMuted[i] = modPlayer.mute(i, -1) == 1
-            } catch (e: RemoteException) {
-                e(TAG, "Can't read channel mute status")
-            }
-        }
-        posY = 0f
-        posX = posY
-    }
-
-    fun setMaxX(x: Int) {
-        synchronized(this) { maxX = x }
-    }
-
-    fun setMaxY(y: Int) {
-        synchronized(this) { maxY = y }
-    }
-
-    /* Callback invoked when the surface dimensions change. */
-    private fun setSurfaceSize(width: Int, height: Int) {
-        // synchronized to make sure these all change atomically
-        synchronized(surfaceHolder) {
-            canvasWidth = width
-            canvasHeight = height
-        }
-    }
-
-    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        setSurfaceSize(width, height)
-    }
-
-    override fun surfaceCreated(holder: SurfaceHolder) {
-        surfaceHolder = holder
-    }
-
-    override fun surfaceDestroyed(holder: SurfaceHolder) {
-        // do nothing
-    }
-
     companion object {
-        private const val TAG = "Viewer"
+        private const val FLING = 1000 // arbitrary
     }
 }

@@ -265,7 +265,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 setPlayer(Xmp.PLAYER_DEFPAN, defpan)
 
                 // Ditto if we can't load the module
-                Log.w(TAG, "Load $currentFileName")
+                Log.i(TAG, "Load $currentFileName")
                 if (loadModule(currentFileName) < 0) {
                     Log.e(TAG, "Error loading $currentFileName")
                     if (cmd == CMD_PREV) {
@@ -291,10 +291,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 )
                 isLoaded = true
 
-                // Unmute all channels
-                for (i in 0..63) {
-                    mute(i, 0)
-                }
                 val volBoost = PrefManager.volumeBoost
                 val interpTypes =
                     intArrayOf(Xmp.INTERP_NEAREST, Xmp.INTERP_LINEAR, Xmp.INTERP_SPLINE)
@@ -314,6 +310,12 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                         setPlayer(Xmp.PLAYER_VOLUME, DUCK_VOLUME)
                     }
                 }
+
+                // Unmute all channels
+                for (i in 0..63) {
+                    mute(i, 0)
+                }
+
                 var numClients = callbacks.beginBroadcast()
                 for (j in 0 until numClients) {
                     try {
@@ -383,7 +385,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                     playNewSequence = false
                     if (playAllSequences && cmd == CMD_NONE) {
                         sequenceNumber++
-                        Log.w(TAG, "Play sequence $sequenceNumber")
+                        Log.i(TAG, "Play sequence $sequenceNumber")
                         if (setSequence(sequenceNumber)) {
                             playNewSequence = true
                             notifyNewSequence()
@@ -399,7 +401,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                     canRelease = false
                     for (j in 0 until numClients) {
                         try {
-                            Log.w(TAG, "Call end of module callback")
+                            Log.i(TAG, "Call end of module callback")
                             callbacks.getBroadcastItem(j).endModCallback()
                         } catch (e: RemoteException) {
                             Log.e(TAG, "Error notifying end of module to client")
@@ -420,7 +422,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 } else {
                     callbacks.finishBroadcast()
                 }
-                Log.w(TAG, "Release module")
+                Log.i(TAG, "Release module")
                 releaseModule()
 
                 // audio.stop();
@@ -652,7 +654,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             return currentFileName.orEmpty()
         }
 
-        override fun getInstruments(): Array<String?>? {
+        override fun getInstruments(): Array<String>? {
             return Xmp.getInstruments()
         }
 
@@ -660,10 +662,12 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             pat: Int,
             row: Int,
             rowNotes: ByteArray,
-            rowInstruments: ByteArray
+            rowInstruments: ByteArray,
+            rowFxType: IntArray,
+            rowFxParm: IntArray
         ) {
             if (isAlive) {
-                Xmp.getPatternRow(pat, row, rowNotes, rowInstruments)
+                Xmp.getPatternRow(pat, row, rowNotes, rowInstruments, rowFxType, rowFxParm)
             }
         }
 
@@ -720,12 +724,12 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     override fun onAudioFocusChange(focusChange: Int) {
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                Log.w(TAG, "AUDIOFOCUS_LOSS_TRANSIENT")
+                Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT")
                 // Pause playback
                 autoPause(true)
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                Log.w(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK")
+                Log.d(TAG, "AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK")
                 // Lower volume
                 synchronized(audioManager!!) {
                     volume = getVolume()
@@ -734,7 +738,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 }
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
-                Log.w(TAG, "AUDIOFOCUS_GAIN")
+                Log.d(TAG, "AUDIOFOCUS_GAIN")
                 // Resume playback/raise volume
                 autoPause(false)
                 synchronized(audioManager!!) {
@@ -743,7 +747,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 }
             }
             AudioManager.AUDIOFOCUS_LOSS -> {
-                Log.w(TAG, "AUDIOFOCUS_LOSS")
+                Log.d(TAG, "AUDIOFOCUS_LOSS")
                 // Stop playback
                 actionStop()
             }
