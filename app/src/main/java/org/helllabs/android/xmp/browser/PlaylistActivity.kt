@@ -13,15 +13,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.h6ah4i.android.widget.advrecyclerview.animator.GeneralItemAnimator
 import com.h6ah4i.android.widget.advrecyclerview.animator.RefactoredDefaultItemAnimator
-import com.h6ah4i.android.widget.advrecyclerview.decoration.ItemShadowDecorator
 import com.h6ah4i.android.widget.advrecyclerview.decoration.SimpleListDividerDecorator
 import com.h6ah4i.android.widget.advrecyclerview.draggable.RecyclerViewDragDropManager
 import com.h6ah4i.android.widget.advrecyclerview.utils.WrapperAdapterUtils
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.browser.playlist.Playlist
 import org.helllabs.android.xmp.browser.playlist.PlaylistAdapter
 import org.helllabs.android.xmp.pluscubed.recyclerfastscroll.RecyclerFastScroller
-import org.helllabs.android.xmp.preferences.Preferences
 import org.helllabs.android.xmp.util.Log.e
 import java.io.IOException
 
@@ -38,9 +37,9 @@ open class PlaylistActivity : BasePlaylistActivity(), PlaylistAdapter.OnItemClic
         val extras = intent.extras ?: return
         setTitle(R.string.browser_playlist_title)
         val name = extras.getString("name").orEmpty()
-        val useFilename = mPrefs.getBoolean(Preferences.USE_FILENAME, false)
+        val useFilename = PrefManager.useFileName
         try {
-            mPlaylist = Playlist(this, name)
+            mPlaylist = Playlist(name)
         } catch (e: IOException) {
             e(TAG, "Can't read playlist $name")
         }
@@ -57,7 +56,7 @@ open class PlaylistActivity : BasePlaylistActivity(), PlaylistAdapter.OnItemClic
 
         // adapter
         mPlaylistAdapter = PlaylistAdapter(this, mPlaylist!!, useFilename, PlaylistAdapter.LAYOUT_DRAG)
-        mWrappedAdapter = mRecyclerViewDragDropManager!!.createWrappedAdapter(mPlaylistAdapter!!)
+        mWrappedAdapter = mRecyclerViewDragDropManager!!.createWrappedAdapter(mPlaylistAdapter)
         val animator: GeneralItemAnimator = RefactoredDefaultItemAnimator()
         mRecyclerView!!.layoutManager = layoutManager
         mRecyclerView!!.adapter = mWrappedAdapter
@@ -68,11 +67,6 @@ open class PlaylistActivity : BasePlaylistActivity(), PlaylistAdapter.OnItemClic
         fastScroller.attachRecyclerView(mRecyclerView!!)
 
         // additional decorations
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            // Lollipop or later has native drop shadow feature. ItemShadowDecorator is not required.
-        } else {
-            mRecyclerView!!.addItemDecoration(ItemShadowDecorator((resources.getDrawable(R.drawable.material_shadow_z1) as NinePatchDrawable)))
-        }
         mRecyclerView!!.addItemDecoration(
             SimpleListDividerDecorator(
                 resources.getDrawable(R.drawable.list_divider),
@@ -80,7 +74,7 @@ open class PlaylistActivity : BasePlaylistActivity(), PlaylistAdapter.OnItemClic
             )
         )
         mRecyclerViewDragDropManager!!.attachRecyclerView(mRecyclerView!!)
-        mPlaylistAdapter!!.setOnItemClickListener(this)
+        mPlaylistAdapter.setOnItemClickListener(this)
         val curListName = findViewById<View>(R.id.current_list_name) as TextView
         val curListDesc = findViewById<View>(R.id.current_list_description) as TextView
         curListName.text = name
@@ -91,7 +85,7 @@ open class PlaylistActivity : BasePlaylistActivity(), PlaylistAdapter.OnItemClic
 
     override fun onResume() {
         super.onResume()
-        mPlaylistAdapter!!.setUseFilename(mPrefs.getBoolean(Preferences.USE_FILENAME, false))
+        mPlaylistAdapter.setUseFilename(PrefManager.useFileName)
         update()
     }
 
@@ -144,7 +138,7 @@ open class PlaylistActivity : BasePlaylistActivity(), PlaylistAdapter.OnItemClic
             return
         }
 
-        val mode = mPrefs.getString(Preferences.PLAYLIST_MODE, "1")!!.toInt()
+        val mode = PrefManager.playlistMode
         menu.setHeaderTitle("Edit playlist")
         menu.add(Menu.NONE, 0, 0, "Remove from playlist")
         menu.add(Menu.NONE, 1, 1, "Add to play queue")
@@ -159,17 +153,17 @@ open class PlaylistActivity : BasePlaylistActivity(), PlaylistAdapter.OnItemClic
 
     override fun onContextItemSelected(item: MenuItem): Boolean {
         val itemId = item.itemId
-        val position = mPlaylistAdapter?.position ?: 0
+        val position = mPlaylistAdapter.position
         when (itemId) {
             0 -> {
                 mPlaylist!!.remove(position)
                 mPlaylist!!.commit()
                 update()
             }
-            1 -> addToQueue(mPlaylistAdapter!!.getFilename(position))
-            2 -> addToQueue(mPlaylistAdapter?.filenameList.orEmpty())
-            3 -> playModule(mPlaylistAdapter!!.getFilename(position))
-            4 -> playModule(mPlaylistAdapter?.filenameList.orEmpty(), position)
+            1 -> addToQueue(mPlaylistAdapter.getFilename(position))
+            2 -> addToQueue(mPlaylistAdapter.filenameList)
+            3 -> playModule(mPlaylistAdapter.getFilename(position))
+            4 -> playModule(mPlaylistAdapter.filenameList, position)
         }
         return true
     }

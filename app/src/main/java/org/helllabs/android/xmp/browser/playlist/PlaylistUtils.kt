@@ -8,9 +8,9 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.EditText
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp.testModule
-import org.helllabs.android.xmp.preferences.Preferences
 import org.helllabs.android.xmp.util.Message.error
 import org.helllabs.android.xmp.util.Message.toast
 import org.helllabs.android.xmp.util.ModInfo
@@ -94,7 +94,7 @@ object PlaylistUtils {
     }
 
     fun list(): Array<String> {
-        return Preferences.DATA_DIR.list(PlaylistFilter()).ifEmpty { arrayOf() }
+        return PrefManager.DATA_DIR.list(PlaylistFilter()).ifEmpty { arrayOf() }
     }
 
     fun listNoSuffix(): Array<String> {
@@ -115,7 +115,7 @@ object PlaylistUtils {
 
     fun createEmptyPlaylist(activity: Activity, name: String, comment: String?): Boolean {
         return try {
-            val playlist = Playlist(activity, name)
+            val playlist = Playlist(name)
             playlist.comment = comment
             playlist.commit()
             true

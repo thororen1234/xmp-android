@@ -6,9 +6,9 @@ import com.android.volley.toolbox.Volley
 
 class XmpApplication : Application() {
 
-    var fileList: MutableList<String>? = null
-
     private val mRequestQueue by lazy { Volley.newRequestQueue(applicationContext) }
+
+    var fileList: MutableList<String>? = null
 
     val requestQueue: RequestQueue
         get() = mRequestQueue
@@ -16,6 +16,8 @@ class XmpApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         setInstance(this)
+
+        PrefManager.init(applicationContext)
     }
 
     fun clearFileList() {

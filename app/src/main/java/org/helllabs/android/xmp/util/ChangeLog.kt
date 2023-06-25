@@ -6,9 +6,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.view.LayoutInflater
 import androidx.core.content.pm.PackageInfoCompat
-import androidx.preference.PreferenceManager
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.preferences.Preferences
 
 class ChangeLog(private val context: Context) {
 
@@ -23,12 +22,8 @@ class ChangeLog(private val context: Context) {
             }
         }
         val versionCode = PackageInfoCompat.getLongVersionCode(packageInfo)
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        val lastViewed = prefs.getInt(Preferences.CHANGELOG_VERSION, 0)
-        if (lastViewed < versionCode) {
-            val editor = prefs.edit()
-            editor.putInt(Preferences.CHANGELOG_VERSION, versionCode.toInt())
-            editor.apply()
+        if (PrefManager.changeLogVersion < versionCode) {
+            PrefManager.changeLogVersion = versionCode.toInt()
             showLog()
             0
         } else {

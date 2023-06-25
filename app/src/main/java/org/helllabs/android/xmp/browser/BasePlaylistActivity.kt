@@ -3,7 +3,6 @@ package org.helllabs.android.xmp.browser
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
@@ -13,10 +12,10 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
-import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.browser.playlist.PlaylistAdapter
@@ -37,7 +36,6 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
     private var mModPlayer: ModInterface? = null
     private var mShowToasts = false
     private var refresh = false
-    protected lateinit var mPrefs: SharedPreferences
     protected lateinit var mPlaylistAdapter: PlaylistAdapter
 
     private val playAllButtonListener: View.OnClickListener = View.OnClickListener {
@@ -95,8 +93,7 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mPrefs = PreferenceManager.getDefaultSharedPreferences(this)
-        mShowToasts = mPrefs.getBoolean(Preferences.SHOW_TOAST, true)
+        mShowToasts = PrefManager.showToast
 
         // Action bar icon navigation
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
@@ -157,7 +154,7 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
 
     open fun onItemClick(adapter: PlaylistAdapter, view: View?, position: Int) {
         val filename = adapter.getItem(position).file?.path.orEmpty()
-        val mode = mPrefs.getString(Preferences.PLAYLIST_MODE, "1")!!.toInt()
+        val mode = PrefManager.playlistMode
 
         /* Test module again if invalid, in case a new file format is added to the
 		 * player library and the file was previously unrecognized and cached as invalid.
@@ -215,7 +212,7 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
         when (requestCode) {
             SETTINGS_REQUEST -> {
                 update()
-                mShowToasts = mPrefs.getBoolean(Preferences.SHOW_TOAST, true)
+                mShowToasts = PrefManager.showToast
             }
             PLAY_MOD_REQUEST -> if (resultCode != RESULT_OK) {
                 update()

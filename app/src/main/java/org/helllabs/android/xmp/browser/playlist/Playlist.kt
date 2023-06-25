@@ -2,10 +2,9 @@ package org.helllabs.android.xmp.browser.playlist
 
 import android.app.Activity
 import android.content.Context
-import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.preferences.Preferences
 import org.helllabs.android.xmp.util.FileUtils.readFromFile
 import org.helllabs.android.xmp.util.FileUtils.removeLineFromFile
 import org.helllabs.android.xmp.util.FileUtils.writeToFile
@@ -18,9 +17,8 @@ import java.io.FileNotFoundException
 import java.io.FileWriter
 import java.io.IOException
 
-class Playlist(context: Context, val name: String) {
+class Playlist(val name: String) {
 
-    private val mPrefs: SharedPreferences
     private var mCommentChanged = false
     private var mListChanged = false
     val list: MutableList<PlaylistItem>
@@ -29,24 +27,23 @@ class Playlist(context: Context, val name: String) {
     var isShuffleMode = false
 
     private class ListFile : File {
-        constructor(name: String) : super(Preferences.DATA_DIR, name + PLAYLIST_SUFFIX)
+        constructor(name: String) : super(PrefManager.DATA_DIR, name + PLAYLIST_SUFFIX)
         constructor(name: String, suffix: String) : super(
-            Preferences.DATA_DIR,
+            PrefManager.DATA_DIR,
             name + PLAYLIST_SUFFIX + suffix
         )
     }
 
     private class CommentFile : File {
-        constructor(name: String) : super(Preferences.DATA_DIR, name + COMMENT_SUFFIX)
+        constructor(name: String) : super(PrefManager.DATA_DIR, name + COMMENT_SUFFIX)
         constructor(name: String, suffix: String) : super(
-            Preferences.DATA_DIR,
+            PrefManager.DATA_DIR,
             name + COMMENT_SUFFIX + suffix
         )
     }
 
     init {
         list = ArrayList()
-        mPrefs = PreferenceManager.getDefaultSharedPreferences(context)
         val file: File = ListFile(name)
         if (file.exists()) {
             Log.i(TAG, "Read playlist $name")
@@ -95,10 +92,8 @@ class Playlist(context: Context, val name: String) {
             saveModes = true
         }
         if (saveModes) {
-            val editor = mPrefs.edit()
-            editor.putBoolean(optionName(name, SHUFFLE_MODE), isShuffleMode)
-            editor.putBoolean(optionName(name, LOOP_MODE), isLoopMode)
-            editor.apply()
+            PrefManager.putBoolean(optionName(name, SHUFFLE_MODE), isShuffleMode)
+            PrefManager.putBoolean(optionName(name, LOOP_MODE), isLoopMode)
         }
     }
 
@@ -192,11 +187,11 @@ class Playlist(context: Context, val name: String) {
     }
 
     private fun readShuffleModePref(name: String): Boolean {
-        return mPrefs.getBoolean(optionName(name, SHUFFLE_MODE), DEFAULT_SHUFFLE_MODE)
+        return PrefManager.getBoolean(optionName(name, SHUFFLE_MODE), DEFAULT_SHUFFLE_MODE)
     }
 
     private fun readLoopModePref(name: String): Boolean {
-        return mPrefs.getBoolean(optionName(name, LOOP_MODE), DEFAULT_LOOP_MODE)
+        return PrefManager.getBoolean(optionName(name, LOOP_MODE), DEFAULT_LOOP_MODE)
     }
 
     fun setListChanged(listChanged: Boolean) {
@@ -283,7 +278,8 @@ class Playlist(context: Context, val name: String) {
                 lines[i++] = item.toString()
             }
             try {
-                writeToFile(File(Preferences.DATA_DIR, name + PLAYLIST_SUFFIX), lines)
+                val file = File(PrefManager.DATA_DIR, name + PLAYLIST_SUFFIX)
+                writeToFile(file, lines)
             } catch (e: IOException) {
                 error(activity, activity.getString(R.string.error_write_to_playlist))
             }

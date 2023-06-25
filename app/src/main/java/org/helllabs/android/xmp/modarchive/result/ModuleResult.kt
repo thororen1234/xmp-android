@@ -1,15 +1,14 @@
 package org.helllabs.android.xmp.modarchive.result
 
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.text.Html
 import android.text.method.LinkMovementMethod
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import org.helllabs.android.xmp.BuildConfig
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.modarchive.Downloader
@@ -24,7 +23,6 @@ import org.helllabs.android.xmp.modarchive.response.ModArchiveResponse
 import org.helllabs.android.xmp.modarchive.response.ModuleResponse
 import org.helllabs.android.xmp.modarchive.response.SoftErrorResponse
 import org.helllabs.android.xmp.player.PlayerActivity
-import org.helllabs.android.xmp.preferences.Preferences
 import org.helllabs.android.xmp.util.Log
 import org.helllabs.android.xmp.util.Message.toast
 import org.helllabs.android.xmp.util.Message.yesNoDialog
@@ -45,7 +43,6 @@ open class ModuleResult : Result(), OnResponseListener, DownloaderListener {
     private var instruments: TextView? = null
     private var license: TextView? = null
     private var licenseDescription: TextView? = null
-    private var mPrefs: SharedPreferences? = null
     private var playButton: Button? = null
     private var sponsorText: TextView? = null
     private var title: TextView? = null
@@ -54,7 +51,6 @@ open class ModuleResult : Result(), OnResponseListener, DownloaderListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.result_module)
         setupCrossfade()
-        mPrefs = PreferenceManager.getDefaultSharedPreferences(this)
         title = findViewById<View>(R.id.module_title) as TextView
         filename = findViewById<View>(R.id.module_filename) as TextView
         info = findViewById<View>(R.id.module_info) as TextView
@@ -159,17 +155,12 @@ open class ModuleResult : Result(), OnResponseListener, DownloaderListener {
             }
 
             // Delete parent directory if empty
-            if (mPrefs!!.getBoolean(Preferences.ARTIST_FOLDER, true)) {
+            if (PrefManager.artistFolder) {
                 val parent = file.parentFile
                 val contents = parent.listFiles()
                 if (contents != null && contents.isEmpty()) {
                     try {
-                        val mediaPath = File(
-                            mPrefs!!.getString(
-                                Preferences.MEDIA_PATH,
-                                Preferences.DEFAULT_MEDIA_PATH
-                            )
-                        ).canonicalPath
+                        val mediaPath = File(PrefManager.mediaPath).canonicalPath
                         val parentPath = parent.canonicalPath
                         if (parentPath.startsWith(mediaPath) && parentPath != mediaPath) {
                             Log.i(TAG, "Remove empty directory " + parent.path)
@@ -187,7 +178,7 @@ open class ModuleResult : Result(), OnResponseListener, DownloaderListener {
     }
 
     fun playClick(view: View?) {
-        val path = localFile(module!!).path
+        val path = localFile(module).path
         val modList: MutableList<String> = ArrayList()
         modList.add(path)
         val intent = Intent(this, PlayerActivity::class.java)
@@ -199,12 +190,12 @@ open class ModuleResult : Result(), OnResponseListener, DownloaderListener {
 
     private fun getDownloadPath(module: Module): String {
         val sb = StringBuilder()
-        sb.append(mPrefs!!.getString(Preferences.MEDIA_PATH, Preferences.DEFAULT_MEDIA_PATH))
-        if (mPrefs!!.getBoolean(Preferences.MODARCHIVE_FOLDER, true)) {
+        sb.append(PrefManager.mediaPath)
+        if (PrefManager.modArchiveFolder) {
             sb.append(File.separatorChar)
             sb.append(MODARCHIVE_DIRNAME)
         }
-        if (mPrefs!!.getBoolean(Preferences.ARTIST_FOLDER, true)) {
+        if (PrefManager.artistFolder) {
             sb.append(File.separatorChar)
             sb.append(module.artist)
         }

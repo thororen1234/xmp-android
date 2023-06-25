@@ -6,7 +6,6 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
-import android.content.SharedPreferences
 import android.content.res.Configuration
 import android.graphics.Typeface
 import android.os.Bundle
@@ -27,7 +26,7 @@ import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.TextView
 import android.widget.ViewFlipper
-import androidx.preference.PreferenceManager
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.browser.PlaylistMenu
@@ -35,7 +34,6 @@ import org.helllabs.android.xmp.player.viewer.ChannelViewer
 import org.helllabs.android.xmp.player.viewer.InstrumentViewer
 import org.helllabs.android.xmp.player.viewer.PatternViewer
 import org.helllabs.android.xmp.player.viewer.Viewer
-import org.helllabs.android.xmp.preferences.Preferences
 import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerCallback
 import org.helllabs.android.xmp.service.PlayerService
@@ -70,7 +68,6 @@ class PlayerActivity : Activity() {
     private var paused = false
     private var playButton: ImageButton? = null
     private var playTime = 0
-    private lateinit var prefs: SharedPreferences
     private var progressThread: Thread? = null
     private var screenOn = false
     private var screenReceiver: BroadcastReceiver? = null
@@ -489,7 +486,6 @@ class PlayerActivity : Activity() {
     }
 
     fun playButtonListener(view: View?) {
-        // Debug.startMethodTracing("xmp");				
         synchronized(this) {
             Log.d(TAG, "Play/pause button pressed (paused=$paused)")
             if (modPlayer != null) {
@@ -573,8 +569,6 @@ class PlayerActivity : Activity() {
         display = (getSystemService(WINDOW_SERVICE) as WindowManager).defaultDisplay
         Log.i(TAG, "Create player interface")
 
-        prefs = PreferenceManager.getDefaultSharedPreferences(this)
-
         // INITIALIZE RECEIVER by jwei512
         val filter = IntentFilter(Intent.ACTION_SCREEN_ON)
         filter.addAction(Intent.ACTION_SCREEN_OFF)
@@ -585,7 +579,7 @@ class PlayerActivity : Activity() {
             canChangeViewer = true
         }
         setResult(RESULT_OK)
-        val showInfoLine = prefs.getBoolean(Preferences.SHOW_INFO_LINE, true)
+        val showInfoLine = PrefManager.showInfoLine
         showElapsed = true
         onNewIntent(intent)
         infoName[0] = findViewById(R.id.info_name_0)
@@ -605,7 +599,7 @@ class PlayerActivity : Activity() {
                 }
             }
         }
-        if (prefs.getBoolean(Preferences.KEEP_SCREEN_ON, false)) {
+        if (PrefManager.keepScreenOn) {
             titleFlipper!!.keepScreenOn = true
         }
         val font = Typeface.createFromAsset(this.assets, "fonts/Michroma.ttf")
@@ -657,11 +651,9 @@ class PlayerActivity : Activity() {
                 try {
                     // Write our all sequences button status to shared prefs
                     val allSeq = modPlayer!!.allSequences
-                    if (allSeq != prefs.getBoolean(Preferences.ALL_SEQUENCES, false)) {
+                    if (allSeq != PrefManager.allSequences) {
                         Log.w(TAG, "Write all sequences preference")
-                        val editor = prefs.edit()
-                        editor.putBoolean(Preferences.ALL_SEQUENCES, allSeq)
-                        editor.apply()
+                        PrefManager.allSequences = allSeq
                     }
                 } catch (e: RemoteException) {
                     Log.e(TAG, "Can't save all sequences preference")
@@ -851,7 +843,7 @@ class PlayerActivity : Activity() {
 
     // Menu
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        if (prefs.getBoolean(Preferences.ENABLE_DELETE, false)) {
+        if (PrefManager.enableDelete) {
             val inflater = menuInflater
             inflater.inflate(R.menu.player_menu, menu)
         }

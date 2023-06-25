@@ -1,7 +1,7 @@
 package org.helllabs.android.xmp.util
 
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp
-import org.helllabs.android.xmp.preferences.Preferences
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -11,8 +11,8 @@ object InfoCache {
 
     @JvmStatic
     fun clearCache(filename: String): Boolean {
-        val cacheFile = File(Preferences.CACHE_DIR, "$filename.cache")
-        val skipFile = File(Preferences.CACHE_DIR, "$filename.skip")
+        val cacheFile = File(PrefManager.CACHE_DIR, "$filename.cache")
+        val skipFile = File(PrefManager.CACHE_DIR, "$filename.skip")
         var ret = false
         if (cacheFile.isFile) {
             cacheFile.delete()
@@ -26,7 +26,7 @@ object InfoCache {
     }
 
     private fun removeCacheDir(filename: String): Boolean {
-        val cacheFile = File(Preferences.CACHE_DIR, "$filename.cache")
+        val cacheFile = File(PrefManager.CACHE_DIR, "$filename.cache")
         var ret = false
         if (cacheFile.isDirectory) {
             cacheFile.delete()
@@ -74,7 +74,7 @@ object InfoCache {
 
     @JvmStatic
     fun testModuleForceIfInvalid(filename: String): Boolean {
-        val skipFile = File(Preferences.CACHE_DIR, "$filename.skip")
+        val skipFile = File(PrefManager.CACHE_DIR, "$filename.skip")
         if (skipFile.isFile) {
             skipFile.delete()
         }
@@ -114,13 +114,13 @@ object InfoCache {
     }
 
     private fun testModule(filename: String, info: ModInfo): Boolean {
-        if (!Preferences.CACHE_DIR.isDirectory && !Preferences.CACHE_DIR.mkdirs()) {
+        if (!PrefManager.CACHE_DIR.isDirectory && !PrefManager.CACHE_DIR.mkdirs()) {
             // Can't use cache
             return Xmp.testModule(filename, info)
         }
         val file = File(filename)
-        val cacheFile = File(Preferences.CACHE_DIR, "$filename.cache")
-        val skipFile = File(Preferences.CACHE_DIR, "$filename.skip")
+        val cacheFile = File(PrefManager.CACHE_DIR, "$filename.cache")
+        val skipFile = File(PrefManager.CACHE_DIR, "$filename.skip")
         return try {
             // If cache file exists and size matches, file is mod
             if (cacheFile.isFile) {

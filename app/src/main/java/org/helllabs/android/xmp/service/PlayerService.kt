@@ -2,14 +2,13 @@ package org.helllabs.android.xmp.service
 
 import android.app.Service
 import android.content.Intent
-import android.content.SharedPreferences
 import android.media.AudioManager
 import android.media.AudioManager.OnAudioFocusChangeListener
 import android.os.Build
 import android.os.IBinder
 import android.os.RemoteCallbackList
 import android.os.RemoteException
-import androidx.preference.PreferenceManager
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.Xmp.deinit
 import org.helllabs.android.xmp.Xmp.dropAudio
@@ -36,7 +35,6 @@ import org.helllabs.android.xmp.Xmp.startPlayer
 import org.helllabs.android.xmp.Xmp.stopAudio
 import org.helllabs.android.xmp.Xmp.stopModule
 import org.helllabs.android.xmp.Xmp.time
-import org.helllabs.android.xmp.preferences.Preferences
 import org.helllabs.android.xmp.service.notifier.LollipopNotifier
 import org.helllabs.android.xmp.service.notifier.Notifier
 import org.helllabs.android.xmp.service.notifier.OreoNotifier
@@ -63,7 +61,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     private var looped = false
     private var notifier: Notifier? = null
     private var playThread: Thread? = null
-    private lateinit var prefs: SharedPreferences
     private var previousPaused = false // save previous pause state
     private var queue: QueueManager? = null
     private var receiverHelper: ReceiverHelper? = null
@@ -82,7 +79,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     override fun onCreate() {
         super.onCreate()
         Log.i(TAG, "Create service")
-        prefs = PreferenceManager.getDefaultSharedPreferences(this)
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         remoteControl = RemoteControl(this, audioManager)
         hasAudioFocus = requestAudioFocus()
@@ -91,14 +87,13 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         }
         receiverHelper = ReceiverHelper(this)
         receiverHelper!!.registerReceivers()
-        var bufferMs = prefs.getInt(Preferences.BUFFER_MS, DEFAULT_BUFFER_MS)
+        var bufferMs = PrefManager.bufferMs
         if (bufferMs < MIN_BUFFER_MS) {
             bufferMs = MIN_BUFFER_MS
         } else if (bufferMs > MAX_BUFFER_MS) {
             bufferMs = MAX_BUFFER_MS
         }
-        sampleRate = prefs.getString(Preferences.SAMPLING_RATE, "44100")!!
-            .toInt()
+        sampleRate = PrefManager.samplingRate
         if (init(sampleRate, bufferMs)) {
             audioInitialized = true
         } else {
@@ -109,7 +104,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         isAlive = false
         isLoaded = false
         isPlayerPaused = false
-        playAllSequences = prefs.getBoolean(Preferences.ALL_SEQUENCES, false)
+        playAllSequences = PrefManager.allSequences
 
         notifier = if (Build.VERSION.SDK_INT >= 26) {
             OreoNotifier(this)
@@ -265,7 +260,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 }
 
                 // Set default pan before we load the module
-                val defpan = prefs.getInt(Preferences.DEFAULT_PAN, 50)
+                val defpan = PrefManager.defaultPan
                 Log.i(TAG, "Set default pan to $defpan")
                 setPlayer(Xmp.PLAYER_DEFPAN, defpan)
 
@@ -285,7 +280,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 lastRecognized = queue!!.index
                 cmd = CMD_NONE
                 var name = getModName()
-                if (name!!.isEmpty()) {
+                if (name.isEmpty()) {
                     name = basename(currentFileName)
                 }
                 notifier!!.notify(
@@ -300,18 +295,17 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 for (i in 0..63) {
                     mute(i, 0)
                 }
-                val volBoost = prefs.getString(Preferences.VOL_BOOST, "1")
+                val volBoost = PrefManager.volumeBoost
                 val interpTypes =
                     intArrayOf(Xmp.INTERP_NEAREST, Xmp.INTERP_LINEAR, Xmp.INTERP_SPLINE)
-                val temp = prefs.getString(Preferences.INTERP_TYPE, "1")!!
-                    .toInt()
+                val temp = PrefManager.interpType
                 var interpType: Int
                 interpType = if (temp in 1..2) {
                     interpTypes[temp]
                 } else {
                     Xmp.INTERP_LINEAR
                 }
-                if (!prefs.getBoolean(Preferences.INTERPOLATE, true)) {
+                if (!PrefManager.interpolate) {
                     interpType = Xmp.INTERP_NEAREST
                 }
                 startPlayer(sampleRate)
@@ -329,12 +323,12 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                     }
                 }
                 callbacks.finishBroadcast()
-                setPlayer(Xmp.PLAYER_AMP, volBoost!!.toInt())
-                setPlayer(Xmp.PLAYER_MIX, prefs.getInt(Preferences.STEREO_MIX, 100))
+                setPlayer(Xmp.PLAYER_AMP, volBoost)
+                setPlayer(Xmp.PLAYER_MIX, PrefManager.stereoMix)
                 setPlayer(Xmp.PLAYER_INTERP, interpType)
                 setPlayer(Xmp.PLAYER_DSP, Xmp.DSP_LOWPASS)
                 var flags = getPlayer(Xmp.PLAYER_CFLAGS)
-                flags = if (prefs.getBoolean(Preferences.AMIGA_MIXER, false)) {
+                flags = if (PrefManager.amigaMixer) {
                     flags or Xmp.FLAGS_A500
                 } else {
                     flags and Xmp.FLAGS_A500.inv()
@@ -511,7 +505,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         override fun add(fileList: List<String>) {
             queue!!.add(fileList)
             updateNotification()
-            // notifier.notification("Added to play queue");			
         }
 
         override fun stop() {
@@ -771,7 +764,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         private const val CMD_STOP = 3
         private const val MIN_BUFFER_MS = 80
         private const val MAX_BUFFER_MS = 1000
-        private const val DEFAULT_BUFFER_MS = 400
         private const val DUCK_VOLUME = 0x500
 
         var isAlive = false

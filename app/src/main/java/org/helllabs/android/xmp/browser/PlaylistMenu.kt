@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -20,11 +19,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.browser.playlist.Playlist
 import org.helllabs.android.xmp.browser.playlist.PlaylistAdapter
@@ -46,7 +45,6 @@ import java.io.IOException
 
 class PlaylistMenu : AppCompatActivity(), PlaylistAdapter.OnItemClickListener {
 
-    private var prefs: SharedPreferences? = null
     private var mediaPath: String? = null
     private var deletePosition = 0
     private lateinit var playlistAdapter: PlaylistAdapter
@@ -106,7 +104,6 @@ class PlaylistMenu : AppCompatActivity(), PlaylistAdapter.OnItemClickListener {
         playlistAdapter.setOnItemClickListener(this)
         recyclerView.adapter = playlistAdapter
         registerForContextMenu(recyclerView)
-        prefs = PreferenceManager.getDefaultSharedPreferences(this)
         if (!checkStorage()) {
             fatalError(this, getString(R.string.error_storage))
         }
@@ -163,8 +160,8 @@ class PlaylistMenu : AppCompatActivity(), PlaylistAdapter.OnItemClickListener {
 
     // Create application directory and populate with empty playlist
     private fun setupDataDir() {
-        if (!Preferences.DATA_DIR.isDirectory) {
-            if (Preferences.DATA_DIR.mkdirs()) {
+        if (!PrefManager.DATA_DIR.isDirectory) {
+            if (PrefManager.DATA_DIR.mkdirs()) {
                 PlaylistUtils.createEmptyPlaylist(
                     this,
                     getString(R.string.empty_playlist),
@@ -197,7 +194,7 @@ class PlaylistMenu : AppCompatActivity(), PlaylistAdapter.OnItemClickListener {
     }
 
     private fun startPlayerActivity() {
-        if (prefs!!.getBoolean(Preferences.START_ON_PLAYER, true)) {
+        if (PrefManager.startOnPlayer) {
             if (PlayerService.isAlive) {
                 val playerIntent = Intent(this, PlayerActivity::class.java)
                 startActivity(playerIntent)
@@ -206,7 +203,7 @@ class PlaylistMenu : AppCompatActivity(), PlaylistAdapter.OnItemClickListener {
     }
 
     private fun updateList() {
-        mediaPath = prefs!!.getString(Preferences.MEDIA_PATH, Preferences.DEFAULT_MEDIA_PATH)
+        mediaPath = PrefManager.mediaPath
         playlistAdapter.clear()
         val browserItem =
             PlaylistItem(PlaylistItem.TYPE_SPECIAL, "File browser", "Files in $mediaPath")
@@ -314,9 +311,7 @@ class PlaylistMenu : AppCompatActivity(), PlaylistAdapter.OnItemClickListener {
         alert.setPositiveButton(R.string.ok) { _, _ ->
             val value = alert.input.text.toString()
             if (value != mediaPath) {
-                val editor = prefs!!.edit()
-                editor.putString(Preferences.MEDIA_PATH, value)
-                editor.apply()
+                PrefManager.mediaPath = value
                 updateList()
             }
         }
@@ -334,7 +329,7 @@ class PlaylistMenu : AppCompatActivity(), PlaylistAdapter.OnItemClickListener {
         alert.input.setText(Playlist.readComment(activity, name))
         alert.setPositiveButton(R.string.ok) { _, _ ->
             val value = alert.input.text.toString().replace("\n", " ")
-            val file = File(Preferences.DATA_DIR, name + Playlist.Companion.COMMENT_SUFFIX)
+            val file = File(PrefManager.DATA_DIR, name + Playlist.COMMENT_SUFFIX)
             try {
                 file.delete()
                 file.createNewFile()
