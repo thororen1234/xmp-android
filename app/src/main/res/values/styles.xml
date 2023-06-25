@@ -32,8 +32,10 @@
         <item name="windowNoTitle">true</item>
     </style>
 
-    <style name="AppTheme.Preferences" parent="AppTheme.NoActionBar">
-
+    <style name="AppTheme.Composable" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">?attr/isLightTheme</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
 
     <style name="ButtonTheme" parent="AppTheme">

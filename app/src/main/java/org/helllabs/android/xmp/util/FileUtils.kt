@@ -12,7 +12,7 @@ object FileUtils {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun writeToFile(file: File?, lines: Array<String?>) {
+    fun writeToFile(file: File, lines: Array<String?>) {
         val out = BufferedWriter(FileWriter(file, true), 512)
         for (line in lines) {
             out.write(line)
@@ -23,14 +23,14 @@ object FileUtils {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun writeToFile(file: File?, line: String?) {
-        val lines = arrayOf(line)
+    fun writeToFile(file: File, line: String) {
+        val lines = arrayOf<String?>(line)
         writeToFile(file, lines)
     }
 
     @JvmStatic
     @Throws(IOException::class)
-    fun readFromFile(file: File?): String {
+    fun readFromFile(file: File): String {
         val `in` = BufferedReader(FileReader(file), 512)
         val line = `in`.readLine()
         `in`.close()

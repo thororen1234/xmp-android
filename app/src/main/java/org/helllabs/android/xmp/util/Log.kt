@@ -2,26 +2,23 @@ package org.helllabs.android.xmp.util
 
 import android.util.Log
 
+@Deprecated("Use Timber")
 object Log {
 
     private const val TAG = "Xmp"
 
-    @JvmStatic
     fun d(tag: String, message: String) {
         Log.d(TAG, "[$tag] $message")
     }
 
-    @JvmStatic
     fun i(tag: String, message: String) {
         Log.i(TAG, "[$tag] $message")
     }
 
-    @JvmStatic
     fun w(tag: String, message: String) {
         Log.w(TAG, "[$tag] $message")
     }
 
-    @JvmStatic
     fun e(tag: String, message: String) {
         Log.e(TAG, "[$tag] $message")
     }

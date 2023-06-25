@@ -11,12 +11,13 @@ object PrefManager {
 
     private lateinit var prefs: SharedPreferences
 
-    val SD_DIR = Environment.getExternalStorageDirectory()
-    val DATA_DIR = File(SD_DIR, "Xmp for Android")
-    val CACHE_DIR = File(SD_DIR, "Android/data/org.helllabs.android.xmp/cache/")
+    private lateinit var SD_DIR: File
+    val DATA_DIR by lazy { File(SD_DIR, "Xmp for Android") }
+    val CACHE_DIR by lazy { File(SD_DIR, "Android/data/org.helllabs.android.xmp/cache/") }
 
-    fun init(context: Context) {
+    fun init(context: Context, sdDir: File = Environment.getExternalStorageDirectory()) {
         prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        SD_DIR = sdDir
     }
 
     fun getBoolean(key: String, defaultValue: Boolean): Boolean {
@@ -181,5 +182,11 @@ object PrefManager {
         get() = prefs.getBoolean("bluetooth_pause", true)
         set(value) {
             prefs.edit { putBoolean("bluetooth_pause", value) }
+        }
+
+    var useBetterWaveform: Boolean
+        get() = prefs.getBoolean("new_waveform", true)
+        set(value) {
+            prefs.edit { putBoolean("new_waveform", value) }
         }
 }

@@ -27,14 +27,14 @@ object Message {
     }
 
     @JvmStatic
-    fun error(activity: Activity, message: String?) {
-        activity.runOnUiThread {
-            val alertDialog = AlertDialog.Builder(activity).create()
+    fun error(context: Context, message: String?) {
+        (context as Activity).runOnUiThread {
+            val alertDialog = AlertDialog.Builder(context).create()
             alertDialog.setTitle(R.string.error)
             alertDialog.setMessage(message)
             alertDialog.setButton(
                 AlertDialog.BUTTON_NEUTRAL,
-                activity.getString(R.string.dismiss)
+                context.getString(R.string.dismiss)
             ) { _, _ ->
                 //
             }
@@ -43,8 +43,8 @@ object Message {
     }
 
     @JvmStatic
-    fun error(activity: Activity, resId: Int) {
-        error(activity, activity.getString(resId))
+    fun error(context: Context, resId: Int) {
+        error(context, context.getString(resId))
     }
 
     @JvmStatic

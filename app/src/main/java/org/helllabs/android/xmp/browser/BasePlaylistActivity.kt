@@ -19,10 +19,7 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.browser.playlist.PlaylistAdapter
-import org.helllabs.android.xmp.browser.playlist.PlaylistUtils
-import org.helllabs.android.xmp.modarchive.Search
 import org.helllabs.android.xmp.player.PlayerActivity
-import org.helllabs.android.xmp.preferences.Preferences
 import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.util.InfoCache.testModule
@@ -263,7 +260,7 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
     // Menu
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         val inflater = menuInflater
-        inflater.inflate(R.menu.options_menu, menu)
+        // inflater.inflate(R.menu.options_menu, menu)
 
         // Calling super after populating the menu is necessary here to ensure that the
         // action bar helpers have a chance to handle this event.
@@ -277,18 +274,6 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
                 intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 startActivity(intent)
                 return true
-            }
-            R.id.menu_new_playlist -> {
-                PlaylistUtils.newPlaylistDialog(this)
-            }
-            R.id.menu_prefs -> {
-                startActivityForResult(Intent(this, Preferences::class.java), SETTINGS_REQUEST)
-            }
-            R.id.menu_refresh -> {
-                update()
-            }
-            R.id.menu_download -> {
-                startActivityForResult(Intent(this, Search::class.java), SEARCH_REQUEST)
             }
         }
         return super.onOptionsItemSelected(item)

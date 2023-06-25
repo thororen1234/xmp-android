@@ -1,131 +1,131 @@
 package org.helllabs.android.xmp.preferences
 
-import android.app.Activity
-import android.content.Context
+import android.content.Intent
 import android.os.Bundle
-import android.os.Environment
-import android.preference.Preference
-import android.preference.PreferenceScreen
-import com.fnp.materialpreferences.PreferenceActivity
-import com.fnp.materialpreferences.PreferenceFragment
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.core.view.WindowCompat
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.service.PlayerService
-import org.helllabs.android.xmp.util.Message.toast
+import org.helllabs.android.xmp.compose.components.XmpTopBar
+import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.preferences.about.About
+import org.helllabs.android.xmp.preferences.about.ListFormats
+import timber.log.Timber
 import java.io.File
 
-class Preferences : PreferenceActivity() {
+class Preferences : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        /**
-         * We load a PreferenceFragment which is the recommended way by Android
-         * see @http://developer.android.com/guide/topics/ui/settings.html#Fragment
-         * @TargetApi(11)
-         */
-        setPreferenceFragment(MyPreferenceFragment())
-    }
+        Timber.d("onCreate")
 
-    class MyPreferenceFragment : PreferenceFragment() {
+        WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        private var context: Context? = null
-
-        override fun addPreferencesFromResource(): Int {
-            return R.xml.preferences
-        }
-
-        override fun onAttach(activity: Activity) {
-            super.onAttach(activity)
-            context = activity.baseContext
-            // prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-        }
-
-        override fun onCreate(savedInstanceState: Bundle?) {
-            // setTheme(R.style.PreferencesTheme);
-            super.onCreate(savedInstanceState)
-
-            // oldPath = prefs.getString(MEDIA_PATH, DEFAULT_MEDIA_PATH);
-            // addPreferencesFromResource(R.xml.preferences);
-            val soundScreen = findPreference("sound_screen") as PreferenceScreen
-            soundScreen.isEnabled = !PlayerService.isAlive
-            val clearCache = findPreference("clear_cache")
-            clearCache.onPreferenceClickListener = Preference.OnPreferenceClickListener {
-                if (deleteCache(CACHE_DIR)) {
-                    toast(context, getString(R.string.cache_clear))
-                } else {
-                    toast(context, getString(R.string.cache_clear_error))
-                }
-                true
-            }
-        }
-
-        companion object {
-            fun deleteCache(file: File): Boolean {
-                return deleteCache(file, true)
-            }
-
-            @Suppress("SameParameterValue")
-            private fun deleteCache(file: File, boolFlag: Boolean): Boolean {
-                var flag = boolFlag
-                if (!file.exists()) {
-                    return true
-                }
-                if (file.isDirectory) {
-                    for (cacheFile in file.listFiles().orEmpty()) {
-                        flag = flag and deleteCache(cacheFile)
+        setContent {
+            XmpTheme {
+                PreferencesScreen(
+                    onBack = { onBackPressedDispatcher.onBackPressed() },
+                    onFormats = { startActivity(Intent(this, ListFormats::class.java)) },
+                    onAbout = { startActivity(Intent(this, About::class.java)) },
+                    onClearCache = {
+                        val result = if (deleteCache(PrefManager.CACHE_DIR)) {
+                            getString(R.string.cache_clear)
+                        } else {
+                            getString(R.string.cache_clear_error)
+                        }
+                        Toast.makeText(this, result, Toast.LENGTH_SHORT).show()
                     }
-                }
-                flag = flag and file.delete()
-                return flag
+                )
             }
         }
     }
 
     companion object {
-        val SD_DIR = Environment.getExternalStorageDirectory()
+        fun deleteCache(file: File): Boolean = deleteCache(file, true)
 
-        @JvmField
-        val DATA_DIR = File(SD_DIR, "Xmp for Android")
-        val CACHE_DIR = File(SD_DIR, "Android/data/org.helllabs.android.xmp/cache/")
+        @Suppress("SameParameterValue")
+        private fun deleteCache(file: File, boolFlag: Boolean): Boolean {
+            var flag = boolFlag
+            if (!file.exists()) {
+                return true
+            }
+            if (file.isDirectory) {
+                for (cacheFile in file.listFiles().orEmpty()) {
+                    flag = flag and deleteCache(cacheFile)
+                }
+            }
+            flag = flag and file.delete()
+            return flag
+        }
+    }
+}
 
-        @JvmField
-        val DEFAULT_MEDIA_PATH = "$SD_DIR/mod"
-        const val MEDIA_PATH = "media_path"
-        const val VOL_BOOST = "vol_boost"
-        const val CHANGELOG_VERSION = "changelog_version"
+@Composable
+private fun PreferencesScreen(
+    onBack: () -> Unit,
+    onFormats: () -> Unit,
+    onAbout: () -> Unit,
+    onClearCache: () -> Unit
+) {
+    val scrollState = rememberScrollState()
+    val isScrolled = remember {
+        derivedStateOf {
+            scrollState.value > 0
+        }
+    }
 
-        // public static final String STEREO = "stereo";
-        // public static final String PAN_SEPARATION = "pan_separation";
-        // change the variable name so we can use the new default mix value
-        const val STEREO_MIX = "stereo_mix"
-        const val DEFAULT_PAN = "default_pan"
-        const val PLAYLIST_MODE = "playlist_mode"
-        const val AMIGA_MIXER = "amiga_mixer"
+    Scaffold(
+        topBar = {
+            XmpTopBar(
+                title = stringResource(id = R.string.settings),
+                isScrolled = isScrolled.value,
+                onBack = onBack
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .verticalScroll(scrollState)
+        ) {
+            SettingsGroupPlaylist(onClearCache = onClearCache)
+            SettingsGroupSound()
+            SettingsGroupInterface()
+            SettingsGroupDownload()
+            SettingsGroupInformation(onFormats = onFormats, onAbout = onAbout)
+        }
+    }
+}
 
-        // Don't use PREF_INTERPOLATION -- was boolean in 2.x and string in 3.2.0
-        const val INTERPOLATE = "interpolate"
-        const val INTERP_TYPE = "interp_type"
-
-        // public static final String FILTER = "filter";
-        const val EXAMPLES = "examples"
-        const val SAMPLING_RATE = "sampling_rate"
-
-        // public static final String BUFFER_MS = "buffer_ms";
-        const val BUFFER_MS = "buffer_ms_opensl"
-        const val SHOW_TOAST = "show_toast"
-        const val SHOW_INFO_LINE = "show_info_line"
-        const val USE_FILENAME = "use_filename"
-
-        // public static final String TITLES_IN_BROWSER = "titles_in_browser";
-        const val ENABLE_DELETE = "enable_delete"
-        const val KEEP_SCREEN_ON = "keep_screen_on"
-        const val HEADSET_PAUSE = "headset_pause"
-        const val ALL_SEQUENCES = "all_sequences"
-
-        // public static final String BACK_BUTTON_PARENTDIR = "back_button_parentdir";
-        const val BACK_BUTTON_NAVIGATION = "back_button_navigation"
-        const val BLUETOOTH_PAUSE = "bluetooth_pause"
-        const val START_ON_PLAYER = "start_on_player"
-        const val MODARCHIVE_FOLDER = "modarchive_folder"
-        const val ARTIST_FOLDER = "artist_folder"
+@Preview
+@Composable
+private fun Preview_PreferencesScreen() {
+    val context = LocalContext.current
+    PrefManager.init(context, File("sdcard"))
+    XmpTheme {
+        PreferencesScreen(
+            onBack = {},
+            onFormats = {},
+            onAbout = {},
+            onClearCache = {}
+        )
     }
 }

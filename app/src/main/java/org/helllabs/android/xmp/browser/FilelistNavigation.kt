@@ -2,7 +2,7 @@ package org.helllabs.android.xmp.browser
 
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import org.helllabs.android.xmp.util.Log.d
+import timber.log.Timber
 import java.io.File
 import java.util.Stack
 
@@ -87,7 +87,7 @@ class FilelistNavigation {
      * @param currentDir The directory to start navigation at.
      */
     fun startNavigation(currentDir: File) {
-        d(TAG, "start navigation at " + currentDir.path)
+        Timber.d("start navigation at ${currentDir.path}")
         this.currentDir = currentDir
         mPathStack.clear()
     }

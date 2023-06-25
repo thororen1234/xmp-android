@@ -29,6 +29,7 @@
     <string name="pref_list_formats_title">Known formats</string>
     <string name="pref_list_formats_summary">List all supported module formats</string>
     <string name="pref_about_title">About</string>
+    <string name="pref_about_formats">Formats</string>
     <string name="pref_about_summary">View version and application info</string>
     <string name="pref_media_path_title">Modules pathname</string>
     <string name="pref_media_path_summary">The directory where mod files are located</string>
@@ -62,7 +63,7 @@
     <string name="pref_artist_folder_title">Artist folders</string>
     <string name="pref_buffer_ms_summary">Sound buffer duration</string>
     <string name="pref_buffer_ms_title">Buffer size</string>
-    <string name="pref_buffer_ms_dialog">Set the size of sound buffer in milliseconds:</string>
+    <string name="pref_buffer_ms_dialog">Set the size of sound buffer in milliseconds: %s</string>
     <string name="pref_clear_cache_summary">Clear module information cache</string>
     <string name="pref_clear_cache_title">Clear cache</string>
     <string name="pref_show_toast_title">Display toasts</string>
@@ -76,13 +77,13 @@
     <string name="pref_enable_delete_title">Enable file delete</string>
     <string name="pref_enable_delete_summary">Display a menu option to delete the currently playing file</string>
 
-    <string name="pref_category_sound">Sound settings</string>
-    <string name="pref_category_files">Playlist settings</string>
+    <string name="pref_category_sound">Sound</string>
+    <string name="pref_category_files">Playlist</string>
     <string name="pref_category_mixer_control">Mixer control</string>
     <string name="pref_category_player_control">Player control</string>
     <string name="pref_category_information">Information</string>
-    <string name="pref_category_interface">Interface settings</string>
-    <string name="pref_category_modarchive">Download settings</string>
+    <string name="pref_category_interface">Interface</string>
+    <string name="pref_category_modarchive">Download</string>
     <string name="pref_category_download">Download location</string>
     <string name="pref_category_experimental">Experimental (be careful)</string>
     <string name="pref_category_preferences">Preferences</string>
@@ -91,8 +92,8 @@
     <string name="pref_category_file_general">General</string>
     <string name="pref_category_file_playlists">Playlists</string>
 
-    <string name="preferences_pan_separation_dialog">Set the mixer stereo separation:</string>
-    <string name="preferences_default_pan_dialog">Set the default pan separation:</string>
+    <string name="preferences_pan_separation_dialog">Set the mixer stereo separation: %s</string>
+    <string name="preferences_default_pan_dialog">Set the default pan separation: %s</string>
 
     <string name="menu_refresh">Refresh</string>
     <string name="menu_prefs">Settings</string>
@@ -196,5 +197,8 @@
 
     <string name="notif_channel_desc">Current module and player controls</string>
     <string name="notif_channel_name">Xmp</string>
+    <string name="clipboard_copied">Copied to clipboard</string>
+    <string name="pref_draw_lines_title">Use better waveform</string>
+    <string name="pref_draw_lines_summary">Enabling this will render the player viewer at ~50fps and use a better waveform drawing. Older/Lower end phones may experience frame drops.</string>
 
 </resources>

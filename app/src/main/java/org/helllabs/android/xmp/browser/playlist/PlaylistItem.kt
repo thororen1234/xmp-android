@@ -3,20 +3,18 @@ package org.helllabs.android.xmp.browser.playlist
 import org.helllabs.android.xmp.R
 import java.io.File
 
-class PlaylistItem(type: Int, name: String?, comment: String?) : Comparable<PlaylistItem> {
+class PlaylistItem(
+    val type: Int,
+    val name: String,
+    val comment: String
+) : Comparable<PlaylistItem> {
 
     // Accessors
     var id = 0
-    val type: Int
-    val name: String?
-    val comment: String?
     var file: File? = null
     var imageRes = 0
 
     init {
-        this.type = type
-        this.name = name
-        this.comment = comment
         imageRes = when (type) {
             TYPE_DIRECTORY -> R.drawable.folder
             TYPE_PLAYLIST -> R.drawable.list
@@ -36,7 +34,7 @@ class PlaylistItem(type: Int, name: String?, comment: String?) : Comparable<Play
         return if (d1 xor d2) {
             if (d1) -1 else 1
         } else {
-            name!!.compareTo(other.name!!)
+            name.compareTo(other.name)
         }
     }
 

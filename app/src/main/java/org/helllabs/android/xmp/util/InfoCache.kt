@@ -140,7 +140,7 @@ object InfoCache {
             }
             val isMod = Xmp.testModule(filename, info)
             if (isMod) {
-                val lines = arrayOf(
+                val lines = arrayOf<String?>(
                     file.length().toString(),
                     info.name,
                     filename,

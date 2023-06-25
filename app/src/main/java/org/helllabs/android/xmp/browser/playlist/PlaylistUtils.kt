@@ -94,7 +94,7 @@ object PlaylistUtils {
     }
 
     fun list(): Array<String> {
-        return PrefManager.DATA_DIR.list(PlaylistFilter()).ifEmpty { arrayOf() }
+        return PrefManager.DATA_DIR.list(PlaylistFilter()) ?: arrayOf()
     }
 
     fun listNoSuffix(): Array<String> {
@@ -113,14 +113,14 @@ object PlaylistUtils {
         )
     }
 
-    fun createEmptyPlaylist(activity: Activity, name: String, comment: String?): Boolean {
+    fun createEmptyPlaylist(context: Context, name: String, comment: String): Boolean {
         return try {
             val playlist = Playlist(name)
             playlist.comment = comment
             playlist.commit()
             true
         } catch (e: IOException) {
-            error(activity, activity.getString(R.string.error_create_playlist))
+            error(context as Activity, context.getString(R.string.error_create_playlist))
             false
         }
     }

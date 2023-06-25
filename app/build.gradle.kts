@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "org.helllabs.android.xmp"
-        minSdk = 21
+        minSdk = 23
         targetSdk = 27
 
         versionCode = 87
@@ -29,9 +29,14 @@ android {
 
     buildFeatures {
         aidl = true
+        compose = true
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(
@@ -50,6 +55,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.4.7"
+    }
+
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -62,14 +71,41 @@ android {
 }
 
 dependencies {
+
+    val composeBom = platform("androidx.compose:compose-bom:2023.05.01")
+    implementation(composeBom)
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material3:material3-window-size-class")
+    implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.runtime:runtime-livedata")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.ui:ui-util")
+    implementation("androidx.activity:activity-compose:1.7.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+
+    val accompanist = "0.31.4-beta"
+    implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanist")
+    implementation("com.google.accompanist:accompanist-permissions:$accompanist")
+
+    // https://mvnrepository.com/artifact/com.github.alorma/compose-settings-storage-preferences
+    val settings = "0.27.0"
+    implementation("com.github.alorma:compose-settings-storage-preferences:$settings")
+    implementation("com.github.alorma:compose-settings-ui-m3:$settings")
+
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+
     // https://mvnrepository.com/artifact/com.android.volley/volley
     implementation("com.android.volley:volley:1.2.1")
 
     // https://mvnrepository.com/artifact/com.telly/groundy
     implementation("com.telly:groundy:1.5")
-
-    // https://mvnrepository.com/artifact/androidx.appcompat/appcompat
-    implementation("androidx.appcompat:appcompat:1.6.1")
 
     // https://mvnrepository.com/artifact/androidx.cardview/cardview
     implementation("androidx.cardview:cardview:1.0.0")
@@ -88,4 +124,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/androidx.preference/preference-ktx
     implementation("androidx.preference:preference-ktx:1.2.0")
+
+    // https://mvnrepository.com/artifact/com.jakewharton.timber/timber
+    implementation("com.jakewharton.timber:timber:5.0.1")
 }

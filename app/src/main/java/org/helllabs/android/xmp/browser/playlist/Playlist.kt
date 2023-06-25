@@ -22,7 +22,7 @@ class Playlist(val name: String) {
     private var mCommentChanged = false
     private var mListChanged = false
     val list: MutableList<PlaylistItem>
-    var comment: String? = null
+    var comment: String = ""
     var isLoopMode = false
     var isShuffleMode = false
 
@@ -288,20 +288,20 @@ class Playlist(val name: String) {
         /**
          * Read comment from a playlist file.
          *
-         * @param activity The activity we're running
+         * @param context The activity we're running
          * @param name The playlist name
          *
          * @return The playlist comment
          */
-        fun readComment(activity: Activity, name: String): String {
+        fun readComment(context: Context, name: String): String {
             var comment: String? = null
             try {
                 comment = readFromFile(CommentFile(name))
             } catch (e: IOException) {
-                error(activity, activity.getString(R.string.error_read_comment))
+                error(context as Activity, context.getString(R.string.error_read_comment))
             }
             if (comment == null || comment.trim { it <= ' ' }.isEmpty()) {
-                comment = activity.getString(R.string.no_comment)
+                comment = context.getString(R.string.no_comment)
             }
             return comment
         }

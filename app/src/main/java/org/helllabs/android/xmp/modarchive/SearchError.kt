@@ -44,7 +44,7 @@ class SearchError : AppCompatActivity(), Runnable {
             }
         }
         msg!!.text = message
-        val typeface = Typeface.createFromAsset(assets, "fonts/TopazPlus_a500_v1.0.ttf")
+        val typeface = Typeface.createFromAsset(assets, "fonts/font_topaz_plus_a500.ttf")
         msg!!.setTypeface(typeface)
         msg!!.postDelayed(this, PERIOD.toLong())
     }

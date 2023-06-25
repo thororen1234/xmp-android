@@ -1,7 +1,6 @@
 package org.helllabs.android.xmp.browser
 
 import android.graphics.drawable.NinePatchDrawable
-import android.os.Build
 import android.os.Bundle
 import android.view.ContextMenu
 import android.view.ContextMenu.ContextMenuInfo

@@ -3,6 +3,7 @@ package org.helllabs.android.xmp
 import android.app.Application
 import com.android.volley.RequestQueue
 import com.android.volley.toolbox.Volley
+import timber.log.Timber
 
 class XmpApplication : Application() {
 
@@ -16,6 +17,10 @@ class XmpApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         setInstance(this)
+
+        if (BuildConfig.DEBUG) {
+            Timber.plant(Timber.DebugTree())
+        }
 
         PrefManager.init(applicationContext)
     }
