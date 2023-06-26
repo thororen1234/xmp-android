@@ -91,6 +91,8 @@ class PlayerActivity : Activity() {
     private var viewer: Viewer? = null
     private var viewerLayout: FrameLayout? = null
 
+    private var isRunning: Boolean = false
+
     private val connection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             Timber.i(TAG, "Service connected")
@@ -309,6 +311,8 @@ class PlayerActivity : Activity() {
             var lastTimer = System.nanoTime()
             var now: Long
             playTime = 0
+            isRunning = true
+
             do {
                 if (stopUpdate) {
                     Timber.i(TAG, "Stop update")
@@ -327,10 +331,15 @@ class PlayerActivity : Activity() {
                     handler.post(updateInfoRunnable)
                 }
 
-                if (frameTime < FRAME_RATE && !stopUpdate) {
-                    sleep(FRAME_RATE - frameTime)
+                try {
+                    if (frameTime < FRAME_RATE && !stopUpdate) {
+                        sleep(FRAME_RATE - frameTime)
+                    }
+                } catch (e: InterruptedException) {
+                    Timber.w("Interrupting thread")
+                    currentThread().interrupt()
                 }
-            } while (playTime >= 0)
+            } while (playTime >= 0 && isRunning)
             handler.removeCallbacksAndMessages(null)
             handler.post {
                 synchronized(playerLock) {
@@ -745,6 +754,11 @@ class PlayerActivity : Activity() {
         } catch (e: IllegalArgumentException) {
             Timber.i(TAG, "Can't unbind unregistered service")
         }
+
+        isRunning = false
+        progressThread?.interrupt()
+        progressThread = null
+
         super.onDestroy()
     }
 
@@ -753,11 +767,16 @@ class PlayerActivity : Activity() {
 	 */
     override fun onPause() {
         // Screen is about to turn off
-        if (ScreenReceiver.Companion.wasScreenOn) {
+        if (ScreenReceiver.wasScreenOn) {
             screenOn = false
         } // else {
         // Screen state not changed
         // }
+
+        isRunning = false
+        progressThread?.interrupt()
+        progressThread = null
+
         super.onPause()
     }
 
