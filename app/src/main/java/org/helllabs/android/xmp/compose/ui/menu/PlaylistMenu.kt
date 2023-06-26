@@ -140,6 +140,12 @@ class PlaylistMenu : ComponentActivity() {
             var newPlaylist by remember { mutableStateOf(false) }
             var changePlaylistInfo: PlaylistItem? by remember { mutableStateOf(null) }
 
+            // Ask for Permissions
+            LaunchedEffect(Unit) {
+                if (!storagePermission.status.isGranted)
+                    storagePermission.launchPermissionRequest()
+            }
+
             LaunchedEffect(storagePermission) {
                 if (storagePermission.status.isGranted) {
                     if (BuildConfig.VERSION_CODE < PrefManager.changeLogVersion) {
