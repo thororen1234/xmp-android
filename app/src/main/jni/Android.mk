@@ -1,22 +1,17 @@
-# Note: The library (libxmp) must be prebuilt before compiling this to use in the android app.
-# Using Windows 10, with Windows Subsystem for Linux, and Ubuntu installed from the Store.
-# Ubuntu 20.04.1 LTS (Windows Store) is the version at the time of writing this.
-# Ubuntu must be launched, setup, and updated to use.
-# With libxmp sources placed in src\main\jni\libxmp.
-# Navigate into the libxmp folder and click "Open Linux shell here" from the contextual menu.
+# Clone libxmp into `src\main\jni` and enter the directory `libxmp` directory.
+# Note: You may need to install autoconf and gcc
+# sudo apt install autoconf build-essential -y
 #
-# Note: You might need to install autoconf, and gcc
-# autoconf: sudo apt install autoconf
-# gcc: sudo apt install build-essential
-#
-# Run the following command (might need to run under SU):
+# Run the following command to build:
 # autoconf && ./configure && make && make check && (cd test-dev; autoconf && ./configure && make)
 #
-# [Linux steps should be similar with most of these steps. Refer to below.]
+# References:
 # Reference: https://github.com/libxmp/libxmp/
 # Reference: https://github.com/libxmp/libxmp/blob/master/INSTALL
 # Reference: https://github.com/libxmp/libxmp/blob/master/jni/Android.mk
 # Reference: https://github.com/libxmp/libxmp/blob/ab70ec9f3a5c9052e022a66338343f8ea87a4220/.travis.yml#L13
+
+# TODO cmake is available now
 
 LOCAL_PATH := $(call my-dir)/libxmp
 
