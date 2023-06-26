@@ -88,9 +88,9 @@ import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullRefre
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.themedText
+import org.helllabs.android.xmp.compose.ui.preferences.Preferences
 import org.helllabs.android.xmp.modarchive.Search
 import org.helllabs.android.xmp.player.PlayerActivity
-import org.helllabs.android.xmp.preferences.Preferences
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 import kotlin.time.Duration.Companion.seconds
@@ -176,7 +176,7 @@ class PlaylistMenu : ComponentActivity() {
                         }
 
                         viewModel.showError("", false)
-                    },
+                    }
                 )
 
                 ChangeLogDialog(

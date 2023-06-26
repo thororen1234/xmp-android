@@ -6,7 +6,6 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
-import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
@@ -27,6 +26,7 @@ import org.helllabs.android.xmp.util.InfoCache.testModule
 import org.helllabs.android.xmp.util.InfoCache.testModuleForceIfInvalid
 import org.helllabs.android.xmp.util.Log.i
 import org.helllabs.android.xmp.util.Message.toast
+import timber.log.Timber
 
 abstract class BasePlaylistActivity : AppCompatActivity() {
 
@@ -178,8 +178,7 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
 
     // Play this module
     protected fun playModule(mod: String) {
-        val modList: MutableList<String> = ArrayList()
-        modList.add(mod)
+        val modList = listOf(mod)
         playModule(modList, 0, false)
     }
 
@@ -193,15 +192,16 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
     }
 
     private fun playModule(modList: List<String>, start: Int, keepFirst: Boolean) {
-        val intent = Intent(this, PlayerActivity::class.java)
         (application as XmpApplication).fileList = modList.toMutableList()
-        intent.putExtra(PlayerActivity.PARM_SHUFFLE, isShuffleMode)
-        intent.putExtra(PlayerActivity.PARM_LOOP, isLoopMode)
-        intent.putExtra(PlayerActivity.PARM_START, start)
-        intent.putExtra(PlayerActivity.PARM_KEEPFIRST, keepFirst)
-        // intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);	// prevent screen flicker when starting player activity
-        i(TAG, "Start Player activity")
-        startActivityForResult(intent, PLAY_MOD_REQUEST)
+        Intent(this, PlayerActivity::class.java).apply {
+            putExtra(PlayerActivity.PARM_SHUFFLE, isShuffleMode)
+            putExtra(PlayerActivity.PARM_LOOP, isLoopMode)
+            putExtra(PlayerActivity.PARM_START, start)
+            putExtra(PlayerActivity.PARM_KEEPFIRST, keepFirst)
+        }.also { intent ->
+            Timber.i("Start Player activity")
+            startActivityForResult(intent, PLAY_MOD_REQUEST)
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -256,16 +256,6 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
                 playModule(realList)
             }
         }
-    }
-
-    // Menu
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        val inflater = menuInflater
-        // inflater.inflate(R.menu.options_menu, menu)
-
-        // Calling super after populating the menu is necessary here to ensure that the
-        // action bar helpers have a chance to handle this event.
-        return super.onCreateOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

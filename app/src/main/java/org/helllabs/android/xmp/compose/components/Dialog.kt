@@ -41,7 +41,7 @@ fun ErrorMessageDialog(
     title: String,
     text: String,
     confirmText: String,
-    onConfirm: () -> Unit,
+    onConfirm: () -> Unit
 ) {
     if (!isShowing) {
         return
@@ -56,7 +56,7 @@ fun ErrorMessageDialog(
             TextButton(onClick = onConfirm) {
                 Text(text = confirmText)
             }
-        },
+        }
     )
 }
 
@@ -64,7 +64,7 @@ fun ErrorMessageDialog(
 fun NewPlaylistDialog(
     isShowing: Boolean,
     onConfirm: (newName: String, newComment: String) -> Unit,
-    onDismiss: () -> Unit,
+    onDismiss: () -> Unit
 ) {
     if (!isShowing) {
         return
@@ -294,7 +294,7 @@ fun Preview_NewPlaylistDialog() {
             NewPlaylistDialog(
                 isShowing = true,
                 onConfirm = { _, _ -> },
-                onDismiss = { },
+                onDismiss = { }
             )
         }
     }
@@ -310,7 +310,7 @@ fun Preview_MessageDialog() {
                 title = stringResource(id = R.string.error),
                 text = stringResource(id = R.string.error_create_playlist),
                 confirmText = stringResource(id = R.string.ok),
-                onConfirm = { },
+                onConfirm = { }
             )
         }
     }

@@ -85,7 +85,7 @@ object PlaylistUtils {
         name: String,
         comment: String,
         onSuccess: () -> Unit,
-        onError: () -> Unit,
+        onError: () -> Unit
     ) {
         try {
             Playlist(name).apply {

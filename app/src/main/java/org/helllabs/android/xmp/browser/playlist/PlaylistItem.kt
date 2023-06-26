@@ -24,7 +24,7 @@ class PlaylistItem(
     }
 
     override fun toString(): String {
-        return String.format("%s:%s:%s\n", file!!.path, comment, name)
+        return String.format("%s:%s:%s\n", file?.path ?: "", comment, name)
     }
 
     // Comparable

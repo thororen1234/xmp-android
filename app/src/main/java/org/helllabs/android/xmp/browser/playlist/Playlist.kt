@@ -6,21 +6,18 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.util.FileUtils.readFromFile
 import org.helllabs.android.xmp.util.FileUtils.removeLineFromFile
-import org.helllabs.android.xmp.util.FileUtils.writeToFile
 import org.helllabs.android.xmp.util.InfoCache.fileExists
 import org.helllabs.android.xmp.util.Message.error
 import timber.log.Timber
-import java.io.BufferedWriter
 import java.io.File
 import java.io.FileNotFoundException
-import java.io.FileWriter
 import java.io.IOException
 
 class Playlist(val name: String) {
 
     private var mCommentChanged = false
     private var mListChanged = false
-    val list: MutableList<PlaylistItem>
+    val list: MutableList<PlaylistItem> = ArrayList()
     var comment: String = ""
     var isLoopMode = false
     var isShuffleMode = false
@@ -42,15 +39,11 @@ class Playlist(val name: String) {
     }
 
     init {
-        list = ArrayList()
-        val file: File = ListFile(name)
+        val file = ListFile(name)
         if (file.exists()) {
-            Timber.i(TAG, "Read playlist $name")
-            val comment = readFromFile(
-                CommentFile(
-                    name
-                )
-            )
+            Timber.i("Read playlist $name")
+
+            val comment = readFromFile(CommentFile(name))
 
             // read list contents
             if (readList(name)) {
@@ -59,7 +52,7 @@ class Playlist(val name: String) {
                 isLoopMode = readLoopModePref(name)
             }
         } else {
-            Timber.i(TAG, "New playlist $name")
+            Timber.i("New playlist $name")
             isShuffleMode = DEFAULT_SHUFFLE_MODE
             isLoopMode = DEFAULT_LOOP_MODE
             mListChanged = true
@@ -71,22 +64,25 @@ class Playlist(val name: String) {
      * Save the current playlist.
      */
     fun commit() {
-        Timber.i(TAG, "Commit playlist $name")
+        Timber.i("Commit playlist $name")
+
         if (mListChanged) {
             writeList(name)
             mListChanged = false
         }
+
         if (mCommentChanged) {
             writeComment(name)
             mCommentChanged = false
         }
+
         var saveModes = false
-        if (isShuffleMode != readShuffleModePref(name)) {
+        if (isShuffleMode != readShuffleModePref(name) ||
+            isLoopMode != readLoopModePref(name)
+        ) {
             saveModes = true
         }
-        if (isLoopMode != readLoopModePref(name)) {
-            saveModes = true
-        }
+
         if (saveModes) {
             PrefManager.putBoolean(optionName(name, SHUFFLE_MODE), isShuffleMode)
             PrefManager.putBoolean(optionName(name, LOOP_MODE), isLoopMode)
@@ -99,14 +95,14 @@ class Playlist(val name: String) {
      * @param index The index of the item to be removed
      */
     fun remove(index: Int) {
-        Timber.i(TAG, "Remove item #" + index + ": " + list[index].name)
+        Timber.i("Remove item #$index: ${list[index].name}")
         list.removeAt(index)
         mListChanged = true
     }
 
     // Helper methods
     private fun readList(name: String): Boolean {
-        Timber.d(TAG, "Reading playlist: $name")
+        Timber.d("Reading playlist: $name")
         list.clear()
         val file: File = ListFile(name)
         var lineNum: Int
@@ -130,7 +126,7 @@ class Playlist(val name: String) {
             }
             PlaylistUtils.renumberIds(list)
         } catch (e: IOException) {
-            Timber.e(TAG, "Error reading playlist " + file.path)
+            Timber.e("Error reading playlist ${file.path}")
             return false
         }
         if (invalidList.isNotEmpty()) {
@@ -142,60 +138,62 @@ class Playlist(val name: String) {
             try {
                 removeLineFromFile(file, array)
             } catch (e: FileNotFoundException) {
-                Timber.e(TAG, "Playlist file " + file.path + " not found")
+                Timber.e("Playlist file ${file.path} not found")
             } catch (e: IOException) {
-                Timber.e(TAG, "I/O error removing invalid lines from " + file.path)
+                Timber.e("I/O error removing invalid lines from ${file.path}")
             }
         }
         return true
     }
 
     private fun writeList(name: String) {
-        Timber.i(TAG, "Write list")
-        val file: File = ListFile(name, ".new")
-        file.delete()
+        Timber.i("Write list")
+
+        val file = ListFile(name, ".new").apply { delete() }
         try {
-            val out = BufferedWriter(FileWriter(file), 512)
-            for (item in list) {
-                out.write(item.toString())
+            file.bufferedWriter().use { out ->
+                list.forEach { item ->
+                    out.write(item.toString())
+                }
             }
-            out.close()
-            val oldFile: File = ListFile(name)
-            oldFile.delete()
+
+            val oldFile = ListFile(name).apply { delete() }
             file.renameTo(oldFile)
         } catch (e: IOException) {
-            Timber.e(TAG, "Error writing playlist file " + file.path)
+            Timber.e("Error writing playlist file ${file.path}")
         }
     }
 
     private fun writeComment(name: String) {
-        Timber.i(TAG, "Write comment")
-        val file: File = CommentFile(name, ".new")
-        file.delete()
+        Timber.i("Write comment")
+
+        val file = CommentFile(name, ".new").apply { delete() }
         try {
-            writeToFile(file, comment)
-            val oldFile: File = CommentFile(name)
-            oldFile.delete()
+            file.writeText(comment)
+
+            val oldFile = CommentFile(name).apply { delete() }
             file.renameTo(oldFile)
         } catch (e: IOException) {
-            Timber.e(TAG, "Error writing comment file " + file.path)
+            Timber.e("Error writing comment file ${file.path}")
         }
     }
 
-    private fun readShuffleModePref(name: String): Boolean {
-        return PrefManager.getBoolean(optionName(name, SHUFFLE_MODE), DEFAULT_SHUFFLE_MODE)
-    }
+    private fun readShuffleModePref(name: String): Boolean =
+        PrefManager.getBoolean(optionName(name, SHUFFLE_MODE), DEFAULT_SHUFFLE_MODE)
 
-    private fun readLoopModePref(name: String): Boolean {
-        return PrefManager.getBoolean(optionName(name, LOOP_MODE), DEFAULT_LOOP_MODE)
-    }
+    private fun readLoopModePref(name: String): Boolean =
+        PrefManager.getBoolean(optionName(name, LOOP_MODE), DEFAULT_LOOP_MODE)
 
     fun setListChanged(listChanged: Boolean) {
         mListChanged = listChanged
     }
 
+    fun setList(newList: List<PlaylistItem>) {
+        list.clear()
+        list.addAll(newList)
+    }
+
     companion object {
-        private const val TAG = "Playlist"
         const val COMMENT_SUFFIX = ".comment"
         const val PLAYLIST_SUFFIX = ".playlist"
         private const val OPTIONS_PREFIX = "options_"
@@ -207,24 +205,26 @@ class Playlist(val name: String) {
         /**
          * Rename a playlist.
          *
-         * @param context The context we're running in
          * @param oldName The current name of the playlist
          * @param newName The new name of the playlist
          *
          * @return Whether the rename was successful
          */
         fun rename(oldName: String, newName: String): Boolean {
-            val old1: File = ListFile(oldName)
-            val old2: File = CommentFile(oldName)
-            val new1: File = ListFile(newName)
-            val new2: File = CommentFile(newName)
-            var error = false
-            if (!old1.renameTo(new1)) {
-                error = true
-            } else if (!old2.renameTo(new2)) {
-                new1.renameTo(old1)
-                error = true
+            val old1 = ListFile(oldName)
+            val old2 = CommentFile(oldName)
+            val new1 = ListFile(newName)
+            val new2 = CommentFile(newName)
+
+            val error = when {
+                !old1.renameTo(new1) -> false
+                !old2.renameTo(new2) -> {
+                    new1.renameTo(old1)
+                    false
+                }
+                else -> true
             }
+
             if (error) {
                 return false
             }
@@ -235,8 +235,8 @@ class Playlist(val name: String) {
                     value = getBoolean(optionName(oldName, SHUFFLE_MODE), DEFAULT_SHUFFLE_MODE)
                 )
                 putBoolean(
-                    optionName(newName, LOOP_MODE),
-                    getBoolean(optionName(oldName, LOOP_MODE), DEFAULT_LOOP_MODE)
+                    key = optionName(newName, LOOP_MODE),
+                    value = getBoolean(optionName(oldName, LOOP_MODE), DEFAULT_LOOP_MODE)
                 )
                 remove(optionName(oldName, SHUFFLE_MODE))
                 remove(optionName(oldName, LOOP_MODE))
@@ -265,14 +265,11 @@ class Playlist(val name: String) {
          * @param items The list of playlist items to add
          */
         fun addToList(activity: Activity, name: String, items: List<PlaylistItem>) {
-            val lines = arrayOfNulls<String>(items.size)
-            var i = 0
-            for (item in items) {
-                lines[i++] = item.toString()
-            }
+            val lines = items.map { it.toString() }
+
             try {
-                val file = File(PrefManager.DATA_DIR, name + PLAYLIST_SUFFIX)
-                writeToFile(file, lines)
+                val file = File(PrefManager.DATA_DIR, "$name$PLAYLIST_SUFFIX")
+                file.writeText(lines.joinToString(separator = "\n"))
             } catch (e: IOException) {
                 error(activity, activity.getString(R.string.error_write_to_playlist))
             }
@@ -299,8 +296,7 @@ class Playlist(val name: String) {
             return comment
         }
 
-        private fun optionName(name: String, option: String): String {
-            return OPTIONS_PREFIX + name + option
-        }
+        private fun optionName(name: String, option: String): String =
+            OPTIONS_PREFIX + name + option
     }
 }

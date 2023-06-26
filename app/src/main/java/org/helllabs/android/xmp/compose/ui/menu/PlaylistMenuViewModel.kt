@@ -50,7 +50,7 @@ class PlaylistMenuViewModel : ViewModel() {
         name: String,
         comment: String,
         onSuccess: () -> Unit,
-        onError: () -> Unit,
+        onError: () -> Unit
     ) {
         if (!PrefManager.DATA_DIR.isDirectory) {
             if (PrefManager.DATA_DIR.mkdirs()) {
