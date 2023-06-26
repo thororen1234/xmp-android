@@ -1,13 +1,7 @@
 package org.helllabs.android.xmp.browser.playlist
 
-import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.AlertDialog
 import android.app.ProgressDialog
-import android.content.Context
-import android.view.LayoutInflater
-import android.view.View
-import android.widget.EditText
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp.testModule
@@ -18,32 +12,6 @@ import java.io.File
 import java.io.IOException
 
 object PlaylistUtils {
-
-    fun newPlaylistDialog(activity: Activity) {
-        newPlaylistDialog(activity, null)
-    }
-
-    @SuppressLint("InflateParams")
-    fun newPlaylistDialog(activity: Activity, runnable: Runnable?) {
-        val alert = AlertDialog.Builder(activity)
-        alert.setTitle("New playlist")
-        val inflater = activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val layout = inflater.inflate(R.layout.newlist, null)
-        alert.setView(layout)
-        alert.setPositiveButton(R.string.ok) { _, _ ->
-            val e1 = layout.findViewById<View>(R.id.new_playlist_name) as EditText
-            val e2 = layout.findViewById<View>(R.id.new_playlist_comment) as EditText
-            val name = e1.text.toString()
-            val comment = e2.text.toString()
-            if (createEmptyPlaylist(activity, name, comment) && runnable != null) {
-                runnable.run()
-            }
-        }
-        alert.setNegativeButton(R.string.cancel) { _, _ ->
-            // Canceled.
-        }
-        alert.show()
-    }
 
     /*
 	 * Send files to the specified playlist
@@ -113,15 +81,19 @@ object PlaylistUtils {
         )
     }
 
-    fun createEmptyPlaylist(context: Context, name: String, comment: String): Boolean {
-        return try {
-            val playlist = Playlist(name)
-            playlist.comment = comment
-            playlist.commit()
-            true
+    fun createEmptyPlaylist(
+        name: String,
+        comment: String,
+        onSuccess: () -> Unit,
+        onError: () -> Unit,
+    ) {
+        try {
+            Playlist(name).apply {
+                this.comment = comment
+            }.commit()
+            onSuccess()
         } catch (e: IOException) {
-            error(context as Activity, context.getString(R.string.error_create_playlist))
-            false
+            onError()
         }
     }
 

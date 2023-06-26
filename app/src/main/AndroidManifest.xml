@@ -28,7 +28,7 @@
 
         <!-- Playlist and File browser -->
         <activity
-            android:name=".browser.PlaylistMenu"
+            android:name=".compose.ui.menu.PlaylistMenu"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
             android:theme="@style/AppTheme.Composable">
@@ -171,7 +171,7 @@
             android:configChanges="keyboardHidden|orientation|screenSize">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".browser.PlaylistMenu" />
+                android:value=".compose.ui.menu.PlaylistMenu" />
         </activity>
         <activity
             android:name=".modarchive.SearchError"

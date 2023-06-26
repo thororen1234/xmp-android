@@ -2,15 +2,14 @@ package org.helllabs.android.xmp.browser.playlist
 
 import android.app.Activity
 import android.content.Context
-import androidx.preference.PreferenceManager
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.util.FileUtils.readFromFile
 import org.helllabs.android.xmp.util.FileUtils.removeLineFromFile
 import org.helllabs.android.xmp.util.FileUtils.writeToFile
 import org.helllabs.android.xmp.util.InfoCache.fileExists
-import org.helllabs.android.xmp.util.Log
 import org.helllabs.android.xmp.util.Message.error
+import timber.log.Timber
 import java.io.BufferedWriter
 import java.io.File
 import java.io.FileNotFoundException
@@ -46,7 +45,7 @@ class Playlist(val name: String) {
         list = ArrayList()
         val file: File = ListFile(name)
         if (file.exists()) {
-            Log.i(TAG, "Read playlist $name")
+            Timber.i(TAG, "Read playlist $name")
             val comment = readFromFile(
                 CommentFile(
                     name
@@ -60,14 +59,11 @@ class Playlist(val name: String) {
                 isLoopMode = readLoopModePref(name)
             }
         } else {
-            Log.i(TAG, "New playlist $name")
+            Timber.i(TAG, "New playlist $name")
             isShuffleMode = DEFAULT_SHUFFLE_MODE
             isLoopMode = DEFAULT_LOOP_MODE
             mListChanged = true
             mCommentChanged = true
-        }
-        if (comment == null) {
-            comment = ""
         }
     }
 
@@ -75,7 +71,7 @@ class Playlist(val name: String) {
      * Save the current playlist.
      */
     fun commit() {
-        Log.i(TAG, "Commit playlist $name")
+        Timber.i(TAG, "Commit playlist $name")
         if (mListChanged) {
             writeList(name)
             mListChanged = false
@@ -103,14 +99,14 @@ class Playlist(val name: String) {
      * @param index The index of the item to be removed
      */
     fun remove(index: Int) {
-        Log.i(TAG, "Remove item #" + index + ": " + list[index].name)
+        Timber.i(TAG, "Remove item #" + index + ": " + list[index].name)
         list.removeAt(index)
         mListChanged = true
     }
 
     // Helper methods
     private fun readList(name: String): Boolean {
-        Log.d(TAG, "Reading playlist: $name")
+        Timber.d(TAG, "Reading playlist: $name")
         list.clear()
         val file: File = ListFile(name)
         var lineNum: Int
@@ -134,7 +130,7 @@ class Playlist(val name: String) {
             }
             PlaylistUtils.renumberIds(list)
         } catch (e: IOException) {
-            Log.e(TAG, "Error reading playlist " + file.path)
+            Timber.e(TAG, "Error reading playlist " + file.path)
             return false
         }
         if (invalidList.isNotEmpty()) {
@@ -146,16 +142,16 @@ class Playlist(val name: String) {
             try {
                 removeLineFromFile(file, array)
             } catch (e: FileNotFoundException) {
-                Log.e(TAG, "Playlist file " + file.path + " not found")
+                Timber.e(TAG, "Playlist file " + file.path + " not found")
             } catch (e: IOException) {
-                Log.e(TAG, "I/O error removing invalid lines from " + file.path)
+                Timber.e(TAG, "I/O error removing invalid lines from " + file.path)
             }
         }
         return true
     }
 
     private fun writeList(name: String) {
-        Log.i(TAG, "Write list")
+        Timber.i(TAG, "Write list")
         val file: File = ListFile(name, ".new")
         file.delete()
         try {
@@ -168,12 +164,12 @@ class Playlist(val name: String) {
             oldFile.delete()
             file.renameTo(oldFile)
         } catch (e: IOException) {
-            Log.e(TAG, "Error writing playlist file " + file.path)
+            Timber.e(TAG, "Error writing playlist file " + file.path)
         }
     }
 
     private fun writeComment(name: String) {
-        Log.i(TAG, "Write comment")
+        Timber.i(TAG, "Write comment")
         val file: File = CommentFile(name, ".new")
         file.delete()
         try {
@@ -182,7 +178,7 @@ class Playlist(val name: String) {
             oldFile.delete()
             file.renameTo(oldFile)
         } catch (e: IOException) {
-            Log.e(TAG, "Error writing comment file " + file.path)
+            Timber.e(TAG, "Error writing comment file " + file.path)
         }
     }
 
@@ -217,7 +213,7 @@ class Playlist(val name: String) {
          *
          * @return Whether the rename was successful
          */
-        fun rename(context: Context, oldName: String, newName: String): Boolean {
+        fun rename(oldName: String, newName: String): Boolean {
             val old1: File = ListFile(oldName)
             val old2: File = CommentFile(oldName)
             val new1: File = ListFile(newName)
@@ -232,36 +228,33 @@ class Playlist(val name: String) {
             if (error) {
                 return false
             }
-            val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-            val editor = prefs.edit()
-            editor.putBoolean(
-                optionName(newName, SHUFFLE_MODE),
-                prefs.getBoolean(optionName(oldName, SHUFFLE_MODE), DEFAULT_SHUFFLE_MODE)
-            )
-            editor.putBoolean(
-                optionName(newName, LOOP_MODE),
-                prefs.getBoolean(optionName(oldName, LOOP_MODE), DEFAULT_LOOP_MODE)
-            )
-            editor.remove(optionName(oldName, SHUFFLE_MODE))
-            editor.remove(optionName(oldName, LOOP_MODE))
-            editor.apply()
+
+            with(PrefManager) {
+                putBoolean(
+                    key = optionName(newName, SHUFFLE_MODE),
+                    value = getBoolean(optionName(oldName, SHUFFLE_MODE), DEFAULT_SHUFFLE_MODE)
+                )
+                putBoolean(
+                    optionName(newName, LOOP_MODE),
+                    getBoolean(optionName(oldName, LOOP_MODE), DEFAULT_LOOP_MODE)
+                )
+                remove(optionName(oldName, SHUFFLE_MODE))
+                remove(optionName(oldName, LOOP_MODE))
+            }
+
             return true
         }
 
         /**
          * Delete the specified playlist.
          *
-         * @param context The context the playlist is being created in
          * @param name The playlist name
          */
-        fun delete(context: Context, name: String) {
+        fun delete(name: String) {
             ListFile(name).delete()
             CommentFile(name).delete()
-            val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-            val editor = prefs.edit()
-            editor.remove(optionName(name, SHUFFLE_MODE))
-            editor.remove(optionName(name, LOOP_MODE))
-            editor.apply()
+            PrefManager.remove(optionName(name, SHUFFLE_MODE))
+            PrefManager.remove(optionName(name, LOOP_MODE))
         }
 
         /**

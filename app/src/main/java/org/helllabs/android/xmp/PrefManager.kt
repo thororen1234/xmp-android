@@ -28,6 +28,10 @@ object PrefManager {
         prefs.edit { putBoolean(key, value) }
     }
 
+    fun remove(key: String) {
+        prefs.edit { remove(key) }
+    }
+
     var changeLogVersion: Int
         get() = prefs.getInt("changelog_version", 0)
         set(value) {

@@ -19,6 +19,7 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.browser.playlist.PlaylistAdapter
+import org.helllabs.android.xmp.compose.ui.menu.PlaylistMenu
 import org.helllabs.android.xmp.player.PlayerActivity
 import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerService

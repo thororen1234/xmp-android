@@ -10,23 +10,6 @@ import org.helllabs.android.xmp.R
 object Message {
 
     @JvmStatic
-    fun fatalError(activity: Activity, message: String?) {
-        activity.runOnUiThread {
-            val alertDialog = AlertDialog.Builder(activity).create()
-            alertDialog.setTitle(R.string.error)
-            alertDialog.setMessage(message)
-            alertDialog.setButton(
-                AlertDialog.BUTTON_NEUTRAL,
-                activity.getString(R.string.exit)
-            ) { dialog, _ ->
-                dialog.dismiss()
-                activity.finish()
-            }
-            alertDialog.show()
-        }
-    }
-
-    @JvmStatic
     fun error(context: Context, message: String?) {
         (context as Activity).runOnUiThread {
             val alertDialog = AlertDialog.Builder(context).create()

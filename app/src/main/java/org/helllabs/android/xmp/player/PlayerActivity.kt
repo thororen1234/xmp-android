@@ -33,7 +33,7 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.XmpApplication
-import org.helllabs.android.xmp.browser.PlaylistMenu
+import org.helllabs.android.xmp.compose.ui.menu.PlaylistMenu
 import org.helllabs.android.xmp.player.viewer.ChannelViewer
 import org.helllabs.android.xmp.player.viewer.InstrumentViewer
 import org.helllabs.android.xmp.player.viewer.PatternViewer

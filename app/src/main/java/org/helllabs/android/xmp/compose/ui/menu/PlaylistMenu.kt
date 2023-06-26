@@ -1,12 +1,9 @@
-package org.helllabs.android.xmp.browser
+package org.helllabs.android.xmp.compose.ui.menu
 
 import android.Manifest
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -64,25 +61,25 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
+import org.helllabs.android.xmp.browser.FilelistActivity
+import org.helllabs.android.xmp.browser.PlaylistActivity
 import org.helllabs.android.xmp.browser.playlist.Playlist
 import org.helllabs.android.xmp.browser.playlist.PlaylistItem
 import org.helllabs.android.xmp.browser.playlist.PlaylistUtils
 import org.helllabs.android.xmp.compose.components.ChangeLogDialog
 import org.helllabs.android.xmp.compose.components.EditPlaylistDialog
+import org.helllabs.android.xmp.compose.components.ErrorMessageDialog
+import org.helllabs.android.xmp.compose.components.NewPlaylistDialog
 import org.helllabs.android.xmp.compose.components.TextInputDialog
 import org.helllabs.android.xmp.compose.components.pullrefresh.ExperimentalMaterialApi
 import org.helllabs.android.xmp.compose.components.pullrefresh.PullRefreshIndicator
@@ -95,78 +92,8 @@ import org.helllabs.android.xmp.modarchive.Search
 import org.helllabs.android.xmp.player.PlayerActivity
 import org.helllabs.android.xmp.preferences.Preferences
 import org.helllabs.android.xmp.service.PlayerService
-import org.helllabs.android.xmp.util.FileUtils.writeToFile
-import org.helllabs.android.xmp.util.Message.error
-import org.helllabs.android.xmp.util.Message.fatalError
 import timber.log.Timber
-import java.io.File
-import java.io.IOException
 import kotlin.time.Duration.Companion.seconds
-
-class PlaylistMenuViewModel : ViewModel() {
-    data class PlaylistMenuState(
-        val isRefreshing: Boolean = false,
-        val mediaPath: String = "",
-        val playlistItems: List<PlaylistItem> = listOf()
-    )
-
-    private val _uiState = MutableStateFlow(PlaylistMenuState())
-    val uiState = _uiState.asStateFlow()
-
-    fun checkStorage(): Boolean {
-        val state = Environment.getExternalStorageState()
-        val result = if (Environment.MEDIA_MOUNTED == state ||
-            Environment.MEDIA_MOUNTED_READ_ONLY == state
-        ) {
-            true
-        } else {
-            Timber.e("External storage state error: $state")
-            false
-        }
-
-        return result
-    }
-
-    // Create application directory and populate with empty playlist
-    fun setupDataDir(context: Context) {
-        if (!PrefManager.DATA_DIR.isDirectory) {
-            if (PrefManager.DATA_DIR.mkdirs()) {
-                PlaylistUtils.createEmptyPlaylist(
-                    context,
-                    context.getString(R.string.empty_playlist),
-                    context.getString(R.string.empty_comment)
-                )
-            } else {
-                fatalError(context as Activity, context.getString(R.string.error_datadir))
-            }
-        }
-    }
-
-    fun updateList(context: Context) {
-        _uiState.update { it.copy(mediaPath = PrefManager.mediaPath) }
-
-        val items = mutableListOf<PlaylistItem>()
-        val browserItem = PlaylistItem(
-            type = PlaylistItem.TYPE_SPECIAL,
-            name = "File browser",
-            comment = "Files in ${uiState.value.mediaPath}"
-        )
-        items.add(browserItem)
-
-        PlaylistUtils.listNoSuffix().forEachIndexed { index, name ->
-            val item = PlaylistItem(
-                PlaylistItem.TYPE_PLAYLIST,
-                name,
-                Playlist.readComment(context, name)
-            )
-            item.id = index + 1
-
-            items.add(item)
-        }
-
-        _uiState.update { it.copy(playlistItems = items) }
-    }
-}
 
 class PlaylistMenu : ComponentActivity() {
 
@@ -196,7 +123,8 @@ class PlaylistMenu : ComponentActivity() {
 //        }
 
         if (!viewModel.checkStorage()) {
-            fatalError(this, getString(R.string.error_storage))
+            val message = getString(R.string.error_storage)
+            viewModel.showError(message, true)
         }
 
         setContent {
@@ -209,6 +137,7 @@ class PlaylistMenu : ComponentActivity() {
             var changeLogDialog by remember { mutableStateOf(false) }
             var changeMediaPath by remember { mutableStateOf(false) }
             var changePlaylist by remember { mutableStateOf(false) }
+            var newPlaylist by remember { mutableStateOf(false) }
             var changePlaylistInfo: PlaylistItem? by remember { mutableStateOf(null) }
 
             LaunchedEffect(storagePermission) {
@@ -217,12 +146,39 @@ class PlaylistMenu : ComponentActivity() {
                         changeLogDialog = true
                     }
 
-                    viewModel.setupDataDir(context)
-                    viewModel.updateList(context)
+                    viewModel.setupDataDir(
+                        name = getString(R.string.empty_playlist),
+                        comment = getString(R.string.empty_comment),
+                        onSuccess = {
+                            viewModel.updateList(context)
+                        },
+                        onError = {
+                            val message = getString(R.string.error_datadir)
+                            viewModel.showError(message, true)
+                        }
+                    )
                 }
             }
 
             XmpTheme {
+                ErrorMessageDialog(
+                    isShowing = state.errorText.isNotEmpty(),
+                    title = stringResource(id = R.string.error),
+                    text = state.errorText,
+                    confirmText = if (state.isFatalError) {
+                        stringResource(id = R.string.exit)
+                    } else {
+                        stringResource(id = R.string.ok)
+                    },
+                    onConfirm = {
+                        if (state.isFatalError) {
+                            finish()
+                        }
+
+                        viewModel.showError("", false)
+                    },
+                )
+
                 ChangeLogDialog(
                     isShowing = changeLogDialog,
                     onDismiss = { PrefManager.changeLogVersion = BuildConfig.VERSION_CODE }
@@ -249,21 +205,24 @@ class PlaylistMenu : ComponentActivity() {
                     playlistItem = changePlaylistInfo,
                     onConfirm = { oldName, newName, oldComment, newComment ->
                         if (oldComment != newComment) {
-                            val value = newComment.replace("\n", " ")
-                            val file = File(PrefManager.DATA_DIR, oldName + Playlist.COMMENT_SUFFIX)
-                            try {
-                                file.delete()
-                                file.createNewFile()
-                                writeToFile(file, value)
-                            } catch (e: IOException) {
-                                error(context, getString(R.string.error_edit_comment))
+                            with(viewModel) {
+                                editComment(oldName, newComment) {
+                                    showError(
+                                        message = getString(R.string.error_edit_comment),
+                                        isFatal = false
+                                    )
+                                }
                             }
                         }
 
                         if (oldName != newName) {
-                            if (!Playlist.rename(context, oldName, newName)) {
-                                error(context, getString(R.string.error_rename_playlist))
-                                return@EditPlaylistDialog
+                            with(viewModel) {
+                                editPlaylist(oldName, newName) {
+                                    showError(
+                                        message = getString(R.string.error_rename_playlist),
+                                        isFatal = false
+                                    )
+                                }
                             }
                         }
 
@@ -275,9 +234,33 @@ class PlaylistMenu : ComponentActivity() {
                         viewModel.updateList(context)
                     },
                     onDelete = { name ->
-                        Playlist.delete(context, name)
+                        Playlist.delete(name)
                         changePlaylist = false
                         viewModel.updateList(context)
+                    }
+                )
+
+                NewPlaylistDialog(
+                    isShowing = newPlaylist,
+                    onConfirm = { name, comment ->
+                        PlaylistUtils.createEmptyPlaylist(
+                            name = name,
+                            comment = comment,
+                            onSuccess = {
+                                viewModel.updateList(this)
+                            },
+                            onError = {
+                                viewModel.showError(
+                                    message = getString(R.string.error_create_playlist),
+                                    isFatal = false
+                                )
+                            }
+                        )
+
+                        newPlaylist = false
+                    },
+                    onDismiss = {
+                        newPlaylist = false
                     }
                 )
 
@@ -312,9 +295,7 @@ class PlaylistMenu : ComponentActivity() {
                         viewModel.updateList(this)
                     },
                     onNewPlaylist = {
-                        PlaylistUtils.newPlaylistDialog(this) {
-                            viewModel.updateList(this)
-                        }
+                        newPlaylist = true
                     },
                     onTitleClicked = {
                         if (PrefManager.startOnPlayer && PlayerService.isAlive) {

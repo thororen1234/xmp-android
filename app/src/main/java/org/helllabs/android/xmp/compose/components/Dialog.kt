@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -32,6 +33,90 @@ import androidx.compose.ui.window.DialogProperties
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.browser.playlist.PlaylistItem
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+
+@Composable
+fun ErrorMessageDialog(
+    isShowing: Boolean,
+    icon: ImageVector = Icons.Default.Error,
+    title: String,
+    text: String,
+    confirmText: String,
+    onConfirm: () -> Unit,
+) {
+    if (!isShowing) {
+        return
+    }
+
+    AlertDialog(
+        onDismissRequest = onConfirm,
+        icon = { Icon(imageVector = icon, contentDescription = null) },
+        title = { Text(text = title) },
+        text = { Text(text = text) },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = confirmText)
+            }
+        },
+    )
+}
+
+@Composable
+fun NewPlaylistDialog(
+    isShowing: Boolean,
+    onConfirm: (newName: String, newComment: String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    if (!isShowing) {
+        return
+    }
+
+    var newName by remember { mutableStateOf("") }
+    var newComment by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(imageVector = Icons.Default.Edit, contentDescription = null)
+        },
+        title = {
+            Text(text = stringResource(id = R.string.menu_new_playlist))
+        },
+        text = {
+            Column {
+                Text(text = stringResource(id = R.string.dialog_new_playlist))
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    label = {
+                        Text(text = "Name")
+                    },
+                    value = newName,
+                    onValueChange = { newName = it }
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    label = {
+                        Text(text = "Comment")
+                    },
+                    value = newComment,
+                    onValueChange = { newComment = it }
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = newName.isNotEmpty(),
+                onClick = { onConfirm(newName, newComment) }
+            ) {
+                Text(text = stringResource(id = R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(id = R.string.cancel))
+            }
+        }
+    )
+}
 
 @Composable
 fun EditPlaylistDialog(
@@ -199,6 +284,36 @@ fun TextInputDialog(
             }
         }
     )
+}
+
+@Preview
+@Composable
+fun Preview_NewPlaylistDialog() {
+    XmpTheme {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            NewPlaylistDialog(
+                isShowing = true,
+                onConfirm = { _, _ -> },
+                onDismiss = { },
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun Preview_MessageDialog() {
+    XmpTheme {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            ErrorMessageDialog(
+                isShowing = true,
+                title = stringResource(id = R.string.error),
+                text = stringResource(id = R.string.error_create_playlist),
+                confirmText = stringResource(id = R.string.ok),
+                onConfirm = { },
+            )
+        }
+    }
 }
 
 @Preview
