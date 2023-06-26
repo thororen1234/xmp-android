@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.preferences.about
+package org.helllabs.android.xmp.compose.ui.preferences.about
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

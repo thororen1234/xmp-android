@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.preferences
+package org.helllabs.android.xmp.compose.ui.preferences
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

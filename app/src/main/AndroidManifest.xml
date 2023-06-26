@@ -142,10 +142,10 @@
 
         <!-- Preferences -->
         <activity
-            android:name=".preferences.Preferences"
+            android:name=".compose.ui.preferences.Preferences"
             android:theme="@style/AppTheme.Composable" />
         <activity
-            android:name=".preferences.about.ListFormats"
+            android:name=".compose.ui.preferences.about.ListFormats"
             android:exported="false"
             android:theme="@style/AppTheme.Composable">
             <intent-filter>
@@ -155,7 +155,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".preferences.about.About"
+            android:name=".compose.ui.preferences.about.About"
             android:exported="false"
             android:theme="@style/AppTheme.Composable">
             <intent-filter>
