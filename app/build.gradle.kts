@@ -128,4 +128,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.jakewharton.timber/timber
     implementation("com.jakewharton.timber:timber:5.0.1")
+
+    // https://square.github.io/leakcanary/getting_started/
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.11")
 }
