@@ -36,8 +36,8 @@ object Xmp {
     val maxSeqFromHeader: Int
         get() = getMaxSequences()
 
-    external fun deinit()
-    external fun dropAudio(): Int
+    external fun deinit(): Int
+    external fun dropAudio()
     external fun endPlayer(): Int
     external fun fillBuffer(loop: Boolean): Int
     external fun getInfo(values: IntArray?)

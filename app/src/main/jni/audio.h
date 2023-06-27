@@ -9,15 +9,16 @@
 	if (--(x) < 0) { (x) = (max) - 1; } \
 } while (0)
 
-int open_audio(int, int);
-void close_audio(void);
-int play_audio(void);
-int stop_audio(void);
-int restart_audio(void);
-int play_buffer(void *, int, int);
-int has_free_buffer(void);
+void drop_audio(void);
 int fill_buffer(int);
 int get_volume(void);
+int has_free_buffer(void);
+int open_audio(int, int);
+int play_audio(void);
+int play_buffer(void *, int, int);
+int restart_audio(void);
 int set_volume(int);
+int stop_audio(void);
+void close_audio(void);
 
 #endif
