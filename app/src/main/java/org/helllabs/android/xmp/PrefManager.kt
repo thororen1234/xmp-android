@@ -193,4 +193,10 @@ object PrefManager {
         set(value) {
             prefs.edit { putBoolean("new_waveform", value) }
         }
+
+    var useMediaStyle: Boolean
+        get() = prefs.getBoolean("use_media_style", true)
+        set(value) {
+            prefs.edit { putBoolean("use_media_style", value) }
+        }
 }

@@ -3,7 +3,7 @@ package org.helllabs.android.xmp.service
 import android.os.RemoteException
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp
-import org.helllabs.android.xmp.service.notifier.Notifier
+import org.helllabs.android.xmp.service.notifier.ModernNotifier
 import org.helllabs.android.xmp.util.FileUtils
 import org.helllabs.android.xmp.util.InfoCache
 import timber.log.Timber
@@ -60,7 +60,7 @@ class ServiceRunnable(private val service: PlayerService) : Runnable {
                 name,
                 Xmp.getModType(),
                 service.queue!!.index,
-                Notifier.TYPE_TICKER
+                ModernNotifier.TYPE_TICKER
             )
             PlayerService.isLoaded = true
 

@@ -32,6 +32,10 @@ object Xmp {
     // Limits
     const val MAX_CHANNELS = 64 // Max number of channels in module
 
+    // MAX_SEQUENCES from common.h
+    val maxSeqFromHeader: Int
+        get() = getMaxSequences()
+
     external fun deinit()
     external fun dropAudio(): Int
     external fun endPlayer(): Int
@@ -66,6 +70,7 @@ object Xmp {
     external fun getFormats(): Array<String>?
     external fun getInstruments(): Array<String>?
     external fun getLoopCount(): Int
+    external fun getMaxSequences(): Int
     external fun getModName(): String
     external fun getModType(): String
     external fun getModVars(vars: IntArray?)

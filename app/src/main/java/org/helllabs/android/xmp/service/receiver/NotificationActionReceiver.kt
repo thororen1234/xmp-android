@@ -3,7 +3,7 @@ package org.helllabs.android.xmp.service.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import org.helllabs.android.xmp.service.notifier.Notifier
+import org.helllabs.android.xmp.service.notifier.ModernNotifier
 import org.helllabs.android.xmp.util.Log
 
 class NotificationActionReceiver : BroadcastReceiver() {
@@ -11,10 +11,10 @@ class NotificationActionReceiver : BroadcastReceiver() {
         val action = intent.action
         Log.i(TAG, "Action $action")
         when (action) {
-            Notifier.ACTION_STOP -> keyCode = STOP
-            Notifier.ACTION_PAUSE -> keyCode = PAUSE
-            Notifier.ACTION_NEXT -> keyCode = NEXT
-            Notifier.ACTION_PREV -> keyCode = PREV
+            ModernNotifier.ACTION_STOP -> keyCode = STOP
+            ModernNotifier.ACTION_PAUSE -> keyCode = PAUSE
+            ModernNotifier.ACTION_NEXT -> keyCode = NEXT
+            ModernNotifier.ACTION_PREV -> keyCode = PREV
         }
     }
 

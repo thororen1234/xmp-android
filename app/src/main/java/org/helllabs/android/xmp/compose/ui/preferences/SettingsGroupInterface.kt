@@ -74,5 +74,15 @@ fun SettingsGroupInterface() {
                 PrefManager.enableDelete = it
             }
         )
+        val useMediaStyle = rememberBooleanSettingState(PrefManager.useMediaStyle)
+        SettingsSwitch(
+            title = { Text(text = "Use media style notification") },
+            subtitle = { Text(text = "If enabled the player notification will use MediaStyle layout, otherwise a standard notification.") },
+            state = useMediaStyle,
+            onCheckedChange = {
+                useMediaStyle.value = it
+                PrefManager.useMediaStyle = it
+            }
+        )
     }
 }

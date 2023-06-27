@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "org.helllabs.android.xmp"
-        minSdk = 23
+        minSdk = 23 // 	Marshmallow
         targetSdk = 27
 
         versionCode = 87
@@ -131,4 +131,8 @@ dependencies {
 
     // https://square.github.io/leakcanary/getting_started/
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.11")
+
+    implementation("androidx.media:media:1.6.0")
+
+    implementation("androidx.core:core-ktx:1.10.1")
 }

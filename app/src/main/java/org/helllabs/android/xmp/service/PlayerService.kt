@@ -4,10 +4,10 @@ import android.app.Service
 import android.content.Intent
 import android.media.AudioManager
 import android.media.AudioManager.OnAudioFocusChangeListener
-import android.os.Build
 import android.os.IBinder
 import android.os.RemoteCallbackList
 import android.os.RemoteException
+import android.support.v4.media.session.MediaSessionCompat
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp.deinit
 import org.helllabs.android.xmp.Xmp.getModName
@@ -20,9 +20,7 @@ import org.helllabs.android.xmp.Xmp.setVolume
 import org.helllabs.android.xmp.Xmp.stopAudio
 import org.helllabs.android.xmp.Xmp.stopModule
 import org.helllabs.android.xmp.Xmp.time
-import org.helllabs.android.xmp.service.notifier.LollipopNotifier
-import org.helllabs.android.xmp.service.notifier.Notifier
-import org.helllabs.android.xmp.service.notifier.OreoNotifier
+import org.helllabs.android.xmp.service.notifier.ModernNotifier
 import org.helllabs.android.xmp.service.utils.QueueManager
 import org.helllabs.android.xmp.service.utils.RemoteControl
 import org.helllabs.android.xmp.service.utils.Watchdog
@@ -32,6 +30,7 @@ import timber.log.Timber
 class PlayerService : Service(), OnAudioFocusChangeListener {
 
     private val binder = ServiceBinder(this)
+    internal lateinit var mediaSession: MediaSessionCompat
 
     internal val callbacks = RemoteCallbackList<PlayerCallback>()
     internal var audioInitialized = false
@@ -43,7 +42,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     internal var ducking = false
     internal var hasAudioFocus = false
     internal var looped = false
-    internal var notifier: Notifier? = null
+    internal var notifier: ModernNotifier? = null
     internal var playAllSequences = false
     internal var playThread: Thread? = null
     internal var queue: QueueManager? = null
@@ -63,6 +62,9 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     override fun onCreate() {
         super.onCreate()
+
+        mediaSession = MediaSessionCompat(this, "PlayerService")
+
         Timber.i("Create service")
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         remoteControl = RemoteControl(this, audioManager)
@@ -91,11 +93,10 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         isPlayerPaused = false
         playAllSequences = PrefManager.allSequences
 
-        notifier = if (Build.VERSION.SDK_INT >= 26) {
-            OreoNotifier(this)
-        } else {
-            LollipopNotifier(this)
-        }
+        //mediaSession.setCallback() // TODO
+        mediaSession.isActive = true
+
+        notifier = ModernNotifier(this)
 
         watchdog = Watchdog(10)
         watchdog!!.setOnTimeoutListener {
@@ -115,7 +116,10 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         watchdog!!.stop()
         notifier!!.cancel()
 
-        // session.setActive(false);
+        mediaSession.isActive = false
+        mediaSession.setCallback(null)
+        mediaSession.release()
+
         if (audioInitialized) {
             end(if (hasAudioFocus) RESULT_OK else RESULT_NO_AUDIO_FOCUS)
         } else {
@@ -146,7 +150,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 name,
                 getModType(),
                 queue!!.index,
-                if (isPlayerPaused) Notifier.TYPE_PAUSE else 0
+                if (isPlayerPaused) ModernNotifier.TYPE_PAUSE else 0
             )
         }
     }

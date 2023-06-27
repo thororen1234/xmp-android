@@ -26,7 +26,7 @@ class ServiceBinder(playerService: PlayerService) : ModInterface.Stub() {
             return
         }
         service.queue = QueueManager(fileList, start, shuffle, loopList, keepFirst)
-        service.notifier!!.setQueue(service.queue)
+        service.notifier!!.queueManager = service.queue!!
         // notifier.clean();
         service.cmd = PlayerService.CMD_NONE
         if (isPaused) {

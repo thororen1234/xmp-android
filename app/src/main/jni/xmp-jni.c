@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <jni.h>
 #include "xmp.h"
+#include "common.h"
 #include "audio.h"
 
 /*  <android/log.h> */
@@ -721,6 +722,11 @@ Java_org_helllabs_android_xmp_Xmp_setSequence(JNIEnv *env, jobject obj, jint seq
     xmp_play_buffer(ctx, NULL, 0, 0);
 
     return JNI_TRUE;
+}
+
+JNIEXPORT jint JNICALL
+Java_org_helllabs_android_xmp_Xmp_getMaxSequences(JNIEnv *env, jobject obj) {
+    return MAX_SEQUENCES;
 }
 
 JNIEXPORT void JNICALL

@@ -57,7 +57,7 @@ class PlayerActivity : Activity() {
     private val infoType = arrayOfNulls<TextView>(2)
     private val modVars = IntArray(10)
     private val playerLock = Any() // for sync
-    private val seqVars = IntArray(16) // this is MAX_SEQUENCES defined in common.h
+    private val seqVars = IntArray(Xmp.maxSeqFromHeader)
     private var activity: Activity? = null
     private var channelViewer: Viewer? = null
     private var currentViewer = 0
