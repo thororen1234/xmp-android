@@ -22,7 +22,7 @@ class ModernNotifier(private val service: PlayerService) {
 
     lateinit var queueManager: QueueManager
 
-    private val icon = BitmapFactory.decodeResource(service.resources, R.drawable.icon)
+    // private val icon = BitmapFactory.decodeResource(service.resources, R.drawable.icon)
     private val nextIntent = makePendingIntent(ACTION_NEXT)
     private val pauseIntent = makePendingIntent(ACTION_PAUSE)
     private val prevIntent = makePendingIntent(ACTION_PREV)
@@ -58,8 +58,9 @@ class ModernNotifier(private val service: PlayerService) {
     }
 
     private fun makePendingIntent(action: String): PendingIntent {
-        val intent = Intent(service, NotificationActionReceiver::class.java)
-        intent.action = action
+        val intent = Intent(service, NotificationActionReceiver::class.java).apply {
+            this.action = action
+        }
         return PendingIntent.getBroadcast(service, 0, intent, 0)
     }
 
@@ -82,10 +83,10 @@ class ModernNotifier(private val service: PlayerService) {
             )
             setChannelId(CHANNEL_ID)
             setContentIntent(contentIntent)
-            setLargeIcon(icon)
+            // setLargeIcon(icon)
             setOngoing(true)
             setShowWhen(true)
-            setSmallIcon(R.drawable.notification_icon)
+            setSmallIcon(R.drawable.ic_notification)
             setSubText(formatIndex(index))
             setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
