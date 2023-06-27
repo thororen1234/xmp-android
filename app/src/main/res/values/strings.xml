@@ -178,7 +178,7 @@
     <string name="search_artist_no_mods">This artist has no modules.</string>
     <string name="search_title_or_filename">Title or file name</string>
     <string name="search_artist">Artist</string>
-    <string name="search_random_pick">Random pick</string>
+    <string name="search_random_pick">Random</string>
 
     <string name="result_title">Title</string>
     <string name="result_download">Download</string>
@@ -200,5 +200,6 @@
     <string name="clipboard_copied">Copied to clipboard</string>
     <string name="pref_draw_lines_title">Use better waveform</string>
     <string name="pref_draw_lines_summary">Enabling this will render the player viewer at ~50fps and use a better waveform drawing. Older/Lower end phones may experience frame drops.</string>
+    <string name="search_provided_by">Downloads provided by</string>
 
 </resources>

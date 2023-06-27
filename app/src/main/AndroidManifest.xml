@@ -165,6 +165,7 @@
         <!-- ModArchive search & download -->
         <activity
             android:name=".modarchive.Search"
+            android:theme="@style/AppTheme.Composable"
             android:configChanges="keyboardHidden|orientation|screenSize">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"

@@ -2,13 +2,15 @@ package org.helllabs.android.xmp.modarchive.result
 
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.modarchive.Search
 import org.helllabs.android.xmp.modarchive.SearchError
 import org.helllabs.android.xmp.util.Crossfader
 
-abstract class Result : AppCompatActivity() {
+abstract class Result : ComponentActivity() {
+
     private var crossfader: Crossfader? = null
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
