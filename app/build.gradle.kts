@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "org.helllabs.android.xmp"
-        minSdk = 23 // 	Marshmallow
+        minSdk = 21 // 	Lollipop
         targetSdk = 27
 
         versionCode = 87

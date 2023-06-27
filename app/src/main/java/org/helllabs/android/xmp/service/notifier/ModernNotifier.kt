@@ -64,7 +64,12 @@ class ModernNotifier(private val service: PlayerService) {
     }
 
     fun cancel() {
-        service.stopForeground(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            service.stopForeground(Service.STOP_FOREGROUND_REMOVE)
+        } else {
+            @Suppress("DEPRECATION")
+            service.stopForeground(true)
+        }
     }
 
     fun notify(title: String, info: String, index: Int, type: Int) {
