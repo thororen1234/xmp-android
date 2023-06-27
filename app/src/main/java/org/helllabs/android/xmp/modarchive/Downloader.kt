@@ -34,10 +34,8 @@ class Downloader(private val mActivity: Activity) {
         fun onProgress(@Param(Groundy.PROGRESS) progress: Int) {
             if (progress == Groundy.NO_SIZE_AVAILABLE) {
                 mProgressDialog!!.isIndeterminate = true
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    mProgressDialog!!.setProgressNumberFormat(null)
-                    mProgressDialog!!.setProgressPercentFormat(null)
-                }
+                mProgressDialog!!.setProgressNumberFormat(null)
+                mProgressDialog!!.setProgressPercentFormat(null)
             } else {
                 mProgressDialog!!.progress = mSize * progress / 100
             }
@@ -128,9 +126,7 @@ class Downloader(private val mActivity: Activity) {
         mProgressDialog!!.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
         mProgressDialog!!.setCancelable(true)
         mProgressDialog!!.max = mSize
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            mProgressDialog!!.setProgressNumberFormat("%d KB")
-        }
+        mProgressDialog!!.setProgressNumberFormat("%d KB")
         mProgressDialog!!.setOnCancelListener {
             if (mTaskHandler != null) {
                 mTaskHandler!!.cancel(mActivity, 0) { id, result ->

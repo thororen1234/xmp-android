@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
+import android.os.Build
 import androidx.core.graphics.ColorUtils
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
@@ -15,7 +16,14 @@ import timber.log.Timber
 class InstrumentViewer(context: Context, val background: Int) : Viewer(context, background) {
 
     private val startBlue: Int
-        get() = resources.getColor(R.color.accent, null)
+        get() {
+            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                resources.getColor(R.color.accent, null)
+            } else {
+                @Suppress("DEPRECATION")
+                resources.getColor(R.color.accent)
+            }
+        }
 
     private lateinit var insName: Array<String>
     private val barPaint = arrayListOf<Paint>()

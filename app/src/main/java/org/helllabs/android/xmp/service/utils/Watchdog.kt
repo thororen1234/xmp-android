@@ -24,6 +24,7 @@ class Watchdog(private val timeout: Int) : Runnable {
             try {
                 Thread.sleep(1000)
             } catch (e: InterruptedException) {
+                /* Nothing */
             }
         }
     }
@@ -40,6 +41,7 @@ class Watchdog(private val timeout: Int) : Runnable {
         try {
             thread!!.join()
         } catch (e: InterruptedException) {
+            /* Nothing */
         }
     }
 
