@@ -1,6 +1,5 @@
 package org.helllabs.android.xmp.di
 
-import android.content.Context
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
@@ -10,7 +9,6 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
-import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.serialization.ExperimentalSerializationApi
 import nl.adaptivity.xmlutil.serialization.XML

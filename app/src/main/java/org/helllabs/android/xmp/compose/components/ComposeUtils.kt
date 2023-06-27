@@ -12,9 +12,8 @@ private val pattern = Regex("http://|https://")
 @Composable
 fun annotatedLinkString(
     text: String,
-    url: String,
+    url: String
 ): AnnotatedString = buildAnnotatedString {
-
     val string = "$text $url"
     append(string)
 

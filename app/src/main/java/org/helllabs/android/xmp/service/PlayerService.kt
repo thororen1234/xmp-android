@@ -93,7 +93,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         isPlayerPaused = false
         playAllSequences = PrefManager.allSequences
 
-        //mediaSession.setCallback() // TODO
+        // mediaSession.setCallback() // TODO
         mediaSession.isActive = true
 
         notifier = ModernNotifier(this)

@@ -112,7 +112,7 @@ class Search : ComponentActivity() {
 private fun SearchScreen(
     onBack: () -> Unit,
     onSearch: (query: String, type: SearchType) -> Unit,
-    onRandom: () -> Unit,
+    onRandom: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -129,7 +129,7 @@ private fun SearchScreen(
         topBar = {
             XmpTopBar(
                 title = stringResource(id = R.string.search_title),
-                onBack = onBack,
+                onBack = onBack
             )
         }
     ) { paddingValues ->
@@ -140,12 +140,12 @@ private fun SearchScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
                 .consumeWindowInsets(paddingValues)
-                .systemBarsPadding(),
+                .systemBarsPadding()
         ) {
             Column(
                 modifier = Modifier.align(Alignment.TopCenter),
                 verticalArrangement = Arrangement.Top,
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
@@ -170,7 +170,7 @@ private fun SearchScreen(
                         keyboardType = KeyboardType.Text
                     ),
                     maxLines = 1,
-                    label = { Text(text = stringResource(id = R.string.search_search)) },
+                    label = { Text(text = stringResource(id = R.string.search_search)) }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 SegmentedButton(
@@ -180,7 +180,7 @@ private fun SearchScreen(
                     selectedIndex = searchType.ordinal,
                     itemsList = listOf(
                         stringResource(id = R.string.search_artist),
-                        stringResource(id = R.string.search_title_or_filename),
+                        stringResource(id = R.string.search_title_or_filename)
                     ),
                     onClick = {
                         searchType = SearchType.values()[it]

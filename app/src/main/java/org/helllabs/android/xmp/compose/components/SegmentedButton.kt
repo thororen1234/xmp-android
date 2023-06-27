@@ -20,7 +20,7 @@ fun SegmentedButton(
     cornerRadius: Dp = 16.dp,
     selectedIndex: Int,
     itemsList: List<String>,
-    onClick: (index: Int) -> Unit,
+    onClick: (index: Int) -> Unit
 ) {
     Row(modifier = modifier) {
         itemsList.forEachIndexed { index, item ->
@@ -64,7 +64,8 @@ fun SegmentedButton(
                     )
                 },
                 border = BorderStroke(
-                    1.dp, if (selectedIndex == index) {
+                    1.dp,
+                    if (selectedIndex == index) {
                         MaterialTheme.colorScheme.primary
                     } else {
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.75f)

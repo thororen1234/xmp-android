@@ -142,8 +142,9 @@ class PlaylistMenu : ComponentActivity() {
 
             // Ask for Permissions
             LaunchedEffect(Unit) {
-                if (!storagePermission.status.isGranted)
+                if (!storagePermission.status.isGranted) {
                     storagePermission.launchPermissionRequest()
+                }
             }
 
             LaunchedEffect(storagePermission) {

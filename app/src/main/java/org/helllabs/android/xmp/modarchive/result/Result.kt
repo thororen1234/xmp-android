@@ -3,7 +3,6 @@ package org.helllabs.android.xmp.modarchive.result
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.appcompat.app.AppCompatActivity
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.modarchive.Search
 import org.helllabs.android.xmp.modarchive.SearchError

@@ -14,7 +14,7 @@ data class ModuleResult(
     @XmlElement(true) val error: String? = null,
     @XmlElement(true) val results: Int = 0,
     @XmlElement(true) val totalpages: Int = 0,
-    @XmlElement(true) val module: Module = Module(),
+    @XmlElement(true) val module: Module = Module()
 ) {
     fun hasSponsor(): Boolean {
         return sponsor.details.text.isNotEmpty()
@@ -33,7 +33,7 @@ data class SponsorDetails(
     @XmlElement(true) val link: String = "",
     @XmlElement(true) val image: String = "",
     @XmlElement(true) val text: String = "",
-    @XmlElement(true) val imagehtml: String = "",
+    @XmlElement(true) val imagehtml: String = ""
 )
 
 @Serializable
@@ -61,7 +61,7 @@ data class Module(
     @XmlElement(true) val channels: Int = 0,
     @XmlElement(true) val overallRatings: OverallRatings = OverallRatings(),
     @XmlElement(true) val license: License = License(),
-    @XmlElement(true) val artistInfo: ArtistInfo = ArtistInfo(),
+    @XmlElement(true) val artistInfo: ArtistInfo = ArtistInfo()
 ) {
     val byteSize: Int
         get() = bytes.div(1024)
@@ -115,14 +115,14 @@ data class Module(
 data class Featured(
     @XmlElement(true) val state: String = "",
     @XmlElement(true) val date: String = "",
-    @XmlElement(true) val timestamp: String = "",
+    @XmlElement(true) val timestamp: String = ""
 )
 
 @Serializable
 @SerialName("favourites")
 data class Favourites(
     @XmlElement(true) val favoured: Int = 0,
-    @XmlElement(true) val myfav: Int = 0,
+    @XmlElement(true) val myfav: Int = 0
 )
 
 @Serializable
@@ -131,7 +131,7 @@ data class OverallRatings(
     @XmlElement(true) val comment_rating: Double = 0.0,
     @XmlElement(true) val comment_total: Int = 0,
     @XmlElement(true) val review_rating: Int = 0,
-    @XmlElement(true) val review_total: Int = 0,
+    @XmlElement(true) val review_total: Int = 0
 )
 
 @Serializable

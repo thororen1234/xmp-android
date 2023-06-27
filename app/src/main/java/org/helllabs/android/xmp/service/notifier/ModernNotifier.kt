@@ -6,17 +6,16 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import org.helllabs.android.xmp.PrefManager
-import androidx.media.app.NotificationCompat.MediaStyle as MediaStyle
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.player.PlayerActivity
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.service.receiver.NotificationActionReceiver
 import org.helllabs.android.xmp.service.utils.QueueManager
 import java.util.Locale
+import androidx.media.app.NotificationCompat.MediaStyle as MediaStyle
 
 class ModernNotifier(private val service: PlayerService) {
 
