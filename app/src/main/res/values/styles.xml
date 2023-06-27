@@ -73,9 +73,4 @@
         <item name="android:background">@drawable/section_background</item>
         <item name="android:textColor">@color/white</item>
     </style>
-
-    <style name="PreferencesTheme" parent="ThemeOverlay.AppCompat.Dark">
-        <item name="android:windowBackground">@color/black</item>
-    </style>
-
 </resources>
