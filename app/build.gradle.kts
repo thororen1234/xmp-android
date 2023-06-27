@@ -1,7 +1,10 @@
 plugins {
     id("com.android.application")
+    id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.android")
     id("org.jlleitschuh.gradle.ktlint") version "11.4.2"
+    kotlin("kapt")
+    kotlin("plugin.serialization") version "1.8.21"
 }
 
 android {
@@ -52,8 +55,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     composeOptions {
@@ -61,7 +64,11 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
+    }
+
+    kapt {
+        correctErrorTypes = true
     }
 
     packaging {
@@ -101,6 +108,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation("androidx.media:media:1.6.0")
+    implementation("androidx.core:core-ktx:1.10.1")
 
     // https://mvnrepository.com/artifact/com.android.volley/volley
     implementation("com.android.volley:volley:1.2.1")
@@ -132,7 +141,22 @@ dependencies {
     // https://square.github.io/leakcanary/getting_started/
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.11")
 
-    implementation("androidx.media:media:1.6.0")
+    // https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
 
-    implementation("androidx.core:core-ktx:1.10.1")
+    // https://github.com/pdvrieze/xmlutil
+    implementation("io.github.pdvrieze.xmlutil:core-android:0.86.0")
+    implementation("io.github.pdvrieze.xmlutil:serialization-android:0.86.0")
+
+    // https://mvnrepository.com/artifact/com.squareup.moshi/moshi-kotlin
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
+
+    // https://search.maven.org/artifact/com.squareup.okhttp3/okhttp
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+
+    // https://mvnrepository.com/artifact/com.jakewharton.retrofit/retrofit2-kotlinx-serialization-converter
+    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
+
+    implementation("com.google.dagger:hilt-android:2.44")
+    kapt("com.google.dagger:hilt-android-compiler:2.44")
 }
