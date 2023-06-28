@@ -89,7 +89,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.themedText
 import org.helllabs.android.xmp.compose.ui.preferences.Preferences
-import org.helllabs.android.xmp.modarchive.Search
+import org.helllabs.android.xmp.compose.ui.search.Search
 import org.helllabs.android.xmp.player.PlayerActivity
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber

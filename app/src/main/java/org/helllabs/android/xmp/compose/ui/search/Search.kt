@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.modarchive
+package org.helllabs.android.xmp.compose.ui.search
 
 import android.content.Intent
 import android.content.res.Configuration
@@ -54,9 +54,8 @@ import org.helllabs.android.xmp.compose.components.SegmentedButton
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.components.annotatedLinkString
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.modarchive.result.ArtistResult
-import org.helllabs.android.xmp.modarchive.result.RandomResult
-import org.helllabs.android.xmp.modarchive.result.TitleResult
+import org.helllabs.android.xmp.compose.ui.search.result.Result
+import org.helllabs.android.xmp.compose.ui.search.result.SearchResult
 import timber.log.Timber
 
 enum class SearchType {
@@ -79,20 +78,15 @@ class Search : ComponentActivity() {
                         onBackPressedDispatcher.onBackPressed()
                     },
                     onSearch = { query, type ->
-                        when (type) {
-                            SearchType.TYPE_ARTIST ->
-                                Intent(this, ArtistResult::class.java).apply {
-                                    putExtra(SEARCH_TEXT, query.trim())
-                                }.also(::startActivity)
-
-                            SearchType.TYPE_TITLE_OR_FILENAME ->
-                                Intent(this, TitleResult::class.java).apply {
-                                    putExtra(SEARCH_TEXT, query.trim())
-                                }.also(::startActivity)
-                        }
+                        Intent(this, SearchResult::class.java).apply {
+                            putExtra(SEARCH_TEXT, query.trim())
+                            putExtra("search_type", type)
+                        }.also(::startActivity)
                     },
                     onRandom = {
-                        Intent(this, RandomResult::class.java).also(::startActivity)
+                        Intent(this, Result::class.java).apply {
+                            putExtra(MODULE_ID, -1)
+                        }.also(::startActivity)
                     }
                 )
             }
@@ -102,7 +96,6 @@ class Search : ComponentActivity() {
     companion object {
         const val SEARCH_TEXT = "search_text"
         const val MODULE_ID = "module_id"
-        const val ARTIST_ID = "artist_id"
         const val ERROR = "error"
     }
 }

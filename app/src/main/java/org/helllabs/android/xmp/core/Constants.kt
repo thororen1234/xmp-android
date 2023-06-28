@@ -6,6 +6,8 @@ import org.helllabs.android.xmp.model.Module
 object Constants {
     const val apiKey: String = BuildConfig.API_KEY
 
+    const val DEFAULT_DOWNLOAD_DIR = "TheModArchive"
+
     const val BASE_URL: String = "https://api.modarchive.org"
     const val BY_ARTIST: String = "search_artist"
     const val BY_ARTIST_ID: String = "view_modules_by_artistid"

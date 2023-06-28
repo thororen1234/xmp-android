@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:installLocation="auto">
 
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -17,10 +18,12 @@
         android:name="XmpApplication"
         android:allowBackup="true"
         android:description="@string/app_description"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:theme="@style/AppTheme.Composable">
+        android:theme="@style/AppTheme.Composable"
+        tools:ignore="UnusedAttribute">
 
         <!-- Playlist and File browser -->
         <activity
@@ -164,58 +167,42 @@
 
         <!-- ModArchive search & download -->
         <activity
-            android:name=".modarchive.Search"
-            android:theme="@style/AppTheme.Composable"
-            android:configChanges="keyboardHidden|orientation|screenSize">
+            android:name=".compose.ui.search.Search"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:theme="@style/AppTheme.Composable">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".compose.ui.menu.PlaylistMenu" />
         </activity>
         <activity
-            android:name=".modarchive.SearchError"
+            android:name=".compose.ui.search.SearchError"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:theme="@style/AppTheme.NoActionBar" />
-        <activity
-            android:name=".modarchive.result.TitleResult"
-            android:configChanges="keyboardHidden|orientation|screenSize">
+            android:parentActivityName=".compose.ui.search.Search"
+            android:theme="@style/AppTheme.Composable">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".modarchive.Search" />
+                android:value=".compose.ui.search.Search" />
         </activity>
         <activity
-            android:name=".modarchive.result.ArtistResult"
-            android:configChanges="keyboardHidden|orientation|screenSize">
+            android:name=".compose.ui.search.result.SearchResult"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:theme="@style/AppTheme.Composable">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".modarchive.Search" />
+                android:value=".compose.ui.search.Search" />
         </activity>
         <activity
-            android:name=".modarchive.result.ArtistModulesResult"
-            android:configChanges="keyboardHidden|orientation|screenSize">
+            android:name=".compose.ui.search.result.Result"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:parentActivityName=".compose.ui.search.Search"
+            android:theme="@style/AppTheme.Composable">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".modarchive.Search" />
-        </activity>
-        <activity
-            android:name=".modarchive.result.ModuleResult"
-            android:configChanges="keyboardHidden|orientation|screenSize">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".modarchive.Search" />
-        </activity>
-        <activity
-            android:name=".modarchive.result.RandomResult"
-            android:configChanges="keyboardHidden|orientation|screenSize">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".modarchive.Search" />
+                android:value=".compose.ui.search.Search" />
         </activity>
 
         <!-- Service -->
         <service android:name=".service.PlayerService" />
-        <service
-            android:name="com.telly.groundy.GroundyService"
-            android:exported="false" />
 
         <receiver
             android:name=".service.receiver.MediaButtonsReceiver"

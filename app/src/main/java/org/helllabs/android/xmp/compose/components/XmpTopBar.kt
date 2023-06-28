@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.components
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -16,7 +17,8 @@ import androidx.compose.runtime.Composable
 fun XmpTopBar(
     title: String,
     isScrolled: Boolean = false,
-    onBack: (() -> Unit)? = null
+    onBack: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {}
 ) {
     val topBarContainerColor = if (isScrolled) {
         MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .5f)
@@ -41,6 +43,7 @@ fun XmpTopBar(
                     content = { Icon(Icons.Default.ArrowBack, contentDescription = null) }
                 )
             }
-        }
+        },
+        actions = actions
     )
 }
