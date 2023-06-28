@@ -80,7 +80,8 @@ android {
 
 dependencies {
 
-    val composeBom = platform("androidx.compose:compose-bom:2023.05.01")
+    // https://developer.android.com/jetpack/compose/bom/bom-mapping
+    val composeBom = platform("androidx.compose:compose-bom:2023.06.01")
     implementation(composeBom)
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.foundation:foundation")
@@ -104,30 +105,18 @@ dependencies {
     implementation("com.github.alorma:compose-settings-storage-preferences:$settings")
     implementation("com.github.alorma:compose-settings-ui-m3:$settings")
 
-    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.core:core-splashscreen:1.0.1") // TODO implement
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
     implementation("androidx.media:media:1.6.0")
-    implementation("androidx.core:core-ktx:1.10.1")
-
-    // https://mvnrepository.com/artifact/com.android.volley/volley
-    implementation("com.android.volley:volley:1.2.1")
-
-    // https://mvnrepository.com/artifact/com.telly/groundy
-    implementation("com.telly:groundy:1.5")
-
-    // https://mvnrepository.com/artifact/androidx.cardview/cardview
-    implementation("androidx.cardview:cardview:1.0.0")
 
     // https://mvnrepository.com/artifact/androidx.recyclerview/recyclerview
     implementation("androidx.recyclerview:recyclerview:1.3.0")
 
     // https://mvnrepository.com/artifact/com.h6ah4i.android.widget.advrecyclerview/advrecyclerview
     implementation("com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:1.0.0")
-
-    // https://mvnrepository.com/artifact/com.fnp/material-preferences
-    implementation("com.fnp:material-preferences:1.0.0")
 
     // https://mvnrepository.com/artifact/androidx.swiperefreshlayout/swiperefreshlayout
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
@@ -138,15 +127,13 @@ dependencies {
     // https://mvnrepository.com/artifact/com.jakewharton.timber/timber
     implementation("com.jakewharton.timber:timber:5.0.1")
 
-    // https://square.github.io/leakcanary/getting_started/
-    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.11")
-
     // https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
 
-    // https://github.com/pdvrieze/xmlutil
-    implementation("io.github.pdvrieze.xmlutil:core-android:0.86.0")
-    implementation("io.github.pdvrieze.xmlutil:serialization-android:0.86.0")
+    // https://mvnrepository.com/artifact/io.github.pdvrieze.xmlutil/core-android
+    val xmlUtil = "0.86.0"
+    implementation("io.github.pdvrieze.xmlutil:core-android:$xmlUtil")
+    implementation("io.github.pdvrieze.xmlutil:serialization-android:$xmlUtil")
 
     // https://mvnrepository.com/artifact/com.squareup.moshi/moshi-kotlin
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
@@ -157,6 +144,10 @@ dependencies {
     // https://mvnrepository.com/artifact/com.jakewharton.retrofit/retrofit2-kotlinx-serialization-converter
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
 
-    implementation("com.google.dagger:hilt-android:2.44")
-    kapt("com.google.dagger:hilt-android-compiler:2.44")
+    // https://mvnrepository.com/artifact/com.google.dagger/hilt-android
+    implementation("com.google.dagger:hilt-android:2.46.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.46.1")
+
+    // https://square.github.io/leakcanary/getting_started/
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.11")
 }

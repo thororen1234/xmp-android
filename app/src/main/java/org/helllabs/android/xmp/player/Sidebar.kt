@@ -8,8 +8,7 @@ import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.util.Log.e
-import org.helllabs.android.xmp.util.Log.i
+import timber.log.Timber
 
 class Sidebar(private val activity: PlayerActivity) {
 
@@ -35,7 +34,7 @@ class Sidebar(private val activity: PlayerActivity) {
         allSequencesButton.setImageResource(if (activity.allSequences) R.drawable.sub_on else R.drawable.sub_off)
         seqGroup = activity.findViewById<View>(R.id.sidebar_sequences) as RadioGroup
         seqGroupListener = RadioGroup.OnCheckedChangeListener { _, checkedId ->
-            e(TAG, "Selection changed to sequence $checkedId")
+            Timber.e("Selection changed to sequence $checkedId")
             activity.playNewSequence(checkedId)
         }
         seqGroup.setOnCheckedChangeListener(seqGroupListener)
@@ -73,21 +72,19 @@ class Sidebar(private val activity: PlayerActivity) {
 
     fun selectSequence(num: Int) {
         seqGroup.setOnCheckedChangeListener(null)
-        i(TAG, "Select sequence $num")
+        Timber.i("Select sequence $num")
         seqGroup.check(-1) // force redraw
         seqGroup.check(num)
         seqGroup.setOnCheckedChangeListener(seqGroupListener)
-    } // 	private void commentClick() {
+    }
 
+    // 	private void commentClick() {
     // 		final String comment = Xmp.getComment();
     // 		if (comment != null) {
     // 			final Intent intent = new Intent(activity, CommentActivity.class);
     // 			intent.putExtra("comment", comment);
-    // 			activity.startActivity(intent);		
+    // 			activity.startActivity(intent);
     // 		}
-    // 		
+    //
     // 	}
-    companion object {
-        private const val TAG = "Sidebar"
-    }
 }

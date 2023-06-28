@@ -8,8 +8,7 @@ import android.media.AudioManager
 import android.media.MediaMetadataRetriever
 import android.media.RemoteControlClient
 import org.helllabs.android.xmp.service.receiver.RemoteControlReceiver
-import org.helllabs.android.xmp.util.Log.i
-import org.helllabs.android.xmp.util.Log.w
+import timber.log.Timber
 
 @Suppress("deprecation")
 class RemoteControl(context: Context, private val audioManager: AudioManager?) {
@@ -18,9 +17,10 @@ class RemoteControl(context: Context, private val audioManager: AudioManager?) {
     private var remoteControlClient: RemoteControlClientCompat? = null
 
     init {
-        remoteControlReceiver = ComponentName(context.packageName, RemoteControlReceiver::class.java.name)
+        remoteControlReceiver =
+            ComponentName(context.packageName, RemoteControlReceiver::class.java.name)
         if (remoteControlClient == null) {
-            i(TAG, "Register remote control client")
+            Timber.i("Register remote control client")
             audioManager!!.registerMediaButtonEventReceiver(remoteControlReceiver)
             val intent = Intent(Intent.ACTION_MEDIA_BUTTON)
             intent.component = remoteControlReceiver
@@ -37,28 +37,28 @@ class RemoteControl(context: Context, private val audioManager: AudioManager?) {
     }
 
     fun unregisterReceiver() {
-        w(TAG, "Unregister remote control client")
+        Timber.w("Unregister remote control client")
         audioManager!!.unregisterMediaButtonEventReceiver(remoteControlReceiver)
         RemoteControlHelper.unregisterRemoteControlClient(audioManager, remoteControlClient)
     }
 
     fun setStatePlaying() {
         if (remoteControlClient != null) {
-            i(TAG, "Set state to playing")
+            Timber.i("Set state to playing")
             remoteControlClient?.setPlaybackState(RemoteControlClient.PLAYSTATE_PLAYING)
         }
     }
 
     fun setStatePaused() {
         if (remoteControlClient != null) {
-            i(TAG, "Set state to paused")
+            Timber.i("Set state to paused")
             remoteControlClient?.setPlaybackState(RemoteControlClient.PLAYSTATE_PAUSED)
         }
     }
 
     fun setStateStopped() {
         if (remoteControlClient != null) {
-            i(TAG, "Set state to stopped")
+            Timber.i("Set state to stopped")
             remoteControlClient?.setPlaybackState(RemoteControlClient.PLAYSTATE_STOPPED)
         }
     }

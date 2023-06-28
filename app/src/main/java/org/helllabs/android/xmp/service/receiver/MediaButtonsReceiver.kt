@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.view.KeyEvent
-import org.helllabs.android.xmp.util.Log.i
+import timber.log.Timber
 
 open class MediaButtonsReceiver : BroadcastReceiver() {
 
@@ -12,7 +12,7 @@ open class MediaButtonsReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        i(TAG, "Action $action")
+        Timber.i("Action $action")
         if (action == Intent.ACTION_MEDIA_BUTTON) {
             val event = intent.extras!![Intent.EXTRA_KEY_EVENT] as KeyEvent?
             if (event!!.action != KeyEvent.ACTION_DOWN) {
@@ -21,10 +21,10 @@ open class MediaButtonsReceiver : BroadcastReceiver() {
             var code: Int
             when (event.keyCode.also { code = it }) {
                 KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_MEDIA_PREVIOUS, KeyEvent.KEYCODE_MEDIA_STOP, KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
-                    i(TAG, "Key code $code")
+                    Timber.i("Key code $code")
                     keyCode = code
                 }
-                else -> i(TAG, "Unhandled key code $code")
+                else -> Timber.i("Unhandled key code $code")
             }
             if (ordered) {
                 abortBroadcast()

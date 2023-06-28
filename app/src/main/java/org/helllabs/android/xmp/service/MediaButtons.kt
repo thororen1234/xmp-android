@@ -4,7 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.media.AudioManager
 import org.helllabs.android.xmp.service.receiver.MediaButtonsReceiver
-import org.helllabs.android.xmp.util.Log.e
+import timber.log.Timber
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
@@ -17,7 +17,8 @@ internal class MediaButtons(context: Context) {
 
     init {
         audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        mediaButtonsResponder = ComponentName(context.packageName, MediaButtonsReceiver::class.java.name)
+        mediaButtonsResponder =
+            ComponentName(context.packageName, MediaButtonsReceiver::class.java.name)
     }
 
     fun register() {
@@ -35,7 +36,7 @@ internal class MediaButtons(context: Context) {
                 else -> throw RuntimeException(ite)
             }
         } catch (ie: IllegalAccessException) {
-            e(TAG, "Unexpected $ie")
+            Timber.e("Unexpected $ie")
         }
     }
 
@@ -53,7 +54,7 @@ internal class MediaButtons(context: Context) {
                 else -> throw RuntimeException(ite)
             }
         } catch (ie: IllegalAccessException) {
-            e(TAG, "Unexpected $ie")
+            Timber.e("Unexpected $ie")
         }
     }
 
@@ -81,7 +82,7 @@ internal class MediaButtons(context: Context) {
             } catch (nsme: NoSuchMethodException) {
                 /* failure, still using the legacy behavior, but this app */
                 /* is future-proof! */
-                e(TAG, nsme.message!!)
+                Timber.e(nsme.message!!)
             }
         }
     }

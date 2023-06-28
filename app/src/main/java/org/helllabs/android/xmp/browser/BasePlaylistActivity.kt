@@ -24,7 +24,6 @@ import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.util.InfoCache.testModule
 import org.helllabs.android.xmp.util.InfoCache.testModuleForceIfInvalid
-import org.helllabs.android.xmp.util.Log.i
 import org.helllabs.android.xmp.util.Message.toast
 import timber.log.Timber
 
@@ -206,7 +205,7 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        i(TAG, "Activity result $requestCode,$resultCode")
+        Timber.i("Activity result $requestCode,$resultCode")
         when (requestCode) {
             SETTINGS_REQUEST -> {
                 update()
@@ -271,7 +270,6 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val TAG = "PlaylistActivity"
         private const val SETTINGS_REQUEST = 45
         private const val PLAY_MOD_REQUEST = 669
         private const val SEARCH_REQUEST = 47

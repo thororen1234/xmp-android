@@ -3,7 +3,7 @@ package org.helllabs.android.xmp.service.receiver
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import org.helllabs.android.xmp.util.Log.i
+import timber.log.Timber
 
 class HeadsetPlugReceiver : BroadcastReceiver() {
 
@@ -11,7 +11,7 @@ class HeadsetPlugReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        i(TAG, "Action $action")
+        Timber.i("Action $action")
         if (intent.action == Intent.ACTION_HEADSET_PLUG) {
             if (skip) {
                 skip = false
@@ -19,10 +19,10 @@ class HeadsetPlugReceiver : BroadcastReceiver() {
             }
             val headsetState = intent.getIntExtra("state", -1)
             if (headsetState == 0) {
-                i(TAG, "Headset unplugged")
+                Timber.i("Headset unplugged")
                 state = HEADSET_UNPLUGGED
             } else if (headsetState == 1) {
-                i(TAG, "Headset plugged")
+                Timber.i("Headset plugged")
                 state = HEADSET_PLUGGED
             }
         }

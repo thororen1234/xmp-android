@@ -4,12 +4,13 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import org.helllabs.android.xmp.service.notifier.ModernNotifier
-import org.helllabs.android.xmp.util.Log
+import timber.log.Timber
 
 class NotificationActionReceiver : BroadcastReceiver() {
+
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
-        Log.i(TAG, "Action $action")
+        Timber.i("Action $action")
         when (action) {
             ModernNotifier.ACTION_STOP -> keyCode = STOP
             ModernNotifier.ACTION_PAUSE -> keyCode = PAUSE
@@ -19,7 +20,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
     }
 
     companion object {
-        private const val TAG = "NotificationActionReceiver"
         const val NO_KEY = -1
         const val STOP = 1
         const val PAUSE = 2

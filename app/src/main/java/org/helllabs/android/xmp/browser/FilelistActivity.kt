@@ -26,10 +26,10 @@ import org.helllabs.android.xmp.util.FileUtils.basename
 import org.helllabs.android.xmp.util.InfoCache.clearCache
 import org.helllabs.android.xmp.util.InfoCache.delete
 import org.helllabs.android.xmp.util.InfoCache.deleteRecursive
-import org.helllabs.android.xmp.util.Log.i
 import org.helllabs.android.xmp.util.Message.error
 import org.helllabs.android.xmp.util.Message.toast
 import org.helllabs.android.xmp.util.Message.yesNoDialog
+import timber.log.Timber
 import java.io.File
 import java.text.DateFormat
 
@@ -237,7 +237,7 @@ class FilelistActivity : BasePlaylistActivity(), PlaylistAdapter.OnItemClickList
             saveModes = true
         }
         if (saveModes) {
-            i(TAG, "Save new file list preferences")
+            Timber.i("Save new file list preferences")
             PrefManager.loopMode = isLoopMode
             PrefManager.shuffleMode = isShuffleMode
         }
@@ -424,8 +424,6 @@ class FilelistActivity : BasePlaylistActivity(), PlaylistAdapter.OnItemClickList
     }
 
     companion object {
-        private const val TAG = "BasePlaylistActivity"
-
         private fun recursiveList(file: File?): List<String> {
             val list: MutableList<String> = ArrayList()
             if (file == null) {
