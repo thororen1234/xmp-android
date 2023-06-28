@@ -7,6 +7,7 @@ import android.content.DialogInterface
 import android.widget.Toast
 import org.helllabs.android.xmp.R
 
+@Deprecated("Replace with Composables")
 object Message {
 
     @JvmStatic

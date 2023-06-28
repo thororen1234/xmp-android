@@ -10,7 +10,6 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ViewModelComponent
 import dagger.hilt.android.scopes.ViewModelScoped
-import kotlinx.serialization.ExperimentalSerializationApi
 import nl.adaptivity.xmlutil.serialization.XML
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -40,7 +39,6 @@ object ModArchiveModule {
 //        return Fetch.Impl.getInstance(fetchConfiguration)
 //    }
 
-    @OptIn(ExperimentalSerializationApi::class)
     @ViewModelScoped
     @Provides
     fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {

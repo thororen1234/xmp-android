@@ -71,7 +71,7 @@ import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.browser.FilelistActivity
+import org.helllabs.android.xmp.browser.FileListActivity
 import org.helllabs.android.xmp.browser.PlaylistActivity
 import org.helllabs.android.xmp.browser.playlist.Playlist
 import org.helllabs.android.xmp.browser.playlist.PlaylistItem
@@ -278,7 +278,7 @@ class PlaylistMenu : ComponentActivity() {
                     onItemClick = { item ->
                         if (item.type == PlaylistItem.TYPE_SPECIAL) {
                             playlistResult.launch(
-                                Intent(context, FilelistActivity::class.java)
+                                Intent(context, FileListActivity::class.java)
                             )
                             return@PlaylistMenuScreen
                         }

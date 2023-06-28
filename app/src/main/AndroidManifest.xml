@@ -38,13 +38,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".browser.FilelistActivity"
+            android:name=".browser.FileListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme.Composable" />
         <activity
             android:name=".browser.PlaylistActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:theme="@style/AppTheme" />
+            android:theme="@style/AppTheme.Composable" />
 
         <!-- Player -->
         <activity

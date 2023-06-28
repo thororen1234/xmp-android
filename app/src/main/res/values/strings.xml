@@ -220,5 +220,7 @@
     <string name="delete_file_message">Are you sure you want to delete %s?</string>
     <string name="msg_file_exists">File Exists</string>
     <string name="msg_file_exists_message">This module already exists. Do you want to overwrite?</string>
+    <string name="file_no_path_title">Path not found</string>
+    <string name="file_no_path_text">%s not found. Create this directory or change the module path.</string>
 
 </resources>

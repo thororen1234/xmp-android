@@ -64,8 +64,8 @@ class ReceiverHelper(private val player: PlayerService) {
     }
 
     private fun checkMediaButtons() {
-        val key: Int = MediaButtonsReceiver.Companion.getKeyCode()
-        if (key != MediaButtonsReceiver.Companion.NO_KEY) {
+        val key: Int = MediaButtonsReceiver.getKeyCode()
+        if (key != MediaButtonsReceiver.NO_KEY) {
             when (key) {
                 KeyEvent.KEYCODE_MEDIA_NEXT -> {
                     Timber.i("Handle KEYCODE_MEDIA_NEXT")
@@ -98,41 +98,41 @@ class ReceiverHelper(private val player: PlayerService) {
                     }
                 }
             }
-            MediaButtonsReceiver.Companion.setKeyCode(MediaButtonsReceiver.Companion.NO_KEY)
+            MediaButtonsReceiver.setKeyCode(MediaButtonsReceiver.NO_KEY)
         }
     }
 
     private fun checkNotificationButtons() {
-        val key: Int = NotificationActionReceiver.Companion.getKeyCode()
-        if (key != NotificationActionReceiver.Companion.NO_KEY) {
+        val key: Int = NotificationActionReceiver.getKeyCode()
+        if (key != NotificationActionReceiver.NO_KEY) {
             when (key) {
-                NotificationActionReceiver.Companion.STOP -> {
+                NotificationActionReceiver.STOP -> {
                     Timber.i("Handle notification stop")
                     player.actionStop()
                 }
-                NotificationActionReceiver.Companion.PAUSE -> {
+                NotificationActionReceiver.PAUSE -> {
                     Timber.i("Handle notification pause")
                     player.actionPlayPause()
                     isHeadsetPaused = false
                 }
-                NotificationActionReceiver.Companion.NEXT -> {
+                NotificationActionReceiver.NEXT -> {
                     Timber.i("Handle notification next")
                     player.actionNext()
                 }
-                NotificationActionReceiver.Companion.PREV -> {
+                NotificationActionReceiver.PREV -> {
                     Timber.i("Handle notification prev")
                     player.actionPrev()
                 }
             }
-            NotificationActionReceiver.Companion.setKeyCode(NotificationActionReceiver.Companion.NO_KEY)
+            NotificationActionReceiver.setKeyCode(NotificationActionReceiver.NO_KEY)
         }
     }
 
     private fun checkHeadsetState() {
-        val state: Int = HeadsetPlugReceiver.Companion.getState()
-        if (state != HeadsetPlugReceiver.Companion.NO_STATE) {
+        val state: Int = HeadsetPlugReceiver.getState()
+        if (state != HeadsetPlugReceiver.NO_STATE) {
             when (state) {
-                HeadsetPlugReceiver.Companion.HEADSET_UNPLUGGED -> {
+                HeadsetPlugReceiver.HEADSET_UNPLUGGED -> {
                     Timber.i("Handle headset unplugged")
 
                     // If not already paused
@@ -143,7 +143,7 @@ class ReceiverHelper(private val player: PlayerService) {
                         Timber.i("Already paused")
                     }
                 }
-                HeadsetPlugReceiver.Companion.HEADSET_PLUGGED -> {
+                HeadsetPlugReceiver.HEADSET_PLUGGED -> {
                     Timber.i("Handle headset plugged")
 
                     // If paused by headset unplug
@@ -160,15 +160,15 @@ class ReceiverHelper(private val player: PlayerService) {
                     }
                 }
             }
-            HeadsetPlugReceiver.Companion.setState(HeadsetPlugReceiver.Companion.NO_STATE)
+            HeadsetPlugReceiver.setState(HeadsetPlugReceiver.NO_STATE)
         }
     }
 
     private fun checkBluetoothState() {
-        val state: Int = BluetoothConnectionReceiver.Companion.getState()
-        if (state != BluetoothConnectionReceiver.Companion.NO_STATE) {
+        val state: Int = BluetoothConnectionReceiver.getState()
+        if (state != BluetoothConnectionReceiver.NO_STATE) {
             when (state) {
-                BluetoothConnectionReceiver.Companion.DISCONNECTED -> {
+                BluetoothConnectionReceiver.DISCONNECTED -> {
                     Timber.i("Handle bluetooth disconnection")
 
                     // If not already paused
@@ -179,7 +179,7 @@ class ReceiverHelper(private val player: PlayerService) {
                         Timber.i("Already paused")
                     }
                 }
-                BluetoothConnectionReceiver.Companion.CONNECTED -> {
+                BluetoothConnectionReceiver.CONNECTED -> {
                     Timber.i("Handle bluetooth connection")
 
                     // If paused by headset unplug

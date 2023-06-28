@@ -70,7 +70,7 @@ object Xmp {
     external fun getFormats(): Array<String>?
     external fun getInstruments(): Array<String>?
     external fun getLoopCount(): Int
-    external fun getMaxSequences(): Int
+    private external fun getMaxSequences(): Int
     external fun getModName(): String
     external fun getModType(): String
     external fun getModVars(vars: IntArray?)
