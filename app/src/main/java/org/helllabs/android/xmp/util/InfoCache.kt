@@ -8,61 +8,39 @@ import java.io.FileReader
 import java.io.IOException
 
 object InfoCache {
+    fun clearCache(fileList: List<String>) {
+        fileList.forEach { fileName ->
+            clearCache(fileName)
+        }
+    }
 
-    @JvmStatic
     fun clearCache(filename: String): Boolean {
+        fun File.deleteIfExists(): Boolean = this.takeIf { it.isFile }?.delete() ?: false
+
         val cacheFile = File(PrefManager.CACHE_DIR, "$filename.cache")
         val skipFile = File(PrefManager.CACHE_DIR, "$filename.skip")
-        var ret = false
-        if (cacheFile.isFile) {
-            cacheFile.delete()
-            ret = true
-        }
-        if (skipFile.isFile) {
-            skipFile.delete()
-            ret = true
-        }
-        return ret
+        return cacheFile.deleteIfExists() or skipFile.deleteIfExists()
     }
 
-    private fun removeCacheDir(filename: String): Boolean {
-        val cacheFile = File(PrefManager.CACHE_DIR, "$filename.cache")
-        var ret = false
-        if (cacheFile.isDirectory) {
-            cacheFile.delete()
-            ret = true
-        }
-        return ret
-    }
-
-    @JvmStatic
     fun delete(filename: String): Boolean {
         val file = File(filename)
         clearCache(filename)
         return file.delete()
     }
 
-    @JvmStatic
     fun deleteRecursive(filename: String): Boolean {
         val file = File(filename)
-        return if (file.isDirectory) {
-            for (f in file.listFiles().orEmpty()) {
-                if (f.isDirectory) {
-                    deleteRecursive(f.path)
-                } else {
-                    f.delete()
-                }
-            }
-            file.delete()
-            removeCacheDir(filename)
-            true
+
+        if (file.isDirectory) {
+            file.deleteRecursively() // Delete the directory and its contents
         } else {
-            clearCache(filename)
-            file.delete()
+            clearCache(filename) // Clears cache
+            file.delete() // Deletes the file
         }
+
+        return !file.exists() // Returns true if the file/directory no longer exists
     }
 
-    @JvmStatic
     fun fileExists(filename: String): Boolean {
         val file = File(filename)
         if (file.isFile) {
@@ -72,7 +50,6 @@ object InfoCache {
         return false
     }
 
-    @JvmStatic
     fun testModuleForceIfInvalid(filename: String): Boolean {
         val skipFile = File(PrefManager.CACHE_DIR, "$filename.skip")
         if (skipFile.isFile) {
@@ -81,36 +58,21 @@ object InfoCache {
         return testModule(filename)
     }
 
-    @JvmStatic
-    fun testModule(filename: String): Boolean {
-        return testModule(filename, ModInfo())
-    }
+    fun testModule(filename: String): Boolean =
+        testModule(filename, ModInfo())
 
     @Throws(IOException::class)
     private fun checkIfCacheValid(file: File, cacheFile: File, info: ModInfo): Boolean {
-        var ret = false
-        val reader = BufferedReader(FileReader(cacheFile), 512)
-        val line = reader.readLine()
-        if (line != null) {
-            try {
-                val size = line.toInt()
-                if (size.toLong() == file.length()) {
-                    info.name = reader.readLine()
-                    if (info.name != null) {
-                        reader.readLine() // skip filename
-                        info.type = reader.readLine()
-                        if (info.type != null) {
-                            ret = true
-                        }
-                    }
-                }
-            } catch (e: NumberFormatException) {
-                // Someone had binary contents in the cache file, breaking parseInt()
-                ret = false
+        return BufferedReader(FileReader(cacheFile), 512).use { reader ->
+            val size = reader.readLine()?.toIntOrNull()
+            if (size?.toLong() == file.length()) {
+                info.name = reader.readLine()
+                reader.readLine() // skip filename
+                info.type = reader.readLine()
+                return true
             }
+            false
         }
-        reader.close()
-        return ret
     }
 
     private fun testModule(filename: String, info: ModInfo): Boolean {
@@ -118,9 +80,11 @@ object InfoCache {
             // Can't use cache
             return Xmp.testModule(filename, info)
         }
+
         val file = File(filename)
         val cacheFile = File(PrefManager.CACHE_DIR, "$filename.cache")
         val skipFile = File(PrefManager.CACHE_DIR, "$filename.skip")
+
         return try {
             // If cache file exists and size matches, file is mod
             if (cacheFile.isFile) {
@@ -133,11 +97,14 @@ object InfoCache {
                 if (checkIfCacheValid(file, cacheFile, info)) {
                     return true
                 }
+
                 cacheFile.delete() // Invalid or outdated cache file
             }
+
             if (skipFile.isFile) {
                 return false
             }
+
             val isMod = Xmp.testModule(filename, info)
             if (isMod) {
                 val lines = arrayOf<String?>(
@@ -159,6 +126,7 @@ object InfoCache {
                 }
                 skipFile.createNewFile()
             }
+
             isMod
         } catch (e: IOException) {
             Xmp.testModule(filename, info)

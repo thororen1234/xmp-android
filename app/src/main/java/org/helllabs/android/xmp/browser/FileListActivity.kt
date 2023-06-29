@@ -6,7 +6,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,11 +25,13 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -90,7 +92,8 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.core.Assets
 import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.model.DropDownItem
-import org.helllabs.android.xmp.util.InfoCache.clearCache
+import org.helllabs.android.xmp.util.FileUtils
+import org.helllabs.android.xmp.util.InfoCache
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
@@ -252,7 +255,7 @@ class FileListViewModel : ViewModel() {
     fun getItems(): List<PlaylistItem> = _uiState.value.list
 
     fun clearCachedEntries() {
-        getFilenameList().forEach { clearCache(it) }
+        InfoCache.clearCache(getFilenameList())
     }
 }
 
@@ -430,7 +433,6 @@ class FileListActivity : BasePlaylistActivity() {
                     )
                 }
 
-                // TODO meh
                 var playlistChoiceState: PlaylistChoiceData? by remember { mutableStateOf(null) }
                 if (playlistChoiceState != null) {
                     // Return if no playlists exist
@@ -502,6 +504,119 @@ class FileListActivity : BasePlaylistActivity() {
                     }
                 }
 
+                var deleteDirectory by remember { mutableIntStateOf(-1) }
+                if (deleteDirectory >= 0) {
+                    val mediaPath = PrefManager.mediaPath
+                    val deleteName by remember {
+                        val deleteName = viewModel.getItems()[deleteDirectory].file!!.path
+                        mutableStateOf(deleteName)
+                    }
+
+                    if (deleteName.startsWith(mediaPath) && deleteName != mediaPath) {
+                        AlertDialog(
+                            onDismissRequest = { deleteDirectory = -1 },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.QuestionMark,
+                                    contentDescription = null
+                                )
+                            },
+                            title = { Text(text = "Delete directory") },
+                            text = {
+                                Text(
+                                    text = "Are you sure you want to delete directory " +
+                                        "\"${FileUtils.basename(deleteName)}\" and all its contents?"
+                                )
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        if (InfoCache.deleteRecursive(deleteName)) {
+                                            viewModel.onRefresh()
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = getString(R.string.msg_dir_deleted)
+                                                )
+                                            }
+                                        } else {
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(
+                                                    message = getString(R.string.msg_cant_delete_dir)
+                                                )
+                                            }
+                                        }
+                                        deleteDirectory = -1
+                                    }
+                                ) {
+                                    Text(text = stringResource(id = R.string.menu_delete))
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { deleteDirectory = -1 }) {
+                                    Text(text = stringResource(id = R.string.cancel))
+                                }
+                            }
+                        )
+                    } else {
+                        // Prevent deletion of files outside preferred mod dir.
+                        LaunchedEffect(deleteDirectory) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = getString(R.string.error_dir_not_under_moddir)
+                                )
+                            }
+                        }
+                        deleteDirectory = -1
+                    }
+                }
+
+                var deleteFile: String? by remember { mutableStateOf(null) }
+                if (deleteFile != null) {
+                    AlertDialog(
+                        onDismissRequest = { deleteFile = null },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Default.QuestionMark,
+                                contentDescription = null
+                            )
+                        },
+                        title = {
+                            Text(text = "Delete File")
+                        },
+                        text = {
+                            Text(text = "Are you sure you want to delete ${FileUtils.basename(deleteFile)}?")
+                        },
+                        confirmButton = {
+                            TextButton(
+                                onClick = {
+                                    if (InfoCache.delete(deleteFile!!)) {
+                                        viewModel.onRefresh()
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = getString(R.string.msg_file_deleted)
+                                            )
+                                        }
+                                    } else {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = getString(R.string.msg_cant_delete)
+                                            )
+                                        }
+                                    }
+                                    deleteFile = null
+                                }
+                            ) {
+                                Text(text = stringResource(id = R.string.menu_delete))
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { deleteFile = null }) {
+                                Text(text = stringResource(id = R.string.cancel))
+                            }
+                        }
+                    )
+                }
+
                 FileListScreen(
                     state = state,
                     snackbarHostState = snackbarHostState,
@@ -520,9 +635,11 @@ class FileListActivity : BasePlaylistActivity() {
                             0 ->
                                 playlistChoiceState =
                                     PlaylistChoiceData(0, addFileListToPlaylistChoice)
+
                             1 ->
                                 playlistChoiceState =
                                     PlaylistChoiceData(0, addCurrentRecursiveChoice)
+
                             2 -> addToQueue(viewModel.getFilenameList())
                             3 -> {
                                 scope.launch {
@@ -532,6 +649,7 @@ class FileListActivity : BasePlaylistActivity() {
                                 }
                                 PrefManager.mediaPath = viewModel.currentPath
                             }
+
                             4 -> viewModel.clearCachedEntries()
                         }
                     },
@@ -551,9 +669,32 @@ class FileListActivity : BasePlaylistActivity() {
                             )
                         }
                     },
-                    onItemLongClick = { item, index ->
-                        // TODO
+                    onItemLongClick = { item, index, menuIndex ->
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        if (item.type == PlaylistItem.TYPE_DIRECTORY) {
+                            // Directories
+                            when (menuIndex) {
+                                0 ->
+                                    playlistChoiceState =
+                                        PlaylistChoiceData(index, addRecursiveToPlaylistChoice)
+
+                                1 -> addToQueue(Files.recursiveList(item.file))
+                                2 -> playModule(Files.recursiveList(item.file))
+                                3 -> deleteDirectory = index
+                            }
+                        } else {
+                            // Files
+                            when (menuIndex) {
+                                0 ->
+                                    playlistChoiceState =
+                                        PlaylistChoiceData(index, addFileToPlaylistChoice)
+
+                                1 -> addToQueue(item.file!!.path)
+                                2 -> playModule(item.file!!.path)
+                                3 -> playModule(viewModel.getFilenameList(), index)
+                                4 -> deleteFile = item.file!!.path
+                            }
+                        }
                     }
                 )
             }
@@ -563,91 +704,6 @@ class FileListActivity : BasePlaylistActivity() {
     override fun update() {
         viewModel.onRefresh()
     }
-
-//    private fun deleteDirectory(position: Int) {
-//        val deleteName = mPlaylistAdapter.getFilename(position)
-//        val mediaPath = PrefManager.mediaPath
-//        if (deleteName.startsWith(mediaPath) && deleteName != mediaPath) {
-//            yesNoDialog(
-//                this,
-//                "Delete directory",
-//                "Are you sure you want to delete directory \"" +
-//                    basename(deleteName) + "\" and all its contents?"
-//            ) {
-//                if (deleteRecursive(deleteName)) {
-//                    updateModlist()
-//                    toast(this@FileListActivity, getString(R.string.msg_dir_deleted))
-//                } else {
-//                    toast(this@FileListActivity, getString(R.string.msg_cant_delete_dir))
-//                }
-//            }
-//        } else {
-//            toast(this, R.string.error_dir_not_under_moddir)
-//        }
-//    }
-//
-//    // Playlist context menu
-//    override fun onCreateContextMenu(menu: ContextMenu?, view: View?, menuInfo: ContextMenuInfo?) {
-//        super.onCreateContextMenu(menu, view, menuInfo)
-//        val position = mPlaylistAdapter.position
-//        if (mPlaylistAdapter.getFile(position)!!.isDirectory) { // For directory
-//            menu.setHeaderTitle("This directory")
-//            menu.add(Menu.NONE, 0, 0, "Add to playlist")
-//            menu.add(Menu.NONE, 1, 1, "Add to play queue")
-//            menu.add(Menu.NONE, 2, 2, "Play contents")
-//            menu.add(Menu.NONE, 3, 3, "Delete directory")
-//        } else { // For files
-//            val mode = PrefManager.playlistMode
-//            menu.setHeaderTitle("This file")
-//            menu.add(Menu.NONE, 0, 0, "Add to playlist")
-//            if (mode != 3) {
-//                menu.add(Menu.NONE, 1, 1, "Add to play queue")
-//            }
-//            if (mode != 2) {
-//                menu.add(Menu.NONE, 2, 2, "Play this file")
-//            }
-//            if (mode != 1) {
-//                menu.add(Menu.NONE, 3, 3, "Play all starting here")
-//            }
-//            menu.add(Menu.NONE, 4, 4, "Delete file")
-//        }
-//    }
-//
-//    override fun onContextItemSelected(item: MenuItem): Boolean {
-//        val id = item.itemId
-//        val position = mPlaylistAdapter.position
-//        if (mPlaylistAdapter.getFile(position)!!.isDirectory) { // Directories
-//            when (id) {
-//                0 -> choosePlaylist(position, addRecursiveToPlaylistChoice)
-//                1 -> addToQueue(recursiveList(mPlaylistAdapter.getFile(position)))
-//                2 -> playModule(recursiveList(mPlaylistAdapter.getFile(position)))
-//                3 -> deleteDirectory(position)
-//            }
-//        } else { // Files
-//            when (id) {
-//                0 -> choosePlaylist(position, addFileToPlaylistChoice)
-//                1 -> addToQueue(mPlaylistAdapter.getFilename(position))
-//                2 -> playModule(mPlaylistAdapter.getFilename(position))
-//                3 -> playModule(mPlaylistAdapter.filenameList, position)
-//                4 -> {
-//                    val deleteName = mPlaylistAdapter.getFilename(position)
-//                    yesNoDialog(
-//                        this,
-//                        "Delete",
-//                        "Are you sure you want to delete " + basename(deleteName) + "?"
-//                    ) {
-//                        if (delete(deleteName)) {
-//                            updateModlist()
-//                            toast(this@FileListActivity, getString(R.string.msg_file_deleted))
-//                        } else {
-//                            toast(this@FileListActivity, getString(R.string.msg_cant_delete))
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        return true
-//    }
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
@@ -664,7 +720,7 @@ private fun FileListScreen(
     onCrumbMenu: (index: Int) -> Unit,
     onCrumbClick: (crumb: FileListViewModel.BreadCrumb, index: Int) -> Unit,
     onItemClick: (item: PlaylistItem, index: Int) -> Unit,
-    onItemLongClick: (item: PlaylistItem, index: Int) -> Unit
+    onItemLongClick: (item: PlaylistItem, index: Int, menuIndex: Int) -> Unit
 ) {
     val scrollState = rememberLazyListState()
     val crumbScrollState = rememberLazyListState()
@@ -723,8 +779,13 @@ private fun FileListScreen(
                                 bottomEnd = 16.dp
                             )
                         ) {
+                            val haptic = LocalHapticFeedback.current
+
                             IconButton(
-                                onClick = { isContextMenuVisible = true }
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    isContextMenuVisible = true
+                                }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.MoreHoriz,
@@ -789,33 +850,101 @@ private fun FileListScreen(
                     state = scrollState
                 ) {
                     itemsIndexed(state.list) { index, item ->
-                        ListItem(
-                            modifier = Modifier.combinedClickable(
-                                onClick = { onItemClick(item, index) },
-                                onLongClick = { onItemLongClick(item, index) }
-                            ),
-                            leadingContent = {
-                                val icon = when (item.type) {
-                                    PlaylistItem.TYPE_DIRECTORY -> Icons.Default.Folder
-                                    PlaylistItem.TYPE_FILE -> Icons.Default.InsertDriveFile
-                                    else -> Icons.Default.QuestionMark
-                                }
+                        Card(modifier = Modifier.padding(6.dp)) {
+                            var isContextMenuVisible by rememberSaveable { mutableStateOf(false) }
+                            val haptic = LocalHapticFeedback.current
+                            ListItem(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onItemClick(item, index) },
+                                leadingContent = {
+                                    val icon = when (item.type) {
+                                        PlaylistItem.TYPE_DIRECTORY -> Icons.Default.Folder
+                                        PlaylistItem.TYPE_FILE -> Icons.Default.InsertDriveFile
+                                        else -> Icons.Default.QuestionMark
+                                    }
 
-                                Icon(imageVector = icon, contentDescription = null)
-                            },
-                            headlineContent = {
-                                Text(text = item.name)
-                            },
-                            supportingContent = {
-                                // Hacky
-                                val comment = if (item.type == PlaylistItem.TYPE_DIRECTORY) {
-                                    stringResource(id = R.string.directory)
-                                } else {
-                                    item.comment
+                                    Icon(imageVector = icon, contentDescription = null)
+                                },
+                                headlineContent = {
+                                    Text(text = item.name)
+                                },
+                                trailingContent = {
+                                    IconButton(
+                                        onClick = {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            isContextMenuVisible = true
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.MoreVert,
+                                            contentDescription = null
+                                        )
+                                    }
+
+                                    val contextList =
+                                        if (item.type == PlaylistItem.TYPE_DIRECTORY) {
+                                            listOf(
+                                                DropDownItem("Add to playlist", 0),
+                                                DropDownItem("Add to play queue", 1),
+                                                DropDownItem("Play contents", 2),
+                                                DropDownItem("Delete directory", 3)
+                                            )
+                                        } else {
+                                            val mode = PrefManager.playlistMode
+                                            mutableListOf(
+                                                DropDownItem("Add to playlist", 0),
+                                                DropDownItem("Delete file", 4)
+                                            ).also {
+                                                if (mode != 3) {
+                                                    it.add(1, DropDownItem("Add to play queue", 1))
+                                                }
+                                                if (mode != 2) {
+                                                    it.add(2, DropDownItem("Play this file", 2))
+                                                }
+                                                if (mode != 1) {
+                                                    it.add(
+                                                        3,
+                                                        DropDownItem("Play all starting here", 3)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    CascadeDropdownMenu(
+                                        expanded = isContextMenuVisible,
+                                        onDismissRequest = { isContextMenuVisible = false }
+                                    ) {
+                                        XmpDropdownMenuHeader {
+                                            val text =
+                                                if (item.type == PlaylistItem.TYPE_DIRECTORY) {
+                                                    "This Directory"
+                                                } else {
+                                                    "This File"
+                                                }
+                                            Text(text = text)
+                                        }
+                                        contextList.forEach {
+                                            DropdownMenuItem(
+                                                text = { Text(text = it.text) },
+                                                onClick = {
+                                                    onItemLongClick(item, index, it.index)
+                                                    isContextMenuVisible = false
+                                                }
+                                            )
+                                        }
+                                    }
+                                },
+                                supportingContent = {
+                                    // Hacky
+                                    val comment = if (item.type == PlaylistItem.TYPE_DIRECTORY) {
+                                        stringResource(id = R.string.directory)
+                                    } else {
+                                        item.comment
+                                    }
+                                    Text(text = comment, fontStyle = FontStyle.Italic)
                                 }
-                                Text(text = comment, fontStyle = FontStyle.Italic)
-                            }
-                        )
+                            )
+                        }
                     }
                 }
 
@@ -884,7 +1013,7 @@ private fun Preview_FileListScreen() {
             onCrumbClick = { _, _ -> },
             onCrumbMenu = {},
             onItemClick = { _, _ -> },
-            onItemLongClick = { _, _ -> }
+            onItemLongClick = { _, _, _ -> }
         )
     }
 }
