@@ -56,6 +56,11 @@ object PrefManager {
             prefs.edit { putBoolean("show_toast", value) }
         }
 
+    /**
+     * 1. Start playing at selection
+     * 2. Play selected file
+     * 3. Enqueue selected file
+     */
     var playlistMode: Int
         get() = prefs.getInt("playlist_mode", 1)
         set(value) {

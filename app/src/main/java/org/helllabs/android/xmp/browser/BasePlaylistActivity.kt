@@ -6,70 +6,45 @@ import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
-import android.view.MenuItem
-import android.view.MotionEvent
-import android.view.View
-import android.widget.ImageButton
-import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.RecyclerView
-import androidx.recyclerview.widget.RecyclerView.OnItemTouchListener
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import androidx.activity.ComponentActivity
+import androidx.compose.material3.SnackbarHostState
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
-import org.helllabs.android.xmp.browser.playlist.PlaylistAdapter
-import org.helllabs.android.xmp.compose.ui.menu.PlaylistMenu
+import org.helllabs.android.xmp.browser.playlist.PlaylistItem
 import org.helllabs.android.xmp.player.PlayerActivity
 import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.util.InfoCache.testModule
 import org.helllabs.android.xmp.util.InfoCache.testModuleForceIfInvalid
-import org.helllabs.android.xmp.util.Message.toast
 import timber.log.Timber
 
-abstract class BasePlaylistActivity : AppCompatActivity() {
+/**
+ * Base activity for [FileListActivity] and [PlaylistActivity].
+ * Contains things needed for [ServiceConnection] and [PlayerService]
+ *      to play modules, queue files, and to provide shuffle and loop commands.
+ */
+abstract class BasePlaylistActivity : ComponentActivity() {
+
+    internal lateinit var snackbarHostState: SnackbarHostState
 
     private var mAddList: MutableList<String>? = null
     private var mModPlayer: ModInterface? = null
-    private var mShowToasts = false
-    private var refresh = false
-    protected lateinit var mPlaylistAdapter: PlaylistAdapter
 
-    private val playAllButtonListener: View.OnClickListener = View.OnClickListener {
-        if (allFiles.isEmpty()) {
-            toast(this@BasePlaylistActivity, R.string.error_no_files_to_play)
-        } else {
-            playModule(allFiles)
+    protected abstract val isShuffleMode: Boolean
+    protected abstract val isLoopMode: Boolean
+    protected abstract val allFiles: List<String>
+    protected abstract fun update()
+
+    private fun showSnack(message: String) {
+        lifecycleScope.launch {
+            snackbarHostState.showSnackbar(
+                message = message
+            )
         }
     }
-
-    private val toggleLoopButtonListener: View.OnClickListener =
-        View.OnClickListener { view ->
-            var loopMode: Boolean = isLoopMode
-            loopMode = loopMode xor true
-            (view as ImageButton).setImageResource(if (loopMode) R.drawable.list_loop_on else R.drawable.list_loop_off)
-            if (mShowToasts) {
-                toast(
-                    view.getContext(),
-                    if (loopMode) R.string.msg_loop_on else R.string.msg_loop_off
-                )
-            }
-            isLoopMode = loopMode
-        }
-
-    private val toggleShuffleButtonListener: View.OnClickListener =
-        View.OnClickListener { view ->
-            var shuffleMode: Boolean = isShuffleMode
-            shuffleMode = shuffleMode xor true
-            (view as ImageButton).setImageResource(if (shuffleMode) R.drawable.list_shuffle_on else R.drawable.list_shuffle_off)
-            if (mShowToasts) {
-                toast(
-                    view.getContext(),
-                    if (shuffleMode) R.string.msg_shuffle_on else R.string.msg_shuffle_off
-                )
-            }
-            isShuffleMode = shuffleMode
-        }
 
     // Connection
     private val connection: ServiceConnection = object : ServiceConnection {
@@ -78,7 +53,11 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
             try {
                 mModPlayer!!.add(mAddList)
             } catch (e: RemoteException) {
-                toast(this@BasePlaylistActivity, R.string.error_adding_mod)
+                lifecycleScope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = getString(R.string.error_adding_mod)
+                    )
+                }
             }
             unbindService(this)
         }
@@ -88,90 +67,62 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
         }
     }
 
-    public override fun onCreate(savedInstanceState: Bundle?) {
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mShowToasts = PrefManager.showToast
-
-        // Action bar icon navigation
-        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+        snackbarHostState = SnackbarHostState()
     }
 
     public override fun onResume() {
         super.onResume()
-        if (refresh) {
-            update()
+        update()
+    }
+
+    /**
+     * Play all `playable` modules in the current path we're in.
+     */
+    open fun onPlayAll() {
+        if (allFiles.isEmpty()) {
+            showSnack(getString(R.string.error_no_files_to_play))
+        } else {
+            playModule(allFiles)
         }
     }
 
-    protected abstract var isShuffleMode: Boolean
-    protected abstract var isLoopMode: Boolean
-    protected abstract val allFiles: List<String>
-    protected abstract fun update()
-
-    protected fun setSwipeRefresh(recyclerView: RecyclerView) {
-        val swipeRefresh = findViewById<View>(R.id.swipeContainer) as SwipeRefreshLayout
-        swipeRefresh.setOnRefreshListener {
-            update()
-            swipeRefresh.isRefreshing = false
-        }
-        swipeRefresh.setColorSchemeResources(R.color.refresh_color)
-        recyclerView.addOnItemTouchListener(object : OnItemTouchListener {
-            override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                if (e.action == MotionEvent.ACTION_DOWN) {
-                    var enable = false
-                    if (recyclerView.childCount > 0) {
-                        enable = !recyclerView.canScrollVertically(-1)
-                    }
-                    swipeRefresh.isEnabled = enable
-                }
-                return false
-            }
-
-            override fun onTouchEvent(rv: RecyclerView, e: MotionEvent) {
-                // do nothing
-            }
-
-            override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) {
-                // do nothing
-            }
-        })
-    }
-
-    protected fun setupButtons() {
-        val playAllButton = findViewById<View>(R.id.play_all) as ImageButton
-        val toggleLoopButton = findViewById<View>(R.id.toggle_loop) as ImageButton
-        val toggleShuffleButton = findViewById<View>(R.id.toggle_shuffle) as ImageButton
-        playAllButton.setImageResource(R.drawable.list_play)
-        playAllButton.setOnClickListener(playAllButtonListener)
-        toggleLoopButton.setImageResource(if (isLoopMode) R.drawable.list_loop_on else R.drawable.list_loop_off)
-        toggleLoopButton.setOnClickListener(toggleLoopButtonListener)
-        toggleShuffleButton.setImageResource(if (isShuffleMode) R.drawable.list_shuffle_on else R.drawable.list_shuffle_off)
-        toggleShuffleButton.setOnClickListener(toggleShuffleButtonListener)
-    }
-
-    open fun onItemClick(adapter: PlaylistAdapter, view: View?, position: Int) {
-        val filename = adapter.getItem(position).file?.path.orEmpty()
+    open fun onItemClick(
+        items: List<PlaylistItem>,
+        filenameList: List<String>,
+        directoryCount: Int,
+        position: Int
+    ) {
+        val filename = items[position].file?.path.orEmpty()
         val mode = PrefManager.playlistMode
 
-        /* Test module again if invalid, in case a new file format is added to the
-		 * player library and the file was previously unrecognized and cached as invalid.
-		 */
+        /**
+         * Test module again if invalid, in case a new file format is added to the
+         * player library and the file was previously unrecognized and cached as invalid.
+         */
         if (testModuleForceIfInvalid(filename)) {
+            /**
+             * mode:
+             * 1. Start playing at selection
+             * 2. Play selected file
+             * 3. Enqueue selected file
+             */
             when (mode) {
                 1 -> {
-                    val count = position - adapter.directoryCount
+                    val count = position - directoryCount
                     if (count >= 0) {
-                        playModule(adapter.filenameList, count, isShuffleMode)
+                        playModule(filenameList, count, isShuffleMode)
                     }
                 }
                 2 -> playModule(filename)
                 3 -> {
                     addToQueue(filename)
-                    toast(this, "Added to queue")
+                    showSnack("Added to queue")
                 }
             }
         } else {
-            toast(this, "Unrecognized file format")
+            showSnack("Unrecognized file format")
         }
     }
 
@@ -203,21 +154,6 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        Timber.i("Activity result $requestCode,$resultCode")
-        when (requestCode) {
-            SETTINGS_REQUEST -> {
-                update()
-                mShowToasts = PrefManager.showToast
-            }
-            PLAY_MOD_REQUEST -> if (resultCode != RESULT_OK) {
-                update()
-            }
-            SEARCH_REQUEST -> refresh = true
-        }
-    }
-
     protected fun addToQueue(filename: String?) {
         if (testModule(filename!!)) {
             if (PlayerService.isAlive) {
@@ -244,7 +180,7 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
             }
         }
         if (invalid) {
-            toast(this, R.string.msg_only_valid_files_sent)
+            showSnack(getString(R.string.msg_only_valid_files_sent))
         }
         if (realSize > 0) {
             if (PlayerService.isAlive) {
@@ -257,21 +193,7 @@ abstract class BasePlaylistActivity : AppCompatActivity() {
         }
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            android.R.id.home -> {
-                val intent = Intent(this, PlaylistMenu::class.java)
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                startActivity(intent)
-                return true
-            }
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
     companion object {
-        private const val SETTINGS_REQUEST = 45
         private const val PLAY_MOD_REQUEST = 669
-        private const val SEARCH_REQUEST = 47
     }
 }

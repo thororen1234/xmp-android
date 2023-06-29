@@ -2,7 +2,7 @@ package org.helllabs.android.xmp.browser
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -18,20 +18,25 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -39,26 +44,35 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import me.saket.cascade.CascadeDropdownMenu
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.browser.playlist.PlaylistItem
@@ -66,43 +80,84 @@ import org.helllabs.android.xmp.browser.playlist.PlaylistUtils
 import org.helllabs.android.xmp.compose.components.BottomBarButtons
 import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
+import org.helllabs.android.xmp.compose.components.XmpDropdownMenuHeader
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.components.pullrefresh.ExperimentalMaterialApi
 import org.helllabs.android.xmp.compose.components.pullrefresh.PullRefreshIndicator
 import org.helllabs.android.xmp.compose.components.pullrefresh.pullRefresh
 import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullRefreshState
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.util.Message
+import org.helllabs.android.xmp.core.Assets
+import org.helllabs.android.xmp.core.Files
+import org.helllabs.android.xmp.model.DropDownItem
+import org.helllabs.android.xmp.util.InfoCache.clearCache
 import timber.log.Timber
 import java.io.File
+import java.io.IOException
+import java.text.DateFormat
 import kotlin.time.Duration.Companion.seconds
 
-data class BreadCrumb(
-    val name: String,
-    val path: String
-)
+// TODO: Seriously need to separate classes, and hoist composables!
 
 class FileListViewModel : ViewModel() {
+
+    // Bread crumbs are the back bone of the file explorer. :)
+    data class BreadCrumb(
+        val name: String,
+        val path: String,
+        val enabled: Boolean = false
+    )
+
+    // State class for UI related stuff
     data class FileListState(
-        val isLoading: Boolean = false,
-        val error: String? = null,
-        val list: List<PlaylistItem> = listOf(),
         val crumbs: List<BreadCrumb> = listOf(),
+        val error: String? = null,
+        val isLoading: Boolean = false,
         val isLoop: Boolean = false,
-        val isShuffle: Boolean = false
+        val isShuffle: Boolean = false,
+        val lastPath: String? = null,
+        val list: List<PlaylistItem> = listOf(),
+        val pathNotFound: Boolean = false
     )
 
     private val _uiState = MutableStateFlow(FileListState())
     val uiState = _uiState.asStateFlow()
 
+    val currentPath: String
+        get() {
+            val crumbs = uiState.value.crumbs
+            return if (crumbs.isEmpty()) "" else crumbs.last().path
+        }
+
     fun init() {
-        val initialPath = PrefManager.mediaPath
         _uiState.update {
             it.copy(
                 isShuffle = PrefManager.shuffleMode,
                 isLoop = PrefManager.loopMode
             )
         }
+
+        val initialPath = File(PrefManager.mediaPath)
+        onNavigate(initialPath)
+    }
+
+    /**
+     * Handle back presses
+     * @return *true* if successful, otherwise false
+     */
+    fun onBackPressed(): Boolean {
+        val popCrumb = _uiState.value.crumbs.dropLast(1).lastOrNull()
+
+        popCrumb?.let {
+            if (!popCrumb.enabled) {
+                return false
+            }
+
+            val file = File(it.path)
+            onNavigate(file)
+        }
+
+        return popCrumb != null
     }
 
     fun onLoop(value: Boolean) {
@@ -116,37 +171,103 @@ class FileListViewModel : ViewModel() {
     }
 
     fun onRefresh() {
-        // TODO
-    }
-
-    fun getCurrentPath(): String {
-        return _uiState.value.crumbs.last().path
-    }
-
-    fun startNavigation() {
-        val file = File(getCurrentPath())
-    }
-
-    fun changeDirectory(file: File): Boolean {
-        val crumbs = _uiState.value.crumbs.toMutableList()
-
-        if (file.isDirectory) {
-            crumbs.add(
-                BreadCrumb(
-                    name = File(file.parent!!).name,
-                    path = file.path
-                )
-            )
+        if (currentPath.isNotEmpty()) {
+            val file = File(currentPath)
+            onNavigate(file)
         }
+    }
+
+    fun onRestore() {
+        val file = _uiState.value.lastPath?.let { File(it) } ?: return
+        onNavigate(file)
+    }
+
+    fun onNavigate(modDir: File) {
+        viewModelScope.launch(Dispatchers.IO) {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+
+            // Snapshot our last known path.
+            if (currentPath.isNotEmpty()) {
+                val checkPath = File(currentPath).list()?.isNotEmpty() ?: false
+                if (checkPath) {
+                    _uiState.update { it.copy(lastPath = currentPath) }
+                }
+            }
+
+            Timber.d("File: ${modDir.path}")
+            if (!modDir.exists()) {
+                _uiState.update { it.copy(pathNotFound = true, isLoading = false) }
+            }
+
+            // Rebuild our bread crumbs
+            val crumbParts = modDir.path.split("/")
+            var currentCrumbPath = ""
+            val crumbs = crumbParts.filter { it.isNotEmpty() }.map { crumb ->
+                currentCrumbPath += "/$crumb"
+                BreadCrumb(
+                    name = crumb,
+                    path = currentCrumbPath,
+                    enabled = File(currentCrumbPath).canRead()
+                )
+            }
+            _uiState.update { it.copy(crumbs = crumbs) }
+
+            val list = modDir.listFiles()?.map { file ->
+                val item = if (file.isDirectory) {
+                    PlaylistItem(
+                        type = PlaylistItem.TYPE_DIRECTORY,
+                        name = file.name,
+                        comment = ""
+                    )
+                } else {
+                    val date = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
+                        .format(file.lastModified())
+
+                    PlaylistItem(
+                        type = PlaylistItem.TYPE_FILE,
+                        name = file.name,
+                        comment = "$date (${file.length() / 1024} kB)"
+                    )
+                }
+                item.file = file
+                item
+            }?.sorted() ?: mutableListOf()
+
+            PlaylistUtils.renumberIds(list)
+
+            _uiState.update { it.copy(list = list, isLoading = false) }
+        }
+    }
+
+    fun showPathNotFound(value: Boolean) {
+        _uiState.update { it.copy(pathNotFound = value) }
+    }
+
+    fun getFilenameList(): List<String> =
+        _uiState.value.list.filter { it.type == PlaylistItem.TYPE_FILE }.map { it.file!!.path }
+
+    fun getDirectoryCount(): Int =
+        _uiState.value.list.takeWhile { it.type == PlaylistItem.TYPE_DIRECTORY }.count()
+
+    fun getItems(): List<PlaylistItem> = _uiState.value.list
+
+    fun clearCachedEntries() {
+        getFilenameList().forEach { clearCache(it) }
     }
 }
 
-class FileListActivity : ComponentActivity() {
+class FileListActivity : BasePlaylistActivity() {
 
     private val viewModel by viewModels<FileListViewModel>()
 
-    val allFiles: List<String>
-        get() = recursiveList(viewModel.getCurrentPath())
+    override val allFiles: List<String>
+        get() = Files.recursiveList(viewModel.currentPath)
+
+    override val isShuffleMode: Boolean
+        get() = viewModel.uiState.value.isShuffle
+
+    override val isLoopMode: Boolean
+        get() = viewModel.uiState.value.isLoop
 
     /**
      * Recursively add current directory to playlist
@@ -155,7 +276,7 @@ class FileListActivity : ComponentActivity() {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
             PlaylistUtils.filesToPlaylist(
                 this@FileListActivity,
-                recursiveList(viewModel.getCurrentPath()),
+                Files.recursiveList(viewModel.currentPath),
                 PlaylistUtils.getPlaylistName(playlistSelection)
             )
         }
@@ -168,7 +289,7 @@ class FileListActivity : ComponentActivity() {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
             PlaylistUtils.filesToPlaylist(
                 this@FileListActivity,
-                recursiveList(viewModel.uiState.value.list[fileSelection].file),
+                Files.recursiveList(viewModel.uiState.value.list[fileSelection].file),
                 PlaylistUtils.getPlaylistName(playlistSelection)
             )
         }
@@ -204,9 +325,14 @@ class FileListActivity : ComponentActivity() {
     /**
      * For actions based on playlist selection made using choosePlaylist()
      */
-    private interface PlaylistChoice {
+    interface PlaylistChoice {
         fun execute(fileSelection: Int, playlistSelection: Int)
     }
+
+    data class PlaylistChoiceData(
+        val fileSelection: Int,
+        val playlistChoice: PlaylistChoice
+    )
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -215,52 +341,77 @@ class FileListActivity : ComponentActivity() {
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // TODO handle nav bar back.
-        // mBackButtonParentdir = PrefManager.backButtonNavigation
+        // On back pressed handler
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (PrefManager.backButtonNavigation) {
+                    if (!viewModel.onBackPressed()) {
+                        this.remove()
+                        onBackPressedDispatcher.onBackPressed()
+                    }
+                } else {
+                    this.remove()
+                    onBackPressedDispatcher.onBackPressed()
+                }
+            }
+        }
+
+        // Init our file manager
+        viewModel.init()
 
         setContent {
+            val haptic = LocalHapticFeedback.current
+            val scope = rememberCoroutineScope()
             val state by viewModel.uiState.collectAsStateWithLifecycle()
 
-            LaunchedEffect(Unit) {
-                // Init some state variables
-                viewModel.init()
+            // Set up and override on back pressed.
+            DisposableEffect(onBackPressedDispatcher) {
+                onBackPressedDispatcher.addCallback(callback)
+                onDispose {
+                    callback.remove()
+                }
             }
 
             XmpTheme {
-                var pathNotFound by remember { mutableStateOf(false) }
-                if (pathNotFound) {
+                if (state.pathNotFound) {
                     AlertDialog(
-                        onDismissRequest = { /*TODO*/ },
+                        onDismissRequest = { viewModel.showPathNotFound(false) },
                         icon = {
-                            Icon(imageVector = Icons.Default.Warning, contentDescription = null)
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null
+                            )
                         },
-                        title = {
-                            Text(text = stringResource(id = R.string.file_no_path_title))
-                        },
+                        title = { Text(text = stringResource(id = R.string.file_no_path_title)) },
                         text = {
                             Text(
                                 text = stringResource(
                                     id = R.string.file_no_path_text,
-                                    viewModel.getCurrentPath()
+                                    viewModel.currentPath
                                 )
                             )
                         },
                         confirmButton = {
                             TextButton(
                                 onClick = {
-                                    val ret = Examples.install(
-                                        this@FileListActivity,
-                                        viewModel.getCurrentPath(),
-                                        PrefManager.examples
-                                    )
-                                    if (ret < 0) {
-                                        Message.error(
+                                    try {
+                                        Assets.install(
                                             this@FileListActivity,
-                                            "Error creating directory ${viewModel.getCurrentPath()}."
+                                            viewModel.currentPath,
+                                            PrefManager.examples
                                         )
+                                        viewModel.onRefresh()
+                                    } catch (e: IOException) {
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(
+                                                message = "Error creating directory ${viewModel.currentPath}.",
+                                                actionLabel = getString(R.string.ok)
+                                            )
+
+                                            finish()
+                                        }
                                     }
-                                    viewModel.startNavigation()
-                                    pathNotFound = false
+                                    viewModel.showPathNotFound(false)
                                 }
                             ) {
                                 Text(text = stringResource(id = R.string.create))
@@ -269,8 +420,8 @@ class FileListActivity : ComponentActivity() {
                         dismissButton = {
                             TextButton(
                                 onClick = {
+                                    viewModel.showPathNotFound(false)
                                     finish()
-                                    pathNotFound = false
                                 }
                             ) {
                                 Text(text = stringResource(id = R.string.cancel))
@@ -279,79 +430,140 @@ class FileListActivity : ComponentActivity() {
                     )
                 }
 
+                // TODO meh
+                var playlistChoiceState: PlaylistChoiceData? by remember { mutableStateOf(null) }
+                if (playlistChoiceState != null) {
+                    // Return if no playlists exist
+                    if (PlaylistUtils.list().isEmpty()) {
+                        LaunchedEffect(playlistChoiceState) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = getString(R.string.msg_no_playlists)
+                                )
+                            }
+                        }
+                        playlistChoiceState = null
+                    } else {
+                        var selection by remember { mutableIntStateOf(0) }
+                        AlertDialog(
+                            onDismissRequest = { playlistChoiceState = null },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Default.PlaylistAdd,
+                                    contentDescription = null
+                                )
+                            },
+                            title = {
+                                Text(text = stringResource(id = R.string.msg_select_playlist))
+                            },
+                            text = {
+                                Column(modifier = Modifier.fillMaxWidth()) {
+                                    PlaylistUtils.listNoSuffix().forEachIndexed { index, text ->
+                                        Row(
+                                            Modifier
+                                                .fillMaxWidth()
+                                                .selectable(
+                                                    selected = (index == selection),
+                                                    onClick = { selection = index }
+                                                )
+                                                .padding(vertical = 5.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            RadioButton(
+                                                selected = (index == selection),
+                                                onClick = null
+                                            )
+                                            Text(text = text)
+                                        }
+                                    }
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(
+                                    onClick = {
+                                        with(playlistChoiceState!!) {
+                                            playlistChoice.execute(
+                                                fileSelection,
+                                                selection
+                                            )
+                                        }
+                                        playlistChoiceState = null
+                                    }
+                                ) {
+                                    Text(text = stringResource(id = R.string.ok))
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { playlistChoiceState = null }) {
+                                    Text(text = stringResource(id = R.string.cancel))
+                                }
+                            }
+                        )
+                    }
+                }
+
                 FileListScreen(
                     state = state,
-                    onBack = { onBackPressedDispatcher.onBackPressed() },
+                    snackbarHostState = snackbarHostState,
+                    onBack = {
+                        callback.remove()
+                        onBackPressedDispatcher.onBackPressed()
+                    },
                     onRefresh = viewModel::onRefresh,
+                    onRestore = viewModel::onRestore,
                     onShuffle = viewModel::onShuffle,
                     onLoop = viewModel::onLoop,
-                    onPlayAll = {
+                    onPlayAll = ::onPlayAll,
+                    onCrumbMenu = { index ->
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                        when (index) {
+                            0 ->
+                                playlistChoiceState =
+                                    PlaylistChoiceData(0, addFileListToPlaylistChoice)
+                            1 ->
+                                playlistChoiceState =
+                                    PlaylistChoiceData(0, addCurrentRecursiveChoice)
+                            2 -> addToQueue(viewModel.getFilenameList())
+                            3 -> {
+                                scope.launch {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Set as default module path"
+                                    )
+                                }
+                                PrefManager.mediaPath = viewModel.currentPath
+                            }
+                            4 -> viewModel.clearCachedEntries()
+                        }
                     },
-                    onCrumbMenu = {
-                    },
-                    onCrumbClick = { crumb, index ->
+                    onCrumbClick = { crumb, _ ->
+                        val file = File(crumb.path)
+                        viewModel.onNavigate(file)
                     },
                     onItemClick = { item, index ->
-                        if (viewModel.changeDirectory(item.file)) {
-                            updateModlist()
+                        if (item.file?.isDirectory == true) {
+                            viewModel.onNavigate(item.file!!)
                         } else {
-                            // TODO handle module click
+                            onItemClick(
+                                viewModel.getItems(),
+                                viewModel.getFilenameList(),
+                                viewModel.getDirectoryCount(),
+                                index
+                            )
                         }
                     },
                     onItemLongClick = { item, index ->
+                        // TODO
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     }
                 )
             }
         }
-
-//        // Check if directory exists
-//        val modDir = File(mediaPath)
-//        if (modDir.isDirectory) {
-//            mNavigation!!.startNavigation(modDir)
-//            updateModlist()
-//        } else {
-//            pathNotFound(mediaPath.orEmpty())
-//        }
     }
 
-//    private fun parentDir() {
-//        if (mNavigation!!.parentDir()) {
-//            updateModlist()
-//            mNavigation!!.restoreListPosition(recyclerView)
-//        }
-//    }
-//
-//    private fun updateModlist() {
-//        val modDir = mNavigation?.currentDir ?: return
-//        mPlaylistAdapter.clear()
-//        curPath!!.text = modDir.path
-//        val list: MutableList<PlaylistItem> = ArrayList()
-//        val dirFiles = modDir.listFiles()
-//        if (dirFiles != null) {
-//            for (file in dirFiles) {
-//                val item: PlaylistItem = if (file.isDirectory) {
-//                    PlaylistItem(
-//                        PlaylistItem.TYPE_DIRECTORY,
-//                        file.name,
-//                        getString(R.string.directory)
-//                    )
-//                } else {
-//                    val date = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
-//                        .format(file.lastModified())
-//                    val comment = date + String.format(" (%d kB)", file.length() / 1024)
-//                    PlaylistItem(PlaylistItem.TYPE_FILE, file.name, comment)
-//                }
-//                item.file = file
-//                list.add(item)
-//            }
-//        }
-//        list.sort()
-//        PlaylistUtils.renumberIds(list)
-//        mPlaylistAdapter.addList(list)
-//        mPlaylistAdapter.notifyDataSetChanged()
-//        mCrossfade!!.crossfade()
-//    }
-//
+    override fun update() {
+        viewModel.onRefresh()
+    }
+
 //    private fun deleteDirectory(position: Int) {
 //        val deleteName = mPlaylistAdapter.getFilename(position)
 //        val mediaPath = PrefManager.mediaPath
@@ -374,56 +586,9 @@ class FileListActivity : ComponentActivity() {
 //        }
 //    }
 //
-//    private fun choosePlaylist(fileSelection: Int, choice: PlaylistChoice) {
-//        // Return if no playlists exist
-//        if (PlaylistUtils.list().isEmpty()) {
-//            toast(this, getString(R.string.msg_no_playlists))
-//            return
-//        }
-//        val playlistSelection = IntArray(1)
-//        val listener = DialogInterface.OnClickListener { _, which ->
-//            if (which == DialogInterface.BUTTON_POSITIVE && playlistSelection[0] >= 0) {
-//                choice.execute(fileSelection, playlistSelection[0])
-//            }
-//        }
-//        val builder = AlertDialog.Builder(this)
-//        builder.setTitle(R.string.msg_select_playlist)
-//            .setPositiveButton(R.string.ok, listener)
-//            .setNegativeButton(R.string.cancel, listener)
-//            .setSingleChoiceItems(
-//                PlaylistUtils.listNoSuffix(),
-//                0
-//            ) { _, which ->
-//                playlistSelection[0] = which
-//            }
-//            .show()
-//    }
-//
-//    private fun clearCachedEntries(fileList: List<String>) {
-//        for (filename in fileList) {
-//            clearCache(filename)
-//        }
-//    }
-//
 //    // Playlist context menu
 //    override fun onCreateContextMenu(menu: ContextMenu?, view: View?, menuInfo: ContextMenuInfo?) {
 //        super.onCreateContextMenu(menu, view, menuInfo)
-//
-//        if (menu == null) {
-//            return
-//        }
-//
-//        if (view == curPath) {
-//            isPathMenu = true
-//            menu.setHeaderTitle("All files")
-//            menu.add(Menu.NONE, 0, 0, "Add to playlist")
-//            menu.add(Menu.NONE, 1, 1, "Recursive add to playlist")
-//            menu.add(Menu.NONE, 2, 2, "Add to play queue")
-//            menu.add(Menu.NONE, 3, 3, "Set as default path")
-//            menu.add(Menu.NONE, 4, 4, "Clear cache")
-//            return
-//        }
-//        isPathMenu = false
 //        val position = mPlaylistAdapter.position
 //        if (mPlaylistAdapter.getFile(position)!!.isDirectory) { // For directory
 //            menu.setHeaderTitle("This directory")
@@ -450,20 +615,6 @@ class FileListActivity : ComponentActivity() {
 //
 //    override fun onContextItemSelected(item: MenuItem): Boolean {
 //        val id = item.itemId
-//        if (isPathMenu) {
-//            when (id) {
-//                0 -> choosePlaylist(0, addFileListToPlaylistChoice)
-//                1 -> choosePlaylist(0, addCurrentRecursiveChoice)
-//                2 -> addToQueue(mPlaylistAdapter.filenameList)
-//                3 -> {
-//                    PrefManager.mediaPath = mNavigation?.currentDir?.path.toString()
-//                    toast(this, "Set as default module path")
-//                }
-//
-//                4 -> clearCachedEntries(mPlaylistAdapter.filenameList)
-//            }
-//            return true
-//        }
 //        val position = mPlaylistAdapter.position
 //        if (mPlaylistAdapter.getFile(position)!!.isDirectory) { // Directories
 //            when (id) {
@@ -497,31 +648,24 @@ class FileListActivity : ComponentActivity() {
 //        }
 //        return true
 //    }
-
-    companion object {
-        private fun recursiveList(path: String): List<String> =
-            recursiveList(File(path))
-
-        private fun recursiveList(file: File?): List<String> =
-            file?.walk()?.filter { it.isFile }?.map { it.path }?.toList() ?: emptyList()
-    }
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
 private fun FileListScreen(
     state: FileListViewModel.FileListState,
+    snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
     onRefresh: () -> Unit,
+    onRestore: () -> Unit,
     onShuffle: (value: Boolean) -> Unit,
     onLoop: (value: Boolean) -> Unit,
     onPlayAll: () -> Unit,
-    onCrumbMenu: () -> Unit,
-    onCrumbClick: (crumb: BreadCrumb, index: Int) -> Unit,
+    onCrumbMenu: (index: Int) -> Unit,
+    onCrumbClick: (crumb: FileListViewModel.BreadCrumb, index: Int) -> Unit,
     onItemClick: (item: PlaylistItem, index: Int) -> Unit,
     onItemLongClick: (item: PlaylistItem, index: Int) -> Unit
 ) {
-    val snackBarHostState = remember { SnackbarHostState() }
     val scrollState = rememberLazyListState()
     val crumbScrollState = rememberLazyListState()
     val isScrolled by remember {
@@ -546,7 +690,7 @@ private fun FileListScreen(
                 onPlayAll = onPlayAll
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
         val scope = rememberCoroutineScope()
         var refreshing by remember { mutableStateOf(false) }
@@ -558,7 +702,6 @@ private fun FileListScreen(
         }
 
         val pullState = rememberPullRefreshState(refreshing, ::refresh)
-
         Column(
             modifier = Modifier
                 .padding(paddingValues)
@@ -567,31 +710,61 @@ private fun FileListScreen(
             Row(modifier = Modifier.fillMaxWidth()) {
                 LazyRow(
                     state = crumbScrollState,
-                    contentPadding = PaddingValues(),
+                    contentPadding = PaddingValues(end = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     stickyHeader {
+                        var isContextMenuVisible by rememberSaveable { mutableStateOf(false) }
+
                         Surface(
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.primaryContainer,
                             shape = RoundedCornerShape(
                                 topEnd = 16.dp,
                                 bottomEnd = 16.dp
                             )
                         ) {
                             IconButton(
-                                modifier = Modifier.padding(horizontal = 3.dp),
-                                onClick = onCrumbMenu
+                                onClick = { isContextMenuVisible = true }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.MoreHoriz,
                                     contentDescription = null
                                 )
+
+                                val dropdownItems = listOf(
+                                    DropDownItem("Add to playlist", 0),
+                                    DropDownItem("Recursive add to playlist", 1),
+                                    DropDownItem("Add to play queue", 2),
+                                    DropDownItem("Set as default path", 3),
+                                    DropDownItem("Clear cache", 4)
+                                )
+                                CascadeDropdownMenu(
+                                    expanded = isContextMenuVisible,
+                                    onDismissRequest = { isContextMenuVisible = false }
+                                ) {
+                                    XmpDropdownMenuHeader {
+                                        Text(
+                                            text = "All Files",
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
+                                    }
+                                    dropdownItems.forEach {
+                                        DropdownMenuItem(
+                                            onClick = {
+                                                onCrumbMenu(it.index)
+                                                isContextMenuVisible = false
+                                            },
+                                            text = { Text(text = it.text) }
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                     itemsIndexed(state.crumbs) { index, item ->
                         AssistChip(
                             modifier = Modifier.padding(horizontal = 3.dp),
+                            enabled = item.enabled,
                             onClick = { onCrumbClick(item, index) },
                             label = { Text(text = item.name) },
                             trailingIcon = {
@@ -612,6 +785,7 @@ private fun FileListScreen(
                 contentAlignment = Alignment.Center
             ) {
                 LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
                     state = scrollState
                 ) {
                     itemsIndexed(state.list) { index, item ->
@@ -633,19 +807,42 @@ private fun FileListScreen(
                                 Text(text = item.name)
                             },
                             supportingContent = {
-                                Text(text = item.comment)
+                                // Hacky
+                                val comment = if (item.type == PlaylistItem.TYPE_DIRECTORY) {
+                                    stringResource(id = R.string.directory)
+                                } else {
+                                    item.comment
+                                }
+                                Text(text = comment, fontStyle = FontStyle.Italic)
                             }
                         )
                     }
                 }
 
-                state.error?.let {
-                    ErrorScreen(text = it)
+                if (state.list.isEmpty() && !state.isLoading) {
+                    ErrorScreen(
+                        text = stringResource(id = R.string.empty_directory),
+                        content = {
+                            if (!state.pathNotFound) {
+                                OutlinedButton(onClick = onRestore) {
+                                    Text(text = stringResource(id = R.string.go_back))
+                                }
+                            }
+                        }
+                    )
                 }
 
                 ProgressbarIndicator(isLoading = state.isLoading)
 
                 PullRefreshIndicator(refreshing, pullState, Modifier.align(Alignment.TopCenter))
+            }
+        }
+
+        // Scroll to the necessary ends for our lists.
+        LaunchedEffect(key1 = state.list, key2 = state.crumbs) {
+            if (state.list.isNotEmpty() || state.crumbs.isNotEmpty()) {
+                crumbScrollState.animateScrollToItem(state.crumbs.lastIndex)
+                scrollState.animateScrollToItem(0)
             }
         }
     }
@@ -669,7 +866,7 @@ private fun Preview_FileListScreen() {
                     }
                 },
                 crumbs = List(10) {
-                    BreadCrumb(
+                    FileListViewModel.BreadCrumb(
                         name = "Crumb $it",
                         path = "\\Some\\Current\\File\\$it"
                     )
@@ -677,8 +874,10 @@ private fun Preview_FileListScreen() {
                 isLoop = true,
                 isShuffle = false
             ),
+            snackbarHostState = SnackbarHostState(),
             onBack = {},
             onRefresh = {},
+            onRestore = {},
             onLoop = {},
             onShuffle = {},
             onPlayAll = {},

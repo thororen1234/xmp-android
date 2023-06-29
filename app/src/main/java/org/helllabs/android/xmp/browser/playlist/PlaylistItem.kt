@@ -1,6 +1,5 @@
 package org.helllabs.android.xmp.browser.playlist
 
-import org.helllabs.android.xmp.R
 import java.io.File
 
 class PlaylistItem(
@@ -14,18 +13,11 @@ class PlaylistItem(
     var file: File? = null
     var imageRes = 0
 
-    init {
-        imageRes = when (type) {
-            TYPE_DIRECTORY -> R.drawable.folder
-            TYPE_PLAYLIST -> R.drawable.list
-            TYPE_FILE -> R.drawable.file
-            else -> -1
-        }
-    }
+    val filename: String
+        get() = file!!.name
 
-    override fun toString(): String {
-        return String.format("%s:%s:%s\n", file?.path ?: "", comment, name)
-    }
+    override fun toString(): String =
+        String.format("%s:%s:%s\n", file?.path ?: "", comment, name)
 
     // Comparable
     override fun compareTo(other: PlaylistItem): Int {
@@ -34,12 +26,9 @@ class PlaylistItem(
         return if (d1 xor d2) {
             if (d1) -1 else 1
         } else {
-            name.compareTo(other.name)
+            name.compareTo(other.name, true)
         }
     }
-
-    val filename: String
-        get() = file!!.name
 
     companion object {
         const val TYPE_DIRECTORY = 1

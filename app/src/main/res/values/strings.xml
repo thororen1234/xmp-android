@@ -105,6 +105,7 @@
     <string name="no_comment">No comment</string>
     <string name="dialog_new_playlist">New playlist name</string>
     <string name="empty_playlist">Empty playlist</string>
+    <string name="empty_directory">Empty directory</string>
     <string name="empty_comment">Long press modules to create new playlists or add to existing playlists. Long press playlists for more options.</string>
     <string name="unrecognized_format">Unrecognized file format</string>
 
@@ -222,5 +223,6 @@
     <string name="msg_file_exists_message">This module already exists. Do you want to overwrite?</string>
     <string name="file_no_path_title">Path not found</string>
     <string name="file_no_path_text">%s not found. Create this directory or change the module path.</string>
+    <string name="go_back">Go Back</string>
 
 </resources>

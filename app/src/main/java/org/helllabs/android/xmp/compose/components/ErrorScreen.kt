@@ -24,7 +24,10 @@ import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 @Composable
-fun ErrorScreen(text: String?) {
+fun ErrorScreen(
+    text: String?,
+    content: (@Composable () -> Unit)? = null
+) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
@@ -47,6 +50,10 @@ fun ErrorScreen(text: String?) {
                 textAlign = TextAlign.Center,
                 text = text ?: stringResource(id = R.string.search_error)
             )
+            content?.let {
+                Spacer(modifier = Modifier.height(16.dp))
+                it()
+            }
         }
     }
 }

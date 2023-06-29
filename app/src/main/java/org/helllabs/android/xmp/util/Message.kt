@@ -10,7 +10,7 @@ import org.helllabs.android.xmp.R
 @Deprecated("Replace with Composables")
 object Message {
 
-    @JvmStatic
+    @Deprecated("Replace with Composables")
     fun error(context: Context, message: String?) {
         (context as Activity).runOnUiThread {
             val alertDialog = AlertDialog.Builder(context).create()
@@ -26,22 +26,22 @@ object Message {
         }
     }
 
-    @JvmStatic
+    @Deprecated("Replace with Composables")
     fun error(context: Context, resId: Int) {
         error(context, context.getString(resId))
     }
 
-    @JvmStatic
+    @Deprecated("Replace with Composables")
     fun toast(context: Context?, message: String?) {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
-    @JvmStatic
+    @Deprecated("Replace with Composables")
     fun toast(context: Context, resId: Int) {
         toast(context, context.getString(resId))
     }
 
-    @JvmStatic
+    @Deprecated("Replace with Composables")
     fun yesNoDialog(activity: Activity, title: String?, message: String?, runnable: Runnable) {
         activity.runOnUiThread {
             val listener = DialogInterface.OnClickListener { _, which ->

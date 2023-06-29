@@ -67,9 +67,7 @@ import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.search.Search
 import org.helllabs.android.xmp.core.Constants.isSupported
-import org.helllabs.android.xmp.core.deleteModuleFile
-import org.helllabs.android.xmp.core.getDownloadPath
-import org.helllabs.android.xmp.core.localFile
+import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.model.Artist
 import org.helllabs.android.xmp.model.ArtistInfo
 import org.helllabs.android.xmp.model.License
@@ -250,7 +248,7 @@ class ModuleResultViewModel @Inject constructor(
     }
 
     fun deleteModule() {
-        val result = deleteModuleFile(_uiState.value.module?.module!!)
+        val result = Files.deleteModuleFile(_uiState.value.module?.module!!)
         Timber.d("Module deleted was: $result")
         _uiState.update {
             it.copy(
@@ -261,7 +259,7 @@ class ModuleResultViewModel @Inject constructor(
     }
 
     private fun doesModuleExist(result: ModuleResult?): Boolean {
-        val exist = localFile(result?.module)?.exists()
+        val exist = Files.localFile(result?.module)?.exists()
         Timber.d("Does module exist? -> $exist")
         return exist ?: false
     }
@@ -371,8 +369,8 @@ open class Result : ComponentActivity() {
                     onRandom = viewModel::getRandomModule,
                     onDelete = { deleteModule = true },
                     onPlay = { module ->
-                        if (localFile(module)!!.exists()) {
-                            val path = localFile(module)!!.path
+                        if (Files.localFile(module)!!.exists()) {
+                            val path = Files.localFile(module)!!.path
                             val modList = ArrayList<String>()
 
                             modList.add(path)
@@ -384,11 +382,11 @@ open class Result : ComponentActivity() {
                             }.also(::startActivity)
                         } else {
                             // Does not exist, download module
-                            val modDir = getDownloadPath(module)
+                            val modDir = Files.getDownloadPath(module)
                             val url = module.url
 
                             Timber.i("Downloaded $url to $modDir")
-                            if (localFile(state.module?.module)?.exists() == true) {
+                            if (Files.localFile(state.module?.module)?.exists() == true) {
                                 moduleExists = true
                             } else {
                                 val mod = module.filename

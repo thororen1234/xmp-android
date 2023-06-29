@@ -30,12 +30,8 @@ object FileUtils {
 
     @JvmStatic
     @Throws(IOException::class)
-    fun readFromFile(file: File): String {
-        val `in` = BufferedReader(FileReader(file), 512)
-        val line = `in`.readLine()
-        `in`.close()
-        return line
-    }
+    fun readFromFile(file: File): String =
+        file.bufferedReader().useLines { it.firstOrNull() ?: "" }
 
     @Throws(IOException::class)
     fun removeLineFromFile(file: File, num: Int): Boolean {

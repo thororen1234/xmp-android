@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "org.helllabs.android.xmp"
-        minSdk = 21 // 	Lollipop
+        minSdk = 23 //
         targetSdk = 27
 
         versionCode = 87
@@ -104,6 +104,9 @@ dependencies {
     val settings = "0.27.0"
     implementation("com.github.alorma:compose-settings-storage-preferences:$settings")
     implementation("com.github.alorma:compose-settings-ui-m3:$settings")
+
+    //
+    implementation("me.saket.cascade:cascade-compose:2.2.0")
 
     implementation("androidx.core:core-ktx:1.10.1")
     implementation("androidx.core:core-splashscreen:1.0.1") // TODO implement

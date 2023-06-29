@@ -5,7 +5,7 @@ import androidx.core.text.toSpanned
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import nl.adaptivity.xmlutil.serialization.*
-import org.helllabs.android.xmp.core.asHtml
+import org.helllabs.android.xmp.core.Strings.asHtml
 
 @Serializable
 @SerialName("modarchive")
