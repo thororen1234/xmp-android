@@ -117,7 +117,7 @@ class Playlist(val name: String) {
                 if (fileExists(filename)) {
                     val item = PlaylistItem(PlaylistItem.TYPE_FILE, title, comment)
                     item.file = File(filename)
-                    item.imageRes = R.drawable.grabber
+                    // item.imageRes = R.drawable.grabber
                     list.add(item)
                 } else {
                     invalidList.add(lineNum)

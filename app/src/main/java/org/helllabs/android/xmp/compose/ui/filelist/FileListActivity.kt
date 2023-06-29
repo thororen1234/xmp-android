@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.browser
+package org.helllabs.android.xmp.compose.ui.filelist
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -18,7 +18,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronRight
@@ -29,7 +28,6 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenuItem
@@ -38,13 +36,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -65,14 +61,8 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.saket.cascade.CascadeDropdownMenu
 import org.helllabs.android.xmp.PrefManager
@@ -81,6 +71,8 @@ import org.helllabs.android.xmp.browser.playlist.PlaylistItem
 import org.helllabs.android.xmp.browser.playlist.PlaylistUtils
 import org.helllabs.android.xmp.compose.components.BottomBarButtons
 import org.helllabs.android.xmp.compose.components.ErrorScreen
+import org.helllabs.android.xmp.compose.components.ListDialog
+import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
 import org.helllabs.android.xmp.compose.components.XmpDropdownMenuHeader
 import org.helllabs.android.xmp.compose.components.XmpTopBar
@@ -89,6 +81,7 @@ import org.helllabs.android.xmp.compose.components.pullrefresh.PullRefreshIndica
 import org.helllabs.android.xmp.compose.components.pullrefresh.pullRefresh
 import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullRefreshState
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.compose.ui.BasePlaylistActivity
 import org.helllabs.android.xmp.core.Assets
 import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.model.DropDownItem
@@ -97,167 +90,9 @@ import org.helllabs.android.xmp.util.InfoCache
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
-import java.text.DateFormat
 import kotlin.time.Duration.Companion.seconds
 
 // TODO: Seriously need to separate classes, and hoist composables!
-
-class FileListViewModel : ViewModel() {
-
-    // Bread crumbs are the back bone of the file explorer. :)
-    data class BreadCrumb(
-        val name: String,
-        val path: String,
-        val enabled: Boolean = false
-    )
-
-    // State class for UI related stuff
-    data class FileListState(
-        val crumbs: List<BreadCrumb> = listOf(),
-        val error: String? = null,
-        val isLoading: Boolean = false,
-        val isLoop: Boolean = false,
-        val isShuffle: Boolean = false,
-        val lastPath: String? = null,
-        val list: List<PlaylistItem> = listOf(),
-        val pathNotFound: Boolean = false
-    )
-
-    private val _uiState = MutableStateFlow(FileListState())
-    val uiState = _uiState.asStateFlow()
-
-    val currentPath: String
-        get() {
-            val crumbs = uiState.value.crumbs
-            return if (crumbs.isEmpty()) "" else crumbs.last().path
-        }
-
-    fun init() {
-        _uiState.update {
-            it.copy(
-                isShuffle = PrefManager.shuffleMode,
-                isLoop = PrefManager.loopMode
-            )
-        }
-
-        val initialPath = File(PrefManager.mediaPath)
-        onNavigate(initialPath)
-    }
-
-    /**
-     * Handle back presses
-     * @return *true* if successful, otherwise false
-     */
-    fun onBackPressed(): Boolean {
-        val popCrumb = _uiState.value.crumbs.dropLast(1).lastOrNull()
-
-        popCrumb?.let {
-            if (!popCrumb.enabled) {
-                return false
-            }
-
-            val file = File(it.path)
-            onNavigate(file)
-        }
-
-        return popCrumb != null
-    }
-
-    fun onLoop(value: Boolean) {
-        PrefManager.loopMode = value
-        _uiState.update { it.copy(isLoop = value) }
-    }
-
-    fun onShuffle(value: Boolean) {
-        PrefManager.shuffleMode = value
-        _uiState.update { it.copy(isShuffle = value) }
-    }
-
-    fun onRefresh() {
-        if (currentPath.isNotEmpty()) {
-            val file = File(currentPath)
-            onNavigate(file)
-        }
-    }
-
-    fun onRestore() {
-        val file = _uiState.value.lastPath?.let { File(it) } ?: return
-        onNavigate(file)
-    }
-
-    fun onNavigate(modDir: File) {
-        viewModelScope.launch(Dispatchers.IO) {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-
-            // Snapshot our last known path.
-            if (currentPath.isNotEmpty()) {
-                val checkPath = File(currentPath).list()?.isNotEmpty() ?: false
-                if (checkPath) {
-                    _uiState.update { it.copy(lastPath = currentPath) }
-                }
-            }
-
-            Timber.d("File: ${modDir.path}")
-            if (!modDir.exists()) {
-                _uiState.update { it.copy(pathNotFound = true, isLoading = false) }
-            }
-
-            // Rebuild our bread crumbs
-            val crumbParts = modDir.path.split("/")
-            var currentCrumbPath = ""
-            val crumbs = crumbParts.filter { it.isNotEmpty() }.map { crumb ->
-                currentCrumbPath += "/$crumb"
-                BreadCrumb(
-                    name = crumb,
-                    path = currentCrumbPath,
-                    enabled = File(currentCrumbPath).canRead()
-                )
-            }
-            _uiState.update { it.copy(crumbs = crumbs) }
-
-            val list = modDir.listFiles()?.map { file ->
-                val item = if (file.isDirectory) {
-                    PlaylistItem(
-                        type = PlaylistItem.TYPE_DIRECTORY,
-                        name = file.name,
-                        comment = ""
-                    )
-                } else {
-                    val date = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
-                        .format(file.lastModified())
-
-                    PlaylistItem(
-                        type = PlaylistItem.TYPE_FILE,
-                        name = file.name,
-                        comment = "$date (${file.length() / 1024} kB)"
-                    )
-                }
-                item.file = file
-                item
-            }?.sorted() ?: mutableListOf()
-
-            PlaylistUtils.renumberIds(list)
-
-            _uiState.update { it.copy(list = list, isLoading = false) }
-        }
-    }
-
-    fun showPathNotFound(value: Boolean) {
-        _uiState.update { it.copy(pathNotFound = value) }
-    }
-
-    fun getFilenameList(): List<String> =
-        _uiState.value.list.filter { it.type == PlaylistItem.TYPE_FILE }.map { it.file!!.path }
-
-    fun getDirectoryCount(): Int =
-        _uiState.value.list.takeWhile { it.type == PlaylistItem.TYPE_DIRECTORY }.count()
-
-    fun getItems(): List<PlaylistItem> = _uiState.value.list
-
-    fun clearCachedEntries() {
-        InfoCache.clearCache(getFilenameList())
-    }
-}
 
 class FileListActivity : BasePlaylistActivity() {
 
@@ -376,246 +211,152 @@ class FileListActivity : BasePlaylistActivity() {
             }
 
             XmpTheme {
-                if (state.pathNotFound) {
-                    AlertDialog(
-                        onDismissRequest = { viewModel.showPathNotFound(false) },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = null
+                /**
+                 * Path not found dialog
+                 */
+                MessageDialog(
+                    isShowing = state.pathNotFound,
+                    icon = Icons.Default.Warning,
+                    title = stringResource(id = R.string.file_no_path_title),
+                    text = stringResource(
+                        id = R.string.file_no_path_text,
+                        viewModel.currentPath
+                    ),
+                    confirmText = stringResource(id = R.string.create),
+                    onConfirm = {
+                        try {
+                            Assets.install(
+                                this@FileListActivity,
+                                viewModel.currentPath,
+                                PrefManager.examples
                             )
-                        },
-                        title = { Text(text = stringResource(id = R.string.file_no_path_title)) },
-                        text = {
-                            Text(
-                                text = stringResource(
-                                    id = R.string.file_no_path_text,
-                                    viewModel.currentPath
-                                )
-                            )
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    try {
-                                        Assets.install(
-                                            this@FileListActivity,
-                                            viewModel.currentPath,
-                                            PrefManager.examples
-                                        )
-                                        viewModel.onRefresh()
-                                    } catch (e: IOException) {
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                message = "Error creating directory ${viewModel.currentPath}.",
-                                                actionLabel = getString(R.string.ok)
-                                            )
-
-                                            finish()
-                                        }
-                                    }
-                                    viewModel.showPathNotFound(false)
-                                }
-                            ) {
-                                Text(text = stringResource(id = R.string.create))
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(
-                                onClick = {
-                                    viewModel.showPathNotFound(false)
-                                    finish()
-                                }
-                            ) {
-                                Text(text = stringResource(id = R.string.cancel))
-                            }
-                        }
-                    )
-                }
-
-                var playlistChoiceState: PlaylistChoiceData? by remember { mutableStateOf(null) }
-                if (playlistChoiceState != null) {
-                    // Return if no playlists exist
-                    if (PlaylistUtils.list().isEmpty()) {
-                        LaunchedEffect(playlistChoiceState) {
+                            viewModel.onRefresh()
+                        } catch (e: IOException) {
                             scope.launch {
                                 snackbarHostState.showSnackbar(
-                                    message = getString(R.string.msg_no_playlists)
+                                    message = "Error creating directory ${viewModel.currentPath}.",
+                                    actionLabel = getString(R.string.ok)
                                 )
+
+                                finish()
                             }
+                        }
+                        viewModel.showPathNotFound(false)
+                    },
+                    onDismiss = {
+                        viewModel.showPathNotFound(false)
+                        finish()
+                    }
+                )
+
+                /**
+                 * Playlist choice dialog
+                 */
+                var playlistChoiceState: PlaylistChoiceData? by remember { mutableStateOf(null) }
+                ListDialog(
+                    isShowing = playlistChoiceState != null,
+                    icon = Icons.Default.PlaylistAdd,
+                    title = stringResource(id = R.string.msg_select_playlist),
+                    list = PlaylistUtils.listNoSuffix().toList(),
+                    onConfirm = { choice ->
+                        with(playlistChoiceState!!) {
+                            playlistChoice.execute(fileSelection, choice)
                         }
                         playlistChoiceState = null
-                    } else {
-                        var selection by remember { mutableIntStateOf(0) }
-                        AlertDialog(
-                            onDismissRequest = { playlistChoiceState = null },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.PlaylistAdd,
-                                    contentDescription = null
-                                )
-                            },
-                            title = {
-                                Text(text = stringResource(id = R.string.msg_select_playlist))
-                            },
-                            text = {
-                                Column(modifier = Modifier.fillMaxWidth()) {
-                                    PlaylistUtils.listNoSuffix().forEachIndexed { index, text ->
-                                        Row(
-                                            Modifier
-                                                .fillMaxWidth()
-                                                .selectable(
-                                                    selected = (index == selection),
-                                                    onClick = { selection = index }
-                                                )
-                                                .padding(vertical = 5.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            RadioButton(
-                                                selected = (index == selection),
-                                                onClick = null
-                                            )
-                                            Text(text = text)
-                                        }
-                                    }
-                                }
-                            },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        with(playlistChoiceState!!) {
-                                            playlistChoice.execute(
-                                                fileSelection,
-                                                selection
-                                            )
-                                        }
-                                        playlistChoiceState = null
-                                    }
-                                ) {
-                                    Text(text = stringResource(id = R.string.ok))
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { playlistChoiceState = null }) {
-                                    Text(text = stringResource(id = R.string.cancel))
-                                }
-                            }
-                        )
+                    },
+                    onDismiss = { playlistChoiceState = null },
+                    onEmpty = {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = getString(R.string.msg_no_playlists)
+                            )
+                        }
+                        playlistChoiceState = null
                     }
-                }
+                )
 
+                /**
+                 * Delete directory dialog
+                 */
                 var deleteDirectory by remember { mutableIntStateOf(-1) }
-                if (deleteDirectory >= 0) {
-                    val mediaPath = PrefManager.mediaPath
-                    val deleteName by remember {
-                        val deleteName = viewModel.getItems()[deleteDirectory].file!!.path
-                        mutableStateOf(deleteName)
-                    }
-
-                    if (deleteName.startsWith(mediaPath) && deleteName != mediaPath) {
-                        AlertDialog(
-                            onDismissRequest = { deleteDirectory = -1 },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Default.QuestionMark,
-                                    contentDescription = null
-                                )
-                            },
-                            title = { Text(text = "Delete directory") },
-                            text = {
-                                Text(
-                                    text = "Are you sure you want to delete directory " +
-                                        "\"${FileUtils.basename(deleteName)}\" and all its contents?"
-                                )
-                            },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        if (InfoCache.deleteRecursive(deleteName)) {
-                                            viewModel.onRefresh()
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar(
-                                                    message = getString(R.string.msg_dir_deleted)
-                                                )
-                                            }
-                                        } else {
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar(
-                                                    message = getString(R.string.msg_cant_delete_dir)
-                                                )
-                                            }
-                                        }
-                                        deleteDirectory = -1
-                                    }
-                                ) {
-                                    Text(text = stringResource(id = R.string.menu_delete))
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { deleteDirectory = -1 }) {
-                                    Text(text = stringResource(id = R.string.cancel))
-                                }
-                            }
-                        )
-                    } else {
+                val deleteName by remember(deleteDirectory) {
+                    val deleteName = viewModel.getItems()[deleteDirectory].file!!.path
+                    mutableStateOf(deleteName)
+                }
+                MessageDialog(
+                    isShowing = deleteDirectory >= 0,
+                    precondition = deleteName.startsWith(PrefManager.mediaPath) &&
+                        deleteName != PrefManager.mediaPath,
+                    onPrecondition = {
                         // Prevent deletion of files outside preferred mod dir.
-                        LaunchedEffect(deleteDirectory) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar(
+                                message = getString(R.string.error_dir_not_under_moddir)
+                            )
+                        }
+                        deleteDirectory = -1
+                    },
+                    icon = Icons.Default.QuestionMark,
+                    title = "Delete directory",
+                    text = "Are you sure you want to delete directory \"${
+                    FileUtils.basename(
+                        deleteName
+                    )
+                    }\" and all its contents?",
+                    confirmText = stringResource(id = R.string.menu_delete),
+                    onConfirm = {
+                        if (InfoCache.deleteRecursive(deleteName)) {
+                            viewModel.onRefresh()
                             scope.launch {
                                 snackbarHostState.showSnackbar(
-                                    message = getString(R.string.error_dir_not_under_moddir)
+                                    message = getString(R.string.msg_dir_deleted)
+                                )
+                            }
+                        } else {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = getString(R.string.msg_cant_delete_dir)
                                 )
                             }
                         }
                         deleteDirectory = -1
+                    },
+                    onDismiss = {
+                        deleteDirectory = -1
                     }
-                }
+                )
 
+                /**
+                 * Delete file dialog
+                 */
                 var deleteFile: String? by remember { mutableStateOf(null) }
-                if (deleteFile != null) {
-                    AlertDialog(
-                        onDismissRequest = { deleteFile = null },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Default.QuestionMark,
-                                contentDescription = null
-                            )
-                        },
-                        title = {
-                            Text(text = "Delete File")
-                        },
-                        text = {
-                            Text(text = "Are you sure you want to delete ${FileUtils.basename(deleteFile)}?")
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    if (InfoCache.delete(deleteFile!!)) {
-                                        viewModel.onRefresh()
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                message = getString(R.string.msg_file_deleted)
-                                            )
-                                        }
-                                    } else {
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                message = getString(R.string.msg_cant_delete)
-                                            )
-                                        }
-                                    }
-                                    deleteFile = null
-                                }
-                            ) {
-                                Text(text = stringResource(id = R.string.menu_delete))
+                MessageDialog(
+                    isShowing = deleteFile != null,
+                    icon = Icons.Default.QuestionMark,
+                    title = "Delete File",
+                    text = "Are you sure you want to delete ${FileUtils.basename(deleteFile)}?",
+                    confirmText = stringResource(id = R.string.menu_delete),
+                    onConfirm = {
+                        if (InfoCache.delete(deleteFile!!)) {
+                            viewModel.onRefresh()
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = getString(R.string.msg_file_deleted)
+                                )
                             }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { deleteFile = null }) {
-                                Text(text = stringResource(id = R.string.cancel))
+                        } else {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = getString(R.string.msg_cant_delete)
+                                )
                             }
                         }
-                    )
-                }
+                        deleteFile = null
+                    },
+                    onDismiss = {
+                        deleteFile = null
+                    }
+                )
 
                 FileListScreen(
                     state = state,

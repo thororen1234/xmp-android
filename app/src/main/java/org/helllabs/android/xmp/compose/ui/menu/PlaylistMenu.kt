@@ -71,14 +71,13 @@ import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.browser.FileListActivity
 import org.helllabs.android.xmp.browser.PlaylistActivity
 import org.helllabs.android.xmp.browser.playlist.Playlist
 import org.helllabs.android.xmp.browser.playlist.PlaylistItem
 import org.helllabs.android.xmp.browser.playlist.PlaylistUtils
 import org.helllabs.android.xmp.compose.components.ChangeLogDialog
 import org.helllabs.android.xmp.compose.components.EditPlaylistDialog
-import org.helllabs.android.xmp.compose.components.ErrorMessageDialog
+import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.NewPlaylistDialog
 import org.helllabs.android.xmp.compose.components.TextInputDialog
 import org.helllabs.android.xmp.compose.components.pullrefresh.ExperimentalMaterialApi
@@ -88,6 +87,7 @@ import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullRefre
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.themedText
+import org.helllabs.android.xmp.compose.ui.filelist.FileListActivity
 import org.helllabs.android.xmp.compose.ui.preferences.Preferences
 import org.helllabs.android.xmp.compose.ui.search.Search
 import org.helllabs.android.xmp.player.PlayerActivity
@@ -168,7 +168,7 @@ class PlaylistMenu : ComponentActivity() {
             }
 
             XmpTheme {
-                ErrorMessageDialog(
+                MessageDialog(
                     isShowing = state.errorText.isNotEmpty(),
                     title = stringResource(id = R.string.error),
                     text = state.errorText,

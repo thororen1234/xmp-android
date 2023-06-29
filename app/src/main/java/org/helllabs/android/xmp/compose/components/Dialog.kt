@@ -2,6 +2,7 @@ package org.helllabs.android.xmp.compose.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
@@ -17,13 +19,16 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -35,26 +40,106 @@ import org.helllabs.android.xmp.browser.playlist.PlaylistItem
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 @Composable
-fun ErrorMessageDialog(
+fun ListDialog(
     isShowing: Boolean,
-    icon: ImageVector = Icons.Default.Error,
+    icon: ImageVector,
     title: String,
-    text: String,
-    confirmText: String,
-    onConfirm: () -> Unit
+    list: List<String>,
+    confirmText: String = stringResource(id = R.string.ok),
+    dismissText: String = stringResource(id = R.string.cancel),
+    onConfirm: (index: Int) -> Unit,
+    onDismiss: () -> Unit,
+    onEmpty: () -> Unit
 ) {
     if (!isShowing) {
         return
     }
 
+    if (list.isEmpty()) {
+        onEmpty()
+        return
+    }
+
+    var selection by remember { mutableIntStateOf(0) }
     AlertDialog(
-        onDismissRequest = onConfirm,
+        onDismissRequest = onDismiss,
+        icon = { Icon(imageVector = icon, contentDescription = null) },
+        title = { Text(text = title) },
+        text = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                list.forEachIndexed { index, text ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .selectable(
+                                selected = (index == selection),
+                                onClick = { selection = index }
+                            )
+                            .padding(5.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = (index == selection),
+                            onClick = null
+                        )
+                        Text(text = text)
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selection) }) {
+                Text(text = confirmText)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = dismissText)
+            }
+        }
+    )
+}
+
+@Composable
+fun MessageDialog(
+    isShowing: Boolean,
+    precondition: Boolean? = null,
+    onPrecondition: (() -> Unit)? = null,
+    icon: ImageVector = Icons.Default.Error,
+    title: String,
+    text: String,
+    confirmText: String,
+    dismissText: String = stringResource(id = R.string.cancel),
+    onConfirm: () -> Unit,
+    onDismiss: (() -> Unit)? = null
+) {
+    if (!isShowing) {
+        return
+    }
+
+    // I can't brain a better way right now.
+    precondition?.let {
+        if (!it) {
+            onPrecondition?.invoke()
+            return
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss ?: onConfirm,
         icon = { Icon(imageVector = icon, contentDescription = null) },
         title = { Text(text = title) },
         text = { Text(text = text) },
         confirmButton = {
             TextButton(onClick = onConfirm) {
                 Text(text = confirmText)
+            }
+        },
+        dismissButton = {
+            onDismiss?.let {
+                TextButton(onClick = it) {
+                    Text(text = dismissText)
+                }
             }
         }
     )
@@ -305,12 +390,13 @@ fun Preview_NewPlaylistDialog() {
 fun Preview_MessageDialog() {
     XmpTheme {
         Box(modifier = Modifier.fillMaxWidth()) {
-            ErrorMessageDialog(
+            MessageDialog(
                 isShowing = true,
                 title = stringResource(id = R.string.error),
                 text = stringResource(id = R.string.error_create_playlist),
                 confirmText = stringResource(id = R.string.ok),
-                onConfirm = { }
+                onConfirm = { },
+                onDismiss = { }
             )
         }
     }

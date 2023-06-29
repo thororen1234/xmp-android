@@ -38,7 +38,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".browser.FileListActivity"
+            android:name=".compose.ui.filelist.FileListActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/AppTheme.Composable" />
         <activity

@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.browser
+package org.helllabs.android.xmp.compose.ui
 
 import android.content.ComponentName
 import android.content.Intent

@@ -109,20 +109,10 @@ dependencies {
     implementation("me.saket.cascade:cascade-compose:2.2.0")
 
     implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.core:core-splashscreen:1.0.1") // TODO implement
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
     implementation("androidx.media:media:1.6.0")
-
-    // https://mvnrepository.com/artifact/androidx.recyclerview/recyclerview
-    implementation("androidx.recyclerview:recyclerview:1.3.0")
-
-    // https://mvnrepository.com/artifact/com.h6ah4i.android.widget.advrecyclerview/advrecyclerview
-    implementation("com.h6ah4i.android.widget.advrecyclerview:advrecyclerview:1.0.0")
-
-    // https://mvnrepository.com/artifact/androidx.swiperefreshlayout/swiperefreshlayout
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
     // https://mvnrepository.com/artifact/androidx.preference/preference-ktx
     implementation("androidx.preference:preference-ktx:1.2.0")
@@ -138,6 +128,7 @@ dependencies {
     implementation("io.github.pdvrieze.xmlutil:core-android:$xmlUtil")
     implementation("io.github.pdvrieze.xmlutil:serialization-android:$xmlUtil")
 
+    // TODO: I don't think I need? (Was for search history)
     // https://mvnrepository.com/artifact/com.squareup.moshi/moshi-kotlin
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
 
