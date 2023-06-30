@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.compose.ui.preferences.about
+package org.helllabs.android.xmp.compose.ui.preferences
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -16,7 +16,6 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -36,9 +35,10 @@ import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.themedText
+import org.helllabs.android.xmp.compose.ui.preferences.components.AboutText
 import timber.log.Timber
 
-class About : ComponentActivity() {
+class PreferencesAbout : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.d("onCreate")
@@ -119,15 +119,4 @@ class About : ComponentActivity() {
             }
         }
     }
-}
-
-@Composable
-private fun AboutText(string: String, textAlign: TextAlign = TextAlign.Center) {
-    Text(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 4.dp, bottom = 4.dp),
-        text = string,
-        textAlign = textAlign
-    )
 }

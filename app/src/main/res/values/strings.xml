@@ -205,7 +205,7 @@
     <string name="frowny_face">:(</string>
     <string name="size_kb">%d KB</string>
     <string name="search_title_error">Search error</string>
-    <string name="search_unknown_error">Software Failure.   Press back to continue.\\n\\nGuru Meditation #35068035.48454C50</string>
+    <string name="search_unknown_error">Software Failure. Press back to continue.\n\nGuru Meditation #35068035.48454C50</string>
     <string name="search_known_error">%s.  Press back button to continue.</string>
     <string name="button_loading">Loading</string>
     <string name="button_play">Play</string>
@@ -224,5 +224,6 @@
     <string name="file_no_path_title">Path not found</string>
     <string name="file_no_path_text">%s not found. Create this directory or change the module path.</string>
     <string name="go_back">Go Back</string>
+    <string name="search_history">Search History</string>
 
 </resources>

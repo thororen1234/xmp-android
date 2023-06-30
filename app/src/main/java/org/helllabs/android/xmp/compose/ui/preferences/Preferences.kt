@@ -23,8 +23,6 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.preferences.about.About
-import org.helllabs.android.xmp.compose.ui.preferences.about.ListFormats
 import timber.log.Timber
 import java.io.File
 
@@ -40,8 +38,8 @@ class Preferences : ComponentActivity() {
             XmpTheme {
                 PreferencesScreen(
                     onBack = { onBackPressedDispatcher.onBackPressed() },
-                    onFormats = { startActivity(Intent(this, ListFormats::class.java)) },
-                    onAbout = { startActivity(Intent(this, About::class.java)) },
+                    onFormats = { startActivity(Intent(this, PreferencesFormats::class.java)) },
+                    onAbout = { startActivity(Intent(this, PreferencesAbout::class.java)) },
                     onClearCache = {
                         val result = if (deleteCache(PrefManager.CACHE_DIR)) {
                             getString(R.string.cache_clear)
@@ -56,21 +54,19 @@ class Preferences : ComponentActivity() {
     }
 
     companion object {
-        fun deleteCache(file: File): Boolean = deleteCache(file, true)
-
-        @Suppress("SameParameterValue")
-        private fun deleteCache(file: File, boolFlag: Boolean): Boolean {
-            var flag = boolFlag
+        private fun deleteCache(file: File): Boolean {
             if (!file.exists()) {
                 return true
             }
+
             if (file.isDirectory) {
-                for (cacheFile in file.listFiles().orEmpty()) {
-                    flag = flag and deleteCache(cacheFile)
+                file.listFiles().orEmpty().forEach { cacheFile ->
+                    if (!deleteCache(cacheFile)) {
+                        return false
+                    }
                 }
             }
-            flag = flag and file.delete()
-            return flag
+            return file.delete()
         }
     }
 }

@@ -13,7 +13,7 @@ import com.alorma.compose.settings.ui.SettingsList
 import com.alorma.compose.settings.ui.SettingsSwitch
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.compose.components.XmpSettingsSlider
+import org.helllabs.android.xmp.compose.ui.preferences.components.XmpSettingsSlider
 import timber.log.Timber
 
 @Composable

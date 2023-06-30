@@ -150,7 +150,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
             putExtra(PlayerActivity.PARM_KEEPFIRST, keepFirst)
         }.also { intent ->
             Timber.i("Start Player activity")
-            startActivityForResult(intent, PLAY_MOD_REQUEST)
+            startActivity(intent)
         }
     }
 
@@ -191,9 +191,5 @@ abstract class BasePlaylistActivity : ComponentActivity() {
                 playModule(realList)
             }
         }
-    }
-
-    companion object {
-        private const val PLAY_MOD_REQUEST = 669
     }
 }

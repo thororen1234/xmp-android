@@ -42,7 +42,7 @@
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/AppTheme.Composable" />
         <activity
-            android:name=".browser.PlaylistActivity"
+            android:name=".compose.ui.playlist.PlaylistActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/AppTheme.Composable" />
 
@@ -145,7 +145,7 @@
             android:name=".compose.ui.preferences.Preferences"
             android:theme="@style/AppTheme.Composable" />
         <activity
-            android:name=".compose.ui.preferences.about.ListFormats"
+            android:name=".compose.ui.preferences.PreferencesFormats"
             android:exported="false"
             android:theme="@style/AppTheme.Composable">
             <intent-filter>
@@ -155,7 +155,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".compose.ui.preferences.about.About"
+            android:name=".compose.ui.preferences.PreferencesAbout"
             android:exported="false"
             android:theme="@style/AppTheme.Composable">
             <intent-filter>
@@ -175,8 +175,15 @@
                 android:value=".compose.ui.menu.PlaylistMenu" />
         </activity>
         <activity
+            android:name=".compose.ui.search.SearchHistory"
+            android:parentActivityName=".compose.ui.search.Search"
+            android:theme="@style/AppTheme.Composable">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".compose.ui.search.Search" />
+        </activity>
+        <activity
             android:name=".compose.ui.search.SearchError"
-            android:configChanges="keyboardHidden|orientation|screenSize"
             android:parentActivityName=".compose.ui.search.Search"
             android:theme="@style/AppTheme.Composable">
             <meta-data
@@ -185,7 +192,6 @@
         </activity>
         <activity
             android:name=".compose.ui.search.result.SearchResult"
-            android:configChanges="keyboardHidden|orientation|screenSize"
             android:theme="@style/AppTheme.Composable">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -193,7 +199,6 @@
         </activity>
         <activity
             android:name=".compose.ui.search.result.Result"
-            android:configChanges="keyboardHidden|orientation|screenSize"
             android:parentActivityName=".compose.ui.search.Search"
             android:theme="@style/AppTheme.Composable">
             <meta-data

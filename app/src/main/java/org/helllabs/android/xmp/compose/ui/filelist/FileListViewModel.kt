@@ -160,10 +160,10 @@ class FileListViewModel : ViewModel() {
     }
 
     fun getFilenameList(): List<String> =
-        _uiState.value.list.filter { it.type == PlaylistItem.TYPE_FILE }.map { it.file!!.path }
+        _uiState.value.list.filter { it.isFile }.map { it.file!!.path }
 
     fun getDirectoryCount(): Int =
-        _uiState.value.list.takeWhile { it.type == PlaylistItem.TYPE_DIRECTORY }.count()
+        _uiState.value.list.takeWhile { it.isDirectory }.count()
 
     fun getItems(): List<PlaylistItem> = _uiState.value.list
 

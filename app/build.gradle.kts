@@ -80,6 +80,16 @@ android {
 
 dependencies {
 
+    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-serialization-json
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+
+    // Android support libs.
+    implementation("androidx.core:core-ktx:1.10.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation("androidx.media:media:1.6.0")
+
     // https://developer.android.com/jetpack/compose/bom/bom-mapping
     val composeBom = platform("androidx.compose:compose-bom:2023.06.01")
     implementation(composeBom)
@@ -96,6 +106,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.7.2")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
 
+    // https://mvnrepository.com/artifact/com.google.accompanist/accompanist-systemuicontroller
     val accompanist = "0.31.4-beta"
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanist")
     implementation("com.google.accompanist:accompanist-permissions:$accompanist")
@@ -105,14 +116,8 @@ dependencies {
     implementation("com.github.alorma:compose-settings-storage-preferences:$settings")
     implementation("com.github.alorma:compose-settings-ui-m3:$settings")
 
-    //
+    // https://mvnrepository.com/artifact/me.saket.cascade/cascade-compose
     implementation("me.saket.cascade:cascade-compose:2.2.0")
-
-    implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
-    implementation("androidx.media:media:1.6.0")
 
     // https://mvnrepository.com/artifact/androidx.preference/preference-ktx
     implementation("androidx.preference:preference-ktx:1.2.0")
@@ -128,11 +133,7 @@ dependencies {
     implementation("io.github.pdvrieze.xmlutil:core-android:$xmlUtil")
     implementation("io.github.pdvrieze.xmlutil:serialization-android:$xmlUtil")
 
-    // TODO: I don't think I need? (Was for search history)
-    // https://mvnrepository.com/artifact/com.squareup.moshi/moshi-kotlin
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
-
-    // https://search.maven.org/artifact/com.squareup.okhttp3/okhttp
+    // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
 
     // https://mvnrepository.com/artifact/com.jakewharton.retrofit/retrofit2-kotlinx-serialization-converter
@@ -142,6 +143,6 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.46.1")
     kapt("com.google.dagger:hilt-android-compiler:2.46.1")
 
-    // https://square.github.io/leakcanary/getting_started/
+    // https://mvnrepository.com/artifact/com.squareup.leakcanary/leakcanary-android
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.11")
 }

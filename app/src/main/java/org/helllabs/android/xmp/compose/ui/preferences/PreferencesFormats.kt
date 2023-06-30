@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.compose.ui.preferences.about
+package org.helllabs.android.xmp.compose.ui.preferences
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -35,7 +35,7 @@ import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import timber.log.Timber
 
-class ListFormats : ComponentActivity() {
+class PreferencesFormats : ComponentActivity() {
 
     @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {

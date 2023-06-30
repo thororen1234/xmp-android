@@ -17,7 +17,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -26,8 +25,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -51,21 +50,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.Buffer
 import okio.ForwardingSource
 import okio.buffer
 import okio.sink
+import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.api.Repository
 import org.helllabs.android.xmp.compose.components.ErrorScreen
-import org.helllabs.android.xmp.compose.components.ModuleLayout
+import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.search.Search
+import org.helllabs.android.xmp.compose.ui.search.SearchError
+import org.helllabs.android.xmp.compose.ui.search.components.ModuleLayout
 import org.helllabs.android.xmp.core.Constants.isSupported
 import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.model.Artist
@@ -81,24 +85,24 @@ import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 
-sealed class DownloadStatus {
-    data class Error(val error: Exception) : DownloadStatus()
-    data class Progress(val percent: Int) : DownloadStatus()
-    object None : DownloadStatus()
-    object Loading : DownloadStatus()
-    object Success : DownloadStatus()
-}
-
 @HiltViewModel
 class ModuleResultViewModel @Inject constructor(
     private val okHttpClient: OkHttpClient,
     private val repository: Repository
 ) : ViewModel() {
+    sealed class DownloadStatus {
+        data class Error(val error: Exception) : DownloadStatus()
+        data class Progress(val percent: Int) : DownloadStatus()
+        object None : DownloadStatus()
+        object Loading : DownloadStatus()
+        object Success : DownloadStatus()
+    }
+
     data class ModuleResultState(
         val isRandom: Boolean = false,
         val isLoading: Boolean = false,
         val softError: String? = null,
-        val hardError: String? = null,
+        val hardError: Throwable? = null,
         val module: ModuleResult? = null,
         val moduleExists: Boolean = false,
         val moduleSupported: Boolean = true,
@@ -215,7 +219,7 @@ class ModuleResultViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
                 Timber.e(e)
-                _uiState.update { it.copy(hardError = e.localizedMessage) }
+                _uiState.update { it.copy(hardError = e) }
             }
         }
     }
@@ -242,7 +246,7 @@ class ModuleResultViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
                 Timber.e(e)
-                _uiState.update { it.copy(hardError = e.localizedMessage) }
+                _uiState.update { it.copy(hardError = e) }
             }
         }
     }
@@ -270,8 +274,45 @@ class ModuleResultViewModel @Inject constructor(
         return supported
     }
 
-    private fun saveModuleToHistory(module: Module?) {
-        // TODO save to history
+    private fun saveModuleToHistory(module: Module) {
+        val history = mutableListOf<Module>()
+
+        // We only care about a few things to store.
+        try {
+            Json.decodeFromString<MutableList<Module>>(PrefManager.searchHistory).map {
+                Module(
+                    id = it.id,
+                    format = it.format,
+                    songtitle = it.songtitle,
+                    artistInfo = it.artistInfo,
+                    bytes = it.bytes
+                )
+            }.also { history.addAll(it) }
+        } catch (e: Exception) {
+            // Something happened or empty, make it an empty list
+            Timber.w("Failed to deserialize history!")
+            PrefManager.searchHistory = "[]"
+        }
+
+        if (history.any { it.id == module.id }) {
+            Timber.i("Module ${module.id} already exists in history. Skipping")
+            return
+        }
+
+        val moduleToAdd = Module(
+            id = module.id,
+            format = module.format,
+            songtitle = module.songtitle,
+            artistInfo = module.artistInfo,
+            bytes = module.bytes
+        )
+        history.add(moduleToAdd)
+
+        if (history.size >= 50) {
+            history.removeFirst()
+        }
+
+        PrefManager.searchHistory = Json.encodeToString(history)
     }
 }
 
@@ -296,73 +337,52 @@ open class Result : ComponentActivity() {
         setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+            LaunchedEffect(state.hardError) {
+                if (state.hardError != null) {
+                    Timber.w("Hard error has occurred")
+                    Intent(this@Result, SearchError::class.java).apply {
+                        putExtra(Search.ERROR, state.hardError)
+                    }.also(::startActivity)
+                }
+            }
+
+            var deleteModule by remember { mutableStateOf(false) }
+            MessageDialog(
+                isShowing = deleteModule,
+                icon = Icons.Default.Delete,
+                title = stringResource(id = R.string.delete_file),
+                text = stringResource(
+                    id = R.string.delete_file_message,
+                    state.module?.module?.filename ?: ""
+                ),
+                confirmText = stringResource(id = R.string.menu_delete),
+                onConfirm = {
+                    viewModel.deleteModule()
+                    deleteModule = false
+                },
+                onDismiss = { deleteModule = false }
+            )
+
+            // Hopefully this shouldn't happen, but let's be sure to handle it.
+            var moduleExists: Module? by remember { mutableStateOf(null) }
+            MessageDialog(
+                isShowing = moduleExists != null,
+                icon = Icons.Default.Delete,
+                title = stringResource(id = R.string.msg_file_exists),
+                text = stringResource(id = R.string.msg_file_exists_message),
+                confirmText = stringResource(id = R.string.ok),
+                onConfirm = {
+                    val module = moduleExists
+                    val mod = module!!.filename
+                    val modDir = Files.getDownloadPath(module)
+                    val url = module.url
+                    viewModel.downloadModule(mod, url, modDir)
+                    moduleExists = null
+                },
+                onDismiss = { moduleExists = null }
+            )
+
             XmpTheme {
-                var deleteModule by remember { mutableStateOf(false) }
-                if (deleteModule) {
-                    AlertDialog(
-                        onDismissRequest = { deleteModule = false },
-                        icon = {
-                            Icon(imageVector = Icons.Default.Delete, contentDescription = null)
-                        },
-                        title = {
-                            Text(text = stringResource(id = R.string.delete_file))
-                        },
-                        text = {
-                            Text(
-                                text = stringResource(
-                                    id = R.string.delete_file_message,
-                                    state.module?.module?.filename ?: ""
-                                )
-                            )
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    viewModel.deleteModule()
-                                    deleteModule = false
-                                }
-                            ) {
-                                Text(text = stringResource(id = R.string.menu_delete))
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { deleteModule = false }) {
-                                Text(text = stringResource(id = R.string.cancel))
-                            }
-                        }
-                    )
-                }
-
-                var moduleExists by remember { mutableStateOf(false) }
-                if (moduleExists) {
-                    AlertDialog(
-                        onDismissRequest = { moduleExists = false },
-                        icon = {
-                            Icon(imageVector = Icons.Default.Delete, contentDescription = null)
-                        },
-                        title = {
-                            Text(text = stringResource(id = R.string.msg_file_exists))
-                        },
-                        text = {
-                            Text(text = stringResource(id = R.string.msg_file_exists_message))
-                        },
-                        confirmButton = {
-                            TextButton(
-                                onClick = {
-                                    moduleExists = false
-                                }
-                            ) {
-                                Text(text = stringResource(id = R.string.ok))
-                            }
-                        },
-                        dismissButton = {
-                            TextButton(onClick = { moduleExists = false }) {
-                                Text(text = stringResource(id = R.string.cancel))
-                            }
-                        }
-                    )
-                }
-
                 ModuleResultScreen(
                     state = state,
                     onBack = { onBackPressedDispatcher.onBackPressed() },
@@ -385,10 +405,10 @@ open class Result : ComponentActivity() {
                             val modDir = Files.getDownloadPath(module)
                             val url = module.url
 
-                            Timber.i("Downloaded $url to $modDir")
                             if (Files.localFile(state.module?.module)?.exists() == true) {
-                                moduleExists = true
+                                moduleExists = module
                             } else {
+                                Timber.i("Downloading $url to $modDir")
                                 val mod = module.filename
                                 viewModel.downloadModule(mod, url, modDir)
                             }

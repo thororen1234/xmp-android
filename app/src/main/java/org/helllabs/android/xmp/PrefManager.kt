@@ -204,4 +204,10 @@ object PrefManager {
         set(value) {
             prefs.edit { putBoolean("use_media_style", value) }
         }
+
+    var searchHistory: String
+        get() = prefs.getString("search_history", "[]")!!
+        set(value) {
+            prefs.edit { putString("search_history", value) }
+        }
 }

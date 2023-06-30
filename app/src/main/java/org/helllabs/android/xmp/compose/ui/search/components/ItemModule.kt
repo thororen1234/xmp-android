@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.compose.components
+package org.helllabs.android.xmp.compose.ui.search.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

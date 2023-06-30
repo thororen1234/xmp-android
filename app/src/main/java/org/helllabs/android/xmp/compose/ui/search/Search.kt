@@ -23,7 +23,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -50,10 +54,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.compose.components.SegmentedButton
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.components.annotatedLinkString
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.compose.ui.search.components.SegmentedButton
 import org.helllabs.android.xmp.compose.ui.search.result.Result
 import org.helllabs.android.xmp.compose.ui.search.result.SearchResult
 import timber.log.Timber
@@ -87,6 +91,9 @@ class Search : ComponentActivity() {
                         Intent(this, Result::class.java).apply {
                             putExtra(MODULE_ID, -1)
                         }.also(::startActivity)
+                    },
+                    onHistory = {
+                        Intent(this, SearchHistory::class.java).also(::startActivity)
                     }
                 )
             }
@@ -105,7 +112,8 @@ class Search : ComponentActivity() {
 private fun SearchScreen(
     onBack: () -> Unit,
     onSearch: (query: String, type: SearchType) -> Unit,
-    onRandom: () -> Unit
+    onRandom: () -> Unit,
+    onHistory: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
@@ -122,7 +130,12 @@ private fun SearchScreen(
         topBar = {
             XmpTopBar(
                 title = stringResource(id = R.string.search_title),
-                onBack = onBack
+                onBack = onBack,
+                actions = {
+                    IconButton(onClick = onHistory) {
+                        Icon(imageVector = Icons.Default.History, contentDescription = null)
+                    }
+                }
             )
         }
     ) { paddingValues ->
@@ -232,7 +245,8 @@ private fun Preview_SearchScreen() {
         SearchScreen(
             onBack = {},
             onSearch = { _, _ -> },
-            onRandom = {}
+            onRandom = {},
+            onHistory = {}
         )
     }
 }

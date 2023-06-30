@@ -8,11 +8,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+
+@Composable
+fun XmpDropdownMenuHeader(
+    text: String,
+    color: Color = MaterialTheme.colorScheme.primary
+) {
+    XmpDropdownMenuHeader {
+        Text(text = "All Files", color = color)
+    }
+}
 
 /**
  * Pretty much just a title header for drop down menu's
@@ -21,7 +33,7 @@ import androidx.compose.ui.unit.dp
  * https://github.com/saket/cascade/blob/f3840d7ec5d4ce5fa3edf0c0d930cfd08107b456/cascade-compose/src/main/java/me/saket/cascade/Cascade.kt#L353
  */
 @Composable
-fun XmpDropdownMenuHeader(
+private fun XmpDropdownMenuHeader(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(vertical = 4.dp),
     text: @Composable () -> Unit

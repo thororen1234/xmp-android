@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.compose.components
+package org.helllabs.android.xmp.compose.ui.preferences.components
 
 import androidx.annotation.IntRange
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,16 +20,29 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.alorma.compose.settings.storage.base.SettingValueState
 import com.alorma.compose.settings.storage.base.getValue
 import com.alorma.compose.settings.storage.base.rememberFloatSettingState
 import com.alorma.compose.settings.storage.base.setValue
+
+@Composable
+internal fun AboutText(string: String, textAlign: TextAlign = TextAlign.Center) {
+    Text(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp, bottom = 4.dp),
+        text = string,
+        textAlign = textAlign
+    )
+}
 
 /**
  * Modified from com.alorma.compose.settings.ui.SettingsSlider
@@ -37,7 +50,7 @@ import com.alorma.compose.settings.storage.base.setValue
  *      Subtitle Text with Slider
  */
 @Composable
-fun XmpSettingsSlider(
+internal fun XmpSettingsSlider(
     modifier: Modifier = Modifier,
     state: SettingValueState<Float> = rememberFloatSettingState(),
     icon: @Composable (() -> Unit)? = null,
@@ -201,11 +214,7 @@ internal fun XmpWrapContentColor(
     enabled: Boolean,
     content: @Composable () -> Unit
 ) {
-    val alpha = if (enabled) {
-        1.0f
-    } else {
-        0.6f
-    }
+    val alpha = if (enabled) 1.0f else 0.6f
     val contentColor = LocalContentColor.current.copy(alpha = alpha)
     CompositionLocalProvider(LocalContentColor provides contentColor) {
         content()

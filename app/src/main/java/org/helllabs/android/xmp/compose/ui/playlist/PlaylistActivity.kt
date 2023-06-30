@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.browser
+package org.helllabs.android.xmp.compose.ui.playlist
 
 import android.content.res.Configuration
 import android.os.Bundle
@@ -64,15 +64,15 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.browser.playlist.Playlist
 import org.helllabs.android.xmp.browser.playlist.PlaylistItem
-import org.helllabs.android.xmp.compose.components.DraggableItem
 import org.helllabs.android.xmp.compose.components.XmpTopBar
-import org.helllabs.android.xmp.compose.components.dragContainer
 import org.helllabs.android.xmp.compose.components.pullrefresh.ExperimentalMaterialApi
 import org.helllabs.android.xmp.compose.components.pullrefresh.PullRefreshIndicator
 import org.helllabs.android.xmp.compose.components.pullrefresh.pullRefresh
 import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullRefreshState
-import org.helllabs.android.xmp.compose.components.rememberDragDropState
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.compose.ui.playlist.components.DraggableItem
+import org.helllabs.android.xmp.compose.ui.playlist.components.dragContainer
+import org.helllabs.android.xmp.compose.ui.playlist.components.rememberDragDropState
 import timber.log.Timber
 import java.io.IOException
 import kotlin.time.Duration.Companion.seconds

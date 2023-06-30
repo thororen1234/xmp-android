@@ -11,10 +11,21 @@ class PlaylistItem(
     // Accessors
     var id = 0
     var file: File? = null
-    var imageRes = 0
 
     val filename: String
         get() = file!!.name
+
+    val isDirectory: Boolean
+        get() = type == TYPE_DIRECTORY
+
+    val isFile: Boolean
+        get() = type == TYPE_FILE
+
+    val isPlaylist: Boolean
+        get() = type == TYPE_PLAYLIST
+
+    val isSpecial: Boolean
+        get() = type == TYPE_SPECIAL
 
     override fun toString(): String =
         String.format("%s:%s:%s\n", file?.path ?: "", comment, name)
@@ -32,8 +43,8 @@ class PlaylistItem(
 
     companion object {
         const val TYPE_DIRECTORY = 1
-        const val TYPE_PLAYLIST = 2
-        const val TYPE_FILE = 3
+        const val TYPE_FILE = 2
+        const val TYPE_PLAYLIST = 3
         const val TYPE_SPECIAL = 4
     }
 }

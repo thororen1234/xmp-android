@@ -30,6 +30,7 @@ import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.topazFontFamily
 import timber.log.Timber
+import java.util.Locale
 
 class SearchError : ComponentActivity() {
 
@@ -53,21 +54,16 @@ class SearchError : ComponentActivity() {
             @Suppress("DEPRECATION")
             intent.getSerializableExtra(Search.ERROR) as Throwable?
         }
-        var message: String? = error?.message
-        if (message.isNullOrBlank()) {
-            message = getString(R.string.search_unknown_error)
-        } else {
-            // Remove java exception stuff
-            val idx = message.indexOf("Exception: ")
-            if (idx >= 0) {
-                message = message.substring(idx + 11)
-            }
-            message = if (message.trim().isEmpty()) {
-                getString(R.string.search_unknown_error)
-            } else {
-                val err = message.substring(0, 1).uppercase() + message.substring(1)
-                getString(R.string.search_known_error, err)
-            }
+
+        val cleanMessage = error?.message?.substringAfter("Exception: ")?.trim()
+        val message = when {
+            cleanMessage.isNullOrEmpty() -> getString(R.string.search_unknown_error)
+            else -> getString(
+                R.string.search_known_error,
+                cleanMessage.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                }
+            )
         }
 
         setContent {

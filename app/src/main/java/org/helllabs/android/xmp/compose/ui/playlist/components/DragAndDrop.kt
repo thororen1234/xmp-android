@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.compose.components
+package org.helllabs.android.xmp.compose.ui.playlist.components
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring

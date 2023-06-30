@@ -39,13 +39,13 @@ import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.api.Repository
 import org.helllabs.android.xmp.compose.components.ErrorScreen
-import org.helllabs.android.xmp.compose.components.ItemModule
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.search.Search
 import org.helllabs.android.xmp.compose.ui.search.SearchError
 import org.helllabs.android.xmp.compose.ui.search.SearchType
+import org.helllabs.android.xmp.compose.ui.search.components.ItemModule
 import org.helllabs.android.xmp.model.Artist
 import org.helllabs.android.xmp.model.ArtistInfo
 import org.helllabs.android.xmp.model.ArtistResult

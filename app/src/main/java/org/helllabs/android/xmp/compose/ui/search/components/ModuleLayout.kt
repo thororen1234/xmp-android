@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.compose.components
+package org.helllabs.android.xmp.compose.ui.search.components
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.animateContentSize
@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.R
+import org.helllabs.android.xmp.compose.components.annotatedLinkStringCombined
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.model.Artist
 import org.helllabs.android.xmp.model.ArtistInfo
@@ -125,7 +126,7 @@ fun ModuleLayout(
         Text(text = module.filename, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(10.dp))
         // Info
-        val infoLink = annotatedLinkString(info, module.infopage) // TODO hide URL in text
+        val infoLink = annotatedLinkStringCombined(info, module.infopage)
         ClickableText(
             style = TextStyle(
                 color = MaterialTheme.colorScheme.onSurface,
@@ -145,10 +146,7 @@ fun ModuleLayout(
         HeaderText(stringResource(id = R.string.text_license))
         Spacer(modifier = Modifier.height(5.dp))
         // Licence Link
-        val licenseLink = annotatedLinkString(
-            module.license.title,
-            module.license.legalurl
-        ) // TODO hide URL in text
+        val licenseLink = annotatedLinkStringCombined(module.license.title, module.license.legalurl)
         ClickableText(
             text = licenseLink,
             style = TextStyle(
@@ -196,8 +194,7 @@ fun ModuleLayout(
         // Sponsor
         if (moduleResult.hasSponsor()) {
             val sponsor = moduleResult.sponsor.details
-            val sponsorLink =
-                annotatedLinkString(sponsor.text, sponsor.link) // TODO hide URL in text
+            val sponsorLink = annotatedLinkStringCombined(sponsor.text, sponsor.link)
             HeaderText(stringResource(id = R.string.text_sponsor))
             Spacer(modifier = Modifier.height(10.dp))
             // Sponsor Content
@@ -246,7 +243,7 @@ private fun Preview_ModuleLayout() {
     val result = ModuleResult(
         sponsor = Sponsor(
             details = SponsorDetails(
-                link = "",
+                link = "http://localhost",
                 text = "Some Sponsor Text"
             )
         ),
@@ -255,10 +252,10 @@ private fun Preview_ModuleLayout() {
             bytes = 669669,
             format = "XM",
             artistInfo = ArtistInfo(artist = listOf(Artist(alias = "Some Artist"))),
-            infopage = "",
+            infopage = "http://localhost",
             license = License(
                 title = "Some License Title",
-                legalurl = "",
+                legalurl = "http://localhost",
                 description = "Some License Description"
             ),
             comment = "Some Comment",

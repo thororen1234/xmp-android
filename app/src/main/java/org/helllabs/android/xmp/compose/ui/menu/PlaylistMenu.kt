@@ -14,6 +14,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -71,7 +72,6 @@ import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.browser.PlaylistActivity
 import org.helllabs.android.xmp.browser.playlist.Playlist
 import org.helllabs.android.xmp.browser.playlist.PlaylistItem
 import org.helllabs.android.xmp.browser.playlist.PlaylistUtils
@@ -88,6 +88,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.themedText
 import org.helllabs.android.xmp.compose.ui.filelist.FileListActivity
+import org.helllabs.android.xmp.compose.ui.playlist.PlaylistActivity
 import org.helllabs.android.xmp.compose.ui.preferences.Preferences
 import org.helllabs.android.xmp.compose.ui.search.Search
 import org.helllabs.android.xmp.player.PlayerActivity
@@ -116,11 +117,11 @@ class PlaylistMenu : ComponentActivity() {
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // TODO go to player if we're playing something
-//        if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0) {
-//            Intent(this, PlayerActivity::class.java).also(::startActivity)
-//            return
-//        }
+        if (PlayerService.isAlive && PrefManager.startOnPlayer) {
+            if (PrefManager.startOnPlayer && PlayerService.isAlive) {
+                Intent(this, PlayerActivity::class.java).also(::startActivity)
+            }
+        }
 
         if (!viewModel.checkStorage()) {
             val message = getString(R.string.error_storage)
@@ -167,136 +168,149 @@ class PlaylistMenu : ComponentActivity() {
                 }
             }
 
-            XmpTheme {
-                MessageDialog(
-                    isShowing = state.errorText.isNotEmpty(),
-                    title = stringResource(id = R.string.error),
-                    text = state.errorText,
-                    confirmText = if (state.isFatalError) {
-                        stringResource(id = R.string.exit)
-                    } else {
-                        stringResource(id = R.string.ok)
-                    },
-                    onConfirm = {
-                        if (state.isFatalError) {
-                            finish()
-                        }
-
-                        viewModel.showError("", false)
+            /**
+             * Error message Dialog
+             */
+            MessageDialog(
+                isShowing = state.errorText.isNotEmpty(),
+                title = stringResource(id = R.string.error),
+                text = state.errorText,
+                confirmText = if (state.isFatalError) {
+                    stringResource(id = R.string.exit)
+                } else {
+                    stringResource(id = R.string.ok)
+                },
+                onConfirm = {
+                    if (state.isFatalError) {
+                        finish()
                     }
-                )
 
-                ChangeLogDialog(
-                    isShowing = changeLogDialog,
-                    onDismiss = { PrefManager.changeLogVersion = BuildConfig.VERSION_CODE }
-                )
+                    viewModel.showError("", false)
+                }
+            )
 
-                TextInputDialog(
-                    isShowing = changeMediaPath,
-                    icon = Icons.Default.Folder,
-                    title = "Change directory",
-                    text = "Enter the mod directory:",
-                    defaultText = state.mediaPath,
-                    onConfirm = { value ->
-                        PrefManager.mediaPath = value
-                        viewModel.updateList(this)
-                        changeMediaPath = false
-                    },
-                    onDismiss = {
-                        changeMediaPath = false
-                    }
-                )
+            /**
+             * Changelog dialog
+             */
+            ChangeLogDialog(
+                isShowing = changeLogDialog,
+                onDismiss = { PrefManager.changeLogVersion = BuildConfig.VERSION_CODE }
+            )
 
-                EditPlaylistDialog(
-                    isShowing = changePlaylist,
-                    playlistItem = changePlaylistInfo,
-                    onConfirm = { oldName, newName, oldComment, newComment ->
-                        if (oldComment != newComment) {
-                            with(viewModel) {
-                                editComment(oldName, newComment) {
-                                    showError(
-                                        message = getString(R.string.error_edit_comment),
-                                        isFatal = false
-                                    )
-                                }
-                            }
-                        }
+            /**
+             * Change default directory dialog
+             */
+            TextInputDialog(
+                isShowing = changeMediaPath,
+                icon = Icons.Default.Folder,
+                title = "Change directory",
+                text = "Enter the mod directory:",
+                defaultText = state.mediaPath,
+                onConfirm = { value ->
+                    PrefManager.mediaPath = value
+                    viewModel.updateList(this)
+                    changeMediaPath = false
+                },
+                onDismiss = {
+                    changeMediaPath = false
+                }
+            )
 
-                        if (oldName != newName) {
-                            with(viewModel) {
-                                editPlaylist(oldName, newName) {
-                                    showError(
-                                        message = getString(R.string.error_rename_playlist),
-                                        isFatal = false
-                                    )
-                                }
-                            }
-                        }
-
-                        changePlaylist = false
-                        viewModel.updateList(context)
-                    },
-                    onDismiss = {
-                        changePlaylist = false
-                        viewModel.updateList(context)
-                    },
-                    onDelete = { name ->
-                        Playlist.delete(name)
-                        changePlaylist = false
-                        viewModel.updateList(context)
-                    }
-                )
-
-                NewPlaylistDialog(
-                    isShowing = newPlaylist,
-                    onConfirm = { name, comment ->
-                        PlaylistUtils.createEmptyPlaylist(
-                            name = name,
-                            comment = comment,
-                            onSuccess = {
-                                viewModel.updateList(this)
-                            },
-                            onError = {
-                                viewModel.showError(
-                                    message = getString(R.string.error_create_playlist),
+            /**
+             * Edit playlist dialog
+             */
+            EditPlaylistDialog(
+                isShowing = changePlaylist,
+                playlistItem = changePlaylistInfo,
+                onConfirm = { oldName, newName, oldComment, newComment ->
+                    if (oldComment != newComment) {
+                        with(viewModel) {
+                            editComment(oldName, newComment) {
+                                showError(
+                                    message = getString(R.string.error_edit_comment),
                                     isFatal = false
                                 )
                             }
-                        )
-
-                        newPlaylist = false
-                    },
-                    onDismiss = {
-                        newPlaylist = false
+                        }
                     }
-                )
 
+                    if (oldName != newName) {
+                        with(viewModel) {
+                            editPlaylist(oldName, newName) {
+                                showError(
+                                    message = getString(R.string.error_rename_playlist),
+                                    isFatal = false
+                                )
+                            }
+                        }
+                    }
+
+                    changePlaylist = false
+                    viewModel.updateList(context)
+                },
+                onDismiss = {
+                    changePlaylist = false
+                    viewModel.updateList(context)
+                },
+                onDelete = { name ->
+                    Playlist.delete(name)
+                    changePlaylist = false
+                    viewModel.updateList(context)
+                }
+            )
+
+            /**
+             * New playlist dialog
+             */
+            NewPlaylistDialog(
+                isShowing = newPlaylist,
+                onConfirm = { name, comment ->
+                    PlaylistUtils.createEmptyPlaylist(
+                        name = name,
+                        comment = comment,
+                        onSuccess = {
+                            viewModel.updateList(this)
+                        },
+                        onError = {
+                            viewModel.showError(
+                                message = getString(R.string.error_create_playlist),
+                                isFatal = false
+                            )
+                        }
+                    )
+
+                    newPlaylist = false
+                },
+                onDismiss = {
+                    newPlaylist = false
+                }
+            )
+
+            XmpTheme {
                 PlaylistMenuScreen(
                     state = state,
                     permissionState = storagePermission.status.isGranted,
                     permissionRationale = storagePermission.status.shouldShowRationale,
                     onItemClick = { item ->
-                        if (item.type == PlaylistItem.TYPE_SPECIAL) {
+                        if (item.isSpecial) {
                             playlistResult.launch(
                                 Intent(context, FileListActivity::class.java)
                             )
-                            return@PlaylistMenuScreen
+                        } else {
+                            playlistResult.launch(
+                                Intent(context, PlaylistActivity::class.java).apply {
+                                    putExtra("name", item.name)
+                                }
+                            )
                         }
-
-                        playlistResult.launch(
-                            Intent(context, PlaylistActivity::class.java).apply {
-                                putExtra("name", item.name)
-                            }
-                        )
                     },
                     onItemLongClick = { item ->
-                        if (item.type == PlaylistItem.TYPE_SPECIAL) {
+                        if (item.isSpecial) {
                             changeMediaPath = true
-                            return@PlaylistMenuScreen
+                        } else {
+                            changePlaylistInfo = item
+                            changePlaylist = true
                         }
-
-                        changePlaylistInfo = item
-                        changePlaylist = true
                     },
                     onRefresh = {
                         viewModel.updateList(this)
@@ -444,20 +458,17 @@ private fun PlaylistMenuScreen(
             ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    state = scrollState
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    state = scrollState,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(state.playlistItems) { item ->
                         Card(
                             modifier = Modifier
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
                                 .fillMaxWidth()
                                 .combinedClickable(
-                                    onClick = {
-                                        onItemClick(item)
-                                    },
-                                    onLongClick = {
-                                        onItemLongClick(item)
-                                    }
+                                    onClick = { onItemClick(item) },
+                                    onLongClick = { onItemLongClick(item) }
                                 )
                         ) {
                             ListItem(
@@ -465,14 +476,12 @@ private fun PlaylistMenuScreen(
                                     containerColor = MaterialTheme.colorScheme.surfaceVariant
                                 ),
                                 leadingContent = {
-                                    val icon = if (item.type == PlaylistItem.TYPE_SPECIAL) {
-                                        Icons.Default.Folder
-                                    } else {
-                                        Icons.Default.List
-                                    }
-
                                     Icon(
-                                        imageVector = icon,
+                                        imageVector = if (item.isSpecial) {
+                                            Icons.Default.Folder
+                                        } else {
+                                            Icons.Default.List
+                                        },
                                         contentDescription = null
                                     )
                                 },
@@ -515,21 +524,19 @@ private fun PlaylistMenuScreen(
 @Preview
 @Composable
 private fun Preview_PlaylistMenuScreen() {
-    val list = List(15) {
-        PlaylistItem(
-            type = if (it < 1) PlaylistItem.TYPE_DIRECTORY else PlaylistItem.TYPE_SPECIAL,
-            name = "Name $it",
-            comment = "Comment $it"
-        )
-    }
-    val state = PlaylistMenuViewModel.PlaylistMenuState(
-        isRefreshing = false,
-        mediaPath = "sdcard\\some\\path",
-        playlistItems = list
-    )
     XmpTheme {
         PlaylistMenuScreen(
-            state = state,
+            state = PlaylistMenuViewModel.PlaylistMenuState(
+                isRefreshing = false,
+                mediaPath = "sdcard\\some\\path",
+                playlistItems = List(15) {
+                    PlaylistItem(
+                        type = if (it < 1) PlaylistItem.TYPE_DIRECTORY else PlaylistItem.TYPE_SPECIAL,
+                        name = "Name $it",
+                        comment = "Comment $it"
+                    )
+                }
+            ),
             permissionState = true,
             permissionRationale = true,
             onItemClick = {},

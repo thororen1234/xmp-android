@@ -52,17 +52,19 @@ class PlaylistMenuViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: () -> Unit
     ) {
-        if (!PrefManager.DATA_DIR.isDirectory) {
-            if (PrefManager.DATA_DIR.mkdirs()) {
-                PlaylistUtils.createEmptyPlaylist(
-                    name = name,
-                    comment = comment,
-                    onSuccess = onSuccess,
-                    onError = onError
-                )
-            } else {
-                onError()
-            }
+        if (PrefManager.DATA_DIR.isDirectory) {
+            return
+        }
+
+        if (PrefManager.DATA_DIR.mkdirs()) {
+            PlaylistUtils.createEmptyPlaylist(
+                name = name,
+                comment = comment,
+                onSuccess = onSuccess,
+                onError = onError
+            )
+        } else {
+            onError()
         }
     }
 
@@ -78,11 +80,8 @@ class PlaylistMenuViewModel : ViewModel() {
         items.add(browserItem)
 
         PlaylistUtils.listNoSuffix().forEachIndexed { index, name ->
-            val item = PlaylistItem(
-                PlaylistItem.TYPE_PLAYLIST,
-                name,
-                Playlist.readComment(context, name)
-            )
+            val comment = Playlist.readComment(context, name)
+            val item = PlaylistItem(PlaylistItem.TYPE_PLAYLIST, name, comment)
             item.id = index + 1
 
             items.add(item)
