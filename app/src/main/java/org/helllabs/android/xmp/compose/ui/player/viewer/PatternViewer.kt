@@ -5,9 +5,10 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
-import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
-import org.helllabs.android.xmp.player.Util
+import org.helllabs.android.xmp.compose.theme.patternViewFontSize
+import org.helllabs.android.xmp.compose.theme.toPx
+import org.helllabs.android.xmp.compose.ui.player.Util
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 
@@ -61,8 +62,7 @@ class PatternViewer(context: Context, background: Int) : Viewer(context, backgro
     private var row: Float = 0f
     private var updateRow: Float = 0f
 
-    private val fontSize: Float =
-        resources.getDimensionPixelSize(R.dimen.patternview_font_size).toFloat()
+    private val fontSize: Float = patternViewFontSize.toPx(context)
 
     private var currentType: String = ""
     private lateinit var effectsTable: MutableMap<Int, String>

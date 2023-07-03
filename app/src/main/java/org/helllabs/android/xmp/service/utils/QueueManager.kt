@@ -9,27 +9,36 @@ class QueueManager(
     loop: Boolean,
     keepFirst: Boolean
 ) {
+
     private val list: MutableList<String>
-    private val ridx: RandomIndex
-    var index: Int
-    private val shuffleMode: Boolean
     private val loopListMode: Boolean
+    private val ridx: RandomIndex
+    private val shuffleMode: Boolean
     private var randomStart = 0
+    var index: Int
+
+    val filename: String
+        get() {
+            val idx = if (shuffleMode) ridx.getIndex(index) else index
+            return list[idx]
+        }
 
     init {
         if (start >= fileList.size) {
             start = fileList.size - 1
         }
+
         if (keepFirst) {
             Collections.swap(fileList, 0, start)
             start = 0
             randomStart = 1
         }
+
         index = start
         list = fileList
+        loopListMode = loop
         ridx = RandomIndex(randomStart, fileList.size)
         shuffleMode = shuffle
-        loopListMode = loop
     }
 
     fun add(fileList: List<String>) {
@@ -39,9 +48,7 @@ class QueueManager(
         }
     }
 
-    fun size(): Int {
-        return list.size
-    }
+    fun size(): Int = list.size
 
     operator fun next(): Boolean {
         index++
@@ -70,10 +77,4 @@ class QueueManager(
     fun restart() {
         index = -1
     }
-
-    val filename: String
-        get() {
-            val idx = if (shuffleMode) ridx.getIndex(index) else index
-            return list[idx]
-        }
 }

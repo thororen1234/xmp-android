@@ -59,7 +59,6 @@ import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
 import org.helllabs.android.xmp.compose.ui.filelist.components.FileListCard
 import org.helllabs.android.xmp.core.Assets
 import org.helllabs.android.xmp.core.Files
-import org.helllabs.android.xmp.util.FileUtils
 import org.helllabs.android.xmp.util.InfoCache
 import timber.log.Timber
 import java.io.File
@@ -266,7 +265,7 @@ class FileListActivity : BasePlaylistActivity() {
                     icon = Icons.Default.QuestionMark,
                     title = "Delete directory",
                     text = "Are you sure you want to delete directory \"${
-                    FileUtils.basename(deleteDirectory)
+                    Files.basename(deleteDirectory)
                     }\" and all its contents?",
                     confirmText = stringResource(id = R.string.menu_delete),
                     onConfirm = {
@@ -293,7 +292,7 @@ class FileListActivity : BasePlaylistActivity() {
                 isShowing = deleteFile != null,
                 icon = Icons.Default.QuestionMark,
                 title = "Delete File",
-                text = "Are you sure you want to delete ${FileUtils.basename(deleteFile)}?",
+                text = "Are you sure you want to delete ${Files.basename(deleteFile)}?",
                 confirmText = stringResource(id = R.string.menu_delete),
                 onConfirm = {
                     if (InfoCache.delete(deleteFile!!)) {

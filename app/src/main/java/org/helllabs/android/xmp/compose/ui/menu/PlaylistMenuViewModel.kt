@@ -10,7 +10,7 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.browser.playlist.Playlist
 import org.helllabs.android.xmp.browser.playlist.PlaylistItem
 import org.helllabs.android.xmp.browser.playlist.PlaylistUtils
-import org.helllabs.android.xmp.util.FileUtils
+import org.helllabs.android.xmp.core.Files
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
@@ -96,7 +96,7 @@ class PlaylistMenuViewModel : ViewModel() {
         try {
             file.delete()
             file.createNewFile()
-            FileUtils.writeToFile(file, value)
+            Files.writeToFile(file, value)
         } catch (e: IOException) {
             onError()
         }

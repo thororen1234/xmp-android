@@ -2,6 +2,8 @@ package org.helllabs.android.xmp.util
 
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp
+import org.helllabs.android.xmp.core.Files
+import org.helllabs.android.xmp.model.ModInfo
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -118,7 +120,7 @@ object InfoCache {
                     dir.mkdirs()
                 }
                 cacheFile.createNewFile()
-                FileUtils.writeToFile(cacheFile, lines)
+                Files.writeToFile(cacheFile, lines)
             } else {
                 val dir: File = skipFile.parentFile!!
                 if (!dir.isDirectory) {

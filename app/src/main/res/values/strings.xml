@@ -164,6 +164,7 @@
     <string name="sidebar_instruments">Instruments:</string>
     <string name="sidebar_samples">Samples:</string>
     <string name="sidebar_channels">Channels:</string>
+    <string name="sidebar_length">Length in Patterns:</string>
     <string name="sidebar_subsongs">Subsongs</string>
     <string name="sidebar_button_allseqs">Play all subsongs</string>
     <string name="sidebar_button_loopseq">Loop subsong</string>
@@ -225,5 +226,11 @@
     <string name="file_no_path_text">%s not found. Create this directory or change the module path.</string>
     <string name="go_back">Go Back</string>
     <string name="search_history">Search History</string>
+    <string name="info_bpm">BPM:%s</string>
+    <string name="info_speed">Speed:%s</string>
+    <string name="info_position">Pos:%s</string>
+    <string name="info_pattern">Pat:%s</string>
+    <string name="sidebar_main_song">Main Song</string>
+    <string name="sheet_sub_song">Subsong %d</string>
 
 </resources>

@@ -12,19 +12,19 @@ struct timespec sleepTime = {
         .tv_nsec = 10000 * 1000
 };
 
-static SLObjectItf engine_obj;
+static SLAndroidSimpleBufferQueueItf buffer_queue;
 static SLEngineItf engine_engine;
+static SLObjectItf engine_obj;
 static SLObjectItf output_mix_obj;
 static SLObjectItf player_obj;
 static SLPlayItf player_play;
 static SLVolumeItf player_vol;
-static SLAndroidSimpleBufferQueueItf buffer_queue;
 static char *buffer;
 static int buffer_num;
 static int buffer_size;
-static volatile int first_free, last_free;
 static int playing;
 static pthread_mutex_t mutex;
+static volatile int first_free, last_free;
 
 #define TAG "Xmp"
 #define BUFFER_TIME 40
@@ -32,10 +32,10 @@ static pthread_mutex_t mutex;
 #define lock()   pthread_mutex_lock(&mutex)
 #define unlock() pthread_mutex_unlock(&mutex)
 
-
 static void player_callback(SLAndroidSimpleBufferQueueItf bq, void *context) {
     (void) bq;
     (void) context;
+
     INC(last_free, buffer_num);
 
     /* underrun, shouldn't happen */
@@ -79,8 +79,7 @@ static int opensl_open(int sr, int num) {
     if (r != SL_RESULT_SUCCESS)
         goto err;
 
-    r = (*engine_obj)->GetInterface(engine_obj, SL_IID_ENGINE,
-                                    &engine_engine);
+    r = (*engine_obj)->GetInterface(engine_obj, SL_IID_ENGINE, &engine_engine);
     if (r != SL_RESULT_SUCCESS)
         goto err1;
 
@@ -88,6 +87,7 @@ static int opensl_open(int sr, int num) {
     const SLInterfaceID ids[] = {
             SL_IID_VOLUME
     };
+
     const SLboolean req[] = {
             SL_BOOLEAN_FALSE
     };
@@ -127,12 +127,14 @@ static int opensl_open(int sr, int num) {
     const SLInterfaceID ids1[] = {
             SL_IID_VOLUME, SL_IID_ANDROIDSIMPLEBUFFERQUEUE
     };
+
     const SLboolean req1[] = {
             SL_BOOLEAN_TRUE
     };
 
     r = (*engine_engine)->CreateAudioPlayer(engine_engine, &player_obj,
                                             &audio_source, &audio_sink, 2, ids1, req1);
+
     if (r != SL_RESULT_SUCCESS)
         goto err2;
 
@@ -152,8 +154,8 @@ static int opensl_open(int sr, int num) {
         goto err3;
 
     /* get buffer queue interface */
-    r = (*player_obj)->GetInterface(player_obj,
-                                    SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &buffer_queue);
+    r = (*player_obj)->GetInterface(player_obj, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &buffer_queue);
+
     if (r != SL_RESULT_SUCCESS)
         goto err3;
 
@@ -166,12 +168,16 @@ static int opensl_open(int sr, int num) {
 
     err3:
     (*player_obj)->Destroy(player_obj);
+
     err2:
     (*output_mix_obj)->Destroy(output_mix_obj);
+
     err1:
     (*engine_obj)->Destroy(engine_obj);
+
     err:
     pthread_mutex_destroy(&mutex);
+
     return -1;
 }
 
@@ -180,8 +186,10 @@ static void opensl_close() {
 
     if (player_obj != NULL)
         (*player_obj)->Destroy(player_obj);
+
     if (output_mix_obj != NULL)
         (*output_mix_obj)->Destroy(output_mix_obj);
+
     if (engine_obj != NULL)
         (*engine_obj)->Destroy(engine_obj);
 
@@ -228,6 +236,7 @@ void flush_audio() {
     SLAndroidSimpleBufferQueueState state;
 
     lock();
+
     if (buffer_queue != NULL) {
         (*buffer_queue)->GetState(buffer_queue, &state);
     }
@@ -238,8 +247,8 @@ void flush_audio() {
         if (buffer_queue != NULL) {
             (*buffer_queue)->GetState(buffer_queue, &state);
         }
-
     }
+
     unlock();
 }
 
@@ -277,13 +286,17 @@ int fill_buffer(int looped) {
 
     /* fill and enqueue buffer */
     char *b = &buffer[first_free * buffer_size];
+
     INC(first_free, buffer_num);
 
     ret = play_buffer(b, buffer_size, looped);
+
     lock();
+
     if (buffer_queue != NULL) {
         (*buffer_queue)->Enqueue(buffer_queue, b, buffer_size);
     }
+
     unlock();
 
     return ret;
@@ -298,9 +311,11 @@ int restart_audio() {
     }
 
     lock();
+
     if (player_play != NULL) {
         ret = (int) (*player_play)->SetPlayState(player_play, SL_PLAYSTATE_PLAYING);
     }
+
     unlock();
 
     return ret == SL_RESULT_SUCCESS ? 0 : -1;
@@ -312,9 +327,11 @@ int stop_audio() {
     drop_audio();
 
     lock();
+
     if (player_play != NULL) {
         ret = (int) (*player_play)->SetPlayState(player_play, SL_PLAYSTATE_STOPPED);
     }
+
     unlock();
 
     return ret == SL_RESULT_SUCCESS ? 0 : -1;
@@ -325,11 +342,14 @@ int get_volume() {
     SLresult r;
 
     r = (*player_vol)->GetVolumeLevel(player_vol, &vol);
+
     return r == SL_RESULT_SUCCESS ? -vol : -1;
 }
 
 int set_volume(int vol) {
     SLresult r;
+
     r = (*player_vol)->SetVolumeLevel(player_vol, (SLmillibel) -vol);
+
     return r == SL_RESULT_SUCCESS ? 0 : -1;
 }

@@ -1,11 +1,15 @@
 package org.helllabs.android.xmp.service.utils
 
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+
 class Watchdog(private val timeout: Int) : Runnable {
 
-    private var timer = 0
-    private var running = false
-    private var thread: Thread? = null
+    private var executor: ScheduledExecutorService? = null
     private var listener: OnTimeoutListener? = null
+    private var running = false
+    private var timer = timeout
 
     fun interface OnTimeoutListener {
         fun onTimeout()
@@ -16,33 +20,25 @@ class Watchdog(private val timeout: Int) : Runnable {
     }
 
     override fun run() {
-        while (running) {
-            if (--timer <= 0) {
-                listener!!.onTimeout()
-                break
-            }
-            try {
-                Thread.sleep(1000)
-            } catch (e: InterruptedException) {
-                /* Nothing */
-            }
+        if (--timer <= 0) {
+            listener?.onTimeout()
+            stop()
         }
     }
 
     fun start() {
+        if (executor == null) {
+            executor = Executors.newScheduledThreadPool(1)
+        }
+
         running = true
-        refresh()
-        thread = Thread(this)
-        thread!!.start()
+        executor?.scheduleAtFixedRate(this, 0, 1, TimeUnit.SECONDS)
     }
 
     fun stop() {
         running = false
-        try {
-            thread!!.join()
-        } catch (e: InterruptedException) {
-            /* Nothing */
-        }
+        executor?.shutdown()
+        executor = null
     }
 
     fun refresh() {

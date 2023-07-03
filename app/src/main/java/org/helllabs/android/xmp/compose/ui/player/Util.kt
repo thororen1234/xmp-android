@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.player
+package org.helllabs.android.xmp.compose.ui.player
 
 object Util {
     private val digits = charArrayOf(

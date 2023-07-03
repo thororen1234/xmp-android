@@ -6,29 +6,24 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
-import android.os.Build
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
-import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
+import org.helllabs.android.xmp.compose.theme.accent
+import org.helllabs.android.xmp.compose.theme.instrumentViewFontSize
+import org.helllabs.android.xmp.compose.theme.toPx
 import timber.log.Timber
 
 @Suppress("ViewConstructor")
 class InstrumentViewer(context: Context, val background: Int) : Viewer(context, background) {
 
     private val startBlue: Int
-        get() {
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                resources.getColor(R.color.accent, null)
-            } else {
-                @Suppress("DEPRECATION")
-                resources.getColor(R.color.accent)
-            }
-        }
+        get() = accent.toArgb()
 
     private lateinit var insName: Array<String>
     private val barPaint = arrayListOf<Paint>()
     private val fontHeight: Int
-    private val fontSize: Int = resources.getDimensionPixelSize(R.dimen.instrumentview_font_size)
+    private val fontSize: Int = instrumentViewFontSize.toPx(context).toInt()
     private val fontWidth: Int
     private val insPaint = arrayListOf<Paint>()
     private val rect = Rect()

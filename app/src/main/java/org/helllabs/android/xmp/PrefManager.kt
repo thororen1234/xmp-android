@@ -210,4 +210,10 @@ object PrefManager {
         set(value) {
             prefs.edit { putString("search_history", value) }
         }
+
+    var showHex: Boolean
+        get() = prefs.getBoolean("player_show_hex", false)
+        set(value) {
+            prefs.edit { putBoolean("player_show_hex", value) }
+        }
 }

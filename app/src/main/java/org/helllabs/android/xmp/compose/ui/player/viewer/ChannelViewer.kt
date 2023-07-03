@@ -10,9 +10,11 @@ import android.graphics.Typeface
 import android.os.RemoteException
 import android.view.Surface
 import org.helllabs.android.xmp.PrefManager
-import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
-import org.helllabs.android.xmp.player.Util
+import org.helllabs.android.xmp.compose.theme.channelViewChannelFontSize
+import org.helllabs.android.xmp.compose.theme.channelViewFontSize
+import org.helllabs.android.xmp.compose.theme.toPx
+import org.helllabs.android.xmp.compose.ui.player.Util
 import timber.log.Timber
 
 @Suppress("ViewConstructor")
@@ -26,7 +28,7 @@ class ChannelViewer(context: Context, background: Int) : Viewer(context, backgro
     private val font2Height: Int
     private val font2Width: Int
     private val fontHeight: Int
-    private val fontSize: Int = resources.getDimensionPixelSize(R.dimen.channelview_font_size)
+    private val fontSize: Int = channelViewFontSize.toPx(context).toInt()
     private val fontWidth: Int
     private val insPaint: Paint
     private val keyRow = IntArray(Xmp.MAX_CHANNELS)
@@ -73,7 +75,7 @@ class ChannelViewer(context: Context, background: Int) : Viewer(context, backgro
     private var panX: Int = 0
 
     init {
-        val font2Size = resources.getDimensionPixelSize(R.dimen.channelview_channel_font_size)
+        val font2Size = channelViewChannelFontSize.toPx(context).toInt()
 
         // Scope and Meter Background Paint
         scopePaint = Paint().apply {

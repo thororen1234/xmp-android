@@ -5,9 +5,9 @@ import android.app.ProgressDialog
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp.testModule
+import org.helllabs.android.xmp.model.ModInfo
 import org.helllabs.android.xmp.util.Message.error
 import org.helllabs.android.xmp.util.Message.toast
-import org.helllabs.android.xmp.util.ModInfo
 import java.io.File
 import java.io.IOException
 

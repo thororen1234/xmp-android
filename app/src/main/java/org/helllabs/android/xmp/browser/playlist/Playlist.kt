@@ -4,8 +4,7 @@ import android.app.Activity
 import android.content.Context
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.util.FileUtils.readFromFile
-import org.helllabs.android.xmp.util.FileUtils.removeLineFromFile
+import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.util.InfoCache.fileExists
 import org.helllabs.android.xmp.util.Message.error
 import timber.log.Timber
@@ -43,7 +42,7 @@ class Playlist(val name: String) {
         if (file.exists()) {
             Timber.i("Read playlist $name")
 
-            val comment = readFromFile(CommentFile(name))
+            val comment = Files.readFromFile(CommentFile(name))
 
             // read list contents
             if (readList(name)) {
@@ -136,7 +135,7 @@ class Playlist(val name: String) {
                 array[i] = iterator.next()
             }
             try {
-                removeLineFromFile(file, array)
+                Files.removeLineFromFile(file, array)
             } catch (e: FileNotFoundException) {
                 Timber.e("Playlist file ${file.path} not found")
             } catch (e: IOException) {
@@ -286,7 +285,7 @@ class Playlist(val name: String) {
         fun readComment(context: Context, name: String): String {
             var comment: String? = null
             try {
-                comment = readFromFile(CommentFile(name))
+                comment = Files.readFromFile(CommentFile(name))
             } catch (e: IOException) {
                 error(context as Activity, context.getString(R.string.error_read_comment))
             }

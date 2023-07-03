@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.player
+package org.helllabs.android.xmp.compose.ui.player
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -10,17 +10,14 @@ import android.content.Intent
  */
 class ScreenReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_SCREEN_OFF) {
-            // DO WHATEVER YOU NEED TO DO HERE
-            wasScreenOn = false
-        } else if (intent.action == Intent.ACTION_SCREEN_ON) {
-            // AND DO WHATEVER YOU NEED TO DO HERE
-            wasScreenOn = true
+        wasScreenOn = when (intent.action) {
+            Intent.ACTION_SCREEN_OFF -> false
+            Intent.ACTION_SCREEN_ON -> true
+            else -> return // Do nothing
         }
     }
 
     companion object {
-        // THANKS JASON
         var wasScreenOn = true
     }
 }

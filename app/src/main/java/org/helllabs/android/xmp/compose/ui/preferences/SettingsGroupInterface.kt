@@ -74,6 +74,18 @@ fun SettingsGroupInterface() {
                 PrefManager.enableDelete = it
             }
         )
+
+        val showHex = rememberBooleanSettingState(PrefManager.showHex)
+        SettingsSwitch(
+            title = { Text(text = "Show hex values") },
+            subtitle = { Text(text = "Show hex values for player info") },
+            state = showHex,
+            onCheckedChange = {
+                showHex.value = it
+                PrefManager.showHex = it
+            }
+        )
+
         val useMediaStyle = rememberBooleanSettingState(PrefManager.useMediaStyle)
         SettingsSwitch(
             title = { Text(text = "Use media style notification") },
