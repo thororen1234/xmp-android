@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.player.viewer
+package org.helllabs.android.xmp.compose.ui.player.viewer
 
 import android.content.Context
 import android.graphics.Canvas
@@ -77,8 +77,8 @@ class InstrumentViewer(context: Context, val background: Int) : Viewer(context, 
         setMaxY(modVars[4] * fontHeight + fontHeight / 2)
     }
 
-    override fun update(info: Info?, paused: Boolean) {
-        super.update(info, paused)
+    override fun update(info: Info?, isPlaying: Boolean) {
+        super.update(info, isPlaying)
 
         requestCanvasLock { canvas ->
             doDraw(canvas, info)

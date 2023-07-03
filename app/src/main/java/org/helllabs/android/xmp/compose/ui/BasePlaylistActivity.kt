@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
 import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.SnackbarHostState
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -14,7 +15,7 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.browser.playlist.PlaylistItem
-import org.helllabs.android.xmp.player.PlayerActivity
+import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.util.InfoCache.testModule
@@ -29,6 +30,19 @@ import timber.log.Timber
 abstract class BasePlaylistActivity : ComponentActivity() {
 
     internal lateinit var snackbarHostState: SnackbarHostState
+
+    private val playerContract = ActivityResultContracts.StartActivityForResult()
+    private var playerResult = registerForActivityResult(playerContract) { result ->
+        if (result.resultCode == 1) {
+            result.data?.getStringExtra("error")?.let {
+                Timber.w("Result with error: $it")
+                showSnack(it)
+            }
+        }
+        if (result.resultCode == 2) {
+            // TODO file was deleted
+        }
+    }
 
     private var mAddList: MutableList<String>? = null
     private var mModPlayer: ModInterface? = null
@@ -150,7 +164,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
             putExtra(PlayerActivity.PARM_KEEPFIRST, keepFirst)
         }.also { intent ->
             Timber.i("Start Player activity")
-            startActivity(intent)
+            playerResult.launch(intent)
         }
     }
 

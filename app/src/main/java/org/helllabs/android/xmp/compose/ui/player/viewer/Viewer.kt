@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.player.viewer
+package org.helllabs.android.xmp.compose.ui.player.viewer
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -114,7 +114,7 @@ abstract class Viewer(context: Context, color: Int) :
         rotation = value
     }
 
-    open fun update(info: Info?, paused: Boolean) {
+    open fun update(info: Info?, isPlaying: Boolean) {
         updateScroll()
     }
 

@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.player.viewer
+package org.helllabs.android.xmp.compose.ui.player.viewer
 
 import timber.log.Timber
 

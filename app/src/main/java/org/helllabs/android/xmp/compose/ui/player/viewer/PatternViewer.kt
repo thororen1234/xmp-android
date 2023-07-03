@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.player.viewer
+package org.helllabs.android.xmp.compose.ui.player.viewer
 
 import android.content.Context
 import android.graphics.Canvas
@@ -162,8 +162,8 @@ class PatternViewer(context: Context, background: Int) : Viewer(context, backgro
         setMaxX((modVars[3] * 10 + 4 /*6 + 2*/) * fontWidth)
     }
 
-    override fun update(info: Info?, paused: Boolean) {
-        super.update(info, paused)
+    override fun update(info: Info?, isPlaying: Boolean) {
+        super.update(info, isPlaying)
 
         updateRow = info!!.values[2].toFloat()
         ord = info.values[0].toFloat()

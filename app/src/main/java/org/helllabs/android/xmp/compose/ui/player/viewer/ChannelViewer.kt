@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.player.viewer
+package org.helllabs.android.xmp.compose.ui.player.viewer
 
 import android.content.Context
 import android.content.res.Configuration
@@ -168,11 +168,11 @@ class ChannelViewer(context: Context, background: Int) : Viewer(context, backgro
         }
     }
 
-    override fun update(info: Info?, paused: Boolean) {
-        super.update(info, paused)
+    override fun update(info: Info?, isPlaying: Boolean) {
+        super.update(info, isPlaying)
 
         requestCanvasLock { canvas ->
-            doDraw(canvas, info, paused)
+            doDraw(canvas, info, isPlaying)
         }
     }
 
@@ -312,7 +312,7 @@ class ChannelViewer(context: Context, background: Int) : Viewer(context, backgro
         }
     }
 
-    private fun doDraw(canvas: Canvas, info: Info?, paused: Boolean) {
+    private fun doDraw(canvas: Canvas, info: Info?, isPlaying: Boolean) {
         numChannels = modVars[3]
         numInstruments = modVars[4]
         row = info!!.values[2]
@@ -371,7 +371,7 @@ class ChannelViewer(context: Context, background: Int) : Viewer(context, backgro
                 )
             } else {
                 canvas.drawRect(rect, scopePaint)
-                if (!paused) {
+                if (isPlaying) {
                     try {
                         // Be very careful here!
                         // Our variables are latency-compensated but sample data is current

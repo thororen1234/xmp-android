@@ -63,6 +63,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
@@ -88,10 +89,10 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.themedText
 import org.helllabs.android.xmp.compose.ui.filelist.FileListActivity
+import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.playlist.PlaylistActivity
 import org.helllabs.android.xmp.compose.ui.preferences.Preferences
 import org.helllabs.android.xmp.compose.ui.search.Search
-import org.helllabs.android.xmp.player.PlayerActivity
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 import kotlin.time.Duration.Companion.seconds
@@ -99,6 +100,8 @@ import kotlin.time.Duration.Companion.seconds
 class PlaylistMenu : ComponentActivity() {
 
     private val viewModel by viewModels<PlaylistMenuViewModel>()
+
+    private lateinit var snackbarHostState: SnackbarHostState
 
     private val settingsContract = ActivityResultContracts.StartActivityForResult()
     private val settingsResult = registerForActivityResult(settingsContract) {
@@ -110,6 +113,21 @@ class PlaylistMenu : ComponentActivity() {
         viewModel.updateList(this)
     }
 
+    private val playerContract = ActivityResultContracts.StartActivityForResult()
+    private var playerResult = registerForActivityResult(playerContract) { result ->
+        if (result.resultCode == 1) {
+            result.data?.getStringExtra("error")?.let {
+                Timber.w("Result with error: $it")
+                lifecycleScope.launch {
+                    snackbarHostState.showSnackbar(message = it)
+                }
+            }
+        }
+        if (result.resultCode == 2) {
+            // TODO file was deleted
+        }
+    }
+
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,16 +135,19 @@ class PlaylistMenu : ComponentActivity() {
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        if (PlayerService.isAlive && PrefManager.startOnPlayer) {
-            if (PrefManager.startOnPlayer && PlayerService.isAlive) {
-                Intent(this, PlayerActivity::class.java).also(::startActivity)
-            }
-        }
+        // TODO need to make sure we do this on a new intent
+//        if (PlayerService.isAlive && PrefManager.startOnPlayer) {
+//            if (PrefManager.startOnPlayer && PlayerService.isAlive) {
+//                Intent(this, PlayerActivity::class.java).also(::startActivity)
+//            }
+//        }
 
         if (!viewModel.checkStorage()) {
             val message = getString(R.string.error_storage)
             viewModel.showError(message, true)
         }
+
+        snackbarHostState = SnackbarHostState()
 
         setContent {
             val context = LocalContext.current
@@ -289,6 +310,7 @@ class PlaylistMenu : ComponentActivity() {
             XmpTheme {
                 PlaylistMenuScreen(
                     state = state,
+                    snackbarHostState = snackbarHostState,
                     permissionState = storagePermission.status.isGranted,
                     permissionRationale = storagePermission.status.shouldShowRationale,
                     onItemClick = { item ->
@@ -320,7 +342,9 @@ class PlaylistMenu : ComponentActivity() {
                     },
                     onTitleClicked = {
                         if (PrefManager.startOnPlayer && PlayerService.isAlive) {
-                            Intent(this, PlayerActivity::class.java).also(::startActivity)
+                            Intent(this, PlayerActivity::class.java).also {
+                                playerResult.launch(it)
+                            }
                         }
                     },
                     onDownload = {
@@ -363,6 +387,7 @@ class PlaylistMenu : ComponentActivity() {
 @Composable
 private fun PlaylistMenuScreen(
     state: PlaylistMenuViewModel.PlaylistMenuState,
+    snackbarHostState: SnackbarHostState,
     permissionState: Boolean,
     permissionRationale: Boolean,
     onItemClick: (item: PlaylistItem) -> Unit,
@@ -374,7 +399,6 @@ private fun PlaylistMenuScreen(
     onSettings: () -> Unit,
     onRequestPermission: () -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberLazyListState()
     val isScrolled = remember {
         derivedStateOf {
@@ -383,6 +407,7 @@ private fun PlaylistMenuScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             val topBarContainerColor = if (isScrolled.value) {
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .5f)
@@ -437,8 +462,7 @@ private fun PlaylistMenuScreen(
                     onClick = onNewPlaylist
                 )
             }
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        }
     ) { paddingValues ->
         val scope = rememberCoroutineScope()
         var refreshing by remember { mutableStateOf(false) }
@@ -537,6 +561,7 @@ private fun Preview_PlaylistMenuScreen() {
                     )
                 }
             ),
+            snackbarHostState = SnackbarHostState(),
             permissionState = true,
             permissionRationale = true,
             onItemClick = {},

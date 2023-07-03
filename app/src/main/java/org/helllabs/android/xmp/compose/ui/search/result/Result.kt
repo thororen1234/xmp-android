@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -67,6 +69,7 @@ import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.search.Search
 import org.helllabs.android.xmp.compose.ui.search.SearchError
 import org.helllabs.android.xmp.compose.ui.search.components.ModuleLayout
@@ -79,7 +82,6 @@ import org.helllabs.android.xmp.model.Module
 import org.helllabs.android.xmp.model.ModuleResult
 import org.helllabs.android.xmp.model.Sponsor
 import org.helllabs.android.xmp.model.SponsorDetails
-import org.helllabs.android.xmp.player.PlayerActivity
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
@@ -321,6 +323,23 @@ open class Result : ComponentActivity() {
 
     private val viewModel by viewModels<ModuleResultViewModel>()
 
+    private lateinit var snackbarHostState: SnackbarHostState
+
+    private val playerContract = ActivityResultContracts.StartActivityForResult()
+    private var playerResult = registerForActivityResult(playerContract) { result ->
+        if (result.resultCode == 1) {
+            result.data?.getStringExtra("error")?.let {
+                Timber.w("Result with error: $it")
+                lifecycleScope.launch {
+                    snackbarHostState.showSnackbar(message = it)
+                }
+            }
+        }
+        if (result.resultCode == 2) {
+            // TODO file was deleted
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.d("onCreate")
@@ -333,6 +352,8 @@ open class Result : ComponentActivity() {
         } else {
             viewModel.getModuleById(id)
         }
+
+        snackbarHostState = SnackbarHostState()
 
         setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -385,6 +406,7 @@ open class Result : ComponentActivity() {
             XmpTheme {
                 ModuleResultScreen(
                     state = state,
+                    snackbarHostState = snackbarHostState,
                     onBack = { onBackPressedDispatcher.onBackPressed() },
                     onRandom = viewModel::getRandomModule,
                     onDelete = { deleteModule = true },
@@ -399,7 +421,7 @@ open class Result : ComponentActivity() {
                             Timber.i("Play $path")
                             Intent(this@Result, PlayerActivity::class.java).apply {
                                 putExtra(PlayerActivity.PARM_START, 0)
-                            }.also(::startActivity)
+                            }.also { playerResult.launch(it) }
                         } else {
                             // Does not exist, download module
                             val modDir = Files.getDownloadPath(module)
@@ -423,12 +445,12 @@ open class Result : ComponentActivity() {
 @Composable
 private fun ModuleResultScreen(
     state: ModuleResultViewModel.ModuleResultState,
+    snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
     onRandom: () -> Unit,
     onDelete: () -> Unit,
     onPlay: (module: Module) -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
     val isScrolled = remember {
         derivedStateOf {
@@ -437,6 +459,7 @@ private fun ModuleResultScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         topBar = {
             XmpTopBar(
                 isScrolled = isScrolled.value,
@@ -489,8 +512,7 @@ private fun ModuleResultScreen(
                     }
                 }
             }
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -555,6 +577,7 @@ private fun Preview_ModuleResult() {
                     )
                 )
             ),
+            snackbarHostState = SnackbarHostState(),
             onBack = {},
             onDelete = {},
             onPlay = {},
