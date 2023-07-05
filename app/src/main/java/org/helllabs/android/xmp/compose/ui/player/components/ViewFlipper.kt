@@ -2,13 +2,11 @@ package org.helllabs.android.xmp.compose.ui.player.components
 
 import android.content.res.Configuration
 import androidx.compose.animation.*
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.Button
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -29,17 +27,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
+private const val ANIMATION_DURATION = 500
+
+// I guess this acts like a ViewFlipper now
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewFlipper(
     actions: (@Composable BoxScope.() -> Unit)? = null,
-    pagerState: PagerState,
-    title: List<String>,
-    format: List<String>
+    navigation: (@Composable BoxScope.() -> Unit)? = null,
+    skipToPrevious: Boolean,
+    info: Pair<String, String>
 ) {
     CenterAlignedTopAppBar(
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
@@ -48,15 +48,28 @@ fun ViewFlipper(
             actionIconContentColor = MaterialTheme.colorScheme.onSurface
         ),
         title = {
-            HorizontalPager(
-                state = pagerState,
-                userScrollEnabled = false,
-                beyondBoundsPageCount = 0
-            ) { page ->
+            AnimatedContent(
+                targetState = info,
+                transitionSpec = {
+                    if (skipToPrevious) {
+                        (slideInHorizontally(animationSpec = tween(ANIMATION_DURATION)) { width -> -width } + fadeIn()).togetherWith(
+                            slideOutHorizontally(animationSpec = tween(ANIMATION_DURATION)) { width -> width } + fadeOut()
+                        )
+                    } else {
+                        (slideInHorizontally(animationSpec = tween(ANIMATION_DURATION)) { width -> width } + fadeIn()).togetherWith(
+                            slideOutHorizontally(animationSpec = tween(ANIMATION_DURATION)) { width -> -width } + fadeOut()
+                        )
+                    }.using(
+                        SizeTransform(clip = false)
+                    )
+                },
+                label = "XMP ViewFlipper"
+            ) {
                 ViewFlipperItem(
                     actions = actions,
-                    modTitle = title[page],
-                    format = format[page]
+                    navigation = navigation,
+                    modTitle = it.first,
+                    format = it.second
                 )
             }
         }
@@ -66,10 +79,15 @@ fun ViewFlipper(
 @Composable
 private fun ViewFlipperItem(
     actions: (@Composable BoxScope.() -> Unit)? = null,
+    navigation: (@Composable BoxScope.() -> Unit)? = null,
     modTitle: String,
     format: String
 ) {
     Box {
+        if (navigation != null) {
+            navigation()
+        }
+
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -107,24 +125,17 @@ private fun ViewFlipperItem(
 @Composable
 private fun ViewFlipperItemPreview() {
     XmpTheme {
-        ViewFlipperItem(actions = {}, "Some Text", "Some Format")
+        ViewFlipperItem(actions = {}, navigation = {}, "Some Text", "Some Format")
     }
 }
 
 // To be ran on a device or emulator to test
-@OptIn(ExperimentalFoundationApi::class)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun ViewFlipperPreview() {
     XmpTheme {
-        var infoName by remember { mutableStateOf(listOf("Name: 0")) }
-        var infoType by remember { mutableStateOf(listOf("Format: 0")) }
-        val scope = rememberCoroutineScope()
-        val pagerState = rememberPagerState(
-            initialPage = 0,
-            pageCount = { infoName.size }
-        )
-
+        var infoName by remember { mutableIntStateOf(0) }
+        var infoType by remember { mutableIntStateOf(0) }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             ViewFlipper(
                 actions = {
@@ -135,27 +146,30 @@ private fun ViewFlipperPreview() {
                         Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null)
                     }
                 },
-                pagerState = pagerState,
-                title = infoName,
-                format = infoType
+                navigation = {
+                    IconButton(
+                        modifier = Modifier.align(Alignment.CenterStart),
+                        onClick = { }
+                    ) {
+                        Icon(imageVector = Icons.Default.Menu, contentDescription = null)
+                    }
+                },
+                skipToPrevious = false,
+                info = Pair("Name: $infoName", "Type: $infoType")
             )
             Spacer(Modifier.size(20.dp))
             Row(horizontalArrangement = Arrangement.SpaceAround) {
                 Button(
                     onClick = {
-                        scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                        }
+                        infoName -= 1
+                        infoType -= 1
                     }
                 ) { Text("Previous") }
                 Spacer(Modifier.size(60.dp))
                 Button(
                     onClick = {
-                        infoName = infoName.toMutableList().apply { add("Name: ${infoName.size}") }
-                        infoType = infoType.toMutableList().apply { add("Format: ${infoType.size}") }
-                        scope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
+                        infoName += 1
+                        infoType += 1
                     }
                 ) { Text("Forward") }
             }

@@ -1,10 +1,11 @@
-package org.helllabs.android.xmp.browser.playlist
+package org.helllabs.android.xmp.model
 
 import android.app.Activity
 import android.content.Context
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.core.Files
+import org.helllabs.android.xmp.core.PlaylistUtils
 import org.helllabs.android.xmp.util.InfoCache.fileExists
 import org.helllabs.android.xmp.util.Message.error
 import timber.log.Timber
@@ -16,7 +17,7 @@ class Playlist(val name: String) {
 
     private var mCommentChanged = false
     private var mListChanged = false
-    val list: MutableList<PlaylistItem> = ArrayList()
+    var list = mutableListOf<PlaylistItem>()
     var comment: String = ""
     var isLoopMode = false
     var isShuffleMode = false
@@ -187,7 +188,7 @@ class Playlist(val name: String) {
         mListChanged = listChanged
     }
 
-    fun setList(newList: List<PlaylistItem>) {
+    fun setNewList(newList: List<PlaylistItem>) {
         list.clear()
         list.addAll(newList)
     }

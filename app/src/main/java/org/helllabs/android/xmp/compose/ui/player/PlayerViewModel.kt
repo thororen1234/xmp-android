@@ -2,28 +2,23 @@ package org.helllabs.android.xmp.compose.ui.player
 
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 class PlayerViewModel : ViewModel() {
-    sealed class FlipperDirection {
-        object Forward : FlipperDirection()
-        object Previous : FlipperDirection()
-    }
 
+    @Immutable
     data class PlayerState(
-        val infoName: List<String> = listOf(""),
-        val infoType: List<String> = listOf(""),
-        val screenOn: Boolean = false,
         val currentViewer: Int = 0,
+        val info: Pair<String, String> = Pair("", ""),
+        val screenOn: Boolean = false,
+        val skipToPrevious: Boolean = false
     )
 
+    @Immutable
     data class PlayerInfoState(
         val infoSpeed: String = "00",
         val infoBpm: String = "00",
@@ -32,11 +27,13 @@ class PlayerViewModel : ViewModel() {
         val isVisible: Boolean = true
     )
 
+    @Immutable
     data class PlayerButtonsState(
         val isPlaying: Boolean = false,
         val isRepeating: Boolean = false
     )
 
+    @Immutable
     data class PlayerTimeState(
         val timeNow: String = "-:--",
         val timeTotal: String = "-:--",
@@ -46,6 +43,7 @@ class PlayerViewModel : ViewModel() {
         val isSeeking: Boolean = false
     )
 
+    @Immutable
     data class PlayerDrawerState(
         val drawerState: DrawerState = DrawerState(DrawerValue.Closed),
         val moduleInfo: List<Int> = listOf(0, 0, 0, 0, 0),
@@ -68,9 +66,6 @@ class PlayerViewModel : ViewModel() {
 
     private val _drawerState = MutableStateFlow(PlayerDrawerState())
     val drawerState = _drawerState.asStateFlow()
-
-    private val _flipperState = MutableSharedFlow<FlipperDirection>()
-    val flipperState = _flipperState.asSharedFlow()
 
     val isPlaying: Boolean
         get() = _buttonState.value.isPlaying
@@ -174,23 +169,8 @@ class PlayerViewModel : ViewModel() {
      * If we press "Next" to play the next song in queue, info will be added.
      * If we press "Previous", we shouldn't add anything and let PagerState handle it
      */
-    fun addFlipperInfo(name: String, type: String) {
-        val infoName = _uiState.value.infoName.toMutableList().apply { add(name) }
-        val infoType = _uiState.value.infoType.toMutableList().apply { add(type) }
-
-        _uiState.update { it.copy(infoName = infoName, infoType = infoType) }
-    }
-
-    fun clearFlipperInfo() {
-        val infoName = _uiState.value.infoName.toMutableList().apply { clear() }
-        val infoType = _uiState.value.infoType.toMutableList().apply { clear() }
-        _uiState.update { it.copy(infoName = infoName, infoType = infoType) }
-    }
-
-    fun postFlipperDirection(direction: FlipperDirection) {
-        viewModelScope.launch {
-            _flipperState.emit(direction)
-        }
+    fun setFlipperInfo(name: String, type: String, skipToPrevious: Boolean) {
+        _uiState.update { it.copy(info = Pair(name, type), skipToPrevious = skipToPrevious) }
     }
 
     fun changeCurrentViewer() {

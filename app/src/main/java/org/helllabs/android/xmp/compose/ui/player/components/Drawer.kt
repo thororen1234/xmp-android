@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.player.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.MenuOpen
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,6 +48,7 @@ import kotlin.random.Random
 @Composable
 fun PlayerDrawer(
     modifier: Modifier = Modifier,
+    onMenuClose: () -> Unit,
     onMessage: () -> Unit,
     moduleInfo: List<Int>,
     playAllSeq: Boolean,
@@ -64,6 +67,16 @@ fun PlayerDrawer(
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.Start
+            ) {
+                IconButton(onClick = onMenuClose) {
+                    Icon(imageVector = Icons.Default.MenuOpen, contentDescription = null)
+                }
+            }
             Spacer(modifier = Modifier.height(12.dp))
             ModuleSection(text = stringResource(id = R.string.sidebar_details)) {
                 IconButton(
@@ -92,9 +105,7 @@ fun PlayerDrawer(
                         .weight(1f)
                         .wrapContentWidth(Alignment.End),
                     checked = playAllSeq,
-                    onCheckedChange = {
-                        onAllSeq(it)
-                    }
+                    onCheckedChange = onAllSeq
                 )
             }
 
@@ -192,13 +203,12 @@ private fun Preview_PlayerDrawer() {
                 drawerState = drawerState,
                 drawerContent = {
                     PlayerDrawer(
+                        onMenuClose = {},
                         onMessage = {},
-                        moduleInfo = List(4) {
-                            Random.nextInt(1, 1000)
-                        },
+                        moduleInfo = listOf(111, 222, 333, 444, 555),
                         playAllSeq = true,
                         onAllSeq = {},
-                        sequences = List(20) {
+                        sequences = List(12) {
                             Random.nextInt(100, 10_000)
                         },
                         currentSequence = 1,

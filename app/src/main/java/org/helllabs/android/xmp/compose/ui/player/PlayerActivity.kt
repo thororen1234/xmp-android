@@ -20,19 +20,17 @@ import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.Icon
@@ -42,7 +40,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -91,7 +88,6 @@ import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 import java.io.File
 
-@OptIn(ExperimentalFoundationApi::class)
 class PlayerActivity : ComponentActivity() {
 
     private val viewModel by viewModels<PlayerViewModel>()
@@ -149,8 +145,6 @@ class PlayerActivity : ComponentActivity() {
                 } else {
                     // Reconnect to existing service
                     try {
-                        // TODO when we change theme's (config change)
-                        //  this gets called and goofs up the [ViewFlipper]
                         handler.post(showNewModRunnable)
                     } catch (e: RemoteException) {
                         Timber.e("Can't get module file name")
@@ -395,18 +389,7 @@ class PlayerActivity : ComponentActivity() {
             viewModel.setSeekBar(playTime, time / 100F)
             viewModel.toggleLoop(loop)
 
-            if (skipToPrevious) {
-                viewModel.postFlipperDirection(PlayerViewModel.FlipperDirection.Previous)
-            } else {
-                if (viewModel.uiState.value.infoName[0].isBlank()) {
-                    // Bootstrap: Clear the initialization
-                    viewModel.clearFlipperInfo()
-                }
-
-                viewModel.addFlipperInfo(name, type)
-                viewModel.postFlipperDirection(PlayerViewModel.FlipperDirection.Forward)
-            }
-
+            viewModel.setFlipperInfo(name, type, skipToPrevious)
             skipToPrevious = false
 
             viewer!!.setup(modVars)
@@ -422,7 +405,6 @@ class PlayerActivity : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.d("onCreate")
@@ -495,20 +477,8 @@ class PlayerActivity : ComponentActivity() {
                 drawerState.drawerState.close()
             }
 
-            val pagerState = rememberPagerState(
-                pageCount = { uiState.infoName.size }
-            )
-
-            LaunchedEffect(Unit) {
-                viewModel.flipperState.collect { event ->
-                    Timber.d("Event: $event")
-                    when (event) {
-                        PlayerViewModel.FlipperDirection.Forward ->
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        PlayerViewModel.FlipperDirection.Previous ->
-                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                    }
-                }
+            fun onOpenDrawer() = scope.launch {
+                drawerState.drawerState.open()
             }
 
             var showComments by remember { mutableStateOf(false) }
@@ -547,13 +517,14 @@ class PlayerActivity : ComponentActivity() {
             XmpTheme {
                 PlayerScreen(
                     snackbarHostState = snackbarHostState,
-                    pagerState = pagerState,
                     uiState = uiState,
                     infoState = infoState,
                     buttonState = buttonState,
                     timeState = timeState,
                     drawerState = drawerState,
                     viewer = viewerLayout!!,
+                    onMenu = ::onOpenDrawer,
+                    onMenuClose = ::onCloseDrawer,
                     onDelete = {
                         deleteFile = true
                     },
@@ -959,17 +930,17 @@ class PlayerActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun PlayerScreen(
     snackbarHostState: SnackbarHostState,
-    pagerState: PagerState,
     uiState: PlayerViewModel.PlayerState,
     infoState: PlayerViewModel.PlayerInfoState,
     buttonState: PlayerViewModel.PlayerButtonsState,
     timeState: PlayerViewModel.PlayerTimeState,
     drawerState: PlayerViewModel.PlayerDrawerState,
     viewer: View,
+    onMenu: () -> Unit,
+    onMenuClose: () -> Unit,
     onDelete: () -> Unit,
     onMessage: () -> Unit,
     onAllSeq: (Boolean) -> Unit,
@@ -984,10 +955,12 @@ private fun PlayerScreen(
 ) {
     ModalNavigationDrawer(
         drawerState = drawerState.drawerState,
+        gesturesEnabled = false,
         drawerContent = {
             PlayerDrawer(
                 modifier = Modifier.systemBarsPadding(),
                 onMessage = onMessage,
+                onMenuClose = onMenuClose,
                 moduleInfo = drawerState.moduleInfo,
                 playAllSeq = drawerState.isPlayAllSequences,
                 onAllSeq = onAllSeq,
@@ -1015,9 +988,19 @@ private fun PlayerScreen(
                             }
                         }
                     },
-                    pagerState = pagerState,
-                    title = uiState.infoName,
-                    format = uiState.infoType
+                    navigation = {
+                        IconButton(
+                            modifier = Modifier.align(Alignment.CenterStart),
+                            onClick = onMenu
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Menu,
+                                contentDescription = null
+                            )
+                        }
+                    },
+                    skipToPrevious = uiState.skipToPrevious,
+                    info = uiState.info
                 )
             },
             bottomBar = {
@@ -1071,21 +1054,17 @@ private fun PlayerScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun Preview_PlayerScreen() {
     val context = LocalContext.current
-    val pagerState = rememberPagerState { 2 }
     PrefManager.init(context, File(""))
 
     XmpTheme {
         PlayerScreen(
             snackbarHostState = SnackbarHostState(),
-            pagerState = pagerState,
             uiState = PlayerViewModel.PlayerState(
-                infoName = listOf("Title 1", "Title 2"),
-                infoType = listOf("Fast Tracker", "MilkyTracker")
+                info = Pair("Title 1", "Fast Tracker")
             ),
             infoState = PlayerViewModel.PlayerInfoState(
                 infoSpeed = "11",
@@ -1112,6 +1091,8 @@ private fun Preview_PlayerScreen() {
             ),
             viewer = SurfaceView(LocalContext.current),
             onMessage = { },
+            onMenu = { },
+            onMenuClose = { },
             onDelete = { },
             onAllSeq = { },
             onSequence = { },
@@ -1126,21 +1107,17 @@ private fun Preview_PlayerScreen() {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun Preview_PlayerScreenDrawerOpen() {
     val context = LocalContext.current
-    val pagerState = rememberPagerState { 2 }
     PrefManager.init(context, File(""))
 
     XmpTheme {
         PlayerScreen(
             snackbarHostState = SnackbarHostState(),
-            pagerState = pagerState,
             uiState = PlayerViewModel.PlayerState(
-                infoName = listOf("Title 1", "Title 2"),
-                infoType = listOf("Fast Tracker", "MilkyTracker")
+                info = Pair("Title 1", "Fast Tracker")
             ),
             infoState = PlayerViewModel.PlayerInfoState(
                 infoSpeed = "11",
@@ -1166,6 +1143,8 @@ private fun Preview_PlayerScreenDrawerOpen() {
                 currentSequence = 2
             ),
             viewer = SurfaceView(LocalContext.current),
+            onMenu = { },
+            onMenuClose = { },
             onDelete = { },
             onMessage = { },
             onAllSeq = { },
