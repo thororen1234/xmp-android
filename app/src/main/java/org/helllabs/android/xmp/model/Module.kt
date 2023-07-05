@@ -158,7 +158,7 @@ data class ArtistInfo(
 }
 
 // https://modarchive.org/forums/index.php?topic=4713.0
-// TODO: I'm not sure of this is correct, rare to see multiple guest artists.
+// NOTE: I'm not sure of this is correct, rare to see multiple guest artists.
 @Serializable
 @SerialName("guessed_artist")
 data class GuessedArtists(

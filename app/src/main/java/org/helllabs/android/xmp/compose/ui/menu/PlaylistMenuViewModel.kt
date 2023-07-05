@@ -7,10 +7,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.helllabs.android.xmp.PrefManager
-import org.helllabs.android.xmp.browser.playlist.Playlist
-import org.helllabs.android.xmp.browser.playlist.PlaylistItem
-import org.helllabs.android.xmp.browser.playlist.PlaylistUtils
 import org.helllabs.android.xmp.core.Files
+import org.helllabs.android.xmp.core.PlaylistUtils
+import org.helllabs.android.xmp.model.Playlist
+import org.helllabs.android.xmp.model.PlaylistItem
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
@@ -58,8 +58,8 @@ class PlaylistMenuViewModel : ViewModel() {
 
         if (PrefManager.DATA_DIR.mkdirs()) {
             PlaylistUtils.createEmptyPlaylist(
-                name = name,
-                comment = comment,
+                newName = name,
+                newComment = comment,
                 onSuccess = onSuccess,
                 onError = onError
             )

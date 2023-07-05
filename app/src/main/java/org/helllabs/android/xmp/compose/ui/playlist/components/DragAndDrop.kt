@@ -40,15 +40,15 @@ import kotlinx.coroutines.launch
 fun rememberDragDropState(
     lazyListState: LazyListState,
     onMove: (Int, Int) -> Unit,
-    onStop: () -> Unit
+    onDragEnd: () -> Unit
 ): DragDropState {
     val scope = rememberCoroutineScope()
     val state = remember(lazyListState) {
         DragDropState(
             state = lazyListState,
+            scope = scope,
             onMove = onMove,
-            onStop = onStop,
-            scope = scope
+            onDragEnd = onDragEnd
         )
     }
     LaunchedEffect(state) {
@@ -64,7 +64,7 @@ class DragDropState internal constructor(
     private val state: LazyListState,
     private val scope: CoroutineScope,
     private val onMove: (Int, Int) -> Unit,
-    private val onStop: () -> Unit
+    private val onDragEnd: () -> Unit
 ) {
     var draggingItemIndex by mutableStateOf<Int?>(null)
         private set
@@ -97,6 +97,10 @@ class DragDropState internal constructor(
             }
     }
 
+    internal fun onDragEnd() {
+        onDragEnd.invoke()
+    }
+
     internal fun onDragInterrupted() {
         if (draggingItemIndex != null) {
             previousIndexOfDraggedItem = draggingItemIndex
@@ -116,10 +120,6 @@ class DragDropState internal constructor(
         draggingItemDraggedDelta = 0f
         draggingItemIndex = null
         draggingItemInitialOffset = 0
-    }
-
-    internal fun onDragEnd() {
-        onStop.invoke()
     }
 
     internal fun onDrag(offset: Offset) {

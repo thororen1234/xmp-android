@@ -13,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "org.helllabs.android.xmp"
-        minSdk = 23 //
+        minSdk = 23
         targetSdk = 27
 
         versionCode = 87
@@ -114,7 +114,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
 
     // https://mvnrepository.com/artifact/com.google.accompanist/accompanist-systemuicontroller
-    val accompanist = "0.31.4-beta"
+    val accompanist = "0.31.5-beta"
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanist")
     implementation("com.google.accompanist:accompanist-permissions:$accompanist")
 
@@ -151,5 +151,5 @@ dependencies {
     kapt("com.google.dagger:hilt-android-compiler:2.46.1")
 
     // https://mvnrepository.com/artifact/com.squareup.leakcanary/leakcanary-android
-    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.11")
+    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
 }

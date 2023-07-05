@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.browser.playlist
+package org.helllabs.android.xmp.core
 
 import android.app.Activity
 import android.app.ProgressDialog
@@ -6,6 +6,8 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp.testModule
 import org.helllabs.android.xmp.model.ModInfo
+import org.helllabs.android.xmp.model.Playlist
+import org.helllabs.android.xmp.model.PlaylistItem
 import org.helllabs.android.xmp.util.Message.error
 import org.helllabs.android.xmp.util.Message.toast
 import java.io.File
@@ -17,21 +19,22 @@ object PlaylistUtils {
 	 * Send files to the specified playlist
 	 */
     private fun addFiles(activity: Activity, fileList: List<String>, playlistName: String) {
-        val list: MutableList<PlaylistItem> = ArrayList()
         val modInfo = ModInfo()
-        var hasInvalid = false
-        for (filename in fileList) {
-            if (testModule(filename, modInfo)) {
-                val item = PlaylistItem(PlaylistItem.TYPE_FILE, modInfo.name, modInfo.type)
-                item.file = File(filename)
-                list.add(item)
+
+        val list = fileList.mapNotNull { filename ->
+            return@mapNotNull if (testModule(filename, modInfo)) {
+                val item = PlaylistItem(PlaylistItem.TYPE_FILE, modInfo.name, modInfo.type).apply {
+                    file = File(filename)
+                }
+                item
             } else {
-                hasInvalid = true
+                null
             }
-        }
+        }.also { renumberIds(it) }
+
         if (list.isNotEmpty()) {
             Playlist.addToList(activity, playlistName, list)
-            if (hasInvalid) {
+            if (fileList.any { !testModule(it, modInfo) }) {
                 activity.runOnUiThread {
                     if (list.size > 1) {
                         toast(activity, R.string.msg_only_valid_files_added)
@@ -41,7 +44,6 @@ object PlaylistUtils {
                 }
             }
         }
-        renumberIds(list.toList())
     }
 
     fun filesToPlaylist(activity: Activity, fileList: List<String>, playlistName: String) {
@@ -61,35 +63,26 @@ object PlaylistUtils {
         addFiles(activity, fileList, playlistName)
     }
 
-    fun list(): Array<String> {
-        return PrefManager.DATA_DIR.list(PlaylistFilter()) ?: arrayOf()
-    }
+    fun list(): Array<String> = PrefManager.DATA_DIR.list { _, name ->
+        name.endsWith(Playlist.PLAYLIST_SUFFIX)
+    } ?: arrayOf()
 
-    fun listNoSuffix(): Array<String> {
-        val pList = list()
-        for (i in pList.indices) {
-            pList[i] = pList[i].substring(0, pList[i].lastIndexOf(Playlist.PLAYLIST_SUFFIX))
-        }
-        return pList
-    }
+    fun listNoSuffix(): Array<String> = list().map {
+        it.substringBeforeLast(Playlist.PLAYLIST_SUFFIX)
+    }.toTypedArray()
 
-    fun getPlaylistName(index: Int): String {
-        val pList = list()
-        return pList[index].substring(
-            0,
-            pList[index].lastIndexOf(Playlist.PLAYLIST_SUFFIX)
-        )
-    }
+    fun getPlaylistName(index: Int): String =
+        list()[index].substringBeforeLast(Playlist.PLAYLIST_SUFFIX)
 
     fun createEmptyPlaylist(
-        name: String,
-        comment: String,
+        newName: String,
+        newComment: String,
         onSuccess: () -> Unit,
         onError: () -> Unit
     ) {
         try {
-            Playlist(name).apply {
-                this.comment = comment
+            Playlist(newName).apply {
+                comment = newComment
             }.commit()
             onSuccess()
         } catch (e: IOException) {
@@ -99,9 +92,8 @@ object PlaylistUtils {
 
     // Stable IDs for used by Advanced RecyclerView
     fun renumberIds(list: List<PlaylistItem>) {
-        var id = 0
-        for (item in list) {
-            item.id = id++
+        list.forEachIndexed { index, item ->
+            item.id = index
         }
     }
 }

@@ -34,8 +34,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.browser.playlist.PlaylistItem
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.model.PlaylistItem
 
 private val maxDialogHeight = 256.dp
 

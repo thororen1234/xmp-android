@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:installLocation="auto">
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.INTERNET" />
@@ -29,8 +30,7 @@
         <activity
             android:name=".compose.ui.menu.PlaylistMenu"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:exported="true"
-            android:theme="@style/AppTheme.Composable">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -39,20 +39,17 @@
         </activity>
         <activity
             android:name=".compose.ui.filelist.FileListActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:theme="@style/AppTheme.Composable" />
+            android:configChanges="keyboardHidden|orientation|screenSize" />
         <activity
             android:name=".compose.ui.playlist.PlaylistActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:theme="@style/AppTheme.Composable" />
+            android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <!-- Player -->
         <activity
             android:name=".compose.ui.player.PlayerActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true"
-            android:launchMode="singleTop"
-            android:theme="@style/AppTheme.Composable">
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
@@ -78,8 +75,6 @@
 
                 <data android:host="*" />
                 <data android:mimeType="*/*" />
-                <data android:scheme="content" />
-                <data android:scheme="file" />
                 <data android:pathPattern=".*\\.669" />
                 <data android:pathPattern=".*\\.amf" />
                 <data android:pathPattern=".*\\.imf" />
@@ -99,6 +94,8 @@
                 <data android:pathPattern=".*\\.umx" />
                 <data android:pathPattern=".*\\.xm" />
                 <data android:pathPattern=".*\\.xmz" />
+                <data android:scheme="content" />
+                <data android:scheme="file" />
 
                 <!-- Ugly! http://stackoverflow.com/questions/3400072/ -->
 
@@ -141,66 +138,40 @@
         </activity>
 
         <!-- Preferences -->
-        <activity
-            android:name=".compose.ui.preferences.Preferences"
-            android:theme="@style/AppTheme.Composable" />
-        <activity
-            android:name=".compose.ui.preferences.PreferencesFormats"
-            android:exported="false"
-            android:theme="@style/AppTheme.Composable">
-            <intent-filter>
-                <action android:name="org.helllabs.android.xmp.LIST_FORMATS" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:name=".compose.ui.preferences.PreferencesAbout"
-            android:exported="false"
-            android:theme="@style/AppTheme.Composable">
-            <intent-filter>
-                <action android:name="org.helllabs.android.xmp.ABOUT" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-            </intent-filter>
-        </activity>
+        <activity android:name=".compose.ui.preferences.Preferences" />
+        <activity android:name=".compose.ui.preferences.PreferencesFormats" />
+        <activity android:name=".compose.ui.preferences.PreferencesAbout" />
 
         <!-- ModArchive search & download -->
         <activity
             android:name=".compose.ui.search.Search"
-            android:configChanges="keyboardHidden|orientation|screenSize"
-            android:theme="@style/AppTheme.Composable">
+            android:configChanges="keyboardHidden|orientation|screenSize">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".compose.ui.menu.PlaylistMenu" />
         </activity>
         <activity
             android:name=".compose.ui.search.SearchHistory"
-            android:parentActivityName=".compose.ui.search.Search"
-            android:theme="@style/AppTheme.Composable">
+            android:parentActivityName=".compose.ui.search.Search">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".compose.ui.search.Search" />
         </activity>
         <activity
             android:name=".compose.ui.search.SearchError"
-            android:parentActivityName=".compose.ui.search.Search"
-            android:theme="@style/AppTheme.Composable">
+            android:parentActivityName=".compose.ui.search.Search">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".compose.ui.search.Search" />
         </activity>
-        <activity
-            android:name=".compose.ui.search.result.SearchResult"
-            android:theme="@style/AppTheme.Composable">
+        <activity android:name=".compose.ui.search.result.SearchResult">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".compose.ui.search.Search" />
         </activity>
         <activity
             android:name=".compose.ui.search.result.Result"
-            android:parentActivityName=".compose.ui.search.Search"
-            android:theme="@style/AppTheme.Composable">
+            android:parentActivityName=".compose.ui.search.Search">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".compose.ui.search.Search" />
@@ -217,6 +188,7 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+
         <receiver
             android:name=".service.receiver.RemoteControlReceiver"
             android:enabled="true"
@@ -225,13 +197,9 @@
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
+
         <receiver android:name=".service.receiver.NotificationActionReceiver" />
 
-        <!--
-             For listening to headset changes, the broadcast receiver
-             cannot be declared in the manifest, it must be dynamically
-             registered.
-        -->
     </application>
 
 </manifest>

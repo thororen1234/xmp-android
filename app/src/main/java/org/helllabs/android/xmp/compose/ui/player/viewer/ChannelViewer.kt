@@ -420,10 +420,6 @@ class ChannelViewer(context: Context, background: Int) : Viewer(context, backgro
                             (drawY + h + buffer[chn][j] * h * finalVol / (48 * 180)).toFloat()
                     }
 
-                    // [Old] Doubled
-                    // canvas.drawLines(bufferXY, 0, scopeWidth shl 1, scopeLinePaint)
-                    // canvas.drawLines(bufferXY, 2, (scopeWidth shl 1) - 2, scopeLinePaint)
-
                     // Using drawPoints() instead of drawing each point saves a lot of CPU
                     canvas.drawPoints(bufferXY, 0, scopeWidth shl 1, scopeLinePaint)
                 }

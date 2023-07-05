@@ -9,14 +9,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,7 +22,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -33,10 +29,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -55,9 +51,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -73,9 +69,6 @@ import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.browser.playlist.Playlist
-import org.helllabs.android.xmp.browser.playlist.PlaylistItem
-import org.helllabs.android.xmp.browser.playlist.PlaylistUtils
 import org.helllabs.android.xmp.compose.components.ChangeLogDialog
 import org.helllabs.android.xmp.compose.components.EditPlaylistDialog
 import org.helllabs.android.xmp.compose.components.MessageDialog
@@ -89,10 +82,14 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.themedText
 import org.helllabs.android.xmp.compose.ui.filelist.FileListActivity
+import org.helllabs.android.xmp.compose.ui.menu.components.MenuCardItem
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.playlist.PlaylistActivity
 import org.helllabs.android.xmp.compose.ui.preferences.Preferences
 import org.helllabs.android.xmp.compose.ui.search.Search
+import org.helllabs.android.xmp.core.PlaylistUtils
+import org.helllabs.android.xmp.model.Playlist
+import org.helllabs.android.xmp.model.PlaylistItem
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 import kotlin.time.Duration.Companion.seconds
@@ -101,7 +98,7 @@ class PlaylistMenu : ComponentActivity() {
 
     private val viewModel by viewModels<PlaylistMenuViewModel>()
 
-    private lateinit var snackbarHostState: SnackbarHostState
+    private var snackbarHostState = SnackbarHostState()
 
     private val settingsContract = ActivityResultContracts.StartActivityForResult()
     private val settingsResult = registerForActivityResult(settingsContract) {
@@ -124,7 +121,7 @@ class PlaylistMenu : ComponentActivity() {
             }
         }
         if (result.resultCode == 2) {
-            // TODO file was deleted
+            viewModel.updateList(this)
         }
     }
 
@@ -135,59 +132,21 @@ class PlaylistMenu : ComponentActivity() {
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // TODO need to make sure we do this on a new intent
-//        if (PlayerService.isAlive && PrefManager.startOnPlayer) {
-//            if (PrefManager.startOnPlayer && PlayerService.isAlive) {
-//                Intent(this, PlayerActivity::class.java).also(::startActivity)
-//            }
-//        }
+        if (PlayerService.isAlive && PrefManager.startOnPlayer) {
+            if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0) {
+                Intent(this, PlayerActivity::class.java).also(::startActivity)
+            }
+        }
 
         if (!viewModel.checkStorage()) {
             val message = getString(R.string.error_storage)
             viewModel.showError(message, true)
         }
 
-        snackbarHostState = SnackbarHostState()
-
         setContent {
             val context = LocalContext.current
             val state by viewModel.uiState.collectAsStateWithLifecycle()
-            val storagePermission =
-                rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-
-            // Dialog visible states
-            var changeLogDialog by remember { mutableStateOf(false) }
-            var changeMediaPath by remember { mutableStateOf(false) }
-            var changePlaylist by remember { mutableStateOf(false) }
-            var newPlaylist by remember { mutableStateOf(false) }
-            var changePlaylistInfo: PlaylistItem? by remember { mutableStateOf(null) }
-
-            // Ask for Permissions
-            LaunchedEffect(Unit) {
-                if (!storagePermission.status.isGranted) {
-                    storagePermission.launchPermissionRequest()
-                }
-            }
-
-            LaunchedEffect(storagePermission) {
-                if (storagePermission.status.isGranted) {
-                    if (BuildConfig.VERSION_CODE < PrefManager.changeLogVersion) {
-                        changeLogDialog = true
-                    }
-
-                    viewModel.setupDataDir(
-                        name = getString(R.string.empty_playlist),
-                        comment = getString(R.string.empty_comment),
-                        onSuccess = {
-                            viewModel.updateList(context)
-                        },
-                        onError = {
-                            val message = getString(R.string.error_datadir)
-                            viewModel.showError(message, true)
-                        }
-                    )
-                }
-            }
+            val permission = rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
             /**
              * Error message Dialog
@@ -213,6 +172,7 @@ class PlaylistMenu : ComponentActivity() {
             /**
              * Changelog dialog
              */
+            var changeLogDialog by remember { mutableStateOf(false) }
             ChangeLogDialog(
                 isShowing = changeLogDialog,
                 onDismiss = { PrefManager.changeLogVersion = BuildConfig.VERSION_CODE }
@@ -221,6 +181,7 @@ class PlaylistMenu : ComponentActivity() {
             /**
              * Change default directory dialog
              */
+            var changeMediaPath by remember { mutableStateOf(false) }
             TextInputDialog(
                 isShowing = changeMediaPath,
                 icon = Icons.Default.Folder,
@@ -240,6 +201,8 @@ class PlaylistMenu : ComponentActivity() {
             /**
              * Edit playlist dialog
              */
+            var changePlaylist by remember { mutableStateOf(false) }
+            var changePlaylistInfo: PlaylistItem? by remember { mutableStateOf(null) }
             EditPlaylistDialog(
                 isShowing = changePlaylist,
                 playlistItem = changePlaylistInfo,
@@ -283,12 +246,13 @@ class PlaylistMenu : ComponentActivity() {
             /**
              * New playlist dialog
              */
+            var newPlaylist by remember { mutableStateOf(false) }
             NewPlaylistDialog(
                 isShowing = newPlaylist,
                 onConfirm = { name, comment ->
                     PlaylistUtils.createEmptyPlaylist(
-                        name = name,
-                        comment = comment,
+                        newName = name,
+                        newComment = comment,
                         onSuccess = {
                             viewModel.updateList(this)
                         },
@@ -307,12 +271,39 @@ class PlaylistMenu : ComponentActivity() {
                 }
             )
 
+            // Ask for Permissions
+            LaunchedEffect(Unit) {
+                if (!permission.status.isGranted) {
+                    permission.launchPermissionRequest()
+                }
+            }
+
+            LaunchedEffect(permission) {
+                if (permission.status.isGranted) {
+                    if (BuildConfig.VERSION_CODE < PrefManager.changeLogVersion) {
+                        changeLogDialog = true
+                    }
+
+                    viewModel.setupDataDir(
+                        name = getString(R.string.empty_playlist),
+                        comment = getString(R.string.empty_comment),
+                        onSuccess = {
+                            viewModel.updateList(context)
+                        },
+                        onError = {
+                            val message = getString(R.string.error_datadir)
+                            viewModel.showError(message, true)
+                        }
+                    )
+                }
+            }
+
             XmpTheme {
                 PlaylistMenuScreen(
                     state = state,
                     snackbarHostState = snackbarHostState,
-                    permissionState = storagePermission.status.isGranted,
-                    permissionRationale = storagePermission.status.shouldShowRationale,
+                    permissionState = permission.status.isGranted,
+                    permissionRationale = permission.status.shouldShowRationale,
                     onItemClick = { item ->
                         if (item.isSpecial) {
                             playlistResult.launch(
@@ -354,8 +345,8 @@ class PlaylistMenu : ComponentActivity() {
                         settingsResult.launch(Intent(this, Preferences::class.java))
                     },
                     onRequestPermission = {
-                        if (storagePermission.status.shouldShowRationale) {
-                            storagePermission.launchPermissionRequest()
+                        if (permission.status.shouldShowRationale) {
+                            permission.launchPermissionRequest()
                         } else {
                             val intent = Intent().apply {
                                 action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
@@ -381,8 +372,7 @@ class PlaylistMenu : ComponentActivity() {
 
 @OptIn(
     ExperimentalMaterial3Api::class,
-    ExperimentalMaterialApi::class,
-    ExperimentalFoundationApi::class
+    ExperimentalMaterialApi::class
 )
 @Composable
 private fun PlaylistMenuScreen(
@@ -441,14 +431,18 @@ private fun PlaylistMenuScreen(
                         enabled = permissionState,
                         onClick = onTitleClicked
                     ) {
-                        Text(
-                            text = themedText(text = stringResource(id = R.string.app_name)),
-                            fontFamily = michromaFontFamily,
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold,
-                            // IDK how I found this "Clip to Padding" hack...
-                            style = TextStyle(baselineShift = BaselineShift(.3f))
-                        )
+                        ProvideTextStyle(
+                            LocalTextStyle.current.merge(
+                                TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                            )
+                        ) {
+                            Text(
+                                text = themedText(text = stringResource(id = R.string.app_name)),
+                                fontFamily = michromaFontFamily,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             )
@@ -487,36 +481,21 @@ private fun PlaylistMenuScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(state.playlistItems) { item ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .combinedClickable(
-                                    onClick = { onItemClick(item) },
-                                    onLongClick = { onItemLongClick(item) }
-                                )
-                        ) {
-                            ListItem(
-                                colors = ListItemDefaults.colors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                ),
-                                leadingContent = {
-                                    Icon(
-                                        imageVector = if (item.isSpecial) {
-                                            Icons.Default.Folder
-                                        } else {
-                                            Icons.Default.List
-                                        },
-                                        contentDescription = null
-                                    )
-                                },
-                                headlineContent = { Text(text = item.name) },
-                                supportingContent = { Text(text = item.comment) }
-                            )
-                        }
+                        MenuCardItem(
+                            item = item,
+                            onClick = { onItemClick(item) },
+                            onLongClick = {
+                                onItemLongClick(item)
+                            }
+                        )
                     }
                 }
 
-                PullRefreshIndicator(refreshing, pullState, Modifier.align(Alignment.TopCenter))
+                PullRefreshIndicator(
+                    refreshing,
+                    pullState,
+                    Modifier.align(Alignment.TopCenter)
+                )
             }
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {

@@ -22,7 +22,7 @@ fun XmpDropdownMenuHeader(
     color: Color = MaterialTheme.colorScheme.primary
 ) {
     XmpDropdownMenuHeader {
-        Text(text = "All Files", color = color)
+        Text(text = text, color = color)
     }
 }
 

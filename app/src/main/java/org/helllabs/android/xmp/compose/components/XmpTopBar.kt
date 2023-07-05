@@ -20,15 +20,13 @@ fun XmpTopBar(
     onBack: (() -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
-    val topBarContainerColor = if (isScrolled) {
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .5f)
-    } else {
-        MaterialTheme.colorScheme.surface
-    }
-
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = topBarContainerColor,
+            containerColor = if (isScrolled) {
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .5f)
+            } else {
+                MaterialTheme.colorScheme.surface
+            },
             navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
             actionIconContentColor = MaterialTheme.colorScheme.onSurface,
             titleContentColor = MaterialTheme.colorScheme.onSurface

@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.browser.playlist
+package org.helllabs.android.xmp.model
 
 import java.io.File
 

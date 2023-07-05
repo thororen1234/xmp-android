@@ -44,7 +44,6 @@ import org.helllabs.android.xmp.util.InfoCache.delete
 import org.helllabs.android.xmp.util.InfoCache.testModule
 import timber.log.Timber
 
-
 class PlayerService : Service(), OnAudioFocusChangeListener {
 
     private var audioInitialized = false
@@ -108,7 +107,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         playerAllSequences = PrefManager.allSequences
 
         mediaSession = MediaSessionCompat(this, packageName)
-        mediaSession.isActive = true;
+        mediaSession.isActive = true
         notifier = ModernNotifier(this)
 
         watchdog = Watchdog(10).apply {
@@ -143,7 +142,8 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     private fun requestAudioFocus(): Boolean {
         return audioManager!!.requestAudioFocus(
-            this, AudioManager.STREAM_MUSIC,
+            this,
+            AudioManager.STREAM_MUSIC,
             AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
         ) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
     }
@@ -221,14 +221,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         cmd = CMD_NEXT
     }
 
-    //	private int playFrame() {
-    //		// Synchronize frame play with data gathering so we don't change playing variables
-    //		// in the middle of e.g. sample data reading, which results in a segfault in C code
-    //
-    //		synchronized (playThread) {
-    //			return Xmp.playBuffer();
-    //		}
-    //	}
     private fun notifyNewSequence() {
         val numClients = callbacks.beginBroadcast()
         for (j in 0 until numClients) {
@@ -436,8 +428,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 Timber.i("Release module")
                 releaseModule()
 
-                //audio.stop();
-
                 // Used when current files are replaced by a new set
                 if (restart) {
                     Timber.i("Restart")
@@ -446,7 +436,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                     restart = false
                 } else if (cmd == CMD_PREV) {
                     queue!!.previous()
-                    //returnToPrev = false;
                 }
             } while (cmd != CMD_STOP && queue!!.next())
 
@@ -459,7 +448,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             remoteControl!!.setStateStopped()
             audioManager!!.abandonAudioFocus(this@PlayerService)
 
-            //end();
             Timber.i("Stop service")
             stopSelf()
         }
@@ -482,7 +470,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             doPauseAndNotify()
         }
         deinit()
-        //audio.release();
     }
 
     private val binder: ModInterface.Stub = object : ModInterface.Stub() {
@@ -500,7 +487,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             queue = QueueManager(fileList.toMutableList(), start, shuffle, loopList, keepFirst)
             notifier?.queueManager = queue!!
 
-            //notifier.clean();
             cmd = CMD_NONE
             if (isPlayerPaused) {
                 doPauseAndNotify()
