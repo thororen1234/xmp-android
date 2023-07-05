@@ -222,7 +222,7 @@ abstract class Viewer(context: Context, color: Int) :
 
     private inner class MyGestureDetector : SimpleOnGestureListener() {
         override fun onScroll(
-            e1: MotionEvent,
+            e1: MotionEvent?,
             e2: MotionEvent,
             distanceX: Float,
             distanceY: Float
@@ -238,7 +238,7 @@ abstract class Viewer(context: Context, color: Int) :
         }
 
         override fun onFling(
-            e1: MotionEvent,
+            e1: MotionEvent?,
             e2: MotionEvent,
             velocityX: Float,
             velocityY: Float

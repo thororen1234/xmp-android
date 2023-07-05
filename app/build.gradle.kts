@@ -9,7 +9,7 @@ plugins {
 
 android {
     namespace = "org.helllabs.android.xmp"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "org.helllabs.android.xmp"
