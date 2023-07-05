@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.PrefManager
-import org.helllabs.android.xmp.browser.playlist.PlaylistItem
-import org.helllabs.android.xmp.browser.playlist.PlaylistUtils
+import org.helllabs.android.xmp.core.PlaylistUtils
+import org.helllabs.android.xmp.model.PlaylistItem
 import org.helllabs.android.xmp.util.InfoCache
 import timber.log.Timber
 import java.io.File
@@ -33,7 +33,8 @@ class FileListViewModel : ViewModel() {
         val isShuffle: Boolean = false,
         val lastPath: String? = null,
         val list: List<PlaylistItem> = listOf(),
-        val pathNotFound: Boolean = false
+        val pathNotFound: Boolean = false,
+        val lastScrollPosition: Int = 0
     )
 
     private val _uiState = MutableStateFlow(FileListState())
@@ -55,6 +56,10 @@ class FileListViewModel : ViewModel() {
 
         val initialPath = File(PrefManager.mediaPath)
         onNavigate(initialPath)
+    }
+
+    fun setScrollPosition(value: Int) {
+        _uiState.update { it.copy(lastScrollPosition = value) }
     }
 
     /**
@@ -151,7 +156,7 @@ class FileListViewModel : ViewModel() {
 
             PlaylistUtils.renumberIds(list)
 
-            _uiState.update { it.copy(list = list, isLoading = false) }
+            _uiState.update { it.copy(list = list, isLoading = false, lastScrollPosition = 0) }
         }
     }
 

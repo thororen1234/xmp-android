@@ -5,8 +5,10 @@ import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,19 +32,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.browser.playlist.PlaylistItem
-import org.helllabs.android.xmp.browser.playlist.PlaylistUtils
 import org.helllabs.android.xmp.compose.components.BottomBarButtons
 import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.ListDialog
@@ -59,12 +64,15 @@ import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
 import org.helllabs.android.xmp.compose.ui.filelist.components.FileListCard
 import org.helllabs.android.xmp.core.Assets
 import org.helllabs.android.xmp.core.Files
+import org.helllabs.android.xmp.core.PlaylistUtils
+import org.helllabs.android.xmp.model.PlaylistItem
 import org.helllabs.android.xmp.util.InfoCache
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
 import kotlin.time.Duration.Companion.seconds
 
+// TODO when we scroll down a ways, clicking on an item results in the wrong module playing
 class FileListActivity : BasePlaylistActivity() {
 
     private val viewModel by viewModels<FileListViewModel>()
@@ -77,6 +85,10 @@ class FileListActivity : BasePlaylistActivity() {
 
     override val isLoopMode: Boolean
         get() = viewModel.uiState.value.isLoop
+
+    override fun update() {
+        viewModel.onRefresh()
+    }
 
     /**
      * Recursively add current directory to playlist
@@ -316,6 +328,7 @@ class FileListActivity : BasePlaylistActivity() {
                         callback.remove()
                         onBackPressedDispatcher.onBackPressed()
                     },
+                    onScrollPosition = viewModel::setScrollPosition,
                     onRefresh = viewModel::onRefresh,
                     onRestore = viewModel::onRestore,
                     onShuffle = viewModel::onShuffle,
@@ -381,18 +394,15 @@ class FileListActivity : BasePlaylistActivity() {
             }
         }
     }
-
-    override fun update() {
-        viewModel.onRefresh()
-    }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, FlowPreview::class)
 @Composable
 private fun FileListScreen(
     state: FileListViewModel.FileListState,
     snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
+    onScrollPosition: (Int) -> Unit,
     onRefresh: () -> Unit,
     onRestore: () -> Unit,
     onShuffle: (value: Boolean) -> Unit,
@@ -403,13 +413,29 @@ private fun FileListScreen(
     onItemClick: (item: PlaylistItem, index: Int) -> Unit,
     onItemLongClick: (item: PlaylistItem, index: Int, menuIndex: Int) -> Unit
 ) {
-    val scrollState = rememberLazyListState()
+    val scrollState = rememberLazyListState(initialFirstVisibleItemIndex = state.lastScrollPosition)
     val crumbScrollState = rememberLazyListState()
     val isScrolled by remember {
         derivedStateOf {
             scrollState.firstVisibleItemIndex > 0
         }
     }
+
+    // Save our scroll position
+    LaunchedEffect(scrollState) {
+        snapshotFlow {
+            scrollState.firstVisibleItemIndex
+        }.debounce(1.seconds).collectLatest {
+            onScrollPosition(it)
+        }
+    }
+
+    // Refresh our list's scroll position if our crumbs changes.
+    LaunchedEffect(state.crumbs) {
+        scrollState.animateScrollToItem(state.lastScrollPosition)
+        crumbScrollState.animateScrollToItem(state.crumbs.lastIndex)
+    }
+
     Scaffold(
         topBar = {
             XmpTopBar(
@@ -459,15 +485,15 @@ private fun FileListScreen(
             ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    state = scrollState
+                    state = scrollState,
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     itemsIndexed(state.list) { index, item ->
                         FileListCard(
                             item = item,
                             onItemClick = { onItemClick(item, index) },
-                            onItemLongClick = {
-                                onItemLongClick(item, index, it)
-                            }
+                            onItemLongClick = { onItemLongClick(item, index, it) }
                         )
                     }
                 }
@@ -488,14 +514,6 @@ private fun FileListScreen(
                 ProgressbarIndicator(isLoading = state.isLoading)
 
                 PullRefreshIndicator(refreshing, pullState, Modifier.align(Alignment.TopCenter))
-            }
-        }
-
-        // Scroll to the necessary ends for our lists.
-        LaunchedEffect(key1 = state.list, key2 = state.crumbs) {
-            if (state.list.isNotEmpty() || state.crumbs.isNotEmpty()) {
-                crumbScrollState.animateScrollToItem(state.crumbs.lastIndex)
-                scrollState.animateScrollToItem(0)
             }
         }
     }
@@ -532,6 +550,7 @@ private fun Preview_FileListScreen() {
             ),
             snackbarHostState = SnackbarHostState(),
             onBack = {},
+            onScrollPosition = {},
             onRefresh = {},
             onRestore = {},
             onLoop = {},

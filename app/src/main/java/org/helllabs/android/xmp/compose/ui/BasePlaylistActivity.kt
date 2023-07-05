@@ -14,8 +14,8 @@ import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
-import org.helllabs.android.xmp.browser.playlist.PlaylistItem
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
+import org.helllabs.android.xmp.model.PlaylistItem
 import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.util.InfoCache.testModule
@@ -40,7 +40,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
             }
         }
         if (result.resultCode == 2) {
-            // TODO file was deleted
+            update()
         }
     }
 

@@ -256,6 +256,10 @@ class ModuleResultViewModel @Inject constructor(
     fun deleteModule() {
         val result = Files.deleteModuleFile(_uiState.value.module?.module!!)
         Timber.d("Module deleted was: $result")
+        update()
+    }
+
+    fun update() {
         _uiState.update {
             it.copy(
                 moduleExists = doesModuleExist(_uiState.value.module),
@@ -336,7 +340,7 @@ open class Result : ComponentActivity() {
             }
         }
         if (result.resultCode == 2) {
-            // TODO file was deleted
+            viewModel.update()
         }
     }
 
