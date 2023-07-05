@@ -27,17 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.AndroidEntryPoint
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.api.Repository
 import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
 import org.helllabs.android.xmp.compose.components.XmpTopBar
@@ -54,74 +46,6 @@ import org.helllabs.android.xmp.model.SearchListResult
 import org.helllabs.android.xmp.model.Sponsor
 import org.helllabs.android.xmp.model.SponsorDetails
 import timber.log.Timber
-import javax.inject.Inject
-
-@HiltViewModel
-class SearchResultViewModel @Inject constructor(
-    private val repository: Repository
-) : ViewModel() {
-    data class SearchResultState(
-        val title: String = "",
-        val isLoading: Boolean = false,
-        var result: Any? = null,
-        val softError: String? = null,
-        val hardError: Throwable? = null
-    )
-
-    private val _uiState = MutableStateFlow(SearchResultState())
-    val uiState = _uiState.asStateFlow()
-
-    fun getFileOrTitle(string: String, query: String) =
-        viewModelScope.launch {
-            _uiState.update { it.copy(title = string, isLoading = true) }
-
-            try {
-                val result = repository.getFileNameOrTitle(query)
-                if (!result.error.isNullOrBlank()) {
-                    _uiState.update { it.copy(softError = result.error, isLoading = false) }
-                } else {
-                    _uiState.update { it.copy(result = result, softError = "", isLoading = false) }
-                }
-            } catch (e: Exception) {
-                Timber.e(e)
-                _uiState.update { it.copy(hardError = e) }
-            }
-        }
-
-    fun getArtistById(id: Int) =
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
-
-            try {
-                val result = repository.getArtistById(id)
-                if (!result.error.isNullOrBlank()) {
-                    _uiState.update { it.copy(softError = result.error, isLoading = false) }
-                } else {
-                    _uiState.update { it.copy(result = result, softError = "", isLoading = false) }
-                }
-            } catch (e: Exception) {
-                Timber.e(e)
-                _uiState.update { it.copy(hardError = e) }
-            }
-        }
-
-    fun getArtists(string: String, query: String) =
-        viewModelScope.launch {
-            _uiState.update { it.copy(title = string, isLoading = true) }
-
-            try {
-                val result = repository.getArtistSearch(query)
-                if (!result.error.isNullOrBlank()) {
-                    _uiState.update { it.copy(softError = result.error, isLoading = false) }
-                } else {
-                    _uiState.update { it.copy(result = result, softError = "", isLoading = false) }
-                }
-            } catch (e: Exception) {
-                Timber.e(e)
-                _uiState.update { it.copy(hardError = e) }
-            }
-        }
-}
 
 @AndroidEntryPoint
 class SearchResult : ComponentActivity() {

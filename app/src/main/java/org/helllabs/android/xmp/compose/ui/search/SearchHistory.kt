@@ -104,8 +104,7 @@ class SearchHistory : ComponentActivity() {
                     }
                 ) { paddingValues ->
                     Box(
-                        modifier = Modifier
-                            .padding(paddingValues),
+                        modifier = Modifier.padding(paddingValues),
                         contentAlignment = Alignment.Center
                     ) {
                         LazyColumn(modifier = Modifier.fillMaxSize()) {
