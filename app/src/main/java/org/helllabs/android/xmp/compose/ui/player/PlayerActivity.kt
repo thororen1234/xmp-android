@@ -762,11 +762,13 @@ class PlayerActivity : ComponentActivity() {
             // Oops. We don't want to start service if launched from history and service is not running
             // so run the browser instead.
             Timber.i("Start file browser")
-            val browserIntent = Intent(this, PlaylistMenu::class.java)
-            browserIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-            startActivity(browserIntent)
+            Intent(this, PlaylistMenu::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }.also(::startActivity)
+
             setResult(RESULT_OK)
             finish()
+
             return
         } else {
             val extras = intent.extras
