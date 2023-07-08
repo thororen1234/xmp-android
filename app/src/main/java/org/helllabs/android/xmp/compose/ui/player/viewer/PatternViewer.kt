@@ -15,37 +15,6 @@ import timber.log.Timber
 @Suppress("ViewConstructor")
 class PatternViewer(context: Context, background: Int) : Viewer(context, background) {
 
-    // Effects paint
-    private val muteEffectsPaint: Paint
-    private var effectsPaint: Paint
-    private var paint3: Paint = Paint()
-
-    private val allNotes = mutableListOf<String>()
-    private val c = CharArray(3)
-    private val fontHeight: Int
-    private val fontWidth: Int
-    private val instHexByte = mutableListOf<String>()
-    private val rect = Rect()
-    private val rowFxParm = IntArray(64)
-    private val rowFxType = IntArray(64)
-    private val rowInsts = ByteArray(64)
-    private val rowNotes = ByteArray(64)
-    private var hexByte = mutableListOf<String>()
-    private var oldOrd = 0f
-    private var oldPosX = 0f
-    private var oldRow = 0f
-
-    private val barPaint: Paint
-    private val headerPaint: Paint
-    private val headerTextPaint: Paint
-    private val insPaint: Paint
-    private val muteNotePaint: Paint
-    private val notePaint: Paint
-    private val numRowsTextPaint: Paint
-    private var muteInsPaint: Paint
-    private var paint1: Paint = Paint()
-    private var paint2: Paint = Paint()
-
     // Draw Loop Variables
     private var adj: Float = 0f
     private var barLine: Int = 0
@@ -62,93 +31,61 @@ class PatternViewer(context: Context, background: Int) : Viewer(context, backgro
     private var row: Float = 0f
     private var updateRow: Float = 0f
 
-    private val fontSize: Float = patternViewFontSize.toPx(context)
-
     private var currentType: String = ""
     private lateinit var effectsTable: MutableMap<Int, String>
 
-    init {
+    private val allNotes = (0 until MAX_NOTES).map { NOTES[it % 12] + it / 12 }.toMutableList()
+    private var hexByte = mutableListOf<String>()
+    private val c = CharArray(3)
+    private val instHexByte = (0..255).map { i ->
+        Util.to02X(c, i)
+        String(c)
+    }
 
-        // Note Paint
-        notePaint = Paint().apply {
-            setARGB(255, 140, 140, 160)
-            typeface = Typeface.MONOSPACE
-            textSize = fontSize
-            isAntiAlias = true
-        }
+    private var paint1: Paint = Paint()
+    private var paint2: Paint = Paint()
+    private var paint3: Paint = Paint()
 
-        // Muted Note Paint
-        muteNotePaint = Paint().apply {
-            setARGB(255, 60, 60, 60)
-            typeface = Typeface.MONOSPACE
-            textSize = fontSize
-            isAntiAlias = true
-        }
+    private val barPaint: Paint by lazy { createPaint(40, 40, 40, false) }
+    private val effectsPaint: Paint by lazy { createPaint(34, 158, 60) }
+    private val headerPaint: Paint by lazy { createPaint(52, 96, 186, false) }
+    private val headerTextPaint: Paint by lazy { createPaint(220, 220, 220, bold = true) }
+    private val insPaint: Paint by lazy { createPaint(160, 80, 80) }
+    private val muteEffectsPaint: Paint by lazy { createPaint(16, 75, 28) }
+    private val muteInsPaint: Paint by lazy { createPaint(80, 40, 40) }
+    private val muteNotePaint: Paint by lazy { createPaint(60, 60, 60) }
+    private val notePaint: Paint by lazy { createPaint(140, 140, 160) }
+    private val numRowsTextPaint: Paint by lazy { createPaint(200, 200, 200, bold = true) }
 
-        // Instrument Paint
-        insPaint = Paint().apply {
-            setARGB(255, 160, 80, 80)
-            typeface = Typeface.MONOSPACE
-            textSize = fontSize
-            isAntiAlias = true
-        }
+    private val fontSize: Float = patternViewFontSize.toPx(context)
 
-        // Muted Instrument Paint
-        muteInsPaint = Paint().apply {
-            setARGB(255, 80, 40, 40)
-            typeface = Typeface.MONOSPACE
-            textSize = fontSize
-            isAntiAlias = true
-        }
+    private val fontHeight: Int = (fontSize * 12 / 10).toInt()
+    private val fontWidth = notePaint.measureText("X").toInt()
 
-        // Effects Paint
-        effectsPaint = Paint().apply {
-            setARGB(255, 34, 158, 60) // Kinda digging the green.
-            typeface = Typeface.MONOSPACE
-            textSize = fontSize
-            isAntiAlias = true
-        }
+    private val rect = Rect()
+    private val rowFxParm = IntArray(64)
+    private val rowFxType = IntArray(64)
+    private val rowInsts = ByteArray(64)
+    private val rowNotes = ByteArray(64)
 
-        // Muted Effects Paint
-        muteEffectsPaint = Paint().apply {
-            setARGB(255, 16, 75, 28) // Darker shade of green
-            typeface = Typeface.MONOSPACE
-            textSize = fontSize
-            isAntiAlias = true
-        }
+    private var oldOrd = 0f
+    private var oldPosX = 0f
+    private var oldRow = 0f
 
-        // Number Row Text Paint
-        numRowsTextPaint = Paint().apply {
-            setARGB(255, 200, 200, 200)
-            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-            textSize = fontSize
-            isAntiAlias = true
-        }
-
-        // Header Text Paint
-        headerTextPaint = Paint().apply {
-            setARGB(255, 220, 220, 220)
-            typeface = Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-            textSize = fontSize
-            isAntiAlias = true
-        }
-
-        // Header Paint
-        headerPaint = Paint().apply { setARGB(255, 140, 140, 220) }
-
-        // Bar Paint
-        barPaint = Paint().apply { setARGB(255, 40, 40, 40) }
-
-        fontWidth = notePaint.measureText("X").toInt()
-        fontHeight = (fontSize * 12 / 10).toInt()
-
-        for (i in 0 until MAX_NOTES) {
-            allNotes.add(NOTES[i % 12] + i / 12)
-        }
-
-        for (i in 0..255) {
-            Util.to02X(c, i)
-            instHexByte.add(String(c))
+    // Helper function to clean up redundant initialization
+    private fun createPaint(
+        red: Int,
+        green: Int,
+        blue: Int,
+        bold: Boolean = false
+    ) = Paint().apply {
+        setARGB(255, red, green, blue)
+        isAntiAlias = true
+        textSize = fontSize
+        typeface = if (bold) {
+            Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        } else {
+            Typeface.MONOSPACE
         }
     }
 

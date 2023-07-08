@@ -46,16 +46,17 @@ import timber.log.Timber
 
 class PlayerService : Service(), OnAudioFocusChangeListener {
 
+    internal lateinit var mediaSession: MediaSessionCompat
+    private var notifier: ModernNotifier? = null
+    private var remoteControl: RemoteControl? = null
+
     private var audioInitialized = false
     private var audioManager: AudioManager? = null
     private var ducking = false
     private var hasAudioFocus = false
-    private var remoteControl: RemoteControl? = null
 
-    internal lateinit var mediaSession: MediaSessionCompat
     private var canRelease = false
     private var cmd = 0
-    private var notifier: ModernNotifier? = null
     private var playThread: Thread? = null
     private var restart = false
     private var sampleRate = 0
@@ -63,10 +64,10 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     private var watchdog: Watchdog? = null
 
     private val callbacks = RemoteCallbackList<PlayerCallback>()
-    private var playerAllSequences = false
     private var discardBuffer = false // don't play current buffer if changing module while paused
-    private var playerFileName: String? = null // currently playing file
     private var looped = false
+    private var playerAllSequences = false
+    private var playerFileName: String? = null // currently playing file
     private var previousPaused = false // save previous pause state
     private var queue: QueueManager? = null
     private var receiverHelper: ReceiverHelper? = null
@@ -74,8 +75,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     private var startIndex = 0
     private var updateData = false
 
-    var isPlayerPaused = false
-        private set
+    internal var isPlayerPaused = false
 
     override fun onCreate() {
         super.onCreate()

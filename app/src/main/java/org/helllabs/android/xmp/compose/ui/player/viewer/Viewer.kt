@@ -41,8 +41,8 @@ abstract class Viewer(context: Context, color: Int) :
     private var surfaceHolder: SurfaceHolder
 
     // Touch tracking
-    internal var posX: Float
-    internal var posY: Float
+    internal var posX: Float = 0f
+    internal var posY: Float = 0f
     internal var velX = 0f
     internal var velY = 0f
     private var maxX = 0
@@ -66,9 +66,6 @@ abstract class Viewer(context: Context, color: Int) :
         holder.addCallback(this)
 
         surfaceHolder = holder
-
-        posY = 0f
-        posX = posY
 
         initGestureListener()
         screenSize = resources.configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK
@@ -128,12 +125,12 @@ abstract class Viewer(context: Context, color: Int) :
             try {
                 isMuted[i] = Xmp.mute(i, -1) == 1
             } catch (e: RemoteException) {
-                Timber.w("Can't read channel mute status")
+                Timber.w("Can't read channel mute status: ${e.message}")
             }
         }
 
-        posY = 0f
-        posX = posY
+        posY = 0F
+        posX = 0F
     }
 
     private fun limitPosition() {
@@ -181,53 +178,52 @@ abstract class Viewer(context: Context, color: Int) :
     }
 
     internal fun setMaxX(x: Int) {
-        synchronized(this) { maxX = x }
+        synchronized(this@Viewer) { maxX = x }
     }
 
     internal fun setMaxY(y: Int) {
-        synchronized(this) { maxY = y }
+        synchronized(this@Viewer) { maxY = y }
     }
 
     fun requestCanvasLock(draw: (canvas: Canvas) -> Unit) {
         // Check if the surface is valid. Stops it from being silly.
-        if (surfaceHolder.surface.isValid) {
-            try {
-                canvas = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    try {
-                        // Try and use hardware-accelerated canvas
-                        surfaceHolder.lockHardwareCanvas()
-                    } catch (e: IllegalStateException) {
-                        // The device must not support hardware-accelerated canvas.
-                        surfaceHolder.lockCanvas()
-                    }
-                } else {
+        if (!surfaceHolder.surface.isValid) {
+            Timber.w("Surface not valid")
+            return
+        }
+
+        try {
+            canvas = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                try {
+                    // Try and use hardware-accelerated canvas
+                    surfaceHolder.lockHardwareCanvas()
+                } catch (e: IllegalStateException) {
+                    // The device must not support hardware-accelerated canvas.
                     surfaceHolder.lockCanvas()
                 }
-
-                draw(canvas!!)
-            } catch (e: Exception) {
-                Timber.w("Canvas error: $e")
-            } finally {
-                // do this in a finally so that if an exception is thrown
-                // during the above, we don't leave the Surface in an
-                // inconsistent state
-                if (canvas != null) {
-                    surfaceHolder.unlockCanvasAndPost(canvas)
-                }
+            } else {
+                surfaceHolder.lockCanvas()
             }
-        } else {
-            Timber.w("Surface not valid")
+
+            canvas?.let(draw)
+        } catch (e: Exception) {
+            Timber.w("Canvas error: $e")
+        } finally {
+            // do this in a finally so that if an exception is thrown
+            // during the above, we don't leave the Surface in an
+            // inconsistent state
+            canvas?.let(surfaceHolder::unlockCanvasAndPost)
         }
     }
 
     private inner class MyGestureDetector : SimpleOnGestureListener() {
         override fun onScroll(
-            e1: MotionEvent?,
+            e1: MotionEvent,
             e2: MotionEvent,
             distanceX: Float,
             distanceY: Float
         ): Boolean {
-            synchronized(this) {
+            synchronized(this@Viewer) {
                 posX += distanceX
                 posY += distanceY
                 limitPosition()
@@ -238,14 +234,14 @@ abstract class Viewer(context: Context, color: Int) :
         }
 
         override fun onFling(
-            e1: MotionEvent?,
+            e1: MotionEvent,
             e2: MotionEvent,
             velocityX: Float,
             velocityY: Float
         ): Boolean {
             // Register a fling after a certain velocity.
             if (velocityX >= FLING || velocityY >= FLING) {
-                synchronized(this) {
+                synchronized(this@Viewer) {
                     velX = velocityX / 25
                     velY = velocityY / 25
                 }

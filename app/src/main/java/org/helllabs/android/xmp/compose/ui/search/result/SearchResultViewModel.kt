@@ -20,7 +20,7 @@ class SearchResultViewModel @Inject constructor(
         val isLoading: Boolean = false,
         val softError: String? = null,
         val title: String = "",
-        var result: Any? = null,
+        var result: Any? = null
     )
 
     private val _uiState = MutableStateFlow(SearchResultState())

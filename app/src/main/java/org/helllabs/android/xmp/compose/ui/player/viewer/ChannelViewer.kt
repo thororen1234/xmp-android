@@ -16,31 +16,30 @@ import org.helllabs.android.xmp.compose.theme.channelViewFontSize
 import org.helllabs.android.xmp.compose.theme.toPx
 import org.helllabs.android.xmp.compose.ui.player.Util
 import timber.log.Timber
+import java.util.Collections
 
 @Suppress("ViewConstructor")
 class ChannelViewer(context: Context, background: Int) : Viewer(context, background) {
+
+    private val font2Size = channelViewChannelFontSize.toPx(context).toInt()
+
+    private val fontSize: Int = channelViewFontSize.toPx(context).toInt()
+
+    private val useNewWaveform = PrefManager.useBetterWaveform
 
     private lateinit var channelNumber: Array<String?>
     private lateinit var holdKey: IntArray
     private lateinit var insNameTrim: Array<String?>
     private val buffer: Array<ByteArray> // keep several buffers to hold data in pause
+
     private val bufferXY: FloatArray
     private val font2Height: Int
     private val font2Width: Int
     private val fontHeight: Int
-    private val fontSize: Int = channelViewFontSize.toPx(context).toInt()
     private val fontWidth: Int
-    private val insPaint: Paint
     private val keyRow = IntArray(Xmp.MAX_CHANNELS)
-    private val meterPaint: Paint
-    private val numPaint: Paint
-    private val rect = Rect()
     private val scopeHeight: Int
     private val scopeLeft: Int
-    private val scopeLinePaint: Paint
-    private val scopeMutePaint: Paint
-    private val scopeMuteTextPaint: Paint
-    private val scopePaint: Paint
     private val scopeWidth: Int
     private val volLeft: Int
     private var cols = 1
@@ -49,92 +48,78 @@ class ChannelViewer(context: Context, background: Int) : Viewer(context, backgro
     private var panWidth = 0
     private var volWidth = 0
 
-    // Better waveform
-    private val useNewWaveform: Boolean
-        get() = PrefManager.useBetterWaveform
+    private val rect = Rect()
     private val waveformPath = Path()
 
+    private val insPaint: Paint = Paint().apply {
+        setARGB(255, 200, 200, 200)
+        typeface = Typeface.MONOSPACE
+        textSize = fontSize.toFloat()
+        isAntiAlias = true
+        isLinearText = true
+    }
+    private val meterPaint: Paint = Paint().apply {
+        setARGB(255, 40, 80, 160)
+    }
+    private val numPaint: Paint = Paint().apply {
+        setARGB(255, 200, 200, 200)
+        typeface = Typeface.MONOSPACE
+        textSize = font2Size.toFloat()
+        isAntiAlias = true
+        isLinearText = true
+    }
+    private val scopeLinePaint: Paint = Paint().apply {
+        setARGB(255, 80, 160, 80)
+        strokeWidth = 2.0f // Thicken the scope line up.
+        style = Paint.Style.STROKE
+        isAntiAlias = true
+    }
+    private val scopeMutePaint: Paint = Paint().apply {
+        setARGB(255, 60, 0, 0)
+    }
+    private val scopeMuteTextPaint: Paint = Paint().apply {
+        setARGB(255, 220, 220, 220)
+        typeface = Typeface.MONOSPACE
+        textSize = fontSize.toFloat()
+        isAntiAlias = true
+        isLinearText = true
+    }
+    private val scopePaint: Paint = Paint().apply {
+        setARGB(255, 40, 40, 40)
+    }
+
     // Draw Loop Variables
-    private var numChannels: Int = 0
-    private var numInstruments: Int = 0
-    private var row: Int = 0
-    private var num: Int = 0
-    private var icol: Int = 0
-    private var drawX: Int = 0
-    private var drawY: Int = 0
-    private var ins: Int = 0
-    private var vol: Int = 0
-    private var finalVol: Int = 0
-    private var pan: Int = 0
-    private var key: Int = 0
-    private var period: Int = 0
-    private var h: Int = 0
-    private var volX: Int = 0
-    private var volY1: Int = 0
-    private var volY2: Int = 0
-    private var panX: Int = 0
+    private var drawX = 0
+    private var drawY = 0
+    private var finalVol = 0
+    private var h = 0
+    private var icol = 0
+    private var ins = 0
+    private var key = 0
+    private var num = 0
+    private var numChannels = 0
+    private var numInstruments = 0
+    private var pan = 0
+    private var panX = 0
+    private var period = 0
+    private var row = 0
+    private var vol = 0
+    private var volX = 0
+    private var volY1 = 0
+    private var volY2 = 0
 
     init {
-        val font2Size = channelViewChannelFontSize.toPx(context).toInt()
-
-        // Scope and Meter Background Paint
-        scopePaint = Paint().apply {
-            setARGB(255, 40, 40, 40)
-        }
-
-        // Scope Waveform Paint
-        scopeLinePaint = Paint().apply {
-            setARGB(255, 80, 160, 80)
-            strokeWidth = 2.0f // Thicken the scope line up.
-            style = Paint.Style.STROKE
-            isAntiAlias = true
-        }
-
-        // Mute Background Paint
-        scopeMutePaint = Paint().apply {
-            setARGB(255, 60, 0, 0)
-        }
-
-        // Mute Text Paint
-        scopeMuteTextPaint = Paint().apply {
-            setARGB(255, 220, 220, 220)
-            typeface = Typeface.MONOSPACE
-            textSize = fontSize.toFloat()
-            isAntiAlias = true
-            isLinearText = true
-        }
-
-        // Meter Paint
-        meterPaint = Paint().apply {
-            setARGB(255, 40, 80, 160)
-        }
-
-        // Channel Instrument Paint
-        insPaint = Paint().apply {
-            setARGB(255, 200, 200, 200)
-            typeface = Typeface.MONOSPACE
-            textSize = fontSize.toFloat()
-            isAntiAlias = true
-            isLinearText = true
-        }
-
-        // Row Number Paint
-        numPaint = Paint().apply {
-            setARGB(255, 200, 200, 200)
-            typeface = Typeface.MONOSPACE
-            textSize = font2Size.toFloat()
-            isAntiAlias = true
-            isLinearText = true
-        }
-
         fontWidth = insPaint.measureText("X").toInt()
         fontHeight = fontSize * 12 / 10
         font2Width = numPaint.measureText("X").toInt()
         font2Height = font2Size * 12 / 10
+
         scopeWidth = 8 * fontWidth
         scopeHeight = 3 * fontHeight
         scopeLeft = 2 * font2Width + 2 * fontWidth
+
         volLeft = scopeLeft + scopeWidth + fontWidth * 2
+
         buffer = Array(Xmp.MAX_CHANNELS) { ByteArray(scopeWidth) }
         bufferXY = FloatArray(scopeWidth * 2)
     }
@@ -146,15 +131,13 @@ class ChannelViewer(context: Context, background: Int) : Viewer(context, backgro
         val ins = modVars[4]
 
         try {
-            insName = Xmp.getInstruments()?.toMutableList() ?: mutableListOf()
+            insName = Xmp.getInstruments()?.toMutableList() ?: Collections.nCopies(ins, "")
         } catch (e: RemoteException) {
             Timber.w("Can't get instrument name")
         }
 
-        if (insName.isEmpty()) {
-            for (i in 0 until ins) {
-                insName.add("")
-            }
+        if (insName.size < ins) {
+            insName.addAll(Collections.nCopies(ins - insName.size, ""))
         }
 
         holdKey = IntArray(chn)
@@ -217,9 +200,9 @@ class ChannelViewer(context: Context, background: Int) : Viewer(context, backgro
             try {
                 val mute = if (isMuted[n]) 0 else 1
                 Xmp.mute(n, mute)
-                isMuted[n] = isMuted[n] xor true
+                isMuted[n] = !isMuted[n]
             } catch (e: RemoteException) {
-                Timber.w("Can't mute channel $n")
+                Timber.w("Can't mute channel $n \n ${e.message}")
             }
         } else {
             super.onClick(x, y)
@@ -230,18 +213,14 @@ class ChannelViewer(context: Context, background: Int) : Viewer(context, backgro
         val chn = modVars[3]
 
         // Check if clicked on scopes
-        val n = findScope(x, y)
+        val scope = findScope(x, y)
 
         // If the channel is solo, a long press unmute all channels,
         // otherwise solo this channel
-        if (n >= 0) {
-            var count = 0
-            for (i in 0 until chn) {
-                if (!isMuted[i]) {
-                    count++
-                }
-            }
-            if (count == 1 && !isMuted[n]) {
+        if (scope >= 0) {
+            val count = (0 until chn).count { !isMuted[it] }
+
+            if (count == 1 && !isMuted[scope]) {
                 try {
                     for (i in 0 until chn) {
                         Xmp.mute(i, 0)
@@ -253,11 +232,11 @@ class ChannelViewer(context: Context, background: Int) : Viewer(context, backgro
             } else {
                 try {
                     for (i in 0 until chn) {
-                        Xmp.mute(i, if (i != n) 1 else 0)
-                        isMuted[i] = i != n
+                        Xmp.mute(i, if (i != scope) 1 else 0)
+                        isMuted[i] = i != scope
                     }
                 } catch (e: RemoteException) {
-                    Timber.w("Can't unmute channel $n")
+                    Timber.w("Can't unmute channel $scope")
                 }
             }
         } else {

@@ -27,6 +27,10 @@ class InstrumentViewer(context: Context, val background: Int) : Viewer(context, 
     private val fontWidth: Int
     private val insPaint = arrayListOf<Paint>()
     private val rect = Rect()
+    private val paint = Paint().apply {
+        alpha = 255
+        isAntiAlias = true
+    }
 
     // Draw Loop Variables
     private var chn: Int = 0
@@ -41,28 +45,19 @@ class InstrumentViewer(context: Context, val background: Int) : Viewer(context, 
         // White text volume shades
         for (i in 0..SHADE_STEPS) {
             val value = (i / SHADE_STEPS.toFloat())
-            // Timber.d("Text Value $i: $value")
-            insPaint.add(
-                Paint().apply {
-                    color = ColorUtils.blendARGB(Color.GRAY, Color.WHITE, value)
-                    alpha = 255
-                    typeface = Typeface.MONOSPACE
-                    textSize = fontSize.toFloat()
-                    isAntiAlias = true
-                }
-            )
+            paint.color = ColorUtils.blendARGB(Color.GRAY, Color.WHITE, value)
+            paint.typeface = Typeface.MONOSPACE
+            paint.textSize = fontSize.toFloat()
+
+            insPaint.add(Paint(paint))
         }
 
         // Blue bar volume shades
         for (i in SHADE_STEPS downTo 0) {
             val value = (i / SHADE_STEPS.toFloat())
-            // Timber.d("Bar Value $i: $value")
-            barPaint.add(
-                Paint().apply {
-                    color = ColorUtils.blendARGB(startBlue, background, value)
-                    alpha = 255
-                }
-            )
+            paint.color = ColorUtils.blendARGB(startBlue, background, value)
+
+            barPaint.add(Paint(paint))
         }
 
         fontWidth = insPaint[0].measureText("X").toInt()
@@ -106,6 +101,7 @@ class InstrumentViewer(context: Context, val background: Int) : Viewer(context, 
                 if (isMuted[j]) {
                     continue
                 }
+
                 if (info!!.instruments[j] == i) {
                     drawX = 3 * fontWidth + drawWidth * j
                     vol = info.volumes[j] / 2
@@ -117,11 +113,13 @@ class InstrumentViewer(context: Context, val background: Int) : Viewer(context, 
 
                     rect.set(drawX, drawY - fontSize + 4, drawX + drawWidth * 8 / 10, drawY + 8)
                     canvas.drawRect(rect, barPaint[vol])
+
                     if (vol > maxVol) {
                         maxVol = vol
                     }
                 }
             }
+
             canvas.drawText(insName[i], 0f, drawY.toFloat(), insPaint[maxVol])
         }
     }
