@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Xmp Mod Player</string>
+    <string name="app_name_launcher">Xmp Player</string>
     <string name="app_description">A modplayer that plays over 90 mainstream and obscure module formats, including Protracker (MOD), Scream Tracker 3 (S3M), Fast Tracker II (XM) and Impulse Tracker (IT).</string>
 
     <string name="changelog_text">• Improve XM and STM compatibility\n• Improve Android Oreo compatibility\n
