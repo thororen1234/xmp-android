@@ -19,10 +19,13 @@ android {
         versionCode = 87
         versionName = "4.12.0"
 
-        ndk.moduleName = "xmp-prebuilt"
         vectorDrawables.useSupportLibrary = true
 
         ndk.abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+        externalNativeBuild.cmake.arguments += listOf(
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DBUILD_SHARED=OFF"
+        )
 
         // ModArchive API Key
         // Must be in your global gradle.properties. ex: C:\Users\<name>\.gradle
@@ -57,8 +60,8 @@ android {
         }
     }
 
-    externalNativeBuild.ndkBuild {
-        path = file("src/main/jni/Android.mk")
+    externalNativeBuild.cmake {
+        path = file("src/main/jni/CMakeLists.txt")
     }
 
     compileOptions {
