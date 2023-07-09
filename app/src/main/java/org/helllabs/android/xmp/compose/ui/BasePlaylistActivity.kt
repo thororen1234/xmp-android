@@ -15,11 +15,11 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
+import org.helllabs.android.xmp.core.InfoCache.testModule
+import org.helllabs.android.xmp.core.InfoCache.testModuleForceIfInvalid
 import org.helllabs.android.xmp.model.PlaylistItem
 import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerService
-import org.helllabs.android.xmp.util.InfoCache.testModule
-import org.helllabs.android.xmp.util.InfoCache.testModuleForceIfInvalid
 import timber.log.Timber
 
 /**
@@ -52,7 +52,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
     protected abstract val allFiles: List<String>
     protected abstract fun update()
 
-    private fun showSnack(message: String) {
+    internal fun showSnack(message: String) {
         lifecycleScope.launch {
             snackbarHostState.showSnackbar(
                 message = message

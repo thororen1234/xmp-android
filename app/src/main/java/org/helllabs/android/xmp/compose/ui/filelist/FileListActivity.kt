@@ -64,9 +64,10 @@ import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
 import org.helllabs.android.xmp.compose.ui.filelist.components.FileListCard
 import org.helllabs.android.xmp.core.Assets
 import org.helllabs.android.xmp.core.Files
+import org.helllabs.android.xmp.core.InfoCache
+import org.helllabs.android.xmp.core.PlaylistMessages
 import org.helllabs.android.xmp.core.PlaylistUtils
 import org.helllabs.android.xmp.model.PlaylistItem
-import org.helllabs.android.xmp.util.InfoCache
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
@@ -90,15 +91,26 @@ class FileListActivity : BasePlaylistActivity() {
         viewModel.onRefresh()
     }
 
+    fun playlistMessage(playlistMessages: PlaylistMessages) {
+        val message = when (playlistMessages) {
+            PlaylistMessages.AddingFiles -> "Scanning module files..."
+            PlaylistMessages.CantWriteToPlaylist -> getString(R.string.error_write_to_playlist)
+            PlaylistMessages.UnrecognizedFormat -> getString(R.string.unrecognized_format)
+            PlaylistMessages.ValidFormatsAdded -> getString(R.string.msg_only_valid_files_added)
+        }
+
+        showSnack(message)
+    }
+
     /**
      * Recursively add current directory to playlist
      */
     private val addCurrentRecursiveChoice: PlaylistChoice = object : PlaylistChoice {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
             PlaylistUtils.filesToPlaylist(
-                this@FileListActivity,
-                Files.recursiveList(viewModel.currentPath),
-                PlaylistUtils.getPlaylistName(playlistSelection)
+                fileList = Files.recursiveList(viewModel.currentPath),
+                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
+                onMessage = ::playlistMessage
             )
         }
     }
@@ -109,9 +121,9 @@ class FileListActivity : BasePlaylistActivity() {
     private val addRecursiveToPlaylistChoice: PlaylistChoice = object : PlaylistChoice {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
             PlaylistUtils.filesToPlaylist(
-                this@FileListActivity,
-                Files.recursiveList(viewModel.getItems()[fileSelection].file),
-                PlaylistUtils.getPlaylistName(playlistSelection)
+                fileList = Files.recursiveList(viewModel.getItems()[fileSelection].file),
+                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
+                onMessage = ::playlistMessage
             )
         }
     }
@@ -122,9 +134,9 @@ class FileListActivity : BasePlaylistActivity() {
     private val addFileToPlaylistChoice: PlaylistChoice = object : PlaylistChoice {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
             PlaylistUtils.filesToPlaylist(
-                this@FileListActivity,
-                viewModel.getItems()[fileSelection].file?.path.orEmpty(),
-                PlaylistUtils.getPlaylistName(playlistSelection)
+                filename = viewModel.getItems()[fileSelection].file?.path.orEmpty(),
+                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
+                onMessage = ::playlistMessage
             )
         }
     }
@@ -135,9 +147,9 @@ class FileListActivity : BasePlaylistActivity() {
     private val addFileListToPlaylistChoice: PlaylistChoice = object : PlaylistChoice {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
             PlaylistUtils.filesToPlaylist(
-                this@FileListActivity,
-                viewModel.getItems().filter { it.isFile }.mapNotNull { it.file?.path },
-                PlaylistUtils.getPlaylistName(playlistSelection)
+                fileList = viewModel.getItems().filter { it.isFile }.mapNotNull { it.file?.path },
+                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
+                onMessage = ::playlistMessage
             )
         }
     }

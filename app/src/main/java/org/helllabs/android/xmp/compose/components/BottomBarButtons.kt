@@ -26,7 +26,7 @@ fun BottomBarButtons(
         actions = {
             IconToggleButton(
                 checked = isShuffle,
-                onCheckedChange = { onShuffle(it) },
+                onCheckedChange = onShuffle,
                 colors = IconButtonDefaults.iconToggleButtonColors(
                     checkedContentColor = Color.Green
                 ),
@@ -36,7 +36,7 @@ fun BottomBarButtons(
             )
             IconToggleButton(
                 checked = isLoop,
-                onCheckedChange = { onLoop(it) },
+                onCheckedChange = onLoop,
                 colors = IconButtonDefaults.iconToggleButtonColors(
                     checkedContentColor = Color.Green
                 ),

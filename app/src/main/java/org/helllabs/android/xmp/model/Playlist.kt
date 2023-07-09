@@ -1,13 +1,12 @@
 package org.helllabs.android.xmp.model
 
-import android.app.Activity
 import android.content.Context
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.core.Files
+import org.helllabs.android.xmp.core.InfoCache.fileExists
+import org.helllabs.android.xmp.core.PlaylistMessages
 import org.helllabs.android.xmp.core.PlaylistUtils
-import org.helllabs.android.xmp.util.InfoCache.fileExists
-import org.helllabs.android.xmp.util.Message.error
 import timber.log.Timber
 import java.io.File
 import java.io.FileNotFoundException
@@ -264,14 +263,18 @@ class Playlist(val name: String) {
          * @param name The playlist name
          * @param items The list of playlist items to add
          */
-        fun addToList(activity: Activity, name: String, items: List<PlaylistItem>) {
+        fun addToList(
+            name: String,
+            items: List<PlaylistItem>,
+            onMessage: (PlaylistMessages) -> Unit
+        ) {
             val lines = items.map { it.toString() }
 
             try {
                 val file = File(PrefManager.DATA_DIR, "$name$PLAYLIST_SUFFIX")
                 file.writeText(lines.joinToString(separator = "\n"))
             } catch (e: IOException) {
-                error(activity, activity.getString(R.string.error_write_to_playlist))
+                onMessage(PlaylistMessages.CantWriteToPlaylist)
             }
         }
 
@@ -283,14 +286,14 @@ class Playlist(val name: String) {
          *
          * @return The playlist comment
          */
-        fun readComment(context: Context, name: String): String {
+        fun readComment(context: Context, name: String, onError: () -> Unit): String {
             var comment: String? = null
             try {
                 comment = Files.readFromFile(CommentFile(name))
             } catch (e: IOException) {
-                error(context as Activity, context.getString(R.string.error_read_comment))
+                onError()
             }
-            if (comment == null || comment.trim { it <= ' ' }.isEmpty()) {
+            if (comment == null || comment.trim().isEmpty()) {
                 comment = context.getString(R.string.no_comment)
             }
             return comment

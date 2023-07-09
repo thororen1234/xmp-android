@@ -1,24 +1,30 @@
 package org.helllabs.android.xmp.core
 
-import android.app.Activity
-import android.app.ProgressDialog
 import org.helllabs.android.xmp.PrefManager
-import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp.testModule
 import org.helllabs.android.xmp.model.ModInfo
 import org.helllabs.android.xmp.model.Playlist
 import org.helllabs.android.xmp.model.PlaylistItem
-import org.helllabs.android.xmp.util.Message.error
-import org.helllabs.android.xmp.util.Message.toast
 import java.io.File
 import java.io.IOException
+
+sealed class PlaylistMessages {
+    object AddingFiles : PlaylistMessages()
+    object CantWriteToPlaylist : PlaylistMessages()
+    object UnrecognizedFormat : PlaylistMessages()
+    object ValidFormatsAdded : PlaylistMessages()
+}
 
 object PlaylistUtils {
 
     /*
 	 * Send files to the specified playlist
 	 */
-    private fun addFiles(activity: Activity, fileList: List<String>, playlistName: String) {
+    private fun addFiles(
+        fileList: List<String>,
+        playlistName: String,
+        onMessage: (PlaylistMessages) -> Unit
+    ) {
         val modInfo = ModInfo()
 
         val list = fileList.mapNotNull { filename ->
@@ -33,34 +39,36 @@ object PlaylistUtils {
         }.also { renumberIds(it) }
 
         if (list.isNotEmpty()) {
-            Playlist.addToList(activity, playlistName, list)
+            Playlist.addToList(playlistName, list, onMessage)
             if (fileList.any { !testModule(it, modInfo) }) {
-                activity.runOnUiThread {
-                    if (list.size > 1) {
-                        toast(activity, R.string.msg_only_valid_files_added)
-                    } else {
-                        error(activity, R.string.unrecognized_format)
-                    }
+                if (list.size > 1) {
+                    onMessage(PlaylistMessages.ValidFormatsAdded)
+                } else {
+                    onMessage(PlaylistMessages.UnrecognizedFormat)
                 }
             }
         }
     }
 
-    fun filesToPlaylist(activity: Activity, fileList: List<String>, playlistName: String) {
-        val progressDialog =
-            ProgressDialog.show(activity, "Please wait", "Scanning module files...", true)
-        object : Thread() {
-            override fun run() {
-                addFiles(activity, fileList, playlistName)
-                progressDialog.dismiss()
-            }
+    fun filesToPlaylist(
+        fileList: List<String>,
+        playlistName: String,
+        onMessage: (PlaylistMessages) -> Unit
+    ) {
+        onMessage(PlaylistMessages.AddingFiles)
+        Thread {
+            addFiles(fileList, playlistName, onMessage)
         }.start()
     }
 
-    fun filesToPlaylist(activity: Activity, filename: String, playlistName: String) {
+    fun filesToPlaylist(
+        filename: String,
+        playlistName: String,
+        onMessage: (PlaylistMessages) -> Unit
+    ) {
         val fileList: MutableList<String> = ArrayList()
         fileList.add(filename)
-        addFiles(activity, fileList, playlistName)
+        addFiles(fileList, playlistName, onMessage)
     }
 
     fun list(): Array<String> = PrefManager.DATA_DIR.list { _, name ->

@@ -1,8 +1,7 @@
-package org.helllabs.android.xmp.util
+package org.helllabs.android.xmp.core
 
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp
-import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.model.ModInfo
 import java.io.BufferedReader
 import java.io.File

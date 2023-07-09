@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.helllabs.android.xmp.PrefManager
+import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.core.PlaylistUtils
 import org.helllabs.android.xmp.model.Playlist
@@ -80,7 +81,15 @@ class PlaylistMenuViewModel : ViewModel() {
         items.add(browserItem)
 
         PlaylistUtils.listNoSuffix().forEachIndexed { index, name ->
-            val comment = Playlist.readComment(context, name)
+            val comment = Playlist.readComment(
+                context = context,
+                name = name,
+                onError = {
+                    _uiState.update {
+                        it.copy(errorText = context.getString(R.string.error_read_comment))
+                    }
+                }
+            )
             val item = PlaylistItem(PlaylistItem.TYPE_PLAYLIST, name, comment)
             item.id = index + 1
 

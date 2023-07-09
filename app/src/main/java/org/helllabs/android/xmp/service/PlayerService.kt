@@ -36,12 +36,12 @@ import org.helllabs.android.xmp.Xmp.stopAudio
 import org.helllabs.android.xmp.Xmp.stopModule
 import org.helllabs.android.xmp.Xmp.time
 import org.helllabs.android.xmp.core.Files
+import org.helllabs.android.xmp.core.InfoCache.delete
+import org.helllabs.android.xmp.core.InfoCache.testModule
 import org.helllabs.android.xmp.service.notifier.ModernNotifier
 import org.helllabs.android.xmp.service.utils.QueueManager
 import org.helllabs.android.xmp.service.utils.RemoteControl
 import org.helllabs.android.xmp.service.utils.Watchdog
-import org.helllabs.android.xmp.util.InfoCache.delete
-import org.helllabs.android.xmp.util.InfoCache.testModule
 import timber.log.Timber
 
 class PlayerService : Service(), OnAudioFocusChangeListener {
