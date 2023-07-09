@@ -1,3 +1,5 @@
+@file:Suppress("UnstableApiUsage")
+
 plugins {
     id("com.android.application")
     id("com.google.dagger.hilt.android")
@@ -13,8 +15,8 @@ android {
 
     defaultConfig {
         applicationId = "org.helllabs.android.xmp"
-        minSdk = 23
-        targetSdk = 27
+        minSdk = 23 // Android 6 - Marshmallow
+        targetSdk = 29 // Android 10 - Quince Tart
 
         versionCode = 87
         versionName = "4.12.0"
@@ -101,6 +103,7 @@ dependencies {
     implementation("androidx.media:media:1.6.0")
 
     // https://developer.android.com/jetpack/compose/bom/bom-mapping
+    // https://mvnrepository.com/artifact/androidx.compose/compose-bom
     val composeBom = platform("androidx.compose:compose-bom:2023.06.01")
     implementation(composeBom)
     debugImplementation("androidx.compose.ui:ui-tooling")
@@ -113,7 +116,10 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.ui:ui-util")
+
+    // https://mvnrepository.com/artifact/androidx.activity/activity-compose
     implementation("androidx.activity:activity-compose:1.7.2")
+    // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-viewmodel-compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
 
     // https://mvnrepository.com/artifact/com.google.accompanist/accompanist-systemuicontroller
@@ -139,7 +145,7 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
 
     // https://mvnrepository.com/artifact/io.github.pdvrieze.xmlutil/core-android
-    val xmlUtil = "0.86.0"
+    val xmlUtil = "0.86.1"
     implementation("io.github.pdvrieze.xmlutil:core-android:$xmlUtil")
     implementation("io.github.pdvrieze.xmlutil:serialization-android:$xmlUtil")
 
