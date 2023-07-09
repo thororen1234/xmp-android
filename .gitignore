@@ -33,3 +33,5 @@ app/app.iml
 *.swp
 
 app/release/output-metadata.json
+
+app/.cxx/
