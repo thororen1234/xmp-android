@@ -114,7 +114,7 @@ class PlaylistActivity : BasePlaylistActivity() {
                             }
                             1 -> addToQueue(item.file!!.path)
                             2 -> addToQueue(viewModel.getFilenameList())
-                            3 -> playModule(item.file!!.path)
+                            3 -> playModule(listOf(item.file!!.path))
                             4 -> playModule(viewModel.getFilenameList(), index)
                         }
                     },

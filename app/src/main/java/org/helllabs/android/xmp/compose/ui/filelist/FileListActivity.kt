@@ -73,7 +73,6 @@ import java.io.File
 import java.io.IOException
 import kotlin.time.Duration.Companion.seconds
 
-// TODO when we scroll down a ways, clicking on an item results in the wrong module playing
 class FileListActivity : BasePlaylistActivity() {
 
     private val viewModel by viewModels<FileListViewModel>()
@@ -191,19 +190,8 @@ class FileListActivity : BasePlaylistActivity() {
             }
         }
 
-        // Init our file manager
-        viewModel.init()
-
         setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-            val scope = rememberCoroutineScope()
-            fun showSnack(message: String, actionLabel: String? = null) = scope.launch {
-                snackbarHostState.showSnackbar(
-                    message = message,
-                    actionLabel = actionLabel
-                )
-            }
 
             // Set up and override on back pressed.
             DisposableEffect(onBackPressedDispatcher) {
@@ -351,14 +339,17 @@ class FileListActivity : BasePlaylistActivity() {
                             0 ->
                                 playlistChoiceState =
                                     PlaylistChoiceData(0, addFileListToPlaylistChoice)
+
                             1 ->
                                 playlistChoiceState =
                                     PlaylistChoiceData(0, addCurrentRecursiveChoice)
+
                             2 -> addToQueue(viewModel.getFilenameList())
                             3 -> {
                                 showSnack(message = "Set as default module path")
                                 PrefManager.mediaPath = viewModel.currentPath
                             }
+
                             4 -> viewModel.clearCachedEntries()
                         }
                     },
@@ -385,6 +376,7 @@ class FileListActivity : BasePlaylistActivity() {
                                 0 ->
                                     playlistChoiceState =
                                         PlaylistChoiceData(index, addRecursiveToPlaylistChoice)
+
                                 1 -> addToQueue(Files.recursiveList(item.file))
                                 2 -> playModule(Files.recursiveList(item.file))
                                 3 -> deleteDirectory = item.file!!.path
@@ -395,8 +387,9 @@ class FileListActivity : BasePlaylistActivity() {
                                 0 ->
                                     playlistChoiceState =
                                         PlaylistChoiceData(index, addFileToPlaylistChoice)
+
                                 1 -> addToQueue(item.file!!.path)
-                                2 -> playModule(item.file!!.path)
+                                2 -> playModule(listOf(item.file!!.path))
                                 3 -> playModule(viewModel.getFilenameList(), index)
                                 4 -> deleteFile = item.file!!.path
                             }

@@ -46,7 +46,7 @@ class FileListViewModel : ViewModel() {
             return if (crumbs.isEmpty()) "" else crumbs.last().path
         }
 
-    fun init() {
+    init {
         _uiState.update {
             it.copy(
                 isShuffle = PrefManager.shuffleMode,
