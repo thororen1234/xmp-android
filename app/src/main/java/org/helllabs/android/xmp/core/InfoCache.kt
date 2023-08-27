@@ -51,6 +51,10 @@ object InfoCache {
         return false
     }
 
+    /**
+     * Test module again if invalid, in case a new file format is added to the
+     * player library and the file was previously unrecognized and cached as invalid.
+     */
     fun testModuleForceIfInvalid(filename: String): Boolean {
         val skipFile = File(PrefManager.CACHE_DIR, "$filename.skip")
         if (skipFile.isFile) {
@@ -59,8 +63,7 @@ object InfoCache {
         return testModule(filename)
     }
 
-    fun testModule(filename: String): Boolean =
-        testModule(filename, ModInfo())
+    fun testModule(filename: String): Boolean = testModule(filename, ModInfo())
 
     @Throws(IOException::class)
     private fun checkIfCacheValid(file: File, cacheFile: File, info: ModInfo): Boolean {

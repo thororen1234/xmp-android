@@ -15,15 +15,16 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
-import org.helllabs.android.xmp.core.InfoCache.testModule
-import org.helllabs.android.xmp.core.InfoCache.testModuleForceIfInvalid
+import org.helllabs.android.xmp.core.InfoCache
 import org.helllabs.android.xmp.model.PlaylistItem
 import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 
 /**
- * Base activity for [FileListActivity] and [PlaylistActivity].
+ * Base activity for [org.helllabs.android.xmp.compose.ui.filelist.FileListActivity]
+ * and [org.helllabs.android.xmp.compose.ui.playlist.PlaylistActivity].
+ *
  * Contains things needed for [ServiceConnection] and [PlayerService]
  *      to play modules, queue files, and to provide shuffle and loop commands.
  */
@@ -52,12 +53,8 @@ abstract class BasePlaylistActivity : ComponentActivity() {
     protected abstract val allFiles: List<String>
     protected abstract fun update()
 
-    internal fun showSnack(message: String) {
-        lifecycleScope.launch {
-            snackbarHostState.showSnackbar(
-                message = message
-            )
-        }
+    internal fun showSnack(message: String, actionLabel: String? = null) = lifecycleScope.launch {
+        snackbarHostState.showSnackbar(message = message, actionLabel = actionLabel)
     }
 
     // Connection
@@ -67,11 +64,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
             try {
                 mModPlayer!!.add(mAddList)
             } catch (e: RemoteException) {
-                lifecycleScope.launch {
-                    snackbarHostState.showSnackbar(
-                        message = getString(R.string.error_adding_mod)
-                    )
-                }
+                showSnack(getString(R.string.error_adding_mod))
             }
             unbindService(this)
         }
@@ -97,9 +90,10 @@ abstract class BasePlaylistActivity : ComponentActivity() {
     open fun onPlayAll() {
         if (allFiles.isEmpty()) {
             showSnack(getString(R.string.error_no_files_to_play))
-        } else {
-            playModule(allFiles)
+            return
         }
+
+        playModule(modList = allFiles)
     }
 
     open fun onItemClick(
@@ -108,54 +102,57 @@ abstract class BasePlaylistActivity : ComponentActivity() {
         directoryCount: Int,
         position: Int
     ) {
-        val filename = items[position].file?.path.orEmpty()
-        val mode = PrefManager.playlistMode
+        fun playAllStaringAtPosition() {
+            val count = position - directoryCount
+            if (count < 0) {
+                throw RuntimeException("Play count is negative")
+            }
+            playModule(modList = filenameList, start = count, keepFirst = isShuffleMode)
+        }
+
+        fun playThisFile() {
+            val filename = items[position].file?.path
+            if (filename.isNullOrEmpty()) {
+                showSnack("Invalid file path")
+                return
+            }
+            if (!InfoCache.testModuleForceIfInvalid(filename)) {
+                showSnack("Unrecognized file format")
+                return
+            }
+            val item = listOf(filename)
+            playModule(modList = item)
+        }
+
+        fun addToQueue() {
+            val filename = items[position].file?.path
+            if (filename.isNullOrEmpty()) {
+                showSnack("Invalid file path")
+                return
+            }
+            if (!InfoCache.testModuleForceIfInvalid(filename)) {
+                showSnack("Unrecognized file format")
+                return
+            }
+            addToQueue(filename)
+            showSnack("Added to queue")
+        }
 
         /**
-         * Test module again if invalid, in case a new file format is added to the
-         * player library and the file was previously unrecognized and cached as invalid.
+         * mode:
+         * 1. Start playing at selection
+         * 2. Play selected file
+         * 3. Enqueue selected file
          */
-        if (testModuleForceIfInvalid(filename)) {
-            /**
-             * mode:
-             * 1. Start playing at selection
-             * 2. Play selected file
-             * 3. Enqueue selected file
-             */
-            when (mode) {
-                1 -> {
-                    val count = position - directoryCount
-                    if (count >= 0) {
-                        playModule(filenameList, count, isShuffleMode)
-                    }
-                }
-                2 -> playModule(filename)
-                3 -> {
-                    addToQueue(filename)
-                    showSnack("Added to queue")
-                }
-            }
-        } else {
-            showSnack("Unrecognized file format")
+        when (PrefManager.playlistMode) {
+            1 -> playAllStaringAtPosition()
+            2 -> playThisFile()
+            3 -> addToQueue()
         }
     }
 
-    // Play this module
-    protected fun playModule(mod: String) {
-        val modList = listOf(mod)
-        playModule(modList, 0, false)
-    }
-
-    // Play all modules in list and honor default shuffle mode
-    protected fun playModule(modList: List<String>) {
-        playModule(modList, 0, false)
-    }
-
-    protected fun playModule(modList: List<String>, start: Int) {
-        playModule(modList, start, false)
-    }
-
-    private fun playModule(modList: List<String>, start: Int, keepFirst: Boolean) {
+    // TODO: We're not keeping first with shuffle enabled when clicking an item
+    protected fun playModule(modList: List<String>, start: Int = 0, keepFirst: Boolean = false) {
         (application as XmpApplication).fileList = modList.toMutableList()
         Intent(this, PlayerActivity::class.java).apply {
             putExtra(PlayerActivity.PARM_SHUFFLE, isShuffleMode)
@@ -168,15 +165,15 @@ abstract class BasePlaylistActivity : ComponentActivity() {
         }
     }
 
-    protected fun addToQueue(filename: String?) {
-        if (testModule(filename!!)) {
+    protected fun addToQueue(filename: String) {
+        if (InfoCache.testModule(filename)) {
             if (PlayerService.isAlive) {
                 val service = Intent(this, PlayerService::class.java)
-                mAddList = ArrayList()
-                mAddList!!.add(filename)
+                mAddList = listOf(filename).toMutableList()
                 bindService(service, connection, 0)
             } else {
-                playModule(filename)
+                val item = listOf(filename)
+                playModule(modList = item)
             }
         }
     }
@@ -186,7 +183,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
         var realSize = 0
         var invalid = false
         for (filename in list) {
-            if (testModule(filename)) {
+            if (InfoCache.testModule(filename)) {
                 realList.add(filename)
                 realSize++
             } else {
@@ -202,7 +199,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
                 mAddList = realList
                 bindService(service, connection, 0)
             } else {
-                playModule(realList)
+                playModule(modList = realList)
             }
         }
     }

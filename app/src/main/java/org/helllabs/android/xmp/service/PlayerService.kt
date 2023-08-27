@@ -8,33 +8,11 @@ import android.os.IBinder
 import android.os.RemoteCallbackList
 import android.os.RemoteException
 import android.support.v4.media.session.MediaSessionCompat
+import androidx.media.AudioAttributesCompat
+import androidx.media.AudioFocusRequestCompat
+import androidx.media.AudioManagerCompat
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp
-import org.helllabs.android.xmp.Xmp.deinit
-import org.helllabs.android.xmp.Xmp.dropAudio
-import org.helllabs.android.xmp.Xmp.endPlayer
-import org.helllabs.android.xmp.Xmp.fillBuffer
-import org.helllabs.android.xmp.Xmp.getComment
-import org.helllabs.android.xmp.Xmp.getModName
-import org.helllabs.android.xmp.Xmp.getModType
-import org.helllabs.android.xmp.Xmp.getModVars
-import org.helllabs.android.xmp.Xmp.getPlayer
-import org.helllabs.android.xmp.Xmp.getVolume
-import org.helllabs.android.xmp.Xmp.hasFreeBuffer
-import org.helllabs.android.xmp.Xmp.init
-import org.helllabs.android.xmp.Xmp.loadModule
-import org.helllabs.android.xmp.Xmp.mute
-import org.helllabs.android.xmp.Xmp.playAudio
-import org.helllabs.android.xmp.Xmp.releaseModule
-import org.helllabs.android.xmp.Xmp.restartAudio
-import org.helllabs.android.xmp.Xmp.seek
-import org.helllabs.android.xmp.Xmp.setPlayer
-import org.helllabs.android.xmp.Xmp.setSequence
-import org.helllabs.android.xmp.Xmp.setVolume
-import org.helllabs.android.xmp.Xmp.startPlayer
-import org.helllabs.android.xmp.Xmp.stopAudio
-import org.helllabs.android.xmp.Xmp.stopModule
-import org.helllabs.android.xmp.Xmp.time
 import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.core.InfoCache.delete
 import org.helllabs.android.xmp.core.InfoCache.testModule
@@ -52,6 +30,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     private var audioInitialized = false
     private var audioManager: AudioManager? = null
+    private var focusRequest: AudioFocusRequestCompat? = null
     private var ducking = false
     private var hasAudioFocus = false
 
@@ -95,12 +74,12 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             bufferMs = MAX_BUFFER_MS
         }
         sampleRate = PrefManager.samplingRate
-        if (init(sampleRate, bufferMs)) {
+        if (Xmp.init(sampleRate, bufferMs)) {
             audioInitialized = true
         } else {
             Timber.e("error initializing audio")
         }
-        volume = getVolume()
+        volume = Xmp.getVolume()
         isAlive = false
         isLoaded = false
         isPlayerPaused = false
@@ -113,7 +92,8 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         watchdog = Watchdog(10).apply {
             setOnTimeoutListener {
                 Timber.e("Stopped by watchdog")
-                audioManager!!.abandonAudioFocus(this@PlayerService)
+                AudioManagerCompat.abandonAudioFocusRequest(audioManager!!, focusRequest!!)
+
                 stopSelf()
             }
             start()
@@ -141,23 +121,33 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     override fun onBind(intent: Intent): IBinder = binder
 
     private fun requestAudioFocus(): Boolean {
-        return audioManager!!.requestAudioFocus(
-            this,
-            AudioManager.STREAM_MUSIC,
-            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+        val playbackAttributes = AudioAttributesCompat.Builder()
+            .setUsage(AudioAttributesCompat.USAGE_MEDIA)
+            .setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
+            .build()
+
+        focusRequest = AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(playbackAttributes ?: return false)
+            .setWillPauseWhenDucked(false)
+            .setOnAudioFocusChangeListener(this)
+            .build()
+
+        return AudioManagerCompat.requestAudioFocus(
+            audioManager!!,
+            focusRequest!!
         ) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
     }
 
     private fun updateNotification() {
         // It seems that queue can be null if we're called from PhoneStateListener
         if (queue != null) {
-            var name = getModName()
+            var name = Xmp.getModName()
             if (name.isEmpty()) {
                 name = Files.basename(queue!!.filename)
             }
             notifier?.notify(
                 name,
-                getModType(),
+                Xmp.getModType(),
                 queue!!.index,
                 if (isPlayerPaused) ModernNotifier.TYPE_PAUSE else 0
             )
@@ -168,16 +158,16 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         isPlayerPaused = isPlayerPaused xor true
         updateNotification()
         if (isPlayerPaused) {
-            stopAudio()
+            Xmp.stopAudio()
             remoteControl!!.setStatePaused()
         } else {
             remoteControl!!.setStatePlaying()
-            restartAudio()
+            Xmp.restartAudio()
         }
     }
 
     fun actionStop() {
-        stopModule()
+        Xmp.stopModule()
         if (isPlayerPaused) {
             doPauseAndNotify()
         }
@@ -200,10 +190,10 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     }
 
     fun actionPrev() {
-        if (time() > 2000) {
-            seek(0)
+        if (Xmp.time() > 2000) {
+            Xmp.seek(0)
         } else {
-            stopModule()
+            Xmp.stopModule()
             cmd = CMD_PREV
         }
         if (isPlayerPaused) {
@@ -213,7 +203,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     }
 
     fun actionNext() {
-        stopModule()
+        Xmp.stopModule()
         if (isPlayerPaused) {
             doPauseAndNotify()
             discardBuffer = true
@@ -260,11 +250,11 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 // Set default pan before we load the module
                 val defpan = PrefManager.defaultPan
                 Timber.i("Set default pan to $defpan")
-                setPlayer(Xmp.PLAYER_DEFPAN, defpan)
+                Xmp.setPlayer(Xmp.PLAYER_DEFPAN, defpan)
 
                 // Ditto if we can't load the module
                 Timber.i("Load $playerFileName")
-                if (loadModule(playerFileName) < 0) {
+                if (Xmp.loadModule(playerFileName) < 0) {
                     Timber.e("Error loading $playerFileName")
                     if (cmd == CMD_PREV) {
                         if (queue!!.index <= 0) {
@@ -277,12 +267,12 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 }
                 lastRecognized = queue!!.index
                 cmd = CMD_NONE
-                var name = getModName()
+                var name = Xmp.getModName()
                 if (name.isEmpty()) {
                     name = Files.basename(playerFileName)
                 }
 
-                notifier?.notify(name, getModType(), queue!!.index, ModernNotifier.TYPE_TICKER)
+                notifier?.notify(name, Xmp.getModType(), queue!!.index, ModernNotifier.TYPE_TICKER)
                 isLoaded = true
 
                 val volBoost = PrefManager.volumeBoost
@@ -298,16 +288,16 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 if (!PrefManager.interpolate) {
                     interpType = Xmp.INTERP_NEAREST
                 }
-                startPlayer(sampleRate)
+                Xmp.startPlayer(sampleRate)
                 synchronized(audioManager!!) {
                     if (ducking) {
-                        setPlayer(Xmp.PLAYER_VOLUME, DUCK_VOLUME)
+                        Xmp.setPlayer(Xmp.PLAYER_VOLUME, DUCK_VOLUME)
                     }
                 }
 
                 // Unmute all channels
                 for (i in 0..63) {
-                    mute(i, 0)
+                    Xmp.mute(i, 0)
                 }
 
                 var numClients = callbacks.beginBroadcast()
@@ -319,29 +309,33 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                     }
                 }
                 callbacks.finishBroadcast()
-                setPlayer(Xmp.PLAYER_AMP, volBoost)
-                setPlayer(Xmp.PLAYER_MIX, PrefManager.stereoMix)
-                setPlayer(Xmp.PLAYER_INTERP, interpType)
-                setPlayer(Xmp.PLAYER_DSP, Xmp.DSP_LOWPASS)
-                var flags = getPlayer(Xmp.PLAYER_CFLAGS)
+                Xmp.setPlayer(Xmp.PLAYER_AMP, volBoost)
+                Xmp.setPlayer(Xmp.PLAYER_MIX, PrefManager.stereoMix)
+                Xmp.setPlayer(Xmp.PLAYER_INTERP, interpType)
+                Xmp.setPlayer(Xmp.PLAYER_DSP, Xmp.DSP_LOWPASS)
+                var flags = Xmp.getPlayer(Xmp.PLAYER_CFLAGS)
                 flags = if (PrefManager.amigaMixer) {
                     flags or Xmp.FLAGS_A500
                 } else {
                     flags and Xmp.FLAGS_A500.inv()
                 }
-                setPlayer(Xmp.PLAYER_CFLAGS, flags)
+                Xmp.setPlayer(Xmp.PLAYER_CFLAGS, flags)
                 updateData = true
                 sequenceNumber = 0
                 var playNewSequence: Boolean
-                setSequence(sequenceNumber)
+                Xmp.setSequence(sequenceNumber)
 
-                playAudio()
+                Xmp.playAudio()
 
                 Timber.i("Enter play loop")
                 do {
-                    getModVars(vars)
+                    Xmp.getModVars(vars)
 
-                    remoteControl!!.setMetadata(getModName(), getModType(), vars[0].toLong())
+                    remoteControl!!.setMetadata(
+                        Xmp.getModName(),
+                        Xmp.getModType(),
+                        vars[0].toLong()
+                    )
 
                     while (cmd == CMD_NONE) {
                         discardBuffer = false
@@ -359,12 +353,12 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
                         if (discardBuffer) {
                             Timber.d("discard buffer")
-                            dropAudio()
+                            Xmp.dropAudio()
                             break
                         }
 
                         // Wait if no buffers available
-                        while (!hasFreeBuffer() && !isPlayerPaused && cmd == CMD_NONE) {
+                        while (!Xmp.hasFreeBuffer() && !isPlayerPaused && cmd == CMD_NONE) {
                             try {
                                 Thread.sleep(40)
                             } catch (e: InterruptedException) {
@@ -373,7 +367,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                         }
 
                         // Fill a new buffer
-                        if (fillBuffer(looped) < 0) {
+                        if (Xmp.fillBuffer(looped) < 0) {
                             break
                         }
                         watchdog!!.refresh()
@@ -387,14 +381,14 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                     if (playerAllSequences && cmd == CMD_NONE) {
                         sequenceNumber++
                         Timber.i("Play sequence $sequenceNumber")
-                        if (setSequence(sequenceNumber)) {
+                        if (Xmp.setSequence(sequenceNumber)) {
                             playNewSequence = true
                             notifyNewSequence()
                         }
                     }
                 } while (playNewSequence)
 
-                endPlayer()
+                Xmp.endPlayer()
                 isLoaded = false
 
                 // notify end of module to our clients
@@ -426,7 +420,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 }
 
                 Timber.i("Release module")
-                releaseModule()
+                Xmp.releaseModule()
 
                 // Used when current files are replaced by a new set
                 if (restart) {
@@ -446,7 +440,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             watchdog?.stop()
             notifier?.cancel()
             remoteControl!!.setStateStopped()
-            audioManager!!.abandonAudioFocus(this@PlayerService)
+            AudioManagerCompat.abandonAudioFocusRequest(audioManager!!, focusRequest!!)
 
             Timber.i("Stop service")
             stopSelf()
@@ -465,11 +459,11 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         }
         callbacks.finishBroadcast()
         isAlive = false
-        stopModule()
+        Xmp.stopModule()
         if (isPlayerPaused) {
             doPauseAndNotify()
         }
-        deinit()
+        Xmp.deinit()
     }
 
     private val binder: ModInterface.Stub = object : ModInterface.Stub() {
@@ -574,7 +568,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         }
 
         override fun nextSong() {
-            stopModule()
+            Xmp.stopModule()
             cmd = CMD_NEXT
             if (isPlayerPaused) {
                 doPauseAndNotify()
@@ -583,7 +577,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         }
 
         override fun prevSong() {
-            stopModule()
+            Xmp.stopModule()
             cmd = CMD_PREV
             if (isPlayerPaused) {
                 doPauseAndNotify()
@@ -661,7 +655,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         }
 
         override fun hasComment(): Boolean {
-            return getComment() != null
+            return Xmp.getComment() != null
         }
 
         // File management
@@ -709,29 +703,33 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 // Pause playback
                 autoPause(true)
             }
+
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
                 Timber.d("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK")
                 // Lower volume
                 synchronized(audioManager!!) {
-                    volume = getVolume()
-                    setVolume(DUCK_VOLUME)
+                    volume = Xmp.getVolume()
+                    Xmp.setVolume(DUCK_VOLUME)
                     ducking = true
                 }
             }
+
             AudioManager.AUDIOFOCUS_GAIN -> {
                 Timber.d("AUDIOFOCUS_GAIN")
                 // Resume playback/raise volume
                 autoPause(false)
                 synchronized(audioManager!!) {
-                    setVolume(volume)
+                    Xmp.setVolume(volume)
                     ducking = false
                 }
             }
+
             AudioManager.AUDIOFOCUS_LOSS -> {
                 Timber.d("AUDIOFOCUS_LOSS")
                 // Stop playback
                 actionStop()
             }
+
             else -> {}
         }
     }
@@ -748,7 +746,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
         private const val MIN_BUFFER_MS = 80
         private const val MAX_BUFFER_MS = 1000
-        private const val DEFAULT_BUFFER_MS = 400
         private const val DUCK_VOLUME = 0x500
 
         var isAlive = false
