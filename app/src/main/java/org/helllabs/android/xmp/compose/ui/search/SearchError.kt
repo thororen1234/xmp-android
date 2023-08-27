@@ -55,6 +55,9 @@ class SearchError : ComponentActivity() {
             intent.getSerializableExtra(Search.ERROR) as Throwable?
         }
 
+        // Print the error into Logcat.
+        error?.let { Timber.e(it) }
+
         val cleanMessage = error?.message?.substringAfter("Exception: ")?.trim()
         val message = when {
             cleanMessage.isNullOrEmpty() -> getString(R.string.search_unknown_error)

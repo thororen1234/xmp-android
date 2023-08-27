@@ -35,3 +35,5 @@ app/app.iml
 app/release/output-metadata.json
 
 app/.cxx/
+
+app/lint-baseline.xml

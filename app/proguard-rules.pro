@@ -33,3 +33,6 @@
 # Keep source file and line number information in crash reports
 -renamesourcefileattribute MyApplication
 -keepattributes SourceFile,LineNumberTable
+
+# Open source app, no need for class obfuscation. (Bypasses other proguard rules for libs)
+-keepnames class ** { *; }

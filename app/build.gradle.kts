@@ -11,7 +11,7 @@ plugins {
 
 android {
     namespace = "org.helllabs.android.xmp"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "org.helllabs.android.xmp"
@@ -62,6 +62,11 @@ android {
         }
     }
 
+    // ./gradlew updateLintBaseline
+    lint {
+        baseline = file("lint-baseline.xml")
+    }
+
     externalNativeBuild.cmake {
         path = file("src/main/jni/CMakeLists.txt")
     }
@@ -93,7 +98,7 @@ android {
 dependencies {
 
     // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-serialization-json
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     // Android support libs.
     implementation("androidx.core:core-ktx:1.10.1")
@@ -104,7 +109,7 @@ dependencies {
 
     // https://developer.android.com/jetpack/compose/bom/bom-mapping
     // https://mvnrepository.com/artifact/androidx.compose/compose-bom
-    val composeBom = platform("androidx.compose:compose-bom:2023.06.01")
+    val composeBom = platform("androidx.compose:compose-bom:2023.08.00")
     implementation(composeBom)
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.foundation:foundation")
@@ -120,10 +125,10 @@ dependencies {
     // https://mvnrepository.com/artifact/androidx.activity/activity-compose
     implementation("androidx.activity:activity-compose:1.7.2")
     // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-viewmodel-compose
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0-alpha01")
 
     // https://mvnrepository.com/artifact/com.google.accompanist/accompanist-systemuicontroller
-    val accompanist = "0.31.5-beta"
+    val accompanist = "0.33.1-alpha"
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanist")
     implementation("com.google.accompanist:accompanist-permissions:$accompanist")
 
@@ -136,7 +141,7 @@ dependencies {
     implementation("me.saket.cascade:cascade-compose:2.2.0")
 
     // https://mvnrepository.com/artifact/androidx.preference/preference-ktx
-    implementation("androidx.preference:preference-ktx:1.2.0")
+    implementation("androidx.preference:preference-ktx:1.2.1")
 
     // https://mvnrepository.com/artifact/com.jakewharton.timber/timber
     implementation("com.jakewharton.timber:timber:5.0.1")
@@ -150,7 +155,7 @@ dependencies {
     implementation("io.github.pdvrieze.xmlutil:serialization-android:$xmlUtil")
 
     // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
-    implementation("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.11")
 
     // https://mvnrepository.com/artifact/com.jakewharton.retrofit/retrofit2-kotlinx-serialization-converter
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")

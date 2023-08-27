@@ -86,7 +86,7 @@ class ResultViewModel @Inject constructor(
                 okHttpClient.newCall(request).execute().use { response ->
                     if (!response.isSuccessful) throw IOException("Unexpected code $response")
 
-                    response.body?.let { body ->
+                    response.body.let { body ->
                         val contentLength = body.contentLength()
                         val source = body.source()
 

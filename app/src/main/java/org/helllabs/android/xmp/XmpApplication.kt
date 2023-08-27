@@ -1,6 +1,7 @@
 package org.helllabs.android.xmp
 
 import android.app.Application
+import android.util.Log
 import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 
@@ -15,6 +16,18 @@ class XmpApplication : Application() {
 
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
+        } else {
+            Timber.plant(
+                object : Timber.Tree() {
+                    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+                        when (priority) {
+                            Log.ERROR -> System.err.println("[ERROR]: $message")
+                            Log.WARN -> System.err.println("[WARN]: $message")
+                            else -> Unit // Ignore other log types.
+                        }
+                    }
+                }
+            )
         }
 
         PrefManager.init(applicationContext)
