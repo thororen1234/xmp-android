@@ -6,7 +6,9 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
@@ -49,6 +51,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
@@ -57,7 +61,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -130,7 +133,12 @@ class PlaylistMenu : ComponentActivity() {
         super.onCreate(savedInstanceState)
         Timber.d("onCreate")
 
-        WindowCompat.setDecorFitsSystemWindows(window, false)
+        enableEdgeToEdge(
+            navigationBarStyle = SystemBarStyle.auto(
+                Color.Transparent.toArgb(),
+                Color.Transparent.toArgb()
+            )
+        )
 
         if (PlayerService.isAlive && PrefManager.startOnPlayer) {
             if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0) {
@@ -147,6 +155,9 @@ class PlaylistMenu : ComponentActivity() {
             val context = LocalContext.current
             val state by viewModel.uiState.collectAsStateWithLifecycle()
             val permission = rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+            // User theme setting? Check this out
+            // https://github.com/android/nowinandroid/commit/a3ee09ec3e53412e65c1f01d2e8588fecd2b7157
 
             /**
              * Error message Dialog

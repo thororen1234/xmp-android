@@ -6,6 +6,7 @@ package org.helllabs.android.xmp.model
 class ModInfo {
     @JvmField
     var name: String = ""
+
     @JvmField
     var type: String = ""
 }

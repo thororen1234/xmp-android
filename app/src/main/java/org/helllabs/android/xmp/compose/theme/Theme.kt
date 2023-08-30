@@ -5,13 +5,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 private val lightColors = lightColorScheme(
     primary = md_theme_light_primary,
@@ -100,11 +97,6 @@ fun XmpTheme(
         darkColors
     } else {
         lightColors
-    }
-
-    val systemUiController = rememberSystemUiController()
-    SideEffect {
-        systemUiController.setSystemBarsColor(Color.Transparent, !useDarkTheme)
     }
 
     MaterialTheme(

@@ -101,11 +101,17 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
     // Android support libs.
-    implementation("androidx.core:core-ktx:1.10.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.6.1")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
-    implementation("androidx.media:media:1.6.0")
+
+    // https://mvnrepository.com/artifact/androidx.core/core-ktx
+    implementation("androidx.core:core-ktx:1.12.0-rc01")
+    // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-compose
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0-alpha01")
+    // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-ktx
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0-alpha01")
+    // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-viewmodel-compose
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0-alpha01")
+    // https://mvnrepository.com/artifact/androidx.media/media
+    implementation("androidx.media:media:1.7.0-alpha01")
 
     // https://developer.android.com/jetpack/compose/bom/bom-mapping
     // https://mvnrepository.com/artifact/androidx.compose/compose-bom
@@ -123,14 +129,12 @@ dependencies {
     implementation("androidx.compose.ui:ui-util")
 
     // https://mvnrepository.com/artifact/androidx.activity/activity-compose
-    implementation("androidx.activity:activity-compose:1.7.2")
+    implementation("androidx.activity:activity-compose:1.8.0-alpha07")
     // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-viewmodel-compose
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0-alpha01")
 
-    // https://mvnrepository.com/artifact/com.google.accompanist/accompanist-systemuicontroller
-    val accompanist = "0.33.1-alpha"
-    implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanist")
-    implementation("com.google.accompanist:accompanist-permissions:$accompanist")
+    // https://mvnrepository.com/artifact/com.google.accompanist/accompanist-permissions
+    implementation("com.google.accompanist:accompanist-permissions:0.33.1-alpha")
 
     // https://mvnrepository.com/artifact/com.github.alorma/compose-settings-storage-preferences
     val settings = "0.27.0"
