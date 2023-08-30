@@ -4,7 +4,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jlleitschuh.gradle.ktlint") version "11.4.2"
-    kotlin("plugin.serialization") version "1.8.21"
+    kotlin("plugin.serialization") version "1.9.10"
 }
 
 android {
@@ -74,8 +74,9 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    // https://developer.android.com/jetpack/androidx/releases/compose-compiler#declaring_dependencies
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.4.7"
+        kotlinCompilerExtensionVersion = "1.5.3"
     }
 
     kotlinOptions {
