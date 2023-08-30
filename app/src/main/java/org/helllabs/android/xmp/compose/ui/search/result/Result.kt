@@ -45,7 +45,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
@@ -68,10 +67,9 @@ import org.helllabs.android.xmp.model.Sponsor
 import org.helllabs.android.xmp.model.SponsorDetails
 import timber.log.Timber
 
-@AndroidEntryPoint
 open class Result : ComponentActivity() {
 
-    private val viewModel by viewModels<ResultViewModel>()
+    private val viewModel by viewModels<ResultViewModel> { ResultViewModel.Factory }
 
     private lateinit var snackbarHostState: SnackbarHostState
 
@@ -242,6 +240,7 @@ private fun ModuleResultScreen(
                 state.moduleExists -> stringResource(id = R.string.button_play)
                 !state.moduleSupported ->
                     stringResource(id = R.string.button_download_unsupported)
+
                 else -> stringResource(id = R.string.download)
             }
 

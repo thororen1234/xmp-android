@@ -1,8 +1,10 @@
 package org.helllabs.android.xmp.compose.ui.search.result
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +20,7 @@ import okio.ForwardingSource
 import okio.buffer
 import okio.sink
 import org.helllabs.android.xmp.PrefManager
+import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.api.Repository
 import org.helllabs.android.xmp.core.Constants.isSupported
 import org.helllabs.android.xmp.core.Files
@@ -26,13 +29,21 @@ import org.helllabs.android.xmp.model.ModuleResult
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
-import javax.inject.Inject
 
-@HiltViewModel
-class ResultViewModel @Inject constructor(
+class ResultViewModel(
     private val okHttpClient: OkHttpClient,
     private val repository: Repository
 ) : ViewModel() {
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val repository = Repository(XmpApplication.modArchiveModule.apiHelper)
+                ResultViewModel(XmpApplication.modArchiveModule.okHttpClient, repository)
+            }
+        }
+    }
+
     sealed class DownloadStatus {
         data class Error(val error: Exception) : DownloadStatus()
         data class Progress(val percent: Int) : DownloadStatus()

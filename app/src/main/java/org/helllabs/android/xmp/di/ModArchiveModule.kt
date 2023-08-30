@@ -1,11 +1,7 @@
 package org.helllabs.android.xmp.di
 
+import android.content.Context
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
-import dagger.Module
-import dagger.Provides
-import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ViewModelComponent
-import dagger.hilt.android.scopes.ViewModelScoped
 import nl.adaptivity.xmlutil.serialization.XML
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -14,19 +10,25 @@ import org.helllabs.android.xmp.api.ApiHelperImpl
 import org.helllabs.android.xmp.api.ApiService
 import org.helllabs.android.xmp.core.Constants
 import retrofit2.Retrofit
-@Module
-@InstallIn(ViewModelComponent::class)
-object ModArchiveModule {
 
-    @ViewModelScoped
-    @Provides
-    fun provideOkHttpClient() = OkHttpClient.Builder().build()
+interface ModArchiveModule {
+    val okHttpClient: OkHttpClient
+    val retrofit: Retrofit
+    val apiService: ApiService
+    val apiHelper: ApiHelper
+}
 
-    @ViewModelScoped
-    @Provides
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
+class ModArchiveModuleImpl(
+    val appContext: Context
+) : ModArchiveModule {
+
+    override val okHttpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder().build()
+    }
+
+    override val retrofit: Retrofit by lazy {
         val contentType = "application/xml;".toMediaType()
-        return Retrofit.Builder()
+        Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
             .addConverterFactory(
                 XML {
@@ -37,11 +39,11 @@ object ModArchiveModule {
             .build()
     }
 
-    @ViewModelScoped
-    @Provides
-    fun provideApiService(retrofit: Retrofit): ApiService = retrofit.create(ApiService::class.java)
+    override val apiService: ApiService by lazy {
+        retrofit.create(ApiService::class.java)
+    }
 
-    @ViewModelScoped
-    @Provides
-    fun provideApiHelper(apiHelper: ApiHelperImpl): ApiHelper = apiHelper
+    override val apiHelper: ApiHelper by lazy {
+        ApiHelperImpl(apiService)
+    }
 }

@@ -7,9 +7,8 @@ import org.helllabs.android.xmp.core.Constants.BY_RANDOM
 import org.helllabs.android.xmp.core.Constants.BY_SEARCH
 import org.helllabs.android.xmp.core.Constants.TYPE_FILE_OR_TITLE
 import org.helllabs.android.xmp.core.Constants.apiKey
-import javax.inject.Inject
 
-class Repository @Inject constructor(private val apiHelper: ApiHelper) {
+class Repository(private val apiHelper: ApiHelper) {
 
     suspend fun getModuleById(query: Int) =
         apiHelper.getModuleById(apiKey, BY_MODULE_ID, query)

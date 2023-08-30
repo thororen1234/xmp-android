@@ -1,20 +1,31 @@
 package org.helllabs.android.xmp.compose.ui.search.result
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.api.Repository
 import timber.log.Timber
-import javax.inject.Inject
 
-@HiltViewModel
-class SearchResultViewModel @Inject constructor(
+class SearchResultViewModel(
     private val repository: Repository
 ) : ViewModel() {
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val repository = Repository(XmpApplication.modArchiveModule.apiHelper)
+                SearchResultViewModel(repository)
+            }
+        }
+    }
+
     data class SearchResultState(
         val hardError: Throwable? = null,
         val isLoading: Boolean = false,

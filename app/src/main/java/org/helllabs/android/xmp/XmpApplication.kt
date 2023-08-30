@@ -2,10 +2,10 @@ package org.helllabs.android.xmp
 
 import android.app.Application
 import android.util.Log
-import dagger.hilt.android.HiltAndroidApp
+import org.helllabs.android.xmp.di.ModArchiveModule
+import org.helllabs.android.xmp.di.ModArchiveModuleImpl
 import timber.log.Timber
 
-@HiltAndroidApp
 class XmpApplication : Application() {
 
     var fileList: MutableList<String>? = null
@@ -13,6 +13,8 @@ class XmpApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         setInstance(this)
+
+        modArchiveModule = ModArchiveModuleImpl(this)
 
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
@@ -38,6 +40,8 @@ class XmpApplication : Application() {
     }
 
     companion object {
+
+        lateinit var modArchiveModule: ModArchiveModule
 
         @get:Synchronized
         var instance: XmpApplication? = null

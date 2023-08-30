@@ -2,10 +2,8 @@
 
 plugins {
     id("com.android.application")
-    id("com.google.dagger.hilt.android")
     id("org.jetbrains.kotlin.android")
     id("org.jlleitschuh.gradle.ktlint") version "11.4.2"
-    kotlin("kapt")
     kotlin("plugin.serialization") version "1.8.21"
 }
 
@@ -84,10 +82,6 @@ android {
         jvmTarget = "17"
     }
 
-    kapt {
-        correctErrorTypes = true
-    }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -163,10 +157,6 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.jakewharton.retrofit/retrofit2-kotlinx-serialization-converter
     implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
-
-    // https://mvnrepository.com/artifact/com.google.dagger/hilt-android
-    implementation("com.google.dagger:hilt-android:2.46.1")
-    kapt("com.google.dagger:hilt-android-compiler:2.46.1")
 
     // https://mvnrepository.com/artifact/com.squareup.leakcanary/leakcanary-android
     debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")

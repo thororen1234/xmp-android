@@ -3,9 +3,8 @@ package org.helllabs.android.xmp.api
 import org.helllabs.android.xmp.model.ArtistResult
 import org.helllabs.android.xmp.model.ModuleResult
 import org.helllabs.android.xmp.model.SearchListResult
-import javax.inject.Inject
 
-class ApiHelperImpl @Inject constructor(private val apiService: ApiService) : ApiHelper {
+class ApiHelperImpl(private val apiService: ApiService) : ApiHelper {
 
     override suspend fun getArtistSearch(
         apiKey: String,

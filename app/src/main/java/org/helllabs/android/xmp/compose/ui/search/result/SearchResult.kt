@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import dagger.hilt.android.AndroidEntryPoint
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
@@ -50,10 +49,9 @@ import org.helllabs.android.xmp.model.Sponsor
 import org.helllabs.android.xmp.model.SponsorDetails
 import timber.log.Timber
 
-@AndroidEntryPoint
 class SearchResult : ComponentActivity() {
 
-    private val viewModel by viewModels<SearchResultViewModel>()
+    private val viewModel by viewModels<SearchResultViewModel> { SearchResultViewModel.Factory }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -82,6 +80,7 @@ class SearchResult : ComponentActivity() {
                 val title = getString(R.string.search_artist_title)
                 viewModel.getArtists(title, query)
             }
+
             SearchType.TYPE_TITLE_OR_FILENAME -> {
                 val title = getString(R.string.search_title_title)
                 viewModel.getFileOrTitle(title, query)
@@ -165,6 +164,7 @@ private fun TitleResultScreen(
                                     )
                                 }
                             }
+
                             is ArtistResult -> {
                                 items(items.listItems) { item ->
                                     ListItem(
