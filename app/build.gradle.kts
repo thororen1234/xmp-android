@@ -1,10 +1,12 @@
 @file:Suppress("UnstableApiUsage")
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jlleitschuh.gradle.ktlint") version "11.4.2"
-    kotlin("plugin.serialization") version "1.9.10"
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.android.kotlin)
+    alias(libs.plugins.dagger.hilt)
+    alias(libs.plugins.gradle.ktLint)
+    kotlin("kapt")
+    kotlin("plugin.serialization") version libs.versions.androidKotlin.get()
 }
 
 android {
@@ -55,7 +57,7 @@ android {
 
     splits {
         abi {
-            isEnable = true
+            // isEnable = true
             isUniversalApk = true
         }
     }
@@ -70,17 +72,21 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        val javaVersion = JavaVersion.toVersion(libs.versions.javaVersion.get().toString())
+        sourceCompatibility = javaVersion
+        targetCompatibility = javaVersion
     }
 
-    // https://developer.android.com/jetpack/androidx/releases/compose-compiler#declaring_dependencies
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3"
+        kotlinCompilerExtensionVersion = libs.versions.kotlinCompiler.get().toString()
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = libs.versions.javaVersion.get().toString()
+    }
+
+    kapt {
+        correctErrorTypes = true
     }
 
     packaging {
@@ -91,74 +97,24 @@ android {
 }
 
 dependencies {
+    debugImplementation(libs.leakcanary.android)
+    debugImplementation(libs.compose.ui.tooling.preview)
 
-    // https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-serialization-json
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+    implementation(platform(libs.compose.bom))
+    implementation(libs.bundles.compose)
+    implementation(libs.bundles.compose.utils)
 
-    // Android support libs.
+    implementation(libs.bundles.retrofit)
+    implementation(libs.bundles.xmlUtils)
+    implementation(libs.core.ktx)
+    implementation(libs.hilt.android)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.lifecycle.runtime.ktx)
+    implementation(libs.lifecycle.viewmodel.compose)
+    implementation(libs.media)
+    implementation(libs.okhttp)
+    implementation(libs.preference.ktx)
+    implementation(libs.timber)
 
-    // https://mvnrepository.com/artifact/androidx.core/core-ktx
-    implementation("androidx.core:core-ktx:1.12.0-rc01")
-    // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-compose
-    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0-alpha01")
-    // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-ktx
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0-alpha01")
-    // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-viewmodel-compose
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0-alpha01")
-    // https://mvnrepository.com/artifact/androidx.media/media
-    implementation("androidx.media:media:1.7.0-alpha01")
-
-    // https://developer.android.com/jetpack/compose/bom/bom-mapping
-    // https://mvnrepository.com/artifact/androidx.compose/compose-bom
-    val composeBom = platform("androidx.compose:compose-bom:2023.08.00")
-    implementation(composeBom)
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.material3:material3-window-size-class")
-    implementation("androidx.compose.material:material-icons-core")
-    implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.compose.runtime:runtime-livedata")
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.ui:ui-util")
-
-    // https://mvnrepository.com/artifact/androidx.activity/activity-compose
-    implementation("androidx.activity:activity-compose:1.8.0-alpha07")
-    // https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-viewmodel-compose
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0-alpha01")
-
-    // https://mvnrepository.com/artifact/com.google.accompanist/accompanist-permissions
-    implementation("com.google.accompanist:accompanist-permissions:0.33.1-alpha")
-
-    // https://mvnrepository.com/artifact/com.github.alorma/compose-settings-storage-preferences
-    val settings = "0.27.0"
-    implementation("com.github.alorma:compose-settings-storage-preferences:$settings")
-    implementation("com.github.alorma:compose-settings-ui-m3:$settings")
-
-    // https://mvnrepository.com/artifact/me.saket.cascade/cascade-compose
-    implementation("me.saket.cascade:cascade-compose:2.2.0")
-
-    // https://mvnrepository.com/artifact/androidx.preference/preference-ktx
-    implementation("androidx.preference:preference-ktx:1.2.1")
-
-    // https://mvnrepository.com/artifact/com.jakewharton.timber/timber
-    implementation("com.jakewharton.timber:timber:5.0.1")
-
-    // https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-
-    // https://mvnrepository.com/artifact/io.github.pdvrieze.xmlutil/core-android
-    val xmlUtil = "0.86.1"
-    implementation("io.github.pdvrieze.xmlutil:core-android:$xmlUtil")
-    implementation("io.github.pdvrieze.xmlutil:serialization-android:$xmlUtil")
-
-    // https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
-    implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.11")
-
-    // https://mvnrepository.com/artifact/com.jakewharton.retrofit/retrofit2-kotlinx-serialization-converter
-    implementation("com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter:1.0.0")
-
-    // https://mvnrepository.com/artifact/com.squareup.leakcanary/leakcanary-android
-    debugImplementation("com.squareup.leakcanary:leakcanary-android:2.12")
+    kapt(libs.hilt.android.compiler)
 }
