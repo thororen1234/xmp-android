@@ -18,10 +18,7 @@ interface ModArchiveModule {
     val apiHelper: ApiHelper
 }
 
-class ModArchiveModuleImpl(
-    val appContext: Context
-) : ModArchiveModule {
-
+class ModArchiveModuleImpl : ModArchiveModule {
     override val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder().build()
     }

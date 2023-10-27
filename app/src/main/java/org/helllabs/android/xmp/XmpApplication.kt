@@ -14,7 +14,7 @@ class XmpApplication : Application() {
         super.onCreate()
         setInstance(this)
 
-        modArchiveModule = ModArchiveModuleImpl(this)
+        modArchiveModule = ModArchiveModuleImpl()
 
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
