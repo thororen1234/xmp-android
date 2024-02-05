@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -32,13 +33,13 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,7 +49,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.BottomBarButtons
@@ -57,10 +57,8 @@ import org.helllabs.android.xmp.compose.components.ListDialog
 import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
 import org.helllabs.android.xmp.compose.components.XmpTopBar
-import org.helllabs.android.xmp.compose.components.pullrefresh.ExperimentalMaterialApi
-import org.helllabs.android.xmp.compose.components.pullrefresh.PullRefreshIndicator
-import org.helllabs.android.xmp.compose.components.pullrefresh.pullRefresh
-import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullRefreshState
+import org.helllabs.android.xmp.compose.components.pullrefresh.PullToRefreshContainer
+import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullToRefreshState
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.BasePlaylistActivity
 import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
@@ -251,7 +249,7 @@ class FileListActivity : BasePlaylistActivity() {
             var playlistChoiceState: PlaylistChoiceData? by remember { mutableStateOf(null) }
             ListDialog(
                 isShowing = playlistChoiceState != null,
-                icon = Icons.Default.PlaylistAdd,
+                icon = Icons.Filled.PlaylistAdd,
                 title = stringResource(id = R.string.msg_select_playlist),
                 list = PlaylistUtils.listNoSuffix().toList(),
                 onConfirm = { choice ->
@@ -409,7 +407,7 @@ class FileListActivity : BasePlaylistActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class, FlowPreview::class)
+@OptIn(FlowPreview::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun FileListScreen(
     state: FileListViewModel.FileListState,
@@ -451,11 +449,19 @@ private fun FileListScreen(
 
     Scaffold(
         topBar = {
-            XmpTopBar(
-                title = stringResource(id = R.string.browser_filelist_title),
-                isScrolled = isScrolled,
-                onBack = onBack
-            )
+            Column {
+                XmpTopBar(
+                    title = stringResource(id = R.string.browser_filelist_title),
+                    isScrolled = isScrolled,
+                    onBack = onBack
+                )
+                BreadCrumbs(
+                    crumbScrollState = crumbScrollState,
+                    crumbs = state.crumbs,
+                    onCrumbMenu = onCrumbMenu,
+                    onCrumbClick = onCrumbClick
+                )
+            }
         },
         bottomBar = {
             BottomBarButtons(
@@ -468,32 +474,22 @@ private fun FileListScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
-        val scope = rememberCoroutineScope()
-        var refreshing by remember { mutableStateOf(false) }
-        fun refresh() = scope.launch {
-            refreshing = true
-            delay(1.seconds)
-            onRefresh()
-            refreshing = false
-        }
+        Box(modifier = Modifier.padding(paddingValues)) {
+            var refreshing by remember { mutableStateOf(false) }
 
-        val pullState = rememberPullRefreshState(refreshing, ::refresh)
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-        ) {
-            BreadCrumbs(
-                crumbScrollState = crumbScrollState,
-                crumbs = state.crumbs,
-                onCrumbMenu = onCrumbMenu,
-                onCrumbClick = onCrumbClick
-            )
+            val pullRefreshState = rememberPullToRefreshState()
+            if (pullRefreshState.isRefreshing) {
+                LaunchedEffect(true) {
+                    refreshing = true
+                    delay(1.seconds)
+                    onRefresh()
+                    refreshing = false
+                    pullRefreshState.endRefresh()
+                }
+            }
 
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pullRefresh(pullState),
+                modifier = Modifier.nestedScroll(pullRefreshState.nestedScrollConnection),
                 contentAlignment = Alignment.Center
             ) {
                 LazyColumn(
@@ -526,7 +522,10 @@ private fun FileListScreen(
 
                 ProgressbarIndicator(isLoading = state.isLoading)
 
-                PullRefreshIndicator(refreshing, pullState, Modifier.align(Alignment.TopCenter))
+                PullToRefreshContainer(
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    state = pullRefreshState
+                )
             }
         }
     }

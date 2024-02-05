@@ -25,31 +25,28 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import okhttp3.internal.toImmutableList
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.BottomBarButtons
 import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.XmpTopBar
-import org.helllabs.android.xmp.compose.components.pullrefresh.ExperimentalMaterialApi
-import org.helllabs.android.xmp.compose.components.pullrefresh.PullRefreshIndicator
-import org.helllabs.android.xmp.compose.components.pullrefresh.pullRefresh
-import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullRefreshState
+import org.helllabs.android.xmp.compose.components.pullrefresh.PullToRefreshContainer
+import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullToRefreshState
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.BasePlaylistActivity
 import org.helllabs.android.xmp.compose.ui.playlist.components.DraggableItem
@@ -109,6 +106,7 @@ class PlaylistActivity : BasePlaylistActivity() {
                                 viewModel.removeItem(index)
                                 update()
                             }
+
                             1 -> addToQueue(item.file!!.path)
                             2 -> addToQueue(viewModel.getFilenameList())
                             3 -> playModule(listOf(item.file!!.path))
@@ -130,11 +128,7 @@ class PlaylistActivity : BasePlaylistActivity() {
     }
 }
 
-@OptIn(
-    ExperimentalMaterialApi::class,
-    ExperimentalFoundationApi::class,
-    ExperimentalMaterial3Api::class
-)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun PlaylistScreen(
     state: PlaylistActivityViewModel.PlaylistState,
@@ -183,29 +177,26 @@ private fun PlaylistScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
-        ) {
-            val scope = rememberCoroutineScope()
+        Box(modifier = Modifier.padding(paddingValues)) {
             var refreshing by remember { mutableStateOf(false) }
-            fun refresh() = scope.launch {
-                refreshing = true
-                delay(1.seconds)
-                onRefresh()
-                refreshing = false
+
+            val pullRefreshState = rememberPullToRefreshState()
+            if (pullRefreshState.isRefreshing) {
+                LaunchedEffect(true) {
+                    refreshing = true
+                    delay(1.seconds)
+                    onRefresh()
+                    refreshing = false
+                    pullRefreshState.endRefresh()
+                }
             }
 
-            val pullState = rememberPullRefreshState(refreshing, ::refresh)
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .pullRefresh(pullState),
+                modifier = Modifier.nestedScroll(pullRefreshState.nestedScrollConnection),
                 contentAlignment = Alignment.Center
             ) {
                 var list by remember(state.playlist!!.list) {
-                    mutableStateOf(state.playlist.list.toImmutableList())
+                    mutableStateOf(state.playlist.list.toList())
                 }
                 val dragDropState = rememberDragDropState(
                     lazyListState = scrollState,
@@ -217,7 +208,9 @@ private fun PlaylistScreen(
                     onDragEnd = { onDragEnd(list) }
                 )
                 LazyColumn(
-                    modifier = Modifier.dragContainer(dragDropState),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .dragContainer(dragDropState),
                     state = scrollState,
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -259,10 +252,9 @@ private fun PlaylistScreen(
                     )
                 }
 
-                PullRefreshIndicator(
-                    refreshing,
-                    pullState,
-                    Modifier.align(Alignment.TopCenter)
+                PullToRefreshContainer(
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    state = pullRefreshState
                 )
             }
         }

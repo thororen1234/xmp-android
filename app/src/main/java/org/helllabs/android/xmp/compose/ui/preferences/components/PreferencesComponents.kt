@@ -20,6 +20,8 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.SwitchColors
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -30,8 +32,35 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.alorma.compose.settings.storage.base.SettingValueState
 import com.alorma.compose.settings.storage.base.getValue
+import com.alorma.compose.settings.storage.base.rememberBooleanSettingState
 import com.alorma.compose.settings.storage.base.rememberFloatSettingState
 import com.alorma.compose.settings.storage.base.setValue
+import com.alorma.compose.settings.ui.SettingsSwitch
+
+// TODO remove when Intrinsic height min is fixed
+// https://github.com/alorma/Compose-Settings/issues/203
+@Composable
+internal fun FixedSettingsSwitch(
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    state: SettingValueState<Boolean> = rememberBooleanSettingState(),
+    icon: @Composable (() -> Unit)? = null,
+    title: @Composable () -> Unit,
+    subtitle: @Composable (() -> Unit)? = null,
+    switchColors: SwitchColors = SwitchDefaults.colors(),
+    onCheckedChange: (Boolean) -> Unit = {}
+) {
+    SettingsSwitch(
+        modifier = modifier.height(88.dp),
+        enabled = enabled,
+        state = state,
+        icon = icon,
+        title = title,
+        subtitle = subtitle,
+        switchColors = switchColors,
+        onCheckedChange = onCheckedChange
+    )
+}
 
 @Composable
 internal fun AboutText(string: String, textAlign: TextAlign = TextAlign.Center) {

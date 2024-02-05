@@ -259,9 +259,9 @@ class Playlist(val name: String) {
         /**
          * Add a list of items to the specified playlist file.
          *
-         * @param activity The activity we're running
          * @param name The playlist name
          * @param items The list of playlist items to add
+         * @param onMessage TODO
          */
         fun addToList(
             name: String,

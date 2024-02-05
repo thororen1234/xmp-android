@@ -197,7 +197,7 @@ private fun SearchScreen(
                         stringResource(id = R.string.search_title_or_filename)
                     ),
                     onClick = {
-                        searchType = SearchType.values()[it]
+                        searchType = SearchType.entries.toTypedArray()[it]
                     }
                 )
                 Spacer(modifier = Modifier.height(32.dp))

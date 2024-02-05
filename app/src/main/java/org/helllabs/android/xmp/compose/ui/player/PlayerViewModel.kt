@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import timber.log.Timber
 
 class PlayerViewModel : ViewModel() {
 
@@ -133,6 +134,7 @@ class PlayerViewModel : ViewModel() {
     }
 
     fun isSeeking(value: Boolean) {
+        Timber.w("Trying to seek: $value")
         _timeState.update { it.copy(isSeeking = value) }
     }
 

@@ -30,7 +30,7 @@ class ModernNotifier(private val service: PlayerService) {
     private val contentIntent: PendingIntent
         get() {
             val intent = Intent(service, PlayerActivity::class.java)
-            return PendingIntent.getActivity(service, 0, intent, 0)
+            return PendingIntent.getActivity(service, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         }
 
     init {
@@ -60,7 +60,7 @@ class ModernNotifier(private val service: PlayerService) {
         val intent = Intent(service, NotificationActionReceiver::class.java).apply {
             this.action = action
         }
-        return PendingIntent.getBroadcast(service, 0, intent, 0)
+        return PendingIntent.getBroadcast(service, 0, intent, PendingIntent.FLAG_IMMUTABLE)
     }
 
     fun cancel() {

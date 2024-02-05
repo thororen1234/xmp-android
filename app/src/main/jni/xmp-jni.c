@@ -507,14 +507,66 @@ Java_org_helllabs_android_xmp_Xmp_getModType(JNIEnv *env, jobject obj) {
     return (*env)->NewStringUTF(env, s);
 }
 
+// TODO lazy hack to sanitize comments to valid utf-8
+void sanitizeUTF8(char *str) {
+    unsigned char *bytes = (unsigned char *)str;
+    while (*bytes) {
+        if (*bytes < 0x80) {
+            // ASCII byte, move to the next one
+            bytes++;
+        } else if ((*bytes & 0xE0) == 0xC0) {
+            // Possible 2-byte sequence
+            if ((bytes[1] & 0xC0) == 0x80) {
+                bytes += 2; // Valid 2-byte sequence
+            } else {
+                *bytes++ = '?'; // Invalid continuation byte
+            }
+        } else if ((*bytes & 0xF0) == 0xE0) {
+            // Possible 3-byte sequence
+            if ((bytes[1] & 0xC0) == 0x80 && (bytes[2] & 0xC0) == 0x80) {
+                bytes += 3; // Valid 3-byte sequence
+            } else {
+                *bytes++ = '?'; // Invalid sequence, replace and move
+            }
+        } else if ((*bytes & 0xF8) == 0xF0) {
+            // Possible 4-byte sequence
+            if ((bytes[1] & 0xC0) == 0x80 && (bytes[2] & 0xC0) == 0x80 && (bytes[3] & 0xC0) == 0x80) {
+                bytes += 4; // Valid 4-byte sequence
+            } else {
+                *bytes++ = '?'; // Invalid sequence, replace and move
+            }
+        } else {
+            // For bytes that don't start a valid sequence, replace them
+            *bytes++ = '?';
+        }
+    }
+}
+
 JNIEXPORT jstring JNICALL
 Java_org_helllabs_android_xmp_Xmp_getComment(JNIEnv *env, jobject obj) {
     (void) obj;
 
-    if (mi.comment)
-        return (*env)->NewStringUTF(env, mi.comment);
-    else
+    if (mi.comment) {
+        char *comment = strdup(mi.comment);
+        if (!comment) {
+            return NULL;
+        }
+
+        sanitizeUTF8(comment);
+
+        jstring result = (*env)->NewStringUTF(env, comment);
+
+        free(comment);
+
+        return result;
+    } else {
         return NULL;
+    }
+
+//    if (mi.comment)
+//        return (*env)->NewStringUTF(env, mi.comment);
+//    else
+//        return NULL;
 }
 
 JNIEXPORT jobjectArray JNICALL

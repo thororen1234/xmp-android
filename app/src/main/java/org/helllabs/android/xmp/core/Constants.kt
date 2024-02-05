@@ -4,7 +4,7 @@ import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.model.Module
 
 object Constants {
-    const val apiKey: String = BuildConfig.API_KEY
+    const val APIKEY: String = BuildConfig.API_KEY
 
     const val DEFAULT_DOWNLOAD_DIR = "TheModArchive"
 

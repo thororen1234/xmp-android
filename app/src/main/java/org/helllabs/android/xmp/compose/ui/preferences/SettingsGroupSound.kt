@@ -10,9 +10,9 @@ import com.alorma.compose.settings.storage.base.rememberFloatSettingState
 import com.alorma.compose.settings.storage.base.rememberIntSettingState
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsList
-import com.alorma.compose.settings.ui.SettingsSwitch
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
+import org.helllabs.android.xmp.compose.ui.preferences.components.FixedSettingsSwitch
 import org.helllabs.android.xmp.compose.ui.preferences.components.XmpSettingsSlider
 import timber.log.Timber
 
@@ -83,7 +83,7 @@ fun SettingsGroupSound() {
         )
 
         val amigaMixer = rememberBooleanSettingState(PrefManager.amigaMixer)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_amiga_mixer_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_amiga_mixer_summary)) },
             state = amigaMixer,
@@ -93,7 +93,7 @@ fun SettingsGroupSound() {
         )
 
         val interpolate = rememberBooleanSettingState(PrefManager.interpolate)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_interpolate_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_interpolate_summary)) },
             state = interpolate,
@@ -162,7 +162,7 @@ fun SettingsGroupSound() {
         )
 
         val headset = rememberBooleanSettingState(PrefManager.headsetPause)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_headset_pause_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_headset_pause_summary)) },
             state = headset,
@@ -172,7 +172,7 @@ fun SettingsGroupSound() {
         )
 
         val bluetooth = rememberBooleanSettingState(PrefManager.bluetoothPause)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_bluetooth_pause_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_bluetooth_pause_summary)) },
             state = bluetooth,
@@ -182,7 +182,7 @@ fun SettingsGroupSound() {
         )
 
         val allSequence = rememberBooleanSettingState(PrefManager.allSequences)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_all_sequences_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_all_sequences_summary)) },
             state = allSequence,

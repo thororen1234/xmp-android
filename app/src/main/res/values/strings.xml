@@ -202,7 +202,7 @@
     <string name="notif_channel_name">Xmp</string>
     <string name="clipboard_copied">Copied to clipboard</string>
     <string name="pref_draw_lines_title">Use better waveform</string>
-    <string name="pref_draw_lines_summary">Enabling this will render the player viewer at ~50fps and use a better waveform drawing. Older/Lower end phones may experience frame drops.</string>
+    <string name="pref_draw_lines_summary">Smoother and nicer looking waveforms.\n(Uses more CPU!)</string>
     <string name="search_provided_by">Downloads provided by</string>
     <string name="frowny_face">:(</string>
     <string name="size_kb">%d KB</string>

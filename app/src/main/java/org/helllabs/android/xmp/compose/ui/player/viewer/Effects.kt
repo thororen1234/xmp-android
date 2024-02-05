@@ -23,6 +23,11 @@ object Effects {
         Timber.d("669 Effects")
     }
 
+    // TODO: Unknown Effect: Farandole Composer 1.0 | 8
+    // TODO: Unknown Effect: Farandole Composer 1.0 | 13
+    // TODO: Unknown Effect: Farandole Composer 1.0 | 104
+    // TODO: Unknown Effect: Farandole Composer 1.0 | 105
+    // https://github.com/libxmp/libxmp/blob/master/docs/formats/far100.doc
     private val effectsFarandole = mutableMapOf(
         249 to "1", // FX_FAR_PORTA_UP
         248 to "2", // FX_FAR_PORTA_DN

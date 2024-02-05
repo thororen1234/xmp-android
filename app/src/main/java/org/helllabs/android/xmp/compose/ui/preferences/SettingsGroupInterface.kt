@@ -5,9 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.alorma.compose.settings.storage.base.rememberBooleanSettingState
 import com.alorma.compose.settings.ui.SettingsGroup
-import com.alorma.compose.settings.ui.SettingsSwitch
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
+import org.helllabs.android.xmp.compose.ui.preferences.components.FixedSettingsSwitch
 
 @Composable
 fun SettingsGroupInterface() {
@@ -15,7 +15,7 @@ fun SettingsGroupInterface() {
         title = { Text(text = stringResource(id = R.string.pref_category_interface)) }
     ) {
         val showInfoLine = rememberBooleanSettingState(PrefManager.showInfoLine)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_show_info_line_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_show_info_line_summary)) },
             state = showInfoLine,
@@ -25,7 +25,7 @@ fun SettingsGroupInterface() {
             }
         )
         val showToast = rememberBooleanSettingState(PrefManager.showToast)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_show_toast_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_show_toast_summary)) },
             state = showToast,
@@ -35,7 +35,7 @@ fun SettingsGroupInterface() {
             }
         )
         val keepScreenOn = rememberBooleanSettingState(PrefManager.keepScreenOn)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_keep_screen_on_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_keep_screen_on_summary)) },
             state = keepScreenOn,
@@ -45,7 +45,7 @@ fun SettingsGroupInterface() {
             }
         )
         val betterWaveform = rememberBooleanSettingState(PrefManager.useBetterWaveform)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_draw_lines_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_draw_lines_summary)) },
             state = betterWaveform,
@@ -55,7 +55,7 @@ fun SettingsGroupInterface() {
             }
         )
         val startOnPlayer = rememberBooleanSettingState(PrefManager.startOnPlayer)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_start_on_player_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_start_on_player_summary)) },
             state = startOnPlayer,
@@ -65,7 +65,7 @@ fun SettingsGroupInterface() {
             }
         )
         val enableDelete = rememberBooleanSettingState(PrefManager.enableDelete)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_enable_delete_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_enable_delete_summary)) },
             state = enableDelete,
@@ -76,7 +76,7 @@ fun SettingsGroupInterface() {
         )
 
         val showHex = rememberBooleanSettingState(PrefManager.showHex)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = "Show hex values") },
             subtitle = { Text(text = "Show hex values for player info") },
             state = showHex,
@@ -87,9 +87,9 @@ fun SettingsGroupInterface() {
         )
 
         val useMediaStyle = rememberBooleanSettingState(PrefManager.useMediaStyle)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = "Use media style notification") },
-            subtitle = { Text(text = "If enabled the player notification will use MediaStyle layout, otherwise a standard notification.") },
+            subtitle = { Text(text = "Use a standard notification for media controls if disabled") },
             state = useMediaStyle,
             onCheckedChange = {
                 useMediaStyle.value = it

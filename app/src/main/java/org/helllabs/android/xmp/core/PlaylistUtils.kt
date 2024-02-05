@@ -9,10 +9,10 @@ import java.io.File
 import java.io.IOException
 
 sealed class PlaylistMessages {
-    object AddingFiles : PlaylistMessages()
-    object CantWriteToPlaylist : PlaylistMessages()
-    object UnrecognizedFormat : PlaylistMessages()
-    object ValidFormatsAdded : PlaylistMessages()
+    data object AddingFiles : PlaylistMessages()
+    data object CantWriteToPlaylist : PlaylistMessages()
+    data object UnrecognizedFormat : PlaylistMessages()
+    data object ValidFormatsAdded : PlaylistMessages()
 }
 
 object PlaylistUtils {

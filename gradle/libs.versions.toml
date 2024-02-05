@@ -1,28 +1,32 @@
 [versions]
-accompanistPermissions = "0.33.2-alpha" # https://mvnrepository.com/artifact/com.google.accompanist/accompanist-permissions
-activityCompose = "1.8.0-rc01" # https://mvnrepository.com/artifact/androidx.activity/activity-compose
-androidGradlePlugin = "8.2.0-rc01" # https://mvnrepository.com/artifact/com.android.application/com.android.application.gradle.plugin
-androidKotlin = "1.9.10" # https://mvnrepository.com/artifact/org.jetbrains.kotlin.android/org.jetbrains.kotlin.android.gradle.plugin
+accompanistPermissions = "0.34.0" # https://mvnrepository.com/artifact/com.google.accompanist/accompanist-permissions
+activityCompose = "1.8.2" # https://mvnrepository.com/artifact/androidx.activity/activity-compose
+androidGradlePlugin = "8.2.2" # https://mvnrepository.com/artifact/com.android.application/com.android.application.gradle.plugin
+androidKotlin = "1.9.22" # https://mvnrepository.com/artifact/org.jetbrains.kotlin.android/org.jetbrains.kotlin.android.gradle.plugin
 cascadeCompose = "2.3.0" # https://mvnrepository.com/artifact/me.saket.cascade/cascade-compose
-composeBom = "2023.10.01" # https://mvnrepository.com/artifact/androidx.compose/compose-bom
+composeBom = "2024.01.00" # https://mvnrepository.com/artifact/androidx.compose/compose-bom
 coreKtx = "1.12.0" # https://mvnrepository.com/artifact/androidx.core/core-ktx
-daggerHilt = "2.48.1" # https://mvnrepository.com/artifact/com.google.dagger/hilt-android
+daggerHilt = "2.50" # https://mvnrepository.com/artifact/com.google.dagger/hilt-android
 javaVersion = "17"
-kotlinCompiler = "1.5.3" # https://developer.android.com/jetpack/androidx/releases/compose-compiler
-kotlinxSerializationJson = "1.6.0" # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-serialization-json
+kotlinCompiler = "1.5.8" # https://developer.android.com/jetpack/androidx/releases/compose-compiler
+kotlinxSerializationJson = "1.6.2" # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-serialization-json
 ktLintGradle = "11.6.1" # // https://github.com/JLLeitschuh/ktlint-gradle
-leakcanaryAndroid = "2.12" # https://mvnrepository.com/artifact/com.squareup.leakcanary/leakcanary-android
-lifecycleRuntimeCompose = "2.7.0-alpha03" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-compose
-lifecycleRuntimeKtx = "2.7.0-alpha03" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-ktx
-lifecycleViewModelCompose = "2.7.0-alpha03" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-viewmodel-compose
-media = "1.7.0-alpha01" # https://mvnrepository.com/artifact/androidx.media/media
-okhttp = "5.0.0-alpha.11" # https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
+leakcanaryAndroid = "2.13" # https://mvnrepository.com/artifact/com.squareup.leakcanary/leakcanary-android
+lifecycleRuntimeCompose = "2.7.0" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-compose
+lifecycleRuntimeKtx = "2.7.0" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-ktx
+lifecycleViewModelCompose = "2.7.0" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-viewmodel-compose
+media = "1.7.0" # https://mvnrepository.com/artifact/androidx.media/media
+okhttp = "5.0.0-alpha.12" # https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
 preferenceKtx = "1.2.0" # https://mvnrepository.com/artifact/androidx.preference/preference-ktx
 retrofit = "2.9.0" # https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
 retrofit2KotlinxSerializationConverter = "1.0.0" # https://mvnrepository.com/artifact/com.jakewharton.retrofit/retrofit2-kotlinx-serialization-converter
-settings = "1.0.2" # https://mvnrepository.com/artifact/com.github.alorma/compose-settings-storage-preferences
+settings = "1.0.3" # https://mvnrepository.com/artifact/com.github.alorma/compose-settings-storage-preferences
 timber = "5.0.1" # https://mvnrepository.com/artifact/com.jakewharton.timber/timber
-xmlUtil = "0.86.2" # https://mvnrepository.com/artifact/io.github.pdvrieze.xmlutil/core-android
+xmlUtil = "0.86.3" # https://mvnrepository.com/artifact/io.github.pdvrieze.xmlutil/core-android
+
+# TODO bruh, material 3 is not having a good time
+# See: (Slider Bug) https://issuetracker.google.com/issues/32226995
+# See: (Animation Core / CircularProgressIndicator) https://issuetracker.google.com/issues/322214617
 
 [libraries]
 compose-activity = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }

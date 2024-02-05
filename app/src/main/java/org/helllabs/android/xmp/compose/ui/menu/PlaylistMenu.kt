@@ -47,12 +47,12 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
@@ -77,10 +77,8 @@ import org.helllabs.android.xmp.compose.components.EditPlaylistDialog
 import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.NewPlaylistDialog
 import org.helllabs.android.xmp.compose.components.TextInputDialog
-import org.helllabs.android.xmp.compose.components.pullrefresh.ExperimentalMaterialApi
-import org.helllabs.android.xmp.compose.components.pullrefresh.PullRefreshIndicator
-import org.helllabs.android.xmp.compose.components.pullrefresh.pullRefresh
-import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullRefreshState
+import org.helllabs.android.xmp.compose.components.pullrefresh.PullToRefreshContainer
+import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullToRefreshState
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.themedText
@@ -381,10 +379,7 @@ class PlaylistMenu : ComponentActivity() {
     }
 }
 
-@OptIn(
-    ExperimentalMaterial3Api::class,
-    ExperimentalMaterialApi::class
-)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PlaylistMenuScreen(
     state: PlaylistMenuViewModel.PlaylistMenuState,
@@ -469,21 +464,24 @@ private fun PlaylistMenuScreen(
             }
         }
     ) { paddingValues ->
-        val scope = rememberCoroutineScope()
         var refreshing by remember { mutableStateOf(false) }
-        fun refresh() = scope.launch {
-            refreshing = true
-            delay(1.seconds)
-            onRefresh()
-            refreshing = false
+
+        val pullRefreshState = rememberPullToRefreshState()
+        if (pullRefreshState.isRefreshing) {
+            LaunchedEffect(true) {
+                refreshing = true
+                delay(1.seconds)
+                onRefresh()
+                refreshing = false
+                pullRefreshState.endRefresh()
+            }
         }
 
-        val pullState = rememberPullRefreshState(refreshing, ::refresh)
         if (permissionState) {
             Box(
                 modifier = Modifier
                     .padding(paddingValues)
-                    .pullRefresh(pullState)
+                    .nestedScroll(pullRefreshState.nestedScrollConnection)
             ) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -502,10 +500,9 @@ private fun PlaylistMenuScreen(
                     }
                 }
 
-                PullRefreshIndicator(
-                    refreshing,
-                    pullState,
-                    Modifier.align(Alignment.TopCenter)
+                PullToRefreshContainer(
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    state = pullRefreshState
                 )
             }
         } else {

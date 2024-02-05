@@ -156,8 +156,10 @@ class DragDropState internal constructor(
             val overscroll = when {
                 draggingItemDraggedDelta > 0 ->
                     (endOffset - state.layoutInfo.viewportEndOffset).coerceAtLeast(0f)
+
                 draggingItemDraggedDelta < 0 ->
                     (startOffset - state.layoutInfo.viewportStartOffset).coerceAtMost(0f)
+
                 else -> 0f
             }
             if (overscroll != 0f) {
@@ -170,8 +172,8 @@ class DragDropState internal constructor(
         get() = this.offset + this.size
 }
 
-fun Modifier.dragContainer(dragDropState: DragDropState): Modifier {
-    return pointerInput(dragDropState) {
+fun Modifier.dragContainer(dragDropState: DragDropState): Modifier = then(
+    pointerInput(dragDropState) {
         detectDragGesturesAfterLongPress(
             onDrag = { change, offset ->
                 change.consume()
@@ -185,7 +187,7 @@ fun Modifier.dragContainer(dragDropState: DragDropState): Modifier {
             onDragCancel = { dragDropState.onDragInterrupted() }
         )
     }
-}
+)
 
 @ExperimentalFoundationApi
 @Composable

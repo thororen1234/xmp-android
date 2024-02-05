@@ -14,10 +14,10 @@ import com.alorma.compose.settings.storage.base.rememberIntSettingState
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsList
 import com.alorma.compose.settings.ui.SettingsMenuLink
-import com.alorma.compose.settings.ui.SettingsSwitch
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.TextInputDialog
+import org.helllabs.android.xmp.compose.ui.preferences.components.FixedSettingsSwitch
 import timber.log.Timber
 
 @Composable
@@ -54,7 +54,7 @@ fun SettingsGroupPlaylist(
         )
 
         val installModules = rememberBooleanSettingState(PrefManager.examples)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_examples_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_examples_summary)) },
             state = installModules,
@@ -85,7 +85,7 @@ fun SettingsGroupPlaylist(
         )
 
         val useFileName = rememberBooleanSettingState(PrefManager.useFileName)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_use_filename_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_use_filename_summary)) },
             state = useFileName,
@@ -95,7 +95,7 @@ fun SettingsGroupPlaylist(
         )
 
         val backButton = rememberBooleanSettingState(PrefManager.backButtonNavigation)
-        SettingsSwitch(
+        FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_back_button_navigation_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_back_button_navigation_summary)) },
             state = backButton,
