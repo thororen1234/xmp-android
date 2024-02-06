@@ -18,6 +18,7 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -37,8 +38,8 @@ private const val ANIMATION_DURATION = 500
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewFlipper(
-    actions: (@Composable BoxScope.() -> Unit)? = null,
-    navigation: (@Composable BoxScope.() -> Unit)? = null,
+    actions: (@Composable RowScope.() -> Unit)? = null,
+    navigation: (@Composable RowScope.() -> Unit)? = null,
     skipToPrevious: Boolean,
     info: Pair<String, String>
 ) {
@@ -79,18 +80,20 @@ fun ViewFlipper(
 
 @Composable
 private fun ViewFlipperItem(
-    actions: (@Composable BoxScope.() -> Unit)? = null,
-    navigation: (@Composable BoxScope.() -> Unit)? = null,
+    actions: (@Composable RowScope.() -> Unit)? = null,
+    navigation: (@Composable RowScope.() -> Unit)? = null,
     modTitle: String,
     format: String
 ) {
-    Box {
+    Row {
         if (navigation != null) {
             navigation()
         }
 
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
@@ -118,6 +121,11 @@ private fun ViewFlipperItem(
 
         if (actions != null) {
             actions()
+        } else {
+            Spacer(modifier = Modifier
+                .minimumInteractiveComponentSize()
+                .size(40.dp)
+            )
         }
     }
 }
@@ -132,8 +140,29 @@ private fun Preview_ViewFlipperItem() {
     }
 }
 
+@Preview
+@Composable
+private fun Preview_ViewVlipperItem_2() {
+    XmpTheme(useDarkTheme = true) {
+        Surface {
+            ViewFlipper(
+                navigation = {
+                    IconButton(onClick = { }) {
+                        Icon(imageVector = Icons.Default.Menu, contentDescription = null)
+                    }
+                },
+                skipToPrevious = false,
+                info = Pair(
+                    "Some Super Very Long Name",
+                    "Some Super Duper Very Long Type"
+                )
+            )
+        }
+    }
+}
+
 // To be ran on a device or emulator to test
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
 @Composable
 private fun Preview_Demo_ViewFlipper() {
     XmpTheme(useDarkTheme = true) {
@@ -142,23 +171,20 @@ private fun Preview_Demo_ViewFlipper() {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             ViewFlipper(
                 actions = {
-                    IconButton(
-                        modifier = Modifier.align(Alignment.CenterEnd),
-                        onClick = { }
-                    ) {
+                    IconButton(onClick = { }) {
                         Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null)
                     }
                 },
                 navigation = {
-                    IconButton(
-                        modifier = Modifier.align(Alignment.CenterStart),
-                        onClick = { }
-                    ) {
+                    IconButton(onClick = { }) {
                         Icon(imageVector = Icons.Default.Menu, contentDescription = null)
                     }
                 },
                 skipToPrevious = false,
-                info = Pair("Name: $infoName", "Type: $infoType")
+                info = Pair(
+                    "Some Super Very Long Name: $infoName",
+                    "Some Super Duper Very Long Type: $infoType"
+                )
             )
             Spacer(Modifier.size(20.dp))
             Row(horizontalArrangement = Arrangement.SpaceAround) {

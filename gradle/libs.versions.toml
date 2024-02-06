@@ -1,5 +1,5 @@
 [versions]
-accompanistPermissions = "0.34.0" # https://mvnrepository.com/artifact/com.google.accompanist/accompanist-permissions
+accompanistPermissions = "0.35.0-alpha" # https://mvnrepository.com/artifact/com.google.accompanist/accompanist-permissions
 activityCompose = "1.8.2" # https://mvnrepository.com/artifact/androidx.activity/activity-compose
 androidGradlePlugin = "8.2.2" # https://mvnrepository.com/artifact/com.android.application/com.android.application.gradle.plugin
 androidKotlin = "1.9.22" # https://mvnrepository.com/artifact/org.jetbrains.kotlin.android/org.jetbrains.kotlin.android.gradle.plugin
@@ -59,9 +59,9 @@ okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceKtx" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit2-kotlinx-serialization-converter = { module = "com.jakewharton.retrofit:retrofit2-kotlinx-serialization-converter", version.ref = "retrofit2KotlinxSerializationConverter" }
+timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 xmlutil-android-core = { module = "io.github.pdvrieze.xmlutil:core-android", version.ref = "xmlUtil" }
 xmlutil-android-serialization = { module = "io.github.pdvrieze.xmlutil:serialization-android", version.ref = "xmlUtil" }
-timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 
 [bundles]
 compose = [

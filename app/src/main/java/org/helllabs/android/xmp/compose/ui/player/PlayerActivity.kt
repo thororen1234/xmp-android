@@ -984,10 +984,7 @@ private fun PlayerScreen(
                 ViewFlipper(
                     actions = {
                         if (PrefManager.enableDelete) {
-                            IconButton(
-                                modifier = Modifier.align(Alignment.CenterEnd),
-                                onClick = onDelete
-                            ) {
+                            IconButton(onClick = onDelete) {
                                 Icon(
                                     imageVector = Icons.Default.DeleteOutline,
                                     contentDescription = null
@@ -996,10 +993,7 @@ private fun PlayerScreen(
                         }
                     },
                     navigation = {
-                        IconButton(
-                            modifier = Modifier.align(Alignment.CenterStart),
-                            onClick = onMenu
-                        ) {
+                        IconButton(onClick = onMenu) {
                             Icon(
                                 imageVector = Icons.Default.Menu,
                                 contentDescription = null
