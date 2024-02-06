@@ -50,13 +50,13 @@ abstract class Viewer(context: Context, color: Int) :
 
     class Info {
         var time = 0
-        val values = IntArray(7) // order pattern row num_rows frame speed bpm
-        val volumes = IntArray(64)
-        val finalVols = IntArray(64)
-        val pans = IntArray(64)
-        val instruments = IntArray(64)
-        val keys = IntArray(64)
-        val periods = IntArray(64)
+        var values = IntArray(7) // order pattern row num_rows frame speed bpm
+        var volumes = IntArray(64)
+        var finalVols = IntArray(64)
+        var pans = IntArray(64)
+        var instruments = IntArray(64)
+        var keys = IntArray(64)
+        var periods = IntArray(64)
         var type = ""
     }
 
