@@ -1,6 +1,5 @@
 package org.helllabs.android.xmp.compose.ui.player.components
 
-import android.content.res.Configuration
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
@@ -104,7 +103,7 @@ private fun ViewFlipperItem(
             ) {
                 Text(
                     fontFamily = michromaFontFamily,
-                    fontSize = 20.sp,
+                    fontSize = 18.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     text = modTitle
@@ -122,9 +121,11 @@ private fun ViewFlipperItem(
         if (actions != null) {
             actions()
         } else {
-            Spacer(modifier = Modifier
-                .minimumInteractiveComponentSize()
-                .size(40.dp)
+            // Fake "touch" size to retain padding
+            Spacer(
+                modifier = Modifier
+                    .minimumInteractiveComponentSize()
+                    .size(40.dp)
             )
         }
     }
@@ -135,14 +136,14 @@ private fun ViewFlipperItem(
 private fun Preview_ViewFlipperItem() {
     XmpTheme(useDarkTheme = true) {
         Surface {
-            ViewFlipperItem(actions = {}, navigation = {}, "Some Text", "Some Format")
+            ViewFlipper(actions = {}, navigation = {}, false, Pair("Some Text", "Some Format"))
         }
     }
 }
 
 @Preview
 @Composable
-private fun Preview_ViewVlipperItem_2() {
+private fun Preview_ViewFlipperItem_2() {
     XmpTheme(useDarkTheme = true) {
         Surface {
             ViewFlipper(

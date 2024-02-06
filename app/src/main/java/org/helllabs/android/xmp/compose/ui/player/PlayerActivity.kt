@@ -46,7 +46,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
@@ -982,8 +981,8 @@ private fun PlayerScreen(
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             topBar = {
                 ViewFlipper(
-                    actions = {
-                        if (PrefManager.enableDelete) {
+                    actions = if (PrefManager.enableDelete) {
+                        {
                             IconButton(onClick = onDelete) {
                                 Icon(
                                     imageVector = Icons.Default.DeleteOutline,
@@ -991,7 +990,7 @@ private fun PlayerScreen(
                                 )
                             }
                         }
-                    },
+                    } else null,
                     navigation = {
                         IconButton(onClick = onMenu) {
                             Icon(
