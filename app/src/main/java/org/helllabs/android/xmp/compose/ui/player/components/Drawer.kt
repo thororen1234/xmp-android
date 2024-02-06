@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.MenuOpen
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.MenuOpen
 import androidx.compose.material3.DrawerValue
@@ -74,7 +75,7 @@ fun PlayerDrawer(
                 horizontalArrangement = Arrangement.Start
             ) {
                 IconButton(onClick = onMenuClose) {
-                    Icon(imageVector = Icons.Default.MenuOpen, contentDescription = null)
+                    Icon(imageVector = Icons.AutoMirrored.Filled.MenuOpen, contentDescription = null)
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -195,7 +196,7 @@ private fun ModuleInsDetails(
 @Preview
 @Composable
 private fun Preview_PlayerDrawer() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         val drawerState = rememberDrawerState(DrawerValue.Open)
         Scaffold { paddingValues ->
             ModalNavigationDrawer(

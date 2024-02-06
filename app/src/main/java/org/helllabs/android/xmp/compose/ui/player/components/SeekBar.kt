@@ -43,13 +43,6 @@ fun PlayerSeekBar(
             fontWeight = FontWeight.Bold
         )
 
-//        LaunchedEffect(range, currentTime, totalTime) {
-//            Timber.d("position: $position")
-//            Timber.d("range: $range")
-//            Timber.d("currentTime: $currentTime")
-//            Timber.d("totalTime: $totalTime")
-//        }
-
         Slider(
             modifier = Modifier
                 .fillMaxWidth(.8f)
@@ -77,7 +70,7 @@ fun PlayerSeekBar(
 @Preview
 @Composable
 private fun Preview_PlayerSeekBar() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         Surface {
             PlayerSeekBar(
                 currentTime = "00:00",

@@ -81,7 +81,7 @@ fun ItemModule(
 @Preview
 @Composable
 private fun Preview_ItemModule() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         ItemModule(
             item = Module(
                 format = "XM",

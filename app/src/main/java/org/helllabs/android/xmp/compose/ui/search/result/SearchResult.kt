@@ -1,7 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.search.result
 
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -185,10 +184,10 @@ private fun TitleResultScreen(
     }
 }
 
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
 @Composable
 private fun Preview_TitleResult() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         TitleResultScreen(
             state = SearchResultViewModel.SearchResultState(
                 isLoading = true,
@@ -203,10 +202,10 @@ private fun Preview_TitleResult() {
     }
 }
 
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
 @Composable
 private fun Preview_TitleResult2() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         TitleResultScreen(
             state = SearchResultViewModel.SearchResultState(
                 isLoading = false,

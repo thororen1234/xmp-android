@@ -13,6 +13,8 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
+import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 @Composable
 fun BottomBarButtons(
@@ -56,4 +58,18 @@ fun BottomBarButtons(
             )
         }
     )
+}
+
+@Preview
+@Composable
+private fun Preview_BottomBarButtons() {
+    XmpTheme {
+        BottomBarButtons(
+            isShuffle = true,
+            isLoop = false,
+            onShuffle = { },
+            onLoop = { },
+            onPlayAll = { }
+        )
+    }
 }

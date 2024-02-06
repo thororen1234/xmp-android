@@ -15,6 +15,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.surfaceColorAtElevation
@@ -123,17 +124,19 @@ private fun ViewFlipperItem(
 
 @Preview
 @Composable
-private fun ViewFlipperItemPreview() {
-    XmpTheme {
-        ViewFlipperItem(actions = {}, navigation = {}, "Some Text", "Some Format")
+private fun Preview_ViewFlipperItem() {
+    XmpTheme(useDarkTheme = true) {
+        Surface {
+            ViewFlipperItem(actions = {}, navigation = {}, "Some Text", "Some Format")
+        }
     }
 }
 
 // To be ran on a device or emulator to test
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
-private fun ViewFlipperPreview() {
-    XmpTheme {
+private fun Preview_Demo_ViewFlipper() {
+    XmpTheme(useDarkTheme = true) {
         var infoName by remember { mutableIntStateOf(0) }
         var infoType by remember { mutableIntStateOf(0) }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -163,15 +166,21 @@ private fun ViewFlipperPreview() {
                     onClick = {
                         infoName -= 1
                         infoType -= 1
+                    },
+                    content = {
+                        Text("Previous")
                     }
-                ) { Text("Previous") }
+                )
                 Spacer(Modifier.size(60.dp))
                 Button(
                     onClick = {
                         infoName += 1
                         infoType += 1
+                    },
+                    content = {
+                        Text("Forward")
                     }
-                ) { Text("Forward") }
+                )
             }
         }
     }

@@ -26,7 +26,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.accent
 
 @Composable
-fun PlayerButtons(
+fun PlayerControls(
     modifier: Modifier = Modifier,
     onStop: () -> Unit,
     onPrev: () -> Unit,
@@ -96,9 +96,9 @@ fun PlayerButtons(
 @Preview
 @Composable
 private fun Preview_PlayerButtons() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         PlayerBottomAppBar {
-            PlayerButtons(
+            PlayerControls(
                 onStop = {},
                 onPrev = {},
                 onPlay = {},

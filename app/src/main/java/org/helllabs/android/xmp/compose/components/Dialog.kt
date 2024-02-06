@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
@@ -61,38 +62,37 @@ fun ListDialog(
     }
 
     var selection by remember { mutableIntStateOf(0) }
-    XmpTheme {
-        val scrollState = rememberScrollState()
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            icon = { Icon(imageVector = icon, contentDescription = null) },
-            title = { Text(text = title) },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .heightIn(max = maxDialogHeight)
-                        .selectableGroup()
-                        .verticalScroll(scrollState)
-                ) {
-                    list.forEachIndexed { index, text ->
-                        RadioButtonItem(index = index, selection = selection, text = text) {
-                            selection = index
-                        }
+    val scrollState = rememberScrollState()
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(imageVector = icon, contentDescription = null) },
+        title = { Text(text = title) },
+        text = {
+            Column(
+                modifier = Modifier
+                    .heightIn(max = maxDialogHeight)
+                    .selectableGroup()
+                    .verticalScroll(scrollState)
+            ) {
+                list.forEachIndexed { index, text ->
+                    RadioButtonItem(index = index, selection = selection, text = text) {
+                        selection = index
                     }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { onConfirm(selection) }) {
-                    Text(text = confirmText)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(text = dismissText)
-                }
             }
-        )
-    }
+        },
+        confirmButton = {
+            TextButton(onClick = { onConfirm(selection) }) {
+                Text(text = confirmText)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = dismissText)
+            }
+        }
+    )
 }
 
 @Composable
@@ -120,34 +120,32 @@ fun MessageDialog(
         }
     }
 
-    XmpTheme {
-        AlertDialog(
-            modifier = Modifier.heightIn(max = maxDialogHeight),
-            onDismissRequest = onDismiss ?: onConfirm,
-            icon = { Icon(imageVector = icon, contentDescription = null) },
-            title = { Text(text = title) },
-            text = {
-                val scrollState = rememberScrollState()
-                Column(
-                    modifier = Modifier.verticalScroll(scrollState)
-                ) {
-                    Text(text = text)
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = onConfirm) {
-                    Text(text = confirmText)
-                }
-            },
-            dismissButton = {
-                onDismiss?.let {
-                    TextButton(onClick = it) {
-                        Text(text = dismissText)
-                    }
+    AlertDialog(
+        modifier = Modifier.heightIn(max = maxDialogHeight),
+        onDismissRequest = onDismiss ?: onConfirm,
+        icon = { Icon(imageVector = icon, contentDescription = null) },
+        title = { Text(text = title) },
+        text = {
+            val scrollState = rememberScrollState()
+            Column(
+                modifier = Modifier.verticalScroll(scrollState)
+            ) {
+                Text(text = text)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onConfirm) {
+                Text(text = confirmText)
+            }
+        },
+        dismissButton = {
+            onDismiss?.let {
+                TextButton(onClick = it) {
+                    Text(text = dismissText)
                 }
             }
-        )
-    }
+        }
+    )
 }
 
 @Composable
@@ -163,51 +161,49 @@ fun NewPlaylistDialog(
     var newName by remember { mutableStateOf("") }
     var newComment by remember { mutableStateOf("") }
 
-    XmpTheme {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            icon = {
-                Icon(imageVector = Icons.Default.Edit, contentDescription = null)
-            },
-            title = {
-                Text(text = stringResource(id = R.string.menu_new_playlist))
-            },
-            text = {
-                Column {
-                    Text(text = stringResource(id = R.string.dialog_new_playlist))
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedTextField(
-                        label = {
-                            Text(text = "Name")
-                        },
-                        value = newName,
-                        onValueChange = { newName = it }
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedTextField(
-                        label = {
-                            Text(text = "Comment")
-                        },
-                        value = newComment,
-                        onValueChange = { newComment = it }
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = newName.isNotEmpty(),
-                    onClick = { onConfirm(newName, newComment) }
-                ) {
-                    Text(text = stringResource(id = R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(text = stringResource(id = R.string.cancel))
-                }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(imageVector = Icons.Default.Edit, contentDescription = null)
+        },
+        title = {
+            Text(text = stringResource(id = R.string.menu_new_playlist))
+        },
+        text = {
+            Column {
+                Text(text = stringResource(id = R.string.dialog_new_playlist))
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    label = {
+                        Text(text = "Name")
+                    },
+                    value = newName,
+                    onValueChange = { newName = it }
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    label = {
+                        Text(text = "Comment")
+                    },
+                    value = newComment,
+                    onValueChange = { newComment = it }
+                )
             }
-        )
-    }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = newName.isNotEmpty(),
+                onClick = { onConfirm(newName, newComment) }
+            ) {
+                Text(text = stringResource(id = R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(id = R.string.cancel))
+            }
+        }
+    )
 }
 
 @Composable
@@ -226,67 +222,65 @@ fun EditPlaylistDialog(
     var newComment by remember { mutableStateOf(playlistItem.comment) }
     var confirmDelete by remember { mutableStateOf(false) }
 
-    XmpTheme {
-        AlertDialog(
-            modifier = Modifier
-                .padding(28.dp)
-                .wrapContentHeight(),
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            onDismissRequest = onDismiss,
-            icon = {
-                Icon(imageVector = Icons.Default.Edit, contentDescription = null)
-            },
-            title = {
-                Text(text = "Edit Playlist")
-            },
-            text = {
-                Column {
-                    Text(text = "Enter a new name or comment for ${playlistItem.name}")
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedTextField(value = newName, onValueChange = { newName = it })
-                    Spacer(modifier = Modifier.height(10.dp))
-                    OutlinedTextField(value = newComment, onValueChange = { newComment = it })
+    AlertDialog(
+        modifier = Modifier
+            .padding(28.dp)
+            .wrapContentHeight(),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(imageVector = Icons.Default.Edit, contentDescription = null)
+        },
+        title = {
+            Text(text = "Edit Playlist")
+        },
+        text = {
+            Column {
+                Text(text = "Enter a new name or comment for ${playlistItem.name}")
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(value = newName, onValueChange = { newName = it })
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(value = newComment, onValueChange = { newComment = it })
 
-                    if (confirmDelete) {
-                        Spacer(modifier = Modifier.height(24.dp))
-                        Text(text = "Press delete again to delete playlist")
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = newName.isNotEmpty(),
-                    onClick = {
-                        onConfirm(
-                            playlistItem.name,
-                            newName,
-                            playlistItem.comment,
-                            newComment
-                        )
-                    }
-                ) {
-                    Text(text = stringResource(id = R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        if (!confirmDelete) {
-                            confirmDelete = true
-                            return@TextButton
-                        }
-
-                        onDelete(playlistItem.name)
-                    }
-                ) {
-                    Text(text = stringResource(id = R.string.menu_delete))
-                }
-                TextButton(onClick = onDismiss) {
-                    Text(text = stringResource(id = R.string.cancel))
+                if (confirmDelete) {
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(text = "Press delete again to delete playlist")
                 }
             }
-        )
-    }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = newName.isNotEmpty(),
+                onClick = {
+                    onConfirm(
+                        playlistItem.name,
+                        newName,
+                        playlistItem.comment,
+                        newComment
+                    )
+                }
+            ) {
+                Text(text = stringResource(id = R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = {
+                    if (!confirmDelete) {
+                        confirmDelete = true
+                        return@TextButton
+                    }
+
+                    onDelete(playlistItem.name)
+                }
+            ) {
+                Text(text = stringResource(id = R.string.menu_delete))
+            }
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(id = R.string.cancel))
+            }
+        }
+    )
 }
 
 @Composable
@@ -298,36 +292,34 @@ fun ChangeLogDialog(
         return
     }
 
-    XmpTheme {
-        AlertDialog(
-            modifier = Modifier.heightIn(max = maxDialogHeight),
-            onDismissRequest = onDismiss,
-            icon = {
-                Icon(imageVector = Icons.Default.Info, contentDescription = null)
-            },
-            title = {
-                Text(text = stringResource(id = R.string.changelog))
-            },
-            text = {
-                val scrollState = rememberScrollState()
+    AlertDialog(
+        modifier = Modifier.heightIn(max = maxDialogHeight),
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(imageVector = Icons.Default.Info, contentDescription = null)
+        },
+        title = {
+            Text(text = stringResource(id = R.string.changelog))
+        },
+        text = {
+            val scrollState = rememberScrollState()
 
-                Column {
-                    Text(text = stringResource(id = R.string.changelog_title))
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Column(
-                        modifier = Modifier.verticalScroll(scrollState)
-                    ) {
-                        Text(text = stringResource(id = R.string.changelog_text))
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(text = stringResource(id = R.string.dismiss))
+            Column {
+                Text(text = stringResource(id = R.string.changelog_title))
+                Spacer(modifier = Modifier.height(10.dp))
+                Column(
+                    modifier = Modifier.verticalScroll(scrollState)
+                ) {
+                    Text(text = stringResource(id = R.string.changelog_text))
                 }
             }
-        )
-    }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(id = R.string.dismiss))
+            }
+        }
+    )
 }
 
 @Composable
@@ -346,128 +338,140 @@ fun TextInputDialog(
 
     var value by remember { mutableStateOf(defaultText) }
 
-    XmpTheme {
-        AlertDialog(
-            onDismissRequest = onDismiss,
-            icon = {
-                icon?.let {
-                    Icon(imageVector = it, contentDescription = null)
-                }
-            },
-            title = {
-                Text(text = title)
-            },
-            text = {
-                Column {
-                    text?.let {
-                        Text(text = it)
-                        Spacer(modifier = Modifier.height(10.dp))
-                    }
-
-                    OutlinedTextField(value = value, onValueChange = { value = it })
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = value.isNotEmpty(),
-                    onClick = { onConfirm(value) }
-                ) {
-                    Text(text = stringResource(id = R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = onDismiss) {
-                    Text(text = stringResource(id = R.string.cancel))
-                }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            icon?.let {
+                Icon(imageVector = it, contentDescription = null)
             }
-        )
-    }
-}
-
-@Preview
-@Composable
-fun Preview_ListDialog() {
-    ListDialog(
-        isShowing = true,
-        icon = Icons.Default.PlaylistAdd,
-        title = stringResource(id = R.string.msg_select_playlist),
-        list = List(20) {
-            "List Item $it"
         },
-        onConfirm = { },
-        onDismiss = { },
-        onEmpty = { }
+        title = {
+            Text(text = title)
+        },
+        text = {
+            Column {
+                text?.let {
+                    Text(text = it)
+                    Spacer(modifier = Modifier.height(10.dp))
+                }
+
+                OutlinedTextField(value = value, onValueChange = { value = it })
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = value.isNotEmpty(),
+                onClick = { onConfirm(value) }
+            ) {
+                Text(text = stringResource(id = R.string.ok))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(text = stringResource(id = R.string.cancel))
+            }
+        }
     )
 }
 
 @Preview
 @Composable
+fun Preview_ListDialog() {
+    XmpTheme(useDarkTheme = true) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            ListDialog(
+                isShowing = true,
+                icon = Icons.AutoMirrored.Filled.PlaylistAdd,
+                title = stringResource(id = R.string.msg_select_playlist),
+                list = List(20) {
+                    "List Item $it"
+                },
+                onConfirm = { },
+                onDismiss = { },
+                onEmpty = { }
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
 fun Preview_NewPlaylistDialog() {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        NewPlaylistDialog(
-            isShowing = true,
-            onConfirm = { _, _ -> },
-            onDismiss = { }
-        )
+    XmpTheme(useDarkTheme = true) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            NewPlaylistDialog(
+                isShowing = true,
+                onConfirm = { _, _ -> },
+                onDismiss = { }
+            )
+        }
     }
 }
 
 @Preview
 @Composable
 fun Preview_MessageDialog() {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        MessageDialog(
-            isShowing = true,
-            title = stringResource(id = R.string.error),
-            text = stringResource(id = R.string.error_create_playlist),
-            confirmText = stringResource(id = R.string.ok),
-            onConfirm = { },
-            onDismiss = { }
-        )
+    XmpTheme(useDarkTheme = true) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            MessageDialog(
+                isShowing = true,
+                title = stringResource(id = R.string.error),
+                text = stringResource(id = R.string.error_create_playlist),
+                confirmText = stringResource(id = R.string.ok),
+                onConfirm = { },
+                onDismiss = { }
+            )
+        }
     }
 }
 
 @Preview
 @Composable
 fun Preview_EditPlaylistDialog() {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        EditPlaylistDialog(
-            isShowing = true,
-            playlistItem = PlaylistItem(
-                PlaylistItem.TYPE_PLAYLIST,
-                "Playlist Name",
-                "Playlist Comment"
-            ),
-            onConfirm = { _, _, _, _ -> },
-            onDismiss = {},
-            onDelete = {}
-        )
+    XmpTheme(useDarkTheme = true) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            EditPlaylistDialog(
+                isShowing = true,
+                playlistItem = PlaylistItem(
+                    PlaylistItem.TYPE_PLAYLIST,
+                    "Playlist Name",
+                    "Playlist Comment"
+                ),
+                onConfirm = { _, _, _, _ -> },
+                onDismiss = {},
+                onDelete = {}
+            )
+        }
     }
 }
 
 @Preview
 @Composable
 fun Preview_ChangeLogDialog() {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        ChangeLogDialog(
-            isShowing = true,
-            onDismiss = {}
-        )
+    XmpTheme(useDarkTheme = true) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            ChangeLogDialog(
+                isShowing = true,
+                onDismiss = {}
+            )
+        }
     }
 }
 
 @Preview
 @Composable
 fun Preview_TextInputDialog() {
-    Box(modifier = Modifier.fillMaxWidth()) {
-        TextInputDialog(
-            isShowing = true,
-            icon = Icons.Default.Info,
-            title = "Some Title",
-            text = "Some Text",
-            defaultText = "Default Text",
-            onConfirm = {},
-            onDismiss = {}
-        )
+    XmpTheme(useDarkTheme = true) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            TextInputDialog(
+                isShowing = true,
+                icon = Icons.Default.Info,
+                title = "Some Title",
+                text = "Some Text",
+                defaultText = "Default Text",
+                onConfirm = {},
+                onDismiss = {}
+            )
+        }
     }
 }

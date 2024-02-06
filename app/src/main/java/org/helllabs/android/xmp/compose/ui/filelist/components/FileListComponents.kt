@@ -9,8 +9,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.InsertDriveFile
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.InsertDriveFile
@@ -37,17 +39,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.saket.cascade.CascadeDropdownMenu
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpDropdownMenuHeader
+import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.filelist.FileListViewModel
 import org.helllabs.android.xmp.model.DropDownItem
 import org.helllabs.android.xmp.model.PlaylistItem
+import java.io.File
 
 private val crumbDropDownItems = listOf(
     DropDownItem("Add to playlist", 0),
@@ -100,7 +106,7 @@ fun FileListCard(
             leadingContent = {
                 val icon = when {
                     item.isDirectory -> Icons.Default.Folder
-                    item.isFile -> Icons.Default.InsertDriveFile
+                    item.isFile -> Icons.AutoMirrored.Filled.InsertDriveFile
                     else -> Icons.Default.QuestionMark
                 }
 
@@ -238,4 +244,47 @@ private fun BreadCrumbChip(
             )
         }
     )
+}
+
+@Preview
+@Composable
+private fun Preview_FileListCard() {
+    PrefManager.init(LocalContext.current, File(""))
+    XmpTheme(useDarkTheme = true) {
+        FileListCard(
+            item = PlaylistItem(
+                PlaylistItem.TYPE_FILE,
+                "File List Card",
+                "File List Comment"
+            ),
+            onItemClick = { },
+            onItemLongClick = { }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun Preview_BreadCrumbs() {
+    XmpTheme(useDarkTheme = true) {
+        val state = rememberLazyListState()
+        BreadCrumbs(
+            crumbScrollState = state,
+            crumbs = listOf(
+                FileListViewModel.BreadCrumb("Bread Crumb 1", ""),
+                FileListViewModel.BreadCrumb("Bread Crumb 2", ""),
+                FileListViewModel.BreadCrumb("Bread Crumb 3", "")
+            ),
+            onCrumbMenu = { },
+            onCrumbClick = { _, _ -> }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun Preview_BreadCrumbChip() {
+    XmpTheme(useDarkTheme = true) {
+        BreadCrumbChip(enabled = true, onClick = { }, label = "Bread Crumb Chip")
+    }
 }

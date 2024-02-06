@@ -169,7 +169,6 @@ class FileListActivity : BasePlaylistActivity() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
 
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.auto(
@@ -196,6 +195,7 @@ class FileListActivity : BasePlaylistActivity() {
             }
         }
 
+        Timber.d("onCreate")
         setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -537,7 +537,7 @@ private fun Preview_FileListScreen() {
     val context = LocalContext.current
     PrefManager.init(context, File(""))
 
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         FileListScreen(
             state = FileListViewModel.FileListState(
                 isLoading = true,

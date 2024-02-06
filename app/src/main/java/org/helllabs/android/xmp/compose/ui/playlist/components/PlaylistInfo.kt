@@ -14,9 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.helllabs.android.xmp.R
+import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,4 +54,16 @@ fun PlaylistInfo(
         windowInsets = WindowInsets(right = 16.dp)
     )
     Divider(modifier = Modifier.fillMaxWidth())
+}
+
+@Preview
+@Composable
+private fun Preview_PlaylistInfo() {
+    XmpTheme(useDarkTheme = true) {
+        PlaylistInfo(
+            isScrolled = false,
+            playlistName = "Playlist Name",
+            playlistComment = "Playlist Comment"
+        )
+    }
 }

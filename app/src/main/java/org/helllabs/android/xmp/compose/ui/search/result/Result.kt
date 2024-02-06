@@ -301,7 +301,7 @@ private fun ModuleResultScreen(
 @Preview
 @Composable
 private fun Preview_ModuleResult() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         ModuleResultScreen(
             state = ResultViewModel.ModuleResultState(
                 module = ModuleResult(

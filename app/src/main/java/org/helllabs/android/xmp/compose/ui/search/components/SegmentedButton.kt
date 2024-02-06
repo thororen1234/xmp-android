@@ -10,10 +10,13 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import org.helllabs.android.xmp.compose.theme.XmpTheme
 
+@Suppress("KotlinConstantConditions")
 @Composable
 fun SegmentedButton(
     modifier: Modifier = Modifier,
@@ -86,5 +89,17 @@ fun SegmentedButton(
                 Text(text = item)
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun Preview_SegmentedButton() {
+    XmpTheme(useDarkTheme = true) {
+        SegmentedButton(
+            selectedIndex = 0,
+            itemsList = List(3) { "Item $it" },
+            onClick = { }
+        )
     }
 }

@@ -2,7 +2,6 @@ package org.helllabs.android.xmp.compose.ui.player
 
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
-import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,7 +10,6 @@ import timber.log.Timber
 
 class PlayerViewModel : ViewModel() {
 
-    @Immutable
     data class PlayerState(
         val currentViewer: Int = 0,
         val info: Pair<String, String> = Pair("", ""),
@@ -19,7 +17,6 @@ class PlayerViewModel : ViewModel() {
         val skipToPrevious: Boolean = false
     )
 
-    @Immutable
     data class PlayerInfoState(
         val infoSpeed: String = "00",
         val infoBpm: String = "00",
@@ -28,13 +25,11 @@ class PlayerViewModel : ViewModel() {
         val isVisible: Boolean = true
     )
 
-    @Immutable
     data class PlayerButtonsState(
         val isPlaying: Boolean = false,
         val isRepeating: Boolean = false
     )
 
-    @Immutable
     data class PlayerTimeState(
         val timeNow: String = "-:--",
         val timeTotal: String = "-:--",
@@ -44,7 +39,6 @@ class PlayerViewModel : ViewModel() {
         val isSeeking: Boolean = false
     )
 
-    @Immutable
     data class PlayerDrawerState(
         val drawerState: DrawerState = DrawerState(DrawerValue.Closed),
         val moduleInfo: List<Int> = listOf(0, 0, 0, 0, 0),

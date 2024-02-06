@@ -14,6 +14,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.model.PlaylistItem
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -47,6 +49,22 @@ fun MenuCardItem(
             },
             headlineContent = { Text(text = item.name) },
             supportingContent = { Text(text = item.comment) }
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun Preview_MenuCardItem() {
+    XmpTheme(useDarkTheme = true) {
+        MenuCardItem(
+            item = PlaylistItem(
+                PlaylistItem.TYPE_PLAYLIST,
+                name = "Menu Card Item",
+                comment = "Menu Card Comment"
+            ),
+            onClick = { },
+            onLongClick = { }
         )
     }
 }

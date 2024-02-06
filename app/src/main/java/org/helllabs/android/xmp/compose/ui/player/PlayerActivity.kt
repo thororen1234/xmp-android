@@ -22,7 +22,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -73,7 +72,7 @@ import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.menu.PlaylistMenu
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerBottomAppBar
-import org.helllabs.android.xmp.compose.ui.player.components.PlayerButtons
+import org.helllabs.android.xmp.compose.ui.player.components.PlayerControls
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerDrawer
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerInfo
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerSeekBar
@@ -408,7 +407,6 @@ class PlayerActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
 
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.auto(
@@ -471,6 +469,7 @@ class PlayerActivity : ComponentActivity() {
             }
         }
 
+        Timber.d("onCreate")
         setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val infoState by viewModel.infoState.collectAsStateWithLifecycle()
@@ -1013,34 +1012,32 @@ private fun PlayerScreen(
             },
             bottomBar = {
                 PlayerBottomAppBar {
-                    Column {
-                        PlayerInfo(
-                            speed = infoState.infoSpeed,
-                            bpm = infoState.infoBpm,
-                            pos = infoState.infoPos,
-                            pat = infoState.infoPat
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        PlayerSeekBar(
-                            currentTime = timeState.timeNow,
-                            totalTime = timeState.timeTotal,
-                            position = timeState.seekPos,
-                            range = timeState.seekMax,
-                            isSeeking = timeState.isSeeking,
-                            onSeek = onSeek,
-                            onIsSeeking = onIsSeeking
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        PlayerButtons(
-                            onStop = onStop,
-                            onPrev = onPrev,
-                            onPlay = onPlay,
-                            onNext = onNext,
-                            onRepeat = onRepeat,
-                            isPlaying = buttonState.isPlaying,
-                            isRepeating = buttonState.isRepeating
-                        )
-                    }
+                    PlayerInfo(
+                        speed = infoState.infoSpeed,
+                        bpm = infoState.infoBpm,
+                        pos = infoState.infoPos,
+                        pat = infoState.infoPat
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    PlayerSeekBar(
+                        currentTime = timeState.timeNow,
+                        totalTime = timeState.timeTotal,
+                        position = timeState.seekPos,
+                        range = timeState.seekMax,
+                        isSeeking = timeState.isSeeking,
+                        onSeek = onSeek,
+                        onIsSeeking = onIsSeeking
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    PlayerControls(
+                        onStop = onStop,
+                        onPrev = onPrev,
+                        onPlay = onPlay,
+                        onNext = onNext,
+                        onRepeat = onRepeat,
+                        isPlaying = buttonState.isPlaying,
+                        isRepeating = buttonState.isRepeating
+                    )
                 }
             }
         ) { paddingValues ->

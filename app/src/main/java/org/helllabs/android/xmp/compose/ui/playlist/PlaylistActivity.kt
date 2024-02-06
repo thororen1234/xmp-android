@@ -82,8 +82,8 @@ class PlaylistActivity : BasePlaylistActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
 
+        Timber.d("onCreate")
         setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
 

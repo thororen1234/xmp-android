@@ -3,6 +3,7 @@ package org.helllabs.android.xmp.compose.ui.player.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -53,12 +54,14 @@ private fun SingleLineText(text: String) {
 @Preview
 @Composable
 private fun PlayerInfoPreview() {
-    XmpTheme {
-        PlayerInfo(
-            speed = "000",
-            bpm = "000",
-            pos = "000",
-            pat = "000"
-        )
+    XmpTheme(useDarkTheme = true) {
+        Surface {
+            PlayerInfo(
+                speed = "000",
+                bpm = "000",
+                pos = "000",
+                pat = "000"
+            )
+        }
     }
 }

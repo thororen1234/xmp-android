@@ -38,7 +38,6 @@ class SearchError : ComponentActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
 
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.auto(
@@ -76,6 +75,7 @@ class SearchError : ComponentActivity() {
             )
         }
 
+        Timber.d("onCreate")
         setContent {
             DisposableEffect(onBackPressedDispatcher) {
                 onBackPressedDispatcher.addCallback(callback)
@@ -151,10 +151,10 @@ private fun GuruFrame(
 @Preview
 @Composable
 private fun Preview_ErrorScreen() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         ErrorScreen(
-            onBack = {},
-            message = "Guru Error\nGuru Error"
+            message = stringResource(id = R.string.search_unknown_error),
+            onBack = {}
         )
     }
 }

@@ -61,12 +61,14 @@ fun ErrorScreen(
 @Preview
 @Composable
 private fun Preview_ErrorScreen() {
-    XmpTheme {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            ErrorScreen(text = "Some very long error message that should wrap around")
+    XmpTheme(useDarkTheme = true) {
+        Surface {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                ErrorScreen(text = "Some very long error message that should wrap around")
+            }
         }
     }
 }

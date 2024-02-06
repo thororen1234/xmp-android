@@ -17,6 +17,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
@@ -40,7 +42,6 @@ import timber.log.Timber
 
 class PreferencesFormats : ComponentActivity() {
 
-    @OptIn(ExperimentalFoundationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Timber.d("onCreate")
@@ -53,61 +54,88 @@ class PreferencesFormats : ComponentActivity() {
         )
 
         setContent {
-            val snackbarHostState = remember { SnackbarHostState() }
-            val scrollState = rememberLazyListState()
-            val isScrolled = remember {
-                derivedStateOf {
-                    scrollState.firstVisibleItemIndex > 0
-                }
+            val formats by remember {
+                val formats = Xmp.getFormats().orEmpty().toList()
+                mutableStateOf(formats)
             }
 
             XmpTheme {
-                Scaffold(
-                    snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-                    topBar = {
-                        XmpTopBar(
-                            title = stringResource(id = R.string.pref_about_formats),
-                            isScrolled = isScrolled.value,
-                            onBack = {
-                                onBackPressedDispatcher.onBackPressed()
-                            }
-                        )
+                FormatsScreen(
+                    formatsList = formats,
+                    onBack = {
+                        onBackPressedDispatcher.onBackPressed()
                     }
-                ) { paddingValues ->
-                    val formats by remember { mutableStateOf(Xmp.getFormats().orEmpty()) }
-                    val clip = LocalClipboardManager.current
-                    val context = LocalContext.current
-                    val haptic = LocalHapticFeedback.current
-                    val scope = rememberCoroutineScope()
-
-                    LazyColumn(
-                        modifier = Modifier
-                            .padding(paddingValues)
-                            .fillMaxSize(),
-                        state = scrollState
-                    ) {
-                        items(formats) { item ->
-                            ListItem(
-                                modifier = Modifier.combinedClickable(
-                                    onClick = { /* Nothing */ },
-                                    onLongClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        scope.launch {
-                                            snackbarHostState.showSnackbar(
-                                                message = context.getString(R.string.clipboard_copied)
-                                            )
-                                        }
-                                        clip.setText(buildAnnotatedString { append(item) })
-                                    }
-                                ),
-                                headlineContent = {
-                                    Text(text = item)
-                                }
-                            )
-                        }
-                    }
-                }
+                )
             }
         }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun FormatsScreen(
+    formatsList: List<String>,
+    onBack: () -> Unit
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scrollState = rememberLazyListState()
+    val isScrolled = remember {
+        derivedStateOf {
+            scrollState.firstVisibleItemIndex > 0
+        }
+    }
+
+    Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        topBar = {
+            XmpTopBar(
+                title = stringResource(id = R.string.pref_about_formats),
+                isScrolled = isScrolled.value,
+                onBack = onBack
+            )
+        }
+    ) { paddingValues ->
+        val clip = LocalClipboardManager.current
+        val context = LocalContext.current
+        val haptic = LocalHapticFeedback.current
+        val scope = rememberCoroutineScope()
+
+        LazyColumn(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize(),
+            state = scrollState
+        ) {
+            items(formatsList) { item ->
+                ListItem(
+                    modifier = Modifier.combinedClickable(
+                        onClick = { /* Nothing */ },
+                        onLongClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            scope.launch {
+                                snackbarHostState.showSnackbar(
+                                    message = context.getString(R.string.clipboard_copied)
+                                )
+                            }
+                            clip.setText(buildAnnotatedString { append(item) })
+                        }
+                    ),
+                    headlineContent = {
+                        Text(text = item)
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun Preview_FormatsScreen() {
+    XmpTheme(useDarkTheme = true) {
+        FormatsScreen(
+            formatsList = List(14) { "Format $it" },
+            onBack = { }
+        )
     }
 }

@@ -1,7 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.search
 
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -10,7 +9,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -74,7 +72,6 @@ class Search : ComponentActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
 
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.auto(
@@ -83,6 +80,7 @@ class Search : ComponentActivity() {
             )
         )
 
+        Timber.d("onCreate")
         setContent {
             XmpTheme {
                 SearchScreen(
@@ -115,7 +113,6 @@ class Search : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SearchScreen(
     onBack: () -> Unit,
@@ -246,10 +243,10 @@ private fun SearchScreen(
     }
 }
 
-@Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
+@Preview
 @Composable
 private fun Preview_SearchScreen() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         SearchScreen(
             onBack = {},
             onSearch = { _, _ -> },

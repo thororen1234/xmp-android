@@ -129,7 +129,6 @@ class PlaylistMenu : ComponentActivity() {
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
 
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.auto(
@@ -149,6 +148,7 @@ class PlaylistMenu : ComponentActivity() {
             viewModel.showError(message, true)
         }
 
+        Timber.d("onCreate")
         setContent {
             val context = LocalContext.current
             val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -535,7 +535,7 @@ private fun PlaylistMenuScreen(
 @Preview
 @Composable
 private fun Preview_PlaylistMenuScreen() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         PlaylistMenuScreen(
             state = PlaylistMenuViewModel.PlaylistMenuState(
                 isRefreshing = false,

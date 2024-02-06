@@ -33,7 +33,6 @@ class Preferences : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
 
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.auto(
@@ -42,12 +41,19 @@ class Preferences : ComponentActivity() {
             )
         )
 
+        Timber.d("onCreate")
         setContent {
             XmpTheme {
                 PreferencesScreen(
-                    onBack = { onBackPressedDispatcher.onBackPressed() },
-                    onFormats = { startActivity(Intent(this, PreferencesFormats::class.java)) },
-                    onAbout = { startActivity(Intent(this, PreferencesAbout::class.java)) },
+                    onBack = {
+                        onBackPressedDispatcher.onBackPressed()
+                    },
+                    onFormats = {
+                        Intent(this, PreferencesFormats::class.java).also(::startActivity)
+                    },
+                    onAbout = {
+                        Intent(this, PreferencesAbout::class.java).also(::startActivity)
+                    },
                     onClearCache = {
                         val result = if (deleteCache(PrefManager.CACHE_DIR)) {
                             getString(R.string.cache_clear)
@@ -122,7 +128,7 @@ private fun PreferencesScreen(
 private fun Preview_PreferencesScreen() {
     val context = LocalContext.current
     PrefManager.init(context, File("sdcard"))
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         PreferencesScreen(
             onBack = {},
             onFormats = {},

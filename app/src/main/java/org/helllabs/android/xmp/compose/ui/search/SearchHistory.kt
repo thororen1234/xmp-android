@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.serialization.json.Json
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
@@ -43,7 +45,6 @@ class SearchHistory : ComponentActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
 
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.auto(
@@ -52,19 +53,20 @@ class SearchHistory : ComponentActivity() {
             )
         )
 
+        Timber.d("onCreate")
         setContent {
             var historyList by remember {
-                var toList: MutableList<Module> = mutableListOf()
+                var list: MutableList<Module> = mutableListOf()
 
                 try {
-                    toList = Json.decodeFromString(PrefManager.searchHistory)
+                    list = Json.decodeFromString(PrefManager.searchHistory)
                 } catch (e: Exception) {
                     // Something happened or empty, make it an empty list
                     Timber.w("Failed to deserialize history!")
                     PrefManager.searchHistory = "[]"
                 }
 
-                mutableStateOf(toList.toList())
+                mutableStateOf(list.toList())
             }
 
             /**
@@ -85,55 +87,85 @@ class SearchHistory : ComponentActivity() {
             )
 
             XmpTheme {
-                val scrollState = rememberLazyListState()
-                val isScrolled = remember {
-                    derivedStateOf {
-                        scrollState.firstVisibleItemIndex > 0
+                HistoryScreen(
+                    historyList = historyList,
+                    onBack = { onBackPressedDispatcher.onBackPressed() },
+                    onClear = { clearDialog = true },
+                    onClicked = {
+                        Intent(this@SearchHistory, Result::class.java).apply {
+                            putExtra(Search.MODULE_ID, it)
+                        }.also(::startActivity)
                     }
-                }
-
-                Scaffold(
-                    topBar = {
-                        XmpTopBar(
-                            isScrolled = isScrolled.value,
-                            onBack = { onBackPressedDispatcher.onBackPressed() },
-                            title = stringResource(id = R.string.search_history),
-                            actions = {
-                                if (historyList.isNotEmpty()) {
-                                    IconButton(onClick = { clearDialog = true }) {
-                                        Icon(
-                                            imageVector = Icons.Default.ClearAll,
-                                            contentDescription = null
-                                        )
-                                    }
-                                }
-                            }
-                        )
-                    }
-                ) { paddingValues ->
-                    Box(
-                        modifier = Modifier.padding(paddingValues),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        LazyColumn(modifier = Modifier.fillMaxSize()) {
-                            itemsIndexed(items = historyList.reversed()) { _, item ->
-                                ItemModule(
-                                    item = item,
-                                    onClick = {
-                                        Intent(this@SearchHistory, Result::class.java).apply {
-                                            putExtra(Search.MODULE_ID, item.id)
-                                        }.also(::startActivity)
-                                    }
-                                )
-                            }
-                        }
-
-                        if (historyList.isEmpty()) {
-                            ErrorScreen(text = "Empty History")
-                        }
-                    }
-                }
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun HistoryScreen(
+    historyList: List<Module>,
+    onBack: () -> Unit,
+    onClear: () -> Unit,
+    onClicked: (Int) -> Unit
+) {
+    val scrollState = rememberLazyListState()
+    val isScrolled = remember {
+        derivedStateOf {
+            scrollState.firstVisibleItemIndex > 0
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            XmpTopBar(
+                isScrolled = isScrolled.value,
+                onBack = onBack,
+                title = stringResource(id = R.string.search_history),
+                actions = {
+                    if (historyList.isNotEmpty()) {
+                        IconButton(onClick = onClear) {
+                            Icon(
+                                imageVector = Icons.Default.ClearAll,
+                                contentDescription = null
+                            )
+                        }
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier.padding(paddingValues),
+            contentAlignment = Alignment.Center
+        ) {
+            LazyColumn(modifier = Modifier.fillMaxSize()) {
+                itemsIndexed(items = historyList.reversed()) { _, item ->
+                    ItemModule(
+                        item = item,
+                        onClick = { onClicked(item.id) }
+                    )
+                }
+            }
+
+            if (historyList.isEmpty()) {
+                ErrorScreen(text = "Empty History")
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun Preview_HistoryScreen() {
+    XmpTheme(useDarkTheme = true) {
+        HistoryScreen(
+            historyList = List(12) {
+                Module(songtitle = "Module $it")
+            },
+            onBack = { },
+            onClear = { },
+            onClicked = { }
+        )
     }
 }

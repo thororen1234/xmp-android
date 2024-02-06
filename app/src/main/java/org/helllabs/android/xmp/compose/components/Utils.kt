@@ -1,11 +1,16 @@
 package org.helllabs.android.xmp.compose.components
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Preview
+import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 private val pattern = Regex("http://|https://")
 
@@ -62,4 +67,25 @@ fun annotatedLinkString(
         start = string.length - url.length,
         end = string.length
     )
+}
+
+@Preview
+@Composable
+private fun Preview_Utils() {
+    val linkStringCombined = annotatedLinkStringCombined(
+        text = "Link String Combined",
+        url = "https://developer.android.com/"
+    )
+    val linkString = annotatedLinkString(
+        text = "Link String",
+        url = "modarchive.org"
+    )
+    XmpTheme(useDarkTheme = true) {
+        Surface {
+            Column {
+                Text(text = linkStringCombined)
+                Text(text = linkString)
+            }
+        }
+    }
 }

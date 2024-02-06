@@ -37,7 +37,7 @@ fun ProgressbarIndicator(isLoading: Boolean = true) {
 @Preview
 @Composable
 private fun ProgressbarIndicatorPreview() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,

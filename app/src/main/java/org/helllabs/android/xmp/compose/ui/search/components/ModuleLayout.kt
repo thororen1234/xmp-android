@@ -1,6 +1,5 @@
 package org.helllabs.android.xmp.compose.ui.search.components
 
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -237,7 +236,7 @@ private fun MonoSpaceText(text: String) {
     )
 }
 
-@Preview(uiMode = UI_MODE_NIGHT_YES, showBackground = true)
+@Preview
 @Composable
 private fun Preview_ModuleLayout() {
     val result = ModuleResult(
@@ -266,7 +265,7 @@ private fun Preview_ModuleLayout() {
             }.toString()
         )
     )
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         Surface {
             ModuleLayout(modifier = Modifier.fillMaxWidth(), moduleResult = result)
         }
