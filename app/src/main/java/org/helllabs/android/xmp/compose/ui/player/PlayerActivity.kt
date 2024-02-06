@@ -976,6 +976,9 @@ private fun PlayerScreen(
             )
         }
     ) {
+        val viewFlipperText by remember(uiState.infoTitle, uiState.infoType) {
+            mutableStateOf(Pair(uiState.infoTitle, uiState.infoType))
+        }
         Scaffold(
             modifier = Modifier.fillMaxSize(),
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
@@ -1000,7 +1003,7 @@ private fun PlayerScreen(
                         }
                     },
                     skipToPrevious = uiState.skipToPrevious,
-                    info = uiState.info
+                    info = viewFlipperText
                 )
             },
             bottomBar = {
@@ -1062,7 +1065,8 @@ private fun Preview_PlayerScreen() {
         PlayerScreen(
             snackbarHostState = SnackbarHostState(),
             uiState = PlayerViewModel.PlayerState(
-                info = Pair("Title 1", "Fast Tracker")
+                infoTitle = "Title 1",
+                infoType = "Fast Tracker",
             ),
             infoState = PlayerViewModel.PlayerInfoState(
                 infoSpeed = "11",
@@ -1115,7 +1119,8 @@ private fun Preview_PlayerScreenDrawerOpen() {
         PlayerScreen(
             snackbarHostState = SnackbarHostState(),
             uiState = PlayerViewModel.PlayerState(
-                info = Pair("Title 1", "Fast Tracker")
+                infoTitle = "Title 1",
+                infoType = "Fast Tracker",
             ),
             infoState = PlayerViewModel.PlayerInfoState(
                 infoSpeed = "11",

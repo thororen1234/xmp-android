@@ -69,8 +69,8 @@ fun ViewFlipper(
                 ViewFlipperItem(
                     actions = actions,
                     navigation = navigation,
-                    modTitle = it.first,
-                    format = it.second
+                    infoTitle = it.first,
+                    infoType = it.second
                 )
             }
         }
@@ -81,8 +81,8 @@ fun ViewFlipper(
 private fun ViewFlipperItem(
     actions: (@Composable RowScope.() -> Unit)? = null,
     navigation: (@Composable RowScope.() -> Unit)? = null,
-    modTitle: String,
-    format: String
+    infoTitle: String,
+    infoType: String
 ) {
     Row {
         if (navigation != null) {
@@ -106,14 +106,14 @@ private fun ViewFlipperItem(
                     fontSize = 18.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    text = modTitle
+                    text = infoTitle
                 )
                 Text(
                     fontFamily = michromaFontFamily,
                     fontSize = 12.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    text = format
+                    text = infoType
                 )
             }
         }
@@ -136,7 +136,15 @@ private fun ViewFlipperItem(
 private fun Preview_ViewFlipperItem() {
     XmpTheme(useDarkTheme = true) {
         Surface {
-            ViewFlipper(actions = {}, navigation = {}, false, Pair("Some Text", "Some Format"))
+            ViewFlipper(
+                actions = {},
+                navigation = {},
+                skipToPrevious = false,
+                info = Pair(
+                    "Some Super Very Long Name",
+                    "Some Super Duper Very Long Type"
+                )
+            )
         }
     }
 }

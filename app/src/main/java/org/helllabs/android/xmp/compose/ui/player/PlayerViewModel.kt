@@ -12,7 +12,8 @@ class PlayerViewModel : ViewModel() {
 
     data class PlayerState(
         val currentViewer: Int = 0,
-        val info: Pair<String, String> = Pair("", ""),
+        val infoTitle: String = "",
+        val infoType: String = "",
         val screenOn: Boolean = false,
         val skipToPrevious: Boolean = false
     )
@@ -166,7 +167,13 @@ class PlayerViewModel : ViewModel() {
      * If we press "Previous", we shouldn't add anything and let PagerState handle it
      */
     fun setFlipperInfo(name: String, type: String, skipToPrevious: Boolean) {
-        _uiState.update { it.copy(info = Pair(name, type), skipToPrevious = skipToPrevious) }
+        _uiState.update {
+            it.copy(
+                infoTitle = name,
+                infoType = type,
+                skipToPrevious = skipToPrevious
+            )
+        }
     }
 
     fun changeCurrentViewer() {
