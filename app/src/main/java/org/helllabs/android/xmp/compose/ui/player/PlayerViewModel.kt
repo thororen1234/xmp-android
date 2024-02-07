@@ -11,6 +11,7 @@ import timber.log.Timber
 class PlayerViewModel : ViewModel() {
 
     data class PlayerState(
+        val serviceConnected: Boolean = false,
         val currentViewer: Int = 0,
         val infoTitle: String = "",
         val infoType: String = "",
@@ -74,6 +75,10 @@ class PlayerViewModel : ViewModel() {
 
     val currentViewer: Int
         get() = _uiState.value.currentViewer
+
+    fun onConnected(value: Boolean) {
+        _uiState.update { it.copy(serviceConnected = value) }
+    }
 
     fun toggleLoop(value: Boolean) {
         _buttonState.update { it.copy(isRepeating = value) }

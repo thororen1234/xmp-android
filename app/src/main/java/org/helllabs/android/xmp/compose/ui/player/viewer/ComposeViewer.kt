@@ -1,41 +1,45 @@
 package org.helllabs.android.xmp.compose.ui.player.viewer
 
 import android.os.RemoteException
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.Lifecycle
-import kotlinx.coroutines.delay
+import androidx.core.graphics.ColorUtils
+import androidx.lifecycle.ViewModel
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.accent
@@ -43,260 +47,194 @@ import timber.log.Timber
 
 // TODO: This is a WIP
 
-enum class ViewerState {
-    PLAYING, STOPPED
-}
-
-class ComposeInstrumentViewer : ViewerObject()
-class ComposePatternViewer : ViewerObject()
-class ComposeChannelViewer : ViewerObject()
-
-class ViewerData {
-    private var currentScreen by mutableIntStateOf(0)
-    var viewerObject by mutableStateOf<ViewerObject?>(null)
-
-    var drawState by mutableStateOf(ViewerState.STOPPED)
+class CanvasViewModel : ViewModel() {
+    private val seqVars = IntArray(Xmp.maxSeqFromHeader)
+    private var serviceConnected by mutableStateOf(false)
 
     var width by mutableStateOf(0.dp)
     var height by mutableStateOf(0.dp)
+    var currentViewer by mutableIntStateOf(0)
+    var insName by mutableStateOf(arrayOf<String>())
+    val modVars by mutableStateOf(IntArray(10))
+    var isMuted by mutableStateOf(BooleanArray(0))
 
-    init {
-        init()
+    var viewInfo by mutableStateOf(Viewer.Info())
+
+    fun changeViewer() {
+        currentViewer = (currentViewer + 1) % 3
+
     }
 
-    fun init() {
-        drawState = ViewerState.PLAYING
-    }
+    fun setup(connected: Boolean) {
+        serviceConnected = connected
 
-    fun update() {
-        if (drawState == ViewerState.STOPPED) return // Screen isn't active
+        if (serviceConnected) {
+            insName = Xmp.getInstruments() ?: arrayOf()
+            Xmp.getModVars(modVars)
+            Xmp.getSeqVars(seqVars)
 
-        viewerObject?.let {
-            it.insName = Xmp.getInstruments()?.toList() ?: listOf() // TODO: Don't call so often
-
-            with(it.viewerInfo) {
-                time = Xmp.time() / 1000
-                type = Xmp.getModType() // TODO: Don't call so often
-                Xmp.getInfo(values)
-                Xmp.getChannelData(volumes, finalVols, pans, instruments, keys, periods)
+            val chn = modVars[3]
+            isMuted = BooleanArray(chn)
+            for (i in 0 until chn) {
+                try {
+                    isMuted[i] = Xmp.mute(i, -1) == 1
+                } catch (e: RemoteException) {
+                    Timber.w("Can't read channel mute status: ${e.message}")
+                }
             }
         }
     }
 
-    fun changeState(state: ViewerState) {
-        drawState = state
+    fun update(info: Viewer.Info) {
+        viewInfo = info
     }
 
-    fun changeCanvas() {
-        currentScreen = (currentScreen + 1) % 3
-        setCanvasScreen()
-    }
-
-    private fun setCanvasScreen() {
-        when (currentScreen) {
-            0 -> viewerObject = ComposeInstrumentViewer()
-            1 -> viewerObject = ComposeChannelViewer()
-            2 -> viewerObject = ComposePatternViewer()
-        }
-
-        viewerObject?.setup()
+    fun onSizeChanged(w: Dp, h: Dp) {
+        width = w
+        height = h
     }
 }
 
 @Composable
-fun ComposeViewer() {
-    val viewerData = remember { ViewerData() }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
-    LaunchedEffect(lifecycleState) {
-        when (lifecycleState) {
-            Lifecycle.State.RESUMED -> viewerData.changeState(ViewerState.PLAYING)
-            Lifecycle.State.DESTROYED -> viewerData.changeState(ViewerState.STOPPED)
-            else -> Unit
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(100)
-            withFrameNanos {
-                viewerData::update
-            }
-        }
-    }
-
-    XmpCanvas(data = viewerData)
+fun ComposeCanvas(
+    modifier: Modifier = Modifier,
+    viewModel: CanvasViewModel
+) {
+    XmpCanvas(
+        modifier = modifier,
+        onSizeChanged = viewModel::onSizeChanged,
+        onChangeViewer = viewModel::changeViewer,
+        currentViewer = viewModel.currentViewer,
+        viewInfo = viewModel.viewInfo,
+        isMuted = viewModel.isMuted,
+        modVars = viewModel.modVars,
+        insName = viewModel.insName
+    )
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun XmpCanvas(data: ViewerData) {
+private fun XmpCanvas(
+    modifier: Modifier = Modifier,
+    onSizeChanged: (width: Dp, height: Dp) -> Unit,
+    onChangeViewer: () -> Unit,
+    currentViewer: Int,
+    viewInfo: Viewer.Info,
+    isMuted: BooleanArray,
+    modVars: IntArray,
+    insName: Array<String>,
+) {
     val density = LocalDensity.current
-    Surface {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clipToBounds() // Needed?
-                .pointerInteropFilter {
-                    with(density) {
 
-                    }
-                    false
-                }
-                .combinedClickable(
-                    onClick = {
-                        data.changeCanvas()
-                    },
-                    onLongClick = {
+    Box(modifier = modifier.fillMaxSize()) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .clipToBounds()
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown()
+                    do {
+                        //This PointerEvent contains details including
+                        // event, id, position and more
+                        val event: PointerEvent = awaitPointerEvent()
+                        // ACTION_MOVE loop
 
-                    }
-                )
-                .onSizeChanged {
-                    with(density) {
-                        data.width = it.width.toDp()
-                        data.height = it.height.toDp()
-                    }
+                        // Consuming event prevents other gestures or scroll to intercept
+                        event.changes.forEach { pointerInputChange: PointerInputChange ->
+                            if (pointerInputChange.positionChange() != Offset.Zero)
+                                pointerInputChange.consume()
+                        }
+                    } while (event.changes.any { it.pressed })
+
+                    // ACTION_UP is here
                 }
+            }
+            .combinedClickable(
+                onClick = onChangeViewer,
+                onLongClick = {
+
+                }
+            )
+            .onSizeChanged {
+                with(density) {
+                    onSizeChanged(it.width.toDp(), it.height.toDp())
+                }
+            }
         ) {
-            // Canvas shit
-            data.viewerObject.let {
-                when (it) {
-                    is ComposeInstrumentViewer -> InstrumentView(it)
-                    is ComposeChannelViewer -> Unit
-                    is ComposePatternViewer -> Unit
+            Surface {
+                when (currentViewer) {
+                    0 -> InstrumentViewer(viewInfo, isMuted, modVars, insName)
+                    1 -> Unit
+                    2 -> Unit
                 }
             }
         }
     }
 }
+
 
 @Composable
-private fun InstrumentView(view: ComposeInstrumentViewer) {
-    fun DrawScope.drawInstrumentBar(
-        x: Float,
-        y: Float,
-        width: Int,
-        fontSize: Float,
-        volume: Int,
-        accentColor: Color
+private fun InstrumentViewer(
+    viewInfo: Viewer.Info,
+    isMuted: BooleanArray,
+    modVars: IntArray,
+    insName: Array<String>,
+) {
+    val verticalScroll = rememberScrollState()
+
+    val barPaint by remember {
+        val shades = (32 downTo 0).map {
+            val value = it / 32.toFloat()
+            val blendedColor =
+                ColorUtils.blendARGB(accent.toArgb(), Color.Transparent.toArgb(), value)
+            Color(blendedColor)
+        }
+
+        mutableStateOf(shades)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(verticalScroll)
     ) {
-        // Constants
-        val maxVolume = 32 // Assuming a maximum volume value for scaling
-        val barHeight = fontSize // Use font size as a proxy for bar height for simplicity
-
-        // Calculate volume-based color intensity
-        val colorIntensity = volume.toFloat() / maxVolume
-        val volumeColor = lerp(Color.Black, accentColor, colorIntensity)
-
-        // Draw the volume bar
-        drawRect(
-            color = volumeColor,
-            topLeft = Offset(x, y - barHeight),
-            size = androidx.compose.ui.geometry.Size(width.toFloat(), barHeight)
-        )
-    }
-
-    fun computeTextColor(volume: Int, maxVolume: Int = 32): Color {
-        // Define the start (low volume) and end (high volume) colors
-        val startColor = Color.Gray // Less intense color for low volume
-        val endColor = Color.White // More intense color for high volume
-
-        // Calculate the interpolation factor based on the volume
-        val volumeFactor = volume.toFloat() / maxVolume.toFloat()
-
-        // Compute the interpolated color based on the volume factor
-        return lerp(startColor, endColor, volumeFactor)
-    }
-
-    val textMeasurer = rememberTextMeasurer()
-    Canvas(modifier = Modifier.fillMaxSize()) {
-        // Constants and initial setup similar to your custom view
-        val shadeSteps = 32
-        val fontSize = 18.sp // Example, adjust based on your theme
-        val fontHeight = (fontSize.value * 1.6).toInt() // Adjust as necessary
-
-        val chn = view.modVars[3]
-        val ins = view.modVars[4]
-        val drawWidth = (size.width - 3 * fontHeight) / chn
-
-        for (i in 0 until ins) {
-            val drawY = (i + 1) * fontHeight - view.modVars[5] // posY in your code, adjust as needed
-            var maxVol = 0
-
-            // Loop to draw each instrument's bars and names
-            for (j in 0 until chn) {
-                if (view.isMuted[j]) {
-                    continue
-                }
-
-                // Example logic, adjust according to your actual data and logic
-                val vol = view.viewerInfo.volumes[j] / 2
-                val adjustedVol = vol.coerceIn(0, shadeSteps)
-                if (adjustedVol > maxVol) maxVol = adjustedVol
-
-                val drawX = 3 * fontHeight + drawWidth * j
-                drawInstrumentBar(
-                    drawX,
-                    drawY.toFloat(),
-                    drawWidth.toInt(),
-                    fontSize.toPx(),
-                    adjustedVol,
-                    accent
-                )
-            }
-
-            val measuredText = textMeasurer.measure(
-                text = view.insName[i],
-                constraints = Constraints.fixedWidth((size.width * 2f / 3f).toInt()),
-                style = TextStyle(fontSize = fontSize)
-            )
-            drawText(
-                textLayoutResult = measuredText,
-                color = computeTextColor(maxVol, shadeSteps),
-                topLeft = Offset(0f, drawY.toFloat())
-            )
-
-//            drawText(
-//                textMeasurer = textMeasurer,
-//                text = view.insName[i],
-//                x = 0f,
-//                y = drawY.toFloat(),
-//                color = computeTextColor(maxVol, shadeSteps),
-//                fontSize = fontSize,
-//                fontFamily = FontFamily.Monospace,
-//                fontWeight = FontWeight.Bold
-//            )
-        }
-    }
-}
-
-abstract class ViewerObject() {
-    var isMuted: BooleanArray = BooleanArray(0)
-    var modVars: IntArray = IntArray(10)
-    var insName by mutableStateOf(listOf<String>())
-    var viewerInfo by mutableStateOf(Viewer.Info())
-
-    // fun onClick()
-
-    // fun onClick(x: Int, y: Int)
-
-    open fun setup() {
-        Timber.d("Viewer Setup: ${this::class.java.simpleName}")
         val chn = modVars[3]
-        isMuted = BooleanArray(chn)
+        val ins = modVars[4]
+        var vol: Int
+        val paddingPx = with(LocalDensity.current) { 2.dp.toPx() }
 
-        for (i in 0 until chn) {
-            try {
-                isMuted[i] = false // TODO Xmp.mute(i, -1) == 1
-            } catch (e: RemoteException) {
-                Timber.w("Can't read channel mute status: ${e.message}")
-            }
+        // TODO text volume shading
+        for (i in 0 until ins) {
+            Text(
+                text = insName[i],
+                style = TextStyle(fontSize = 18.sp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp)
+                    .drawBehind {
+                        for (j in 0 until chn) {
+                            if (isMuted[j]) {
+                                continue
+                            }
+
+                            if (viewInfo.instruments[j] == i) {
+                                val totalPadding = (chn - 1) * paddingPx
+                                val availableWidth = size.width - totalPadding
+                                val boxWidth = availableWidth / modVars[3]
+                                val start = j * (boxWidth + paddingPx)
+
+                                vol = (viewInfo.volumes[j] / 2).coerceAtMost(32)
+
+                                drawRect(
+                                    color = barPaint[vol],
+                                    topLeft = Offset(start, 0f),
+                                    size = Size(boxWidth, size.height)
+                                )
+                            }
+                        }
+                    }
+            )
         }
-    }
-
-    fun update() {
-
     }
 }
 
@@ -341,18 +279,25 @@ private fun Preview_ComposeViewer() {
         }
     }
 
-    val viewerData = remember {
-        ViewerData().apply {
-            this.viewerObject = ComposeInstrumentViewer().apply {
-                viewerInfo = info
-                modVars = intArrayOf(190968, 30, 25, 12, 24, 18, 1, 0, 0, 0)
-                insName = List(modVars[4]) { "Instrument Name: $it" }
-                setup() // TODO: eeeh, this should be set up in the composables.
-            }
-        }
+    val viewInfo by remember {
+        mutableStateOf(info)
+    }
+    val currentViewer by remember {
+        mutableIntStateOf(0)
+    }
+    val modVars by remember {
+        mutableStateOf(intArrayOf(190968, 30, 25, 12, 24, 18, 1, 0, 0, 0))
     }
 
     XmpTheme(useDarkTheme = true) {
-        XmpCanvas(data = viewerData)
+        XmpCanvas(
+            onSizeChanged = { _, _ -> },
+            onChangeViewer = {},
+            currentViewer = currentViewer,
+            viewInfo = viewInfo,
+            isMuted = BooleanArray(modVars[3]) { false },
+            modVars = modVars,
+            insName = Array(modVars[4]) { String.format("%02X %s", it + 1, "Instument Name") },
+        )
     }
 }

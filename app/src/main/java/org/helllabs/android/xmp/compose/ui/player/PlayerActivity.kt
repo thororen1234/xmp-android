@@ -13,10 +13,7 @@ import android.os.IBinder
 import android.os.Looper
 import android.os.RemoteException
 import android.provider.OpenableColumns
-import android.view.SurfaceView
-import android.view.View
 import android.view.WindowManager
-import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -53,9 +50,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -76,9 +73,8 @@ import org.helllabs.android.xmp.compose.ui.player.components.PlayerDrawer
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerInfo
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerSeekBar
 import org.helllabs.android.xmp.compose.ui.player.components.ViewFlipper
-import org.helllabs.android.xmp.compose.ui.player.viewer.ChannelViewer
-import org.helllabs.android.xmp.compose.ui.player.viewer.InstrumentViewer
-import org.helllabs.android.xmp.compose.ui.player.viewer.PatternViewer
+import org.helllabs.android.xmp.compose.ui.player.viewer.CanvasViewModel
+import org.helllabs.android.xmp.compose.ui.player.viewer.ComposeCanvas
 import org.helllabs.android.xmp.compose.ui.player.viewer.Viewer
 import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.service.ModInterface
@@ -90,6 +86,7 @@ import java.io.File
 class PlayerActivity : ComponentActivity() {
 
     private val viewModel by viewModels<PlayerViewModel>()
+    private val canvasViewModel by viewModels<CanvasViewModel>()
 
     /* Actual mod player */
     private var modPlayer: ModInterface? = null
@@ -100,8 +97,8 @@ class PlayerActivity : ComponentActivity() {
 
     private var job: Job? = null
     private val playerLock = Any() // for sync
-    private var viewer: Viewer? = null
-    private var viewerLayout: FrameLayout? = null
+    // private var viewer: Viewer? = null
+    // private var viewerLayout: FrameLayout? = null
 
     private val modVars = IntArray(10)
     private val seqVars = IntArray(Xmp.maxSeqFromHeader)
@@ -150,6 +147,7 @@ class PlayerActivity : ComponentActivity() {
                     }
                 }
 
+                viewModel.onConnected(true)
                 viewModel.isPlaying(!modPlayer!!.isPaused)
             }
         }
@@ -163,6 +161,7 @@ class PlayerActivity : ComponentActivity() {
                 setResult(RESULT_OK)
                 finish()
             }
+            viewModel.onConnected(false)
         }
     }
 
@@ -276,6 +275,7 @@ class PlayerActivity : ComponentActivity() {
                             info!!.keys,
                             info!!.periods
                         )
+                        canvasViewModel.update(info!!)
                     } catch (e: RemoteException) {
                         // fail silently
                     }
@@ -322,9 +322,9 @@ class PlayerActivity : ComponentActivity() {
             }
 
             // always call viewer update (for scrolls during pause)
-            synchronized(viewerLayout!!) {
-                viewer!!.update(info, viewModel.isPlaying)
-            }
+//            synchronized(viewerLayout!!) {
+//                viewer!!.update(info, viewModel.isPlaying)
+//            }
         }
     }
 
@@ -391,11 +391,14 @@ class PlayerActivity : ComponentActivity() {
             viewModel.setFlipperInfo(name, type, skipToPrevious)
             skipToPrevious = false
 
-            viewer!!.setup(modVars)
-            viewer!!.setRotation(rotation)
+//            viewer!!.setup(modVars)
+//            viewer!!.setRotation(rotation)
 
             info = Viewer.Info()
             info!!.type = Xmp.getModType()
+
+            canvasViewModel.setup(viewModel.uiState.value.serviceConnected)
+
             stopUpdate = false
 
             if (job == null || !job!!.isActive) {
@@ -435,38 +438,38 @@ class PlayerActivity : ComponentActivity() {
 
         onNewIntent(intent)
 
-        val color = Color(red = 28, green = 27, blue = 31).toArgb()
-        val instrumentViewer = InstrumentViewer(this, color)
-        val channelViewer = ChannelViewer(this, color)
-        val patternViewer = PatternViewer(this, color)
-        viewer = instrumentViewer
-
-        viewerLayout = FrameLayout(this).apply {
-            addView(viewer)
-            setOnClickListener {
-                synchronized(playerLock) {
-                    if (canChangeViewer) {
-                        viewModel.changeCurrentViewer()
-
-                        synchronized(playerLock) player@{
-                            if (modPlayer == null) {
-                                return@player
-                            }
-
-                            removeAllViews()
-                            when (viewModel.currentViewer) {
-                                0 -> viewer = instrumentViewer
-                                1 -> viewer = channelViewer
-                                2 -> viewer = patternViewer
-                            }
-                            addView(viewer)
-                            viewer!!.setup(modVars)
-                            viewer!!.setRotation(display.rotation)
-                        }
-                    }
-                }
-            }
-        }
+//        val color = Color(red = 28, green = 27, blue = 31).toArgb()
+//        val instrumentViewer = InstrumentViewer(this, color)
+//        val channelViewer = ChannelViewer(this, color)
+//        val patternViewer = PatternViewer(this, color)
+//        viewer = instrumentViewer
+//
+//        viewerLayout = FrameLayout(this).apply {
+//            addView(viewer)
+//            setOnClickListener {
+//                synchronized(playerLock) {
+//                    if (canChangeViewer) {
+//                        viewModel.changeCurrentViewer()
+//
+//                        synchronized(playerLock) player@{
+//                            if (modPlayer == null) {
+//                                return@player
+//                            }
+//
+//                            removeAllViews()
+//                            when (viewModel.currentViewer) {
+//                                0 -> viewer = instrumentViewer
+//                                1 -> viewer = channelViewer
+//                                2 -> viewer = patternViewer
+//                            }
+//                            addView(viewer)
+//                            viewer!!.setup(modVars)
+//                            viewer!!.setRotation(display.rotation)
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         Timber.d("onCreate")
         setContent {
@@ -521,12 +524,13 @@ class PlayerActivity : ComponentActivity() {
             XmpTheme {
                 PlayerScreen(
                     snackbarHostState = snackbarHostState,
+                    canvasViewModel = canvasViewModel,
                     uiState = uiState,
                     infoState = infoState,
                     buttonState = buttonState,
                     timeState = timeState,
                     drawerState = drawerState,
-                    viewer = viewerLayout!!,
+                    // viewer = viewerLayout!!,
                     onMenu = ::onOpenDrawer,
                     onMenuClose = ::onCloseDrawer,
                     onDelete = {
@@ -709,7 +713,7 @@ class PlayerActivity : ComponentActivity() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         Timber.d("onConfigurationChanged")
-        viewer?.setRotation(rotation)
+        // viewer?.setRotation(rotation)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -939,12 +943,13 @@ class PlayerActivity : ComponentActivity() {
 @Composable
 private fun PlayerScreen(
     snackbarHostState: SnackbarHostState,
+    canvasViewModel: CanvasViewModel,
     uiState: PlayerViewModel.PlayerState,
     infoState: PlayerViewModel.PlayerInfoState,
     buttonState: PlayerViewModel.PlayerButtonsState,
     timeState: PlayerViewModel.PlayerTimeState,
     drawerState: PlayerViewModel.PlayerDrawerState,
-    viewer: View,
+    // viewer: View,
     onMenu: () -> Unit,
     onMenuClose: () -> Unit,
     onDelete: () -> Unit,
@@ -1037,33 +1042,35 @@ private fun PlayerScreen(
                 }
             }
         ) { paddingValues ->
+            ComposeCanvas(modifier = Modifier.padding(paddingValues), viewModel = canvasViewModel)
             // https://developer.android.com/jetpack/compose/migrate/interoperability-apis/views-in-compose
-            AndroidView(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxSize(),
-                factory = { _ ->
-                    // Creates view
-                    viewer
-                },
-                update = { _ ->
-                    // View's been inflated or state read in this block has been updated
-                    // Add logic here if necessary
-                }
-            )
+//            AndroidView(
+//                modifier = Modifier
+//                    .padding(paddingValues)
+//                    .fillMaxSize(),
+//                factory = { _ ->
+//                    // Creates view
+//                    viewer
+//                },
+//                update = { _ ->
+//                    // View's been inflated or state read in this block has been updated
+//                    // Add logic here if necessary
+//                }
+//            )
         }
     }
 }
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
-private fun Preview_PlayerScreen() {
+private fun Preview_PlayerScreen(canvasViewModel: CanvasViewModel = viewModel()) {
     val context = LocalContext.current
     PrefManager.init(context, File(""))
 
     XmpTheme {
         PlayerScreen(
             snackbarHostState = SnackbarHostState(),
+            canvasViewModel =canvasViewModel,
             uiState = PlayerViewModel.PlayerState(
                 infoTitle = "Title 1",
                 infoType = "Fast Tracker",
@@ -1091,7 +1098,7 @@ private fun Preview_PlayerScreen() {
                 numOfSequences = List(8) { it },
                 currentSequence = 2
             ),
-            viewer = SurfaceView(LocalContext.current),
+            // viewer = SurfaceView(LocalContext.current),
             onMessage = { },
             onMenu = { },
             onMenuClose = { },
@@ -1111,13 +1118,14 @@ private fun Preview_PlayerScreen() {
 
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
-private fun Preview_PlayerScreenDrawerOpen() {
+private fun Preview_PlayerScreenDrawerOpen(canvasViewModel: CanvasViewModel = viewModel()) {
     val context = LocalContext.current
     PrefManager.init(context, File(""))
 
     XmpTheme {
         PlayerScreen(
             snackbarHostState = SnackbarHostState(),
+            canvasViewModel = canvasViewModel,
             uiState = PlayerViewModel.PlayerState(
                 infoTitle = "Title 1",
                 infoType = "Fast Tracker",
@@ -1145,7 +1153,7 @@ private fun Preview_PlayerScreenDrawerOpen() {
                 numOfSequences = List(8) { it },
                 currentSequence = 2
             ),
-            viewer = SurfaceView(LocalContext.current),
+            // viewer = SurfaceView(LocalContext.current),
             onMenu = { },
             onMenuClose = { },
             onDelete = { },
