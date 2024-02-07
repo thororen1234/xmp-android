@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
@@ -23,15 +22,23 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import org.helllabs.android.xmp.Xmp
-import org.helllabs.android.xmp.compose.theme.XmpTheme
 import timber.log.Timber
 
 // TODO: This is a WIP
+
+@Suppress("ArrayInDataClass")
+data class SampleData(
+    var key: Int = 0,
+    var ins: Int = 0,
+    var holdKey: IntArray = intArrayOf(),
+    var period: Int = 0,
+    var scopeWidth: Int = 0,
+    var buffer: Array<ByteArray> = arrayOf(),
+)
 
 class CanvasViewModel : ViewModel() {
     private val seqVars = IntArray(Xmp.maxSeqFromHeader)
@@ -45,6 +52,7 @@ class CanvasViewModel : ViewModel() {
     var isMuted by mutableStateOf(BooleanArray(0))
 
     var viewInfo by mutableStateOf(Viewer.Info())
+    var sampleData by mutableStateOf(SampleData())
 
     fun changeViewer() {
         currentViewer = (currentViewer + 1) % 3
@@ -150,8 +158,8 @@ internal fun XmpCanvas(
             Surface {
                 when (currentViewer) {
                     0 -> InstrumentViewer(viewInfo, isMuted, modVars, insName)
-                    1 -> Unit
-                    2 -> Unit
+                    1 -> ComposePatternViewer(viewInfo, isMuted, modVars)
+                    2 -> ComposeChannelViewer(viewInfo, isMuted, modVars, insName)
                 }
             }
         }

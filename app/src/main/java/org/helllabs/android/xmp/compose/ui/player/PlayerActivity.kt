@@ -1042,7 +1042,10 @@ private fun PlayerScreen(
                 }
             }
         ) { paddingValues ->
-            ComposeCanvas(modifier = Modifier.padding(paddingValues), viewModel = canvasViewModel)
+            ComposeCanvas(
+                modifier = Modifier.padding(paddingValues),
+                viewModel = canvasViewModel
+            )
             // https://developer.android.com/jetpack/compose/migrate/interoperability-apis/views-in-compose
 //            AndroidView(
 //                modifier = Modifier

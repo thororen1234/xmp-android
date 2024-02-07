@@ -35,6 +35,8 @@ import androidx.compose.ui.unit.sp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.accent
 
+private const val VOLUME_STEPS = 32
+
 @Composable
 internal fun InstrumentViewer(
     viewInfo: Viewer.Info,
@@ -101,18 +103,18 @@ internal fun InstrumentViewer(
                                     val start = j * (boxWidth + paddingPx)
 
                                     // Clamp volume
-                                    vol = (viewInfo.volumes[j] / 2).coerceAtMost(32)
+                                    vol = (viewInfo.volumes[j] / 2).coerceAtMost(VOLUME_STEPS)
 
                                     drawRect(
                                         color = accent,
-                                        alpha = vol / 32f,
+                                        alpha = vol / VOLUME_STEPS.toFloat(),
                                         topLeft = Offset(start, 0f),
                                         size = Size(boxWidth, measuredText.size.height.toFloat())
                                     )
                                 }
                             }
 
-                            textFraction = vol.coerceIn(0, 32) / 32f
+                            textFraction = vol.coerceIn(0, VOLUME_STEPS) / VOLUME_STEPS.toFloat()
                             textColor = lerp(Color.Gray, Color.White, textFraction)
                             drawText(textLayoutResult = measuredText, color = textColor)
                         }
@@ -124,7 +126,7 @@ internal fun InstrumentViewer(
 
 @Preview
 @Composable
-private fun Preview_ComposeViewer() {
+private fun Preview_InstrumentViewer() {
     val info = remember {
         Viewer.Info().apply {
             time = 109
@@ -181,7 +183,7 @@ private fun Preview_ComposeViewer() {
             viewInfo = viewInfo,
             isMuted = BooleanArray(modVars[3]) { false },
             modVars = modVars,
-            insName = Array(modVars[4]) { String.format("%02X %s", it + 1, "Instument Name") },
+            insName = Array(modVars[4]) { String.format("%02X %s", it + 1, "Instrument Name") },
         )
     }
 }
