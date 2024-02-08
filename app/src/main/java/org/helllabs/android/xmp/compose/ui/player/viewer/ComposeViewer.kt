@@ -44,8 +44,6 @@ class CanvasViewModel : ViewModel() {
     private val seqVars = IntArray(Xmp.maxSeqFromHeader)
     private var serviceConnected by mutableStateOf(false)
 
-    var width by mutableStateOf(0.dp)
-    var height by mutableStateOf(0.dp)
     var currentViewer by mutableIntStateOf(0)
     var insName by mutableStateOf(arrayOf<String>())
     val modVars by mutableStateOf(IntArray(10))
@@ -56,10 +54,10 @@ class CanvasViewModel : ViewModel() {
 
     fun changeViewer() {
         currentViewer = (currentViewer + 1) % 3
-
     }
 
     fun setup(connected: Boolean) {
+        Timber.d("Setup: $connected")
         serviceConnected = connected
 
         if (serviceConnected) {
@@ -82,21 +80,17 @@ class CanvasViewModel : ViewModel() {
     fun update(info: Viewer.Info) {
         viewInfo = info
     }
-
-    fun onSizeChanged(w: Dp, h: Dp) {
-        width = w
-        height = h
-    }
 }
 
 @Composable
 fun ComposeCanvas(
     modifier: Modifier = Modifier,
-    viewModel: CanvasViewModel
+    viewModel: CanvasViewModel,
+    isPlaying: Boolean
 ) {
     XmpCanvas(
         modifier = modifier,
-        onSizeChanged = viewModel::onSizeChanged,
+        isPlaying = isPlaying,
         onChangeViewer = viewModel::changeViewer,
         currentViewer = viewModel.currentViewer,
         viewInfo = viewModel.viewInfo,
@@ -110,7 +104,7 @@ fun ComposeCanvas(
 @Composable
 internal fun XmpCanvas(
     modifier: Modifier = Modifier,
-    onSizeChanged: (width: Dp, height: Dp) -> Unit,
+    isPlaying: Boolean,
     onChangeViewer: () -> Unit,
     currentViewer: Int,
     viewInfo: Viewer.Info,
@@ -118,49 +112,17 @@ internal fun XmpCanvas(
     modVars: IntArray,
     insName: Array<String>,
 ) {
-    val density = LocalDensity.current
-
-    Box(modifier = modifier.fillMaxSize()) {
-        Box(modifier = Modifier
-            .fillMaxSize()
-            .clipToBounds()
-            .pointerInput(Unit) {
-                awaitEachGesture {
-                    awaitFirstDown()
-                    do {
-                        //This PointerEvent contains details including
-                        // event, id, position and more
-                        val event: PointerEvent = awaitPointerEvent()
-                        // ACTION_MOVE loop
-
-                        // Consuming event prevents other gestures or scroll to intercept
-                        event.changes.forEach { pointerInputChange: PointerInputChange ->
-                            if (pointerInputChange.positionChange() != Offset.Zero)
-                                pointerInputChange.consume()
-                        }
-                    } while (event.changes.any { it.pressed })
-
-                    // ACTION_UP is here
-                }
-            }
-            .combinedClickable(
-                onClick = onChangeViewer,
-                onLongClick = {
-
-                }
-            )
-            .onSizeChanged {
-                with(density) {
-                    onSizeChanged(it.width.toDp(), it.height.toDp())
-                }
-            }
-        ) {
-            Surface {
-                when (currentViewer) {
-                    0 -> InstrumentViewer(viewInfo, isMuted, modVars, insName)
-                    1 -> ComposePatternViewer(viewInfo, isMuted, modVars)
-                    2 -> ComposeChannelViewer(viewInfo, isMuted, modVars, insName)
-                }
+    Box(modifier = modifier.combinedClickable(
+        onClick = onChangeViewer,
+        onLongClick = {
+        }
+    )
+    ) {
+        Surface {
+            when (currentViewer) {
+                0 -> InstrumentViewer(isPlaying, viewInfo, isMuted, modVars, insName)
+                1 -> ComposePatternViewer(viewInfo, isMuted, modVars)
+                2 -> ComposeChannelViewer(viewInfo, isMuted, modVars, insName)
             }
         }
     }

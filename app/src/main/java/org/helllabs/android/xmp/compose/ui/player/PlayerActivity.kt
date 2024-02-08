@@ -51,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CoroutineScope
@@ -1043,8 +1044,9 @@ private fun PlayerScreen(
             }
         ) { paddingValues ->
             ComposeCanvas(
-                modifier = Modifier.padding(paddingValues),
-                viewModel = canvasViewModel
+                modifier = Modifier.padding(paddingValues).fillMaxSize(),
+                viewModel = canvasViewModel,
+                isPlaying = buttonState.isPlaying
             )
             // https://developer.android.com/jetpack/compose/migrate/interoperability-apis/views-in-compose
 //            AndroidView(

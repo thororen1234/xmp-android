@@ -16,10 +16,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -36,9 +38,11 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.accent
 
 private const val VOLUME_STEPS = 32
+private val barShape = CornerRadius(8f, 8f)
 
 @Composable
 internal fun InstrumentViewer(
+    isPlaying: Boolean,
     viewInfo: Viewer.Info,
     isMuted: BooleanArray,
     modVars: IntArray,
@@ -47,6 +51,33 @@ internal fun InstrumentViewer(
     val density = LocalDensity.current
     val verticalScroll = rememberScrollState()
     val textMeasurer = rememberTextMeasurer()
+
+    val context = LocalContext.current
+    val displayMetrics = context.resources.displayMetrics
+    val screenWidth by remember { mutableIntStateOf(displayMetrics.widthPixels) }
+
+    val textColor by remember {
+        val list = (0..VOLUME_STEPS).map {
+            val fraction = it.coerceIn(0, VOLUME_STEPS) / VOLUME_STEPS.toFloat()
+            lerp(Color.Gray, Color.White, fraction)
+        }
+        mutableStateOf(list)
+    }
+    val measuredText by remember(modVars[4], insName) {
+        val list = (0 until modVars[4]).map {
+            textMeasurer.measure(
+                text = AnnotatedString(insName[it]),
+                constraints = Constraints.fixedWidth(screenWidth),
+                style = TextStyle(
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Normal,
+                    textAlign = TextAlign.Start,
+                    fontFamily = FontFamily.Monospace
+                )
+            )
+        }
+        mutableStateOf(list)
+    }
 
     val paddingPx by remember {
         mutableFloatStateOf(with(density) { 2.dp.toPx() })
@@ -60,12 +91,6 @@ internal fun InstrumentViewer(
     var vol by remember {
         mutableIntStateOf(0)
     }
-    var textFraction by remember {
-        mutableFloatStateOf(0f)
-    }
-    var textColor by remember {
-        mutableStateOf(Color.Gray)
-    }
 
     Column(
         modifier = Modifier
@@ -73,22 +98,12 @@ internal fun InstrumentViewer(
             .verticalScroll(verticalScroll)
     ) {
         for (i in 0 until ins) {
+            var maxVol = 0
             Spacer(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp)
+                    .padding(vertical = 12.dp, horizontal = 4.dp)
                     .drawWithCache {
-                        val measuredText = textMeasurer.measure(
-                            text = AnnotatedString(insName[i]),
-                            constraints = Constraints.fixedWidth(size.width.toInt()),
-                            style = TextStyle(
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Normal,
-                                textAlign = TextAlign.Start,
-                                fontFamily = FontFamily.Monospace
-                            )
-                        )
-
                         onDrawBehind {
                             vol = 0 // Reset volume on each draw
 
@@ -103,20 +118,25 @@ internal fun InstrumentViewer(
                                     val start = j * (boxWidth + paddingPx)
 
                                     // Clamp volume
-                                    vol = (viewInfo.volumes[j] / 2).coerceAtMost(VOLUME_STEPS)
+                                    if (isPlaying) {
+                                        vol = (viewInfo.volumes[j] / 2).coerceAtMost(VOLUME_STEPS)
+                                    }
 
-                                    drawRect(
+                                    drawRoundRect(
                                         color = accent,
+                                        cornerRadius = barShape,
                                         alpha = vol / VOLUME_STEPS.toFloat(),
                                         topLeft = Offset(start, 0f),
-                                        size = Size(boxWidth, measuredText.size.height.toFloat())
+                                        size = Size(boxWidth, measuredText[i].size.height.toFloat())
                                     )
+
+                                    if (vol > maxVol) {
+                                        maxVol = vol
+                                    }
                                 }
                             }
 
-                            textFraction = vol.coerceIn(0, VOLUME_STEPS) / VOLUME_STEPS.toFloat()
-                            textColor = lerp(Color.Gray, Color.White, textFraction)
-                            drawText(textLayoutResult = measuredText, color = textColor)
+                            drawText(textLayoutResult = measuredText[i], color = textColor[maxVol])
                         }
                     }
             )
@@ -177,8 +197,8 @@ private fun Preview_InstrumentViewer() {
 
     XmpTheme(useDarkTheme = true) {
         XmpCanvas(
-            onSizeChanged = { _, _ -> },
             onChangeViewer = {},
+            isPlaying = true,
             currentViewer = currentViewer,
             viewInfo = viewInfo,
             isMuted = BooleanArray(modVars[3]) { false },

@@ -71,7 +71,7 @@ private fun Preview_PatternViewer() {
 
     XmpTheme(useDarkTheme = true) {
         XmpCanvas(
-            onSizeChanged = { _, _ -> },
+            isPlaying = true,
             onChangeViewer = {},
             currentViewer = currentViewer,
             viewInfo = viewInfo,
