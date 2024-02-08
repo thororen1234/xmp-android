@@ -3,7 +3,6 @@ package org.helllabs.android.xmp.compose.ui.player.viewer
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.tooling.preview.Preview
@@ -14,7 +13,7 @@ internal fun ComposePatternViewer(
     viewInfo: Viewer.Info,
     isMuted: BooleanArray,
     modVars: IntArray,
-    ) {
+) {
     Text("TODO")
 }
 
@@ -62,18 +61,14 @@ private fun Preview_PatternViewer() {
     val viewInfo by remember {
         mutableStateOf(info)
     }
-    val currentViewer by remember {
-        mutableIntStateOf(1)
-    }
     val modVars by remember {
         mutableStateOf(intArrayOf(190968, 30, 25, 12, 24, 18, 1, 0, 0, 0))
     }
 
     XmpTheme(useDarkTheme = true) {
         XmpCanvas(
-            isPlaying = true,
             onChangeViewer = {},
-            currentViewer = currentViewer,
+            currentViewer = 1,
             viewInfo = viewInfo,
             isMuted = BooleanArray(modVars[3]) { false },
             modVars = modVars,

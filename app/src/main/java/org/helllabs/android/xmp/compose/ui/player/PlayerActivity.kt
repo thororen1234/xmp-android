@@ -19,6 +19,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -1044,9 +1045,10 @@ private fun PlayerScreen(
             }
         ) { paddingValues ->
             ComposeCanvas(
-                modifier = Modifier.padding(paddingValues).fillMaxSize(),
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxSize(),
                 viewModel = canvasViewModel,
-                isPlaying = buttonState.isPlaying
             )
             // https://developer.android.com/jetpack/compose/migrate/interoperability-apis/views-in-compose
 //            AndroidView(
@@ -1075,7 +1077,7 @@ private fun Preview_PlayerScreen(canvasViewModel: CanvasViewModel = viewModel())
     XmpTheme {
         PlayerScreen(
             snackbarHostState = SnackbarHostState(),
-            canvasViewModel =canvasViewModel,
+            canvasViewModel = canvasViewModel,
             uiState = PlayerViewModel.PlayerState(
                 infoTitle = "Title 1",
                 infoType = "Fast Tracker",
