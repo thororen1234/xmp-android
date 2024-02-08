@@ -32,8 +32,7 @@ app/app.iml
 *~
 *.swp
 
-app/release/output-metadata.json
-
 app/.cxx/
-
 app/lint-baseline.xml
+app/release/output-metadata.json
+app/src/main/jni/libxmp/
