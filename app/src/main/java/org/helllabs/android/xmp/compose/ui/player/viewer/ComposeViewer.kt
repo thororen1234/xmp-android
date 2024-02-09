@@ -1,19 +1,14 @@
 package org.helllabs.android.xmp.compose.ui.player.viewer
 
 import android.os.RemoteException
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import org.helllabs.android.xmp.Xmp
 import timber.log.Timber
@@ -27,7 +22,7 @@ data class SampleData(
     var holdKey: IntArray = intArrayOf(),
     var period: Int = 0,
     var scopeWidth: Int = 0,
-    var buffer: Array<ByteArray> = arrayOf(),
+    var buffer: Array<ByteArray> = arrayOf()
 )
 
 class CanvasViewModel : ViewModel() {
@@ -73,22 +68,6 @@ class CanvasViewModel : ViewModel() {
 }
 
 @Composable
-fun ComposeCanvas(
-    modifier: Modifier = Modifier,
-    viewModel: CanvasViewModel,
-) {
-    XmpCanvas(
-        modifier = modifier,
-        onChangeViewer = viewModel::changeViewer,
-        currentViewer = viewModel.currentViewer,
-        viewInfo = viewModel.viewInfo,
-        isMuted = viewModel.isMuted,
-        modVars = viewModel.modVars,
-        insName = viewModel.insName
-    )
-}
-
-@Composable
 internal fun XmpCanvas(
     modifier: Modifier = Modifier,
     onChangeViewer: () -> Unit,
@@ -96,14 +75,13 @@ internal fun XmpCanvas(
     viewInfo: Viewer.Info,
     isMuted: BooleanArray,
     modVars: IntArray,
-    insName: Array<String>,
+    insName: Array<String>
 ) {
     // TODO we can possibly get the 'ViewPort' size here to aid in the bottom culling
 
-    Box(modifier = modifier
-        .fillMaxSize()
-        .clickable { onChangeViewer() }
-        .border(1.dp, Color.Blue)
+    Box(
+        modifier = modifier
+            .clickable { onChangeViewer() }
     ) {
         when (currentViewer) {
             0 -> InstrumentViewer(viewInfo, isMuted, modVars, insName)
@@ -112,6 +90,3 @@ internal fun XmpCanvas(
         }
     }
 }
-
-
-

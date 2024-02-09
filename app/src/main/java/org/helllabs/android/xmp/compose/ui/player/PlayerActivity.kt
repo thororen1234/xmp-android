@@ -19,7 +19,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -52,7 +51,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CoroutineScope
@@ -76,8 +74,8 @@ import org.helllabs.android.xmp.compose.ui.player.components.PlayerInfo
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerSeekBar
 import org.helllabs.android.xmp.compose.ui.player.components.ViewFlipper
 import org.helllabs.android.xmp.compose.ui.player.viewer.CanvasViewModel
-import org.helllabs.android.xmp.compose.ui.player.viewer.ComposeCanvas
 import org.helllabs.android.xmp.compose.ui.player.viewer.Viewer
+import org.helllabs.android.xmp.compose.ui.player.viewer.XmpCanvas
 import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerCallback
@@ -1000,7 +998,9 @@ private fun PlayerScreen(
                                 )
                             }
                         }
-                    } else null,
+                    } else {
+                        null
+                    },
                     navigation = {
                         IconButton(onClick = onMenu) {
                             Icon(
@@ -1044,11 +1044,16 @@ private fun PlayerScreen(
                 }
             }
         ) { paddingValues ->
-            ComposeCanvas(
+            XmpCanvas(
                 modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxSize(),
-                viewModel = canvasViewModel,
+                onChangeViewer = canvasViewModel::changeViewer,
+                currentViewer = canvasViewModel.currentViewer,
+                viewInfo = canvasViewModel.viewInfo,
+                isMuted = canvasViewModel.isMuted,
+                modVars = canvasViewModel.modVars,
+                insName = canvasViewModel.insName
             )
             // https://developer.android.com/jetpack/compose/migrate/interoperability-apis/views-in-compose
 //            AndroidView(
@@ -1080,7 +1085,7 @@ private fun Preview_PlayerScreen(canvasViewModel: CanvasViewModel = viewModel())
             canvasViewModel = canvasViewModel,
             uiState = PlayerViewModel.PlayerState(
                 infoTitle = "Title 1",
-                infoType = "Fast Tracker",
+                infoType = "Fast Tracker"
             ),
             infoState = PlayerViewModel.PlayerInfoState(
                 infoSpeed = "11",
@@ -1135,7 +1140,7 @@ private fun Preview_PlayerScreenDrawerOpen(canvasViewModel: CanvasViewModel = vi
             canvasViewModel = canvasViewModel,
             uiState = PlayerViewModel.PlayerState(
                 infoTitle = "Title 1",
-                infoType = "Fast Tracker",
+                infoType = "Fast Tracker"
             ),
             infoState = PlayerViewModel.PlayerInfoState(
                 infoSpeed = "11",
