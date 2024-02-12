@@ -47,9 +47,9 @@ class ResultViewModel(
     sealed class DownloadStatus {
         data class Error(val error: Exception) : DownloadStatus()
         data class Progress(val percent: Int) : DownloadStatus()
-        object None : DownloadStatus()
-        object Loading : DownloadStatus()
-        object Success : DownloadStatus()
+        data object None : DownloadStatus()
+        data object Loading : DownloadStatus()
+        data object Success : DownloadStatus()
     }
 
     data class ModuleResultState(

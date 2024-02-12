@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -163,6 +164,7 @@ open class Result : ComponentActivity() {
                     onBack = { onBackPressedDispatcher.onBackPressed() },
                     onRandom = viewModel::getRandomModule,
                     onDelete = { deleteModule = true },
+                    onShare = ::shareLink,
                     onPlay = { module ->
                         if (Files.localFile(module)!!.exists()) {
                             val path = Files.localFile(module)!!.path
@@ -193,6 +195,17 @@ open class Result : ComponentActivity() {
             }
         }
     }
+
+    private fun shareLink(url: String) {
+        val sendIntent: Intent = Intent().apply {
+            action = Intent.ACTION_SEND
+            putExtra(Intent.EXTRA_TEXT, url)
+            type = "text/html"
+        }
+
+        val shareIntent = Intent.createChooser(sendIntent, null)
+        startActivity(shareIntent)
+    }
 }
 
 @Composable
@@ -201,6 +214,7 @@ private fun ModuleResultScreen(
     snackbarHostState: SnackbarHostState,
     onBack: () -> Unit,
     onRandom: () -> Unit,
+    onShare: (String) -> Unit,
     onDelete: () -> Unit,
     onPlay: (module: Module) -> Unit
 ) {
@@ -230,6 +244,9 @@ private fun ModuleResultScreen(
                                 contentDescription = null
                             )
                         }
+                    }
+                    IconButton(onClick = { onShare(state.module!!.module.infopage) }) {
+                        Icon(imageVector = Icons.Default.Share, contentDescription = "Share Module")
                     }
                 }
             )
@@ -335,7 +352,8 @@ private fun Preview_ModuleResult() {
             onBack = {},
             onDelete = {},
             onPlay = {},
-            onRandom = {}
+            onRandom = {},
+            onShare = {}
         )
     }
 }
