@@ -1,5 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.player.viewer
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
@@ -8,23 +10,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontFamily
@@ -32,21 +32,22 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.accent
-import org.helllabs.android.xmp.compose.theme.toPx
 
 private const val VOLUME_STEPS = 32
 private val barShape = CornerRadius(8f, 8f)
 
 @Composable
 internal fun InstrumentViewer(
-    viewInfo: Viewer.Info,
+    viewInfo: ViewerInfo,
     isMuted: BooleanArray,
     modVars: IntArray,
     insName: Array<String>
 ) {
     val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
     val textMeasurer = rememberTextMeasurer()
     val view = LocalView.current
 
@@ -79,23 +80,30 @@ internal fun InstrumentViewer(
     val ins by remember(modVars[4]) {
         mutableIntStateOf(modVars[4])
     }
-    var yOffset by remember {
-        mutableFloatStateOf(0f)
+    val yOffset = remember {
+        Animatable(0f)
     }
     var canvasSize by remember {
         mutableStateOf(Size.Zero)
     }
     val scrollState = rememberScrollableState { delta ->
-        val totalContentHeight = with(density) { 24.dp.toPx() * ins }
-        val maxOffset = (totalContentHeight - canvasSize.height).coerceAtLeast(0f)
-        val newOffset = (yOffset + delta).coerceIn(-maxOffset, 0f)
-        yOffset = newOffset
+        scope.launch {
+            val totalContentHeight = with(density) { 24.dp.toPx() * ins }
+            val maxOffset = (totalContentHeight - canvasSize.height).coerceAtLeast(0f)
+            val newOffset = (yOffset.value + delta).coerceIn(-maxOffset, 0f)
+            yOffset.snapTo(newOffset)
+        }
         delta
     }
 
     LaunchedEffect(modVars[4], insName) {
         // Scroll to the top on song change
-        // TODO
+        scope.launch {
+            yOffset.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 300)
+            )
+        }
     }
 
     Canvas(
@@ -103,8 +111,7 @@ internal fun InstrumentViewer(
             .fillMaxSize()
             .scrollable(
                 orientation = Orientation.Vertical,
-                state = scrollState,
-                enabled = true
+                state = scrollState
             )
     ) {
         if (canvasSize != size) {
@@ -113,7 +120,7 @@ internal fun InstrumentViewer(
 
         for (i in 0 until ins) {
             var maxVol = 0
-            val yPos = yOffset + (24.dp.toPx() * i)
+            val yPos = yOffset.value + (24.dp.toPx() * i)
 
             // Timber.d(String.format("%s %02X", "Processing: ", i + 1))
 
@@ -163,47 +170,6 @@ internal fun InstrumentViewer(
         if (view.isInEditMode) {
             debugScreen(textMeasurer = textMeasurer)
         }
-    }
-}
-
-private fun DrawScope.debugScreen(textMeasurer: TextMeasurer) {
-    val xValue = 24.dp.toPx()
-    val yValue = 24.dp.toPx()
-    for (i in 0 until (size.width / xValue).toInt()) {
-        val xPosition = i * xValue
-        drawRect(
-            color = Color.Green.copy(alpha = .12f),
-            topLeft = Offset(xPosition, 0f),
-            size = Size(1f, size.height)
-        )
-        val text = textMeasurer.measure(
-            text = AnnotatedString(i.toString()),
-            style = TextStyle(
-                color = Color.White,
-                fontSize = 5.sp,
-                fontFamily = FontFamily.Monospace
-            )
-
-        )
-        drawText(textLayoutResult = text, topLeft = Offset(xPosition, 0f))
-    }
-    for (i in 0 until (size.height / yValue).toInt()) {
-        val yPosition = i * yValue
-        val text = textMeasurer.measure(
-            text = AnnotatedString(i.toString()),
-            style = TextStyle(
-                color = Color.White,
-                fontSize = 5.sp,
-                fontFamily = FontFamily.Monospace
-            )
-
-        )
-        drawText(textLayoutResult = text, topLeft = Offset(0f, yPosition))
-        drawRect(
-            color = Color.Yellow.copy(alpha = .12f),
-            topLeft = Offset(0f, yPosition),
-            size = Size(size.width, 1f)
-        )
     }
 }
 

@@ -1,12 +1,10 @@
 package org.helllabs.android.xmp.compose.ui.player
 
 import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.content.res.Configuration
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
@@ -74,7 +72,6 @@ import org.helllabs.android.xmp.compose.ui.player.components.PlayerInfo
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerSeekBar
 import org.helllabs.android.xmp.compose.ui.player.components.ViewFlipper
 import org.helllabs.android.xmp.compose.ui.player.viewer.CanvasViewModel
-import org.helllabs.android.xmp.compose.ui.player.viewer.Viewer
 import org.helllabs.android.xmp.compose.ui.player.viewer.XmpCanvas
 import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.service.ModInterface
@@ -100,10 +97,11 @@ class PlayerActivity : ComponentActivity() {
     // private var viewer: Viewer? = null
     // private var viewerLayout: FrameLayout? = null
 
-    private val modVars = IntArray(10)
-    private val seqVars = IntArray(Xmp.maxSeqFromHeader)
+    // private val modVars = IntArray(10)
+    // private val seqVars = IntArray(Xmp.maxSeqFromHeader)
     private var fileList: MutableList<String>? = null
-    private var info: Viewer.Info? = null
+
+    // private var info: ViewerInfo? = null
     private var keepFirst = false
     private var loopListMode = false
 
@@ -116,14 +114,14 @@ class PlayerActivity : ComponentActivity() {
     private val s = StringBuilder()
     private val c = CharArray(2)
 
-    private val rotation: Int
-        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            display!!.rotation
-        } else {
-            @Suppress("DEPRECATION")
-            (getSystemService(Context.WINDOW_SERVICE) as WindowManager)
-                .defaultDisplay.rotation
-        }
+//    private val rotation: Int
+//        get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+//            display!!.rotation
+//        } else {
+//            @Suppress("DEPRECATION")
+//            (getSystemService(Context.WINDOW_SERVICE) as WindowManager)
+//                .defaultDisplay.rotation
+//        }
 
     private val connection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
@@ -235,7 +233,7 @@ class PlayerActivity : ComponentActivity() {
             synchronized(playerLock) {
                 Timber.d("newSequenceCallback: show new sequence")
                 try {
-                    modPlayer!!.getModVars(modVars)
+                    modPlayer!!.getModVars(canvasViewModel.modVars)
                 } catch (e: RemoteException) {
                     Timber.e("Can't get new sequence data")
                 }
@@ -265,34 +263,52 @@ class PlayerActivity : ComponentActivity() {
                         return@synchronized
                     }
                     try {
-                        modPlayer!!.getInfo(info!!.values)
-                        info!!.time = modPlayer!!.time() / 1000
+                        modPlayer!!.getInfo(canvasViewModel.viewInfo.values)
+                        canvasViewModel.viewInfo.time = modPlayer!!.time() / 1000
                         modPlayer!!.getChannelData(
-                            info!!.volumes,
-                            info!!.finalVols,
-                            info!!.pans,
-                            info!!.instruments,
-                            info!!.keys,
-                            info!!.periods
+                            canvasViewModel.viewInfo.volumes,
+                            canvasViewModel.viewInfo.finalVols,
+                            canvasViewModel.viewInfo.pans,
+                            canvasViewModel.viewInfo.instruments,
+                            canvasViewModel.viewInfo.keys,
+                            canvasViewModel.viewInfo.periods
                         )
-                        canvasViewModel.update(info!!)
+
+                        if (PlayerService.isAlive) {
+                            if (canvasViewModel.currentViewer == 1) {
+                                with(canvasViewModel.patternInfo) {
+                                    Xmp.getPatternRow(
+                                        pat,
+                                        lineInPattern,
+                                        rowNotes,
+                                        rowInsts,
+                                        rowFxType,
+                                        rowFxParm
+                                    )
+                                }
+                            }
+                            if (canvasViewModel.currentViewer == 2) {
+                                // TODO: Channel Viewer
+                                Unit
+                            }
+                        }
                     } catch (e: RemoteException) {
                         // fail silently
                     }
                 }
 
                 // Frame Info - Speed
-                oldSpd = updateFrameInfo(info!!.values[5], oldSpd, viewModel::setInfoSpeed)
+                oldSpd = updateFrameInfo(canvasViewModel.viewInfo.values[5], oldSpd, viewModel::setInfoSpeed)
                 // Frame Info - BPM
-                oldBpm = updateFrameInfo(info!!.values[6], oldBpm, viewModel::setInfoBpm)
+                oldBpm = updateFrameInfo(canvasViewModel.viewInfo.values[6], oldBpm, viewModel::setInfoBpm)
                 // Frame Info - Position
-                oldPos = updateFrameInfo(info!!.values[0], oldPos, viewModel::setInfoPos)
+                oldPos = updateFrameInfo(canvasViewModel.viewInfo.values[0], oldPos, viewModel::setInfoPos)
                 // Frame Info - Pattern
-                oldPat = updateFrameInfo(info!!.values[1], oldPat, viewModel::setInfoPat)
+                oldPat = updateFrameInfo(canvasViewModel.viewInfo.values[1], oldPat, viewModel::setInfoPat)
 
                 // display playback time
-                if (info!!.time != oldTime) {
-                    var t = info!!.time
+                if (canvasViewModel.viewInfo.time != oldTime) {
+                    var t = canvasViewModel.viewInfo.time
                     if (t < 0) {
                         t = 0
                     }
@@ -304,7 +320,7 @@ class PlayerActivity : ComponentActivity() {
                     s.append(c)
 
                     viewModel.setTimeNow(s.toString())
-                    oldTime = info!!.time
+                    oldTime = canvasViewModel.viewInfo.time
                 }
 
                 // display total playback time
@@ -329,13 +345,13 @@ class PlayerActivity : ComponentActivity() {
     }
 
     private val showNewSequenceRunnable = Runnable {
-        val time = modVars[0]
+        val time = canvasViewModel.modVars[0]
         totalTime = time / 1000
         viewModel.setSeekBar(0F, time / 100F)
 
         val timeString = String.format("%d:%02d", time / 60000, time / 1000 % 60)
         showSnack("New sequence duration: $timeString")
-        viewModel.currentSequence(modVars[7])
+        viewModel.currentSequence(canvasViewModel.modVars[7])
     }
 
     private val showNewModRunnable = Runnable {
@@ -346,8 +362,8 @@ class PlayerActivity : ComponentActivity() {
 
         synchronized(playerLock) {
             playTime = try {
-                modPlayer!!.getModVars(modVars)
-                modPlayer!!.getSeqVars(seqVars)
+                modPlayer!!.getModVars(canvasViewModel.modVars)
+                modPlayer!!.getSeqVars(canvasViewModel.seqVars)
                 modPlayer!!.time() / 100F
             } catch (e: RemoteException) {
                 Timber.e("Can't get module data")
@@ -373,14 +389,14 @@ class PlayerActivity : ComponentActivity() {
                 loop = false
                 Timber.e("Can't get module name and type")
             }
-            val time = modVars[0]
-            val len = modVars[1]
-            val pat = modVars[2]
-            val chn = modVars[3]
-            val ins = modVars[4]
-            val smp = modVars[5]
-            val numSeq = modVars[6]
-            val sequences = seqVars.take(numSeq)
+            val time = canvasViewModel.modVars[0]
+            val len = canvasViewModel.modVars[1]
+            val pat = canvasViewModel.modVars[2]
+            val chn = canvasViewModel.modVars[3]
+            val ins = canvasViewModel.modVars[4]
+            val smp = canvasViewModel.modVars[5]
+            val numSeq = canvasViewModel.modVars[6]
+            val sequences = canvasViewModel.seqVars.take(numSeq)
 
             viewModel.setDetails(pat, ins, smp, chn, len, allSeq, 0, sequences)
             totalTime = time / 1000
@@ -394,8 +410,8 @@ class PlayerActivity : ComponentActivity() {
 //            viewer!!.setup(modVars)
 //            viewer!!.setRotation(rotation)
 
-            info = Viewer.Info()
-            info!!.type = Xmp.getModType()
+//            info = ViewerInfo()
+            canvasViewModel.viewInfo.type = Xmp.getModType()
 
             canvasViewModel.setup(viewModel.uiState.value.serviceConnected)
 
@@ -949,7 +965,6 @@ private fun PlayerScreen(
     buttonState: PlayerViewModel.PlayerButtonsState,
     timeState: PlayerViewModel.PlayerTimeState,
     drawerState: PlayerViewModel.PlayerDrawerState,
-    // viewer: View,
     onMenu: () -> Unit,
     onMenuClose: () -> Unit,
     onDelete: () -> Unit,
@@ -1051,6 +1066,7 @@ private fun PlayerScreen(
                 onChangeViewer = canvasViewModel::changeViewer,
                 currentViewer = canvasViewModel.currentViewer,
                 viewInfo = canvasViewModel.viewInfo,
+                patternInfo = canvasViewModel.patternInfo,
                 isMuted = canvasViewModel.isMuted,
                 modVars = canvasViewModel.modVars,
                 insName = canvasViewModel.insName

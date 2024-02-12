@@ -35,7 +35,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 @Composable
 fun ComposeChannelViewer(
-    viewInfo: Viewer.Info,
+    viewInfo: ViewerInfo,
     isMuted: BooleanArray,
     modVars: IntArray,
     insName: Array<String>
