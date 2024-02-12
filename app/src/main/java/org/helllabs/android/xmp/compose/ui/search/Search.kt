@@ -62,7 +62,6 @@ import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.components.annotatedLinkString
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.theme.accent
 import org.helllabs.android.xmp.compose.ui.search.result.Result
 import org.helllabs.android.xmp.compose.ui.search.result.SearchResult
 import timber.log.Timber
@@ -117,7 +116,6 @@ class Search : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SearchScreen(
     onBack: () -> Unit,
@@ -129,13 +127,6 @@ private fun SearchScreen(
     val focusRequester = remember { FocusRequester() }
     var searchText by rememberSaveable { mutableStateOf("") }
     var searchType by rememberSaveable { mutableStateOf(SearchType.TYPE_TITLE_OR_FILENAME) }
-    val searchOptions by remember {
-        val list = listOf(
-            R.string.search_artist,
-            R.string.search_title_or_filename
-        )
-        mutableStateOf(list)
-    }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -196,73 +187,111 @@ private fun SearchScreen(
                     label = { Text(text = stringResource(id = R.string.search_search)) }
                 )
                 Spacer(modifier = Modifier.height(32.dp))
-                SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier
-                        .padding(horizontal = 32.dp)
-                        .fillMaxWidth()
-                ) {
-                    searchOptions.forEachIndexed { index, label ->
-                        SegmentedButton(
-                            colors = SegmentedButtonDefaults.colors(
-                                activeContainerColor = MaterialTheme.colorScheme.primaryContainer
-                                    .copy(alpha = .75f)
-                            ),
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = searchOptions.size
-                            ),
-                            onClick = { searchType = SearchType.entries.toTypedArray()[index] },
-                            selected = index == searchType.ordinal,
-                            label = { Text(stringResource(id = label)) }
-                        )
-                    }
-                }
+
+                SegmentedButtons(
+                    searchType = searchType,
+                    onSearchType = { searchType = SearchType.entries.toTypedArray()[it] }
+                )
+
                 Spacer(modifier = Modifier.height(32.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 32.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Button(
-                        modifier = Modifier
-                            .weight(.75f),
-                        enabled = searchText.isNotEmpty(),
-                        onClick = { onSearch(searchText, searchType) }
-                    ) {
-                        Text(text = stringResource(id = R.string.search_search))
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    OutlinedButton(
-                        modifier = Modifier
-                            .weight(.75f),
-                        onClick = onRandom
-                    ) {
-                        Text(text = stringResource(id = R.string.search_random_pick))
-                    }
-                }
+
+                SearchButtons(
+                    searchText = searchText,
+                    onSearch = { onSearch(it, searchType) },
+                    onRandom = onRandom
+                )
             }
 
-            val uriHandler = LocalUriHandler.current
-            val linkString = annotatedLinkString(
-                text = stringResource(id = R.string.search_provided_by),
-                url = "modarchive.org"
-            )
-            ClickableText(
+            DownloadsText(
                 modifier = Modifier
                     .padding(vertical = 8.dp)
-                    .align(Alignment.BottomCenter),
-                text = linkString,
-                style = TextStyle(color = MaterialTheme.colorScheme.onBackground),
-                onClick = {
-                    linkString
-                        .getStringAnnotations("URL", it, it)
-                        .firstOrNull()
-                        ?.let { stringAnnotation -> uriHandler.openUri(stringAnnotation.item) }
-                }
+                    .align(Alignment.BottomCenter)
             )
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SegmentedButtons(searchType: SearchType, onSearchType: (Int) -> Unit) {
+    val searchOptions by remember {
+        val list = listOf(R.string.search_artist, R.string.search_title_or_filename)
+        mutableStateOf(list)
+    }
+
+    SingleChoiceSegmentedButtonRow(
+        modifier = Modifier
+            .padding(horizontal = 32.dp)
+            .fillMaxWidth()
+    ) {
+        searchOptions.forEachIndexed { index, label ->
+            SegmentedButton(
+                colors = SegmentedButtonDefaults.colors(
+                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .75f)
+                ),
+                shape = SegmentedButtonDefaults.itemShape(
+                    index = index,
+                    count = searchOptions.size
+                ),
+                onClick = { onSearchType(index) },
+                selected = index == searchType.ordinal,
+                label = { Text(text = stringResource(id = label)) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun SearchButtons(
+    searchText: String,
+    onSearch: (String) -> Unit,
+    onRandom: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 32.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly
+    ) {
+        Button(
+            modifier = Modifier
+                .weight(.75f),
+            enabled = searchText.isNotEmpty(),
+            onClick = { onSearch(searchText) }
+        ) {
+            Text(text = stringResource(id = R.string.search_search))
+        }
+        Spacer(modifier = Modifier.width(16.dp))
+        OutlinedButton(
+            modifier = Modifier
+                .weight(.75f),
+            onClick = onRandom
+        ) {
+            Text(text = stringResource(id = R.string.search_random_pick))
+        }
+    }
+}
+
+@Composable
+private fun DownloadsText(
+    modifier: Modifier = Modifier
+) {
+    val uriHandler = LocalUriHandler.current
+    val linkString = annotatedLinkString(
+        text = stringResource(id = R.string.search_provided_by),
+        url = "modarchive.org"
+    )
+    ClickableText(
+        modifier = modifier,
+        text = linkString,
+        style = TextStyle(color = MaterialTheme.colorScheme.onBackground),
+        onClick = {
+            linkString
+                .getStringAnnotations("URL", it, it)
+                .firstOrNull()
+                ?.let { stringAnnotation -> uriHandler.openUri(stringAnnotation.item) }
+        }
+    )
 }
 
 @Preview

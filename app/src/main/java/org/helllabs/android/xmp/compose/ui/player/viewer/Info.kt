@@ -19,8 +19,8 @@ data class ViewerInfo(
 
 @Suppress("ArrayInDataClass")
 data class PatternInfo(
-    val lineInPattern: Int = 0,
-    val pat: Int = 0,
+    var lineInPattern: Int = 0,
+    var pat: Int = 0,
     val rowFxParm: IntArray = IntArray(64),
     val rowFxType: IntArray = IntArray(64),
     val rowInsts: ByteArray = ByteArray(64),

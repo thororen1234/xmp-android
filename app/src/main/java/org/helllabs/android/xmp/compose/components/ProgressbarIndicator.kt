@@ -27,7 +27,7 @@ fun ProgressbarIndicator(isLoading: Boolean = true) {
             CircularProgressIndicator(
                 modifier = Modifier
                     .padding(64.dp)
-                    .scale(2f),
+                    .scale(2f)
             )
         }
     }

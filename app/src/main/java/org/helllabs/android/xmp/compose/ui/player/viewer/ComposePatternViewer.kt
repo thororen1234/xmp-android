@@ -7,14 +7,12 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -64,23 +62,6 @@ internal fun ComposePatternViewer(
     val scope = rememberCoroutineScope()
     val textMeasurer = rememberTextMeasurer()
     val view = LocalView.current
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            withFrameMillis {
-                if (PlayerService.isAlive) {
-                    Xmp.getPatternRow(
-                        patternInfo.pat,
-                        patternInfo.lineInPattern,
-                        patternInfo.rowNotes,
-                        patternInfo.rowInsts,
-                        patternInfo.rowFxType,
-                        patternInfo.rowFxParm
-                    )
-                }
-            }
-        }
-    }
 
     var canvasSize by remember {
         mutableStateOf(Size.Zero)
@@ -186,8 +167,12 @@ internal fun ComposePatternViewer(
         val rowHeight = 24.dp.toPx()
         val currentRowYOffset = barLineY - (currentRow * rowHeight)
 
+        patternInfo.pat = viewInfo.values[1]
+
         // Row numbers
         for (i in 0 until numRows) {
+            patternInfo.lineInPattern = i
+
             val rowText = textMeasurer.measure(
                 text = AnnotatedString(i.toString()),
                 density = density,
@@ -216,6 +201,22 @@ internal fun ComposePatternViewer(
 
             // TODO it seems `patternInfo` is not getting current data?
             for (j in 0 until chn) {
+                // Be very careful here!
+                // Our variables are latency-compensated but pattern data is current
+                // so caution is needed to avoid retrieving data using old variables
+                // from a module with pattern data from a newly loaded one.
+                if (PlayerService.isAlive) {
+                    Xmp.getPatternRow(
+                        patternInfo.pat,
+                        patternInfo.lineInPattern,
+                        patternInfo.rowNotes,
+                        patternInfo.rowInsts,
+                        patternInfo.rowFxType,
+                        patternInfo.rowFxParm
+                    )
+                }
+
+                /****** Notes *****/
                 val notes = when (val note = patternInfo.rowNotes[j]) {
                     in 1..MAX_NOTES -> allNotes[note - 1]
                     else -> if (note < 0) "===" else "---"
@@ -238,7 +239,7 @@ internal fun ComposePatternViewer(
                     topLeft = Offset(noteCenterX, textCenterY)
                 )
 
-                // Instruments
+                /***** Instruments *****/
                 val inst =
                     if (patternInfo.rowInsts[j] > 0) instHexByte[patternInfo.rowInsts[j].toInt()] else "--"
                 val instText = textMeasurer.measure(
@@ -253,14 +254,14 @@ internal fun ComposePatternViewer(
                     )
 
                 )
-                val instDivision = (j * 3 + 1) * 47.dp.toPx()
-                val instCenterX = offsetX.value + instDivision
+
+                val instOffsetX = noteCenterX + noteText.size.width.toDp().toPx()
                 drawText(
                     textLayoutResult = instText,
-                    topLeft = Offset(instCenterX, textCenterY)
+                    topLeft = Offset(instOffsetX, textCenterY)
                 )
 
-                // Effects
+                /***** Effects *****/
                 if (currentType != viewInfo.type) {
                     currentType = viewInfo.type
                     effectsTable = Effects.getEffectList(viewInfo.type)
@@ -272,7 +273,7 @@ internal fun ComposePatternViewer(
                         if (effectType != null) {
                             effectType
                         } else {
-                            Timber.w("Unknown Effect: $currentType | ${patternInfo.rowFxType[j]}")
+                            // Timber.w("Unknown Effect: $currentType | ${patternInfo.rowFxType[j]}")
                             "?"
                         }
 
@@ -289,11 +290,11 @@ internal fun ComposePatternViewer(
                         fontWeight = FontWeight.Bold
                     )
                 )
-                val fxDivision = (j * 3 + 1) * 63.dp.toPx()
-                val fxCenterX = offsetX.value + fxDivision
+
+                val fxOffsetX = instOffsetX + instText.size.width.toDp().toPx()
                 drawText(
                     textLayoutResult = fxText,
-                    topLeft = Offset(fxCenterX, textCenterY)
+                    topLeft = Offset(fxOffsetX, textCenterY)
                 )
 
                 // Effects Params
@@ -312,11 +313,11 @@ internal fun ComposePatternViewer(
                         fontWeight = FontWeight.Bold
                     )
                 )
-                val fxParmDivision = (j * 3 + 1) * 71.dp.toPx()
-                val fxParmCenterX = offsetX.value + fxParmDivision
+
+                val fxParmOffsetX = fxOffsetX + fxText.size.width.toDp().toPx()
                 drawText(
                     textLayoutResult = fxParmText,
-                    topLeft = Offset(fxParmCenterX, textCenterY)
+                    topLeft = Offset(fxParmOffsetX, textCenterY)
                 )
             }
         }

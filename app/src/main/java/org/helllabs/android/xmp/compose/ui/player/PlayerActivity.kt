@@ -196,18 +196,18 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                         )
 
                         if (PlayerService.isAlive) {
-                            if (canvasViewModel.currentViewer == 1) {
-                                with(canvasViewModel.patternInfo) {
-                                    Xmp.getPatternRow(
-                                        pat,
-                                        lineInPattern,
-                                        rowNotes,
-                                        rowInsts,
-                                        rowFxType,
-                                        rowFxParm
-                                    )
-                                }
-                            }
+//                            if (canvasViewModel.currentViewer == 1) {
+//                                with(canvasViewModel.patternInfo) {
+//                                    Xmp.getPatternRow(
+//                                        pat,
+//                                        lineInPattern,
+//                                        rowNotes,
+//                                        rowInsts,
+//                                        rowFxType,
+//                                        rowFxParm
+//                                    )
+//                                }
+//                            }
                             if (canvasViewModel.currentViewer == 2) {
                                 // TODO: Channel Viewer
                                 Unit
@@ -219,13 +219,29 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                 }
 
                 // Frame Info - Speed
-                oldSpd = updateFrameInfo(canvasViewModel.viewInfo.values[5], oldSpd, viewModel::setInfoSpeed)
+                oldSpd = updateFrameInfo(
+                    canvasViewModel.viewInfo.values[5],
+                    oldSpd,
+                    viewModel::setInfoSpeed
+                )
                 // Frame Info - BPM
-                oldBpm = updateFrameInfo(canvasViewModel.viewInfo.values[6], oldBpm, viewModel::setInfoBpm)
+                oldBpm = updateFrameInfo(
+                    canvasViewModel.viewInfo.values[6],
+                    oldBpm,
+                    viewModel::setInfoBpm
+                )
                 // Frame Info - Position
-                oldPos = updateFrameInfo(canvasViewModel.viewInfo.values[0], oldPos, viewModel::setInfoPos)
+                oldPos = updateFrameInfo(
+                    canvasViewModel.viewInfo.values[0],
+                    oldPos,
+                    viewModel::setInfoPos
+                )
                 // Frame Info - Pattern
-                oldPat = updateFrameInfo(canvasViewModel.viewInfo.values[1], oldPat, viewModel::setInfoPat)
+                oldPat = updateFrameInfo(
+                    canvasViewModel.viewInfo.values[1],
+                    oldPat,
+                    viewModel::setInfoPat
+                )
 
                 // display playback time
                 if (canvasViewModel.viewInfo.time != oldTime) {
