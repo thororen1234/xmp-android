@@ -7,6 +7,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,11 +22,14 @@ import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -57,8 +61,6 @@ import org.helllabs.android.xmp.compose.components.ListDialog
 import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
 import org.helllabs.android.xmp.compose.components.XmpTopBar
-import org.helllabs.android.xmp.compose.components.pullrefresh.PullToRefreshContainer
-import org.helllabs.android.xmp.compose.components.pullrefresh.rememberPullToRefreshState
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.BasePlaylistActivity
 import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
@@ -456,6 +458,7 @@ private fun FileListScreen(
                     onBack = onBack
                 )
                 BreadCrumbs(
+                    modifier = Modifier.background(MaterialTheme.colorScheme.background),
                     crumbScrollState = crumbScrollState,
                     crumbs = state.crumbs,
                     onCrumbMenu = onCrumbMenu,

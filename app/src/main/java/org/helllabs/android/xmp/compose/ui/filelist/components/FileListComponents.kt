@@ -166,12 +166,13 @@ fun FileListCard(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun BreadCrumbs(
+    modifier: Modifier = Modifier,
     crumbScrollState: LazyListState,
     crumbs: List<FileListViewModel.BreadCrumb>,
     onCrumbMenu: (Int) -> Unit,
     onCrumbClick: (FileListViewModel.BreadCrumb, Int) -> Unit
 ) {
-    Row(modifier = Modifier.fillMaxWidth()) {
+    Row(modifier = modifier.fillMaxWidth()) {
         LazyRow(
             state = crumbScrollState,
             contentPadding = PaddingValues(end = 16.dp),

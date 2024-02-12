@@ -28,7 +28,6 @@ fun ProgressbarIndicator(isLoading: Boolean = true) {
                 modifier = Modifier
                     .padding(64.dp)
                     .scale(2f),
-                progress = .5f // TODO crappy M3 animation fix
             )
         }
     }

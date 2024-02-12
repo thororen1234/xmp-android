@@ -26,12 +26,16 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,7 +62,6 @@ import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.components.annotatedLinkString
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.search.components.SegmentedButton
 import org.helllabs.android.xmp.compose.ui.search.result.Result
 import org.helllabs.android.xmp.compose.ui.search.result.SearchResult
 import timber.log.Timber
@@ -113,6 +116,7 @@ class Search : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SearchScreen(
     onBack: () -> Unit,
@@ -124,6 +128,13 @@ private fun SearchScreen(
     val focusRequester = remember { FocusRequester() }
     var searchText by rememberSaveable { mutableStateOf("") }
     var searchType by rememberSaveable { mutableStateOf(SearchType.TYPE_TITLE_OR_FILENAME) }
+    val searchOptions by remember {
+        val list = listOf(
+            R.string.search_artist,
+            R.string.search_title_or_filename
+        )
+        mutableStateOf(list)
+    }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -183,37 +194,43 @@ private fun SearchScreen(
                     maxLines = 1,
                     label = { Text(text = stringResource(id = R.string.search_search)) }
                 )
-                Spacer(modifier = Modifier.height(16.dp))
-                SegmentedButton(
+                Spacer(modifier = Modifier.height(32.dp))
+                SingleChoiceSegmentedButtonRow(
                     modifier = Modifier
                         .padding(horizontal = 32.dp)
-                        .fillMaxWidth(),
-                    selectedIndex = searchType.ordinal,
-                    itemsList = listOf(
-                        stringResource(id = R.string.search_artist),
-                        stringResource(id = R.string.search_title_or_filename)
-                    ),
-                    onClick = {
-                        searchType = SearchType.entries.toTypedArray()[it]
+                        .fillMaxWidth()
+                ) {
+                    searchOptions.forEachIndexed { index, label ->
+                        SegmentedButton(
+                            shape = SegmentedButtonDefaults.itemShape(
+                                index = index,
+                                count = searchOptions.size
+                            ),
+                            onClick = { searchType = SearchType.entries.toTypedArray()[index] },
+                            selected = index == searchType.ordinal,
+                            label = { Text(stringResource(id = label)) }
+                        )
                     }
-                )
+                }
                 Spacer(modifier = Modifier.height(32.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 64.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                        .padding(horizontal = 32.dp),
+                    horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     Button(
-                        modifier = Modifier.width(128.dp),
+                        modifier = Modifier
+                            .weight(.75f),
                         enabled = searchText.isNotEmpty(),
                         onClick = { onSearch(searchText, searchType) }
                     ) {
                         Text(text = stringResource(id = R.string.search_search))
                     }
-
+                    Spacer(modifier = Modifier.width(16.dp))
                     OutlinedButton(
-                        modifier = Modifier.width(128.dp),
+                        modifier = Modifier
+                            .weight(.75f),
                         onClick = onRandom
                     ) {
                         Text(text = stringResource(id = R.string.search_random_pick))
