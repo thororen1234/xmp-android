@@ -74,19 +74,18 @@ import org.helllabs.android.xmp.compose.ui.player.components.ViewFlipper
 import org.helllabs.android.xmp.compose.ui.player.viewer.CanvasViewModel
 import org.helllabs.android.xmp.compose.ui.player.viewer.XmpCanvas
 import org.helllabs.android.xmp.core.Files
-import org.helllabs.android.xmp.service.ModInterface
-import org.helllabs.android.xmp.service.PlayerCallback
 import org.helllabs.android.xmp.service.PlayerService
+import org.helllabs.android.xmp.service.PlayerServiceCallback
 import timber.log.Timber
 import java.io.File
 
-class PlayerActivity : ComponentActivity() {
+class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
 
     private val viewModel by viewModels<PlayerViewModel>()
     private val canvasViewModel by viewModels<CanvasViewModel>()
 
     /* Actual mod player */
-    private var modPlayer: ModInterface? = null
+    private var modPlayer: PlayerService? = null
 
     private val handler = Handler(Looper.myLooper() ?: Looper.getMainLooper())
     private val screenReceiver = ScreenReceiver()
@@ -127,12 +126,13 @@ class PlayerActivity : ComponentActivity() {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             Timber.i("Service connected")
             synchronized(playerLock) {
-                modPlayer = ModInterface.Stub.asInterface(service)
-                try {
-                    modPlayer!!.registerCallback(playerCallback)
-                } catch (e: RemoteException) {
-                    Timber.e("Can't register player callback")
-                }
+                modPlayer = (service as PlayerService.LocalBinder).getService()
+                modPlayer!!.setCallback(this@PlayerActivity)
+//                try {
+//                    modPlayer!!.registerCallback(playerCallback)
+//                } catch (e: RemoteException) {
+//                    Timber.e("Can't register player callback")
+//                }
                 if (fileList != null && fileList!!.isNotEmpty()) {
                     // Start new queue
                     playNewMod(fileList!!, start)
@@ -146,7 +146,7 @@ class PlayerActivity : ComponentActivity() {
                 }
 
                 viewModel.onConnected(true)
-                viewModel.isPlaying(!modPlayer!!.isPaused)
+                viewModel.isPlaying(!modPlayer!!.isPaused())
             }
         }
 
@@ -160,85 +160,6 @@ class PlayerActivity : ComponentActivity() {
                 finish()
             }
             viewModel.onConnected(false)
-        }
-    }
-
-    private val playerCallback: PlayerCallback = object : PlayerCallback.Stub() {
-        @Throws(RemoteException::class)
-        override fun newModCallback() {
-            synchronized(playerLock) {
-                Timber.d("newModCallback: show module data")
-                handler.post(showNewModRunnable)
-                canChangeViewer = true
-            }
-        }
-
-        @Throws(RemoteException::class)
-        override fun endModCallback() {
-            synchronized(playerLock) {
-                Timber.d("endModCallback: end of module")
-                stopUpdate = true
-                canChangeViewer = false
-            }
-        }
-
-        @Throws(RemoteException::class)
-        override fun endPlayCallback(result: Int) {
-            synchronized(playerLock) {
-                Timber.d("endPlayCallback: End progress thread")
-                stopUpdate = true
-                if (result != PlayerService.RESULT_OK) {
-                    Timber.e("Weeee")
-                    val resultIntent = Intent().apply {
-                        if (result == PlayerService.RESULT_CANT_OPEN_AUDIO) {
-                            putExtra("error", getString(R.string.error_opensl))
-                        } else if (result == PlayerService.RESULT_NO_AUDIO_FOCUS) {
-                            putExtra("error", getString(R.string.error_audiofocus))
-                        }
-                    }
-
-                    setResult(1, resultIntent)
-                } else {
-                    setResult(RESULT_OK)
-                }
-
-                job?.cancel()
-                finish()
-            }
-        }
-
-        @Throws(RemoteException::class)
-        override fun pauseCallback() {
-            Timber.d("pauseCallback")
-            if (modPlayer == null) {
-                return
-            }
-
-            synchronized(playerLock) {
-                try {
-                    // Set pause status according to external state
-                    viewModel.isPlaying(!modPlayer!!.isPaused)
-                } catch (e: RemoteException) {
-                    Timber.e("Can't get pause status")
-                }
-            }
-        }
-
-        @Throws(RemoteException::class)
-        override fun newSequenceCallback() {
-            if (modPlayer == null) {
-                return
-            }
-
-            synchronized(playerLock) {
-                Timber.d("newSequenceCallback: show new sequence")
-                try {
-                    modPlayer!!.getModVars(canvasViewModel.modVars)
-                } catch (e: RemoteException) {
-                    Timber.e("Can't get new sequence data")
-                }
-                handler.post(showNewSequenceRunnable)
-            }
         }
     }
 
@@ -375,12 +296,12 @@ class PlayerActivity : ComponentActivity() {
             var allSeq: Boolean
             var loop: Boolean
             try {
-                name = modPlayer!!.modName
-                type = modPlayer!!.modType
-                allSeq = modPlayer!!.allSequences
-                loop = modPlayer!!.loop
+                name = modPlayer!!.getModName()
+                type = modPlayer!!.getModType()
+                allSeq = modPlayer!!.getAllSequences()
+                loop = modPlayer!!.getLoop()
                 if (name.trim().isEmpty()) {
-                    name = Files.basename(modPlayer!!.fileName)
+                    name = Files.basename(modPlayer!!.getFileName())
                 }
             } catch (e: RemoteException) {
                 name = ""
@@ -571,7 +492,7 @@ class PlayerActivity : ComponentActivity() {
                                 Timber.e("Can't toggle all sequences status")
                             }
                         }
-                        viewModel.onAllSequence(modPlayer!!.allSequences)
+                        viewModel.onAllSequence(modPlayer!!.getAllSequences())
                     },
                     onSequence = {
                         synchronized(playerLock) {
@@ -643,7 +564,7 @@ class PlayerActivity : ComponentActivity() {
                             }
                             try {
                                 modPlayer!!.pause()
-                                viewModel.isPlaying(!modPlayer!!.isPaused)
+                                viewModel.isPlaying(!modPlayer!!.isPaused())
                             } catch (e: RemoteException) {
                                 Timber.e("Can't pause/unpause module")
                             }
@@ -689,11 +610,11 @@ class PlayerActivity : ComponentActivity() {
             if (modPlayer == null) {
                 return@synchronized
             }
-            try {
-                modPlayer!!.unregisterCallback(playerCallback)
-            } catch (e: RemoteException) {
-                Timber.e("Can't unregister player callback")
-            }
+//            try {
+//                modPlayer!!.unregisterCallback(playerCallback)
+//            } catch (e: RemoteException) {
+//                Timber.e("Can't unregister player callback")
+//            }
         }
 
         unregisterReceiver(screenReceiver)
@@ -717,6 +638,77 @@ class PlayerActivity : ComponentActivity() {
 
         if (ScreenReceiver.wasScreenOn) {
             viewModel.screenOn(false)
+        }
+    }
+
+    override fun onPlayerPause() {
+        Timber.d("pauseCallback")
+        if (modPlayer == null) {
+            return
+        }
+
+        synchronized(playerLock) {
+            try {
+                // Set pause status according to external state
+                viewModel.isPlaying(!modPlayer!!.isPaused())
+            } catch (e: RemoteException) {
+                Timber.e("Can't get pause status")
+            }
+        }
+    }
+
+    override fun onNewSequence() {
+        if (modPlayer == null) {
+            return
+        }
+
+        synchronized(playerLock) {
+            Timber.d("newSequenceCallback: show new sequence")
+            try {
+                modPlayer!!.getModVars(canvasViewModel.modVars)
+            } catch (e: RemoteException) {
+                Timber.e("Can't get new sequence data")
+            }
+            handler.post(showNewSequenceRunnable)
+        }
+    }
+
+    override fun onNewMod() {
+        synchronized(playerLock) {
+            Timber.d("newModCallback: show module data")
+            handler.post(showNewModRunnable)
+            canChangeViewer = true
+        }
+    }
+
+    override fun onEndMod() {
+        synchronized(playerLock) {
+            Timber.d("endModCallback: end of module")
+            stopUpdate = true
+            canChangeViewer = false
+        }
+    }
+
+    override fun onEndPlayCallback(result: Int) {
+        synchronized(playerLock) {
+            Timber.d("endPlayCallback: End progress thread")
+            stopUpdate = true
+            if (result != PlayerService.RESULT_OK) {
+                val resultIntent = Intent().apply {
+                    if (result == PlayerService.RESULT_CANT_OPEN_AUDIO) {
+                        putExtra("error", getString(R.string.error_opensl))
+                    } else if (result == PlayerService.RESULT_NO_AUDIO_FOCUS) {
+                        putExtra("error", getString(R.string.error_audiofocus))
+                    }
+                }
+
+                setResult(1, resultIntent)
+            } else {
+                setResult(RESULT_OK)
+            }
+
+            job?.cancel()
+            finish()
         }
     }
 
@@ -887,7 +879,7 @@ class PlayerActivity : ComponentActivity() {
             }
             try {
                 // Write our all sequences button status to shared prefs
-                val allSeq = modPlayer!!.allSequences
+                val allSeq = modPlayer!!.getAllSequences()
                 if (allSeq != PrefManager.allSequences) {
                     Timber.d("Write all sequences preference")
                     PrefManager.allSequences = allSeq

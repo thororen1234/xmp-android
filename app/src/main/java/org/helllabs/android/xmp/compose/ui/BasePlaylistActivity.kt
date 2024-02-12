@@ -17,7 +17,6 @@ import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.core.InfoCache
 import org.helllabs.android.xmp.model.PlaylistItem
-import org.helllabs.android.xmp.service.ModInterface
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 
@@ -46,7 +45,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
     }
 
     private var mAddList: MutableList<String>? = null
-    private var mModPlayer: ModInterface? = null
+    private var mModPlayer: PlayerService? = null
 
     protected abstract val isShuffleMode: Boolean
     protected abstract val isLoopMode: Boolean
@@ -60,9 +59,10 @@ abstract class BasePlaylistActivity : ComponentActivity() {
     // Connection
     private val connection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            mModPlayer = ModInterface.Stub.asInterface(service)
+            mModPlayer = (service as PlayerService.LocalBinder).getService()
             try {
-                mModPlayer!!.add(mAddList)
+                // TODO ehh? Should care about null or empty
+                mModPlayer!!.add(mAddList?.toList().orEmpty())
             } catch (e: RemoteException) {
                 showSnack(getString(R.string.error_adding_mod))
             }
