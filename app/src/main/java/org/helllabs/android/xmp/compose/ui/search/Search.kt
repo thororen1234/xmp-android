@@ -62,6 +62,7 @@ import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.components.annotatedLinkString
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.compose.theme.accent
 import org.helllabs.android.xmp.compose.ui.search.result.Result
 import org.helllabs.android.xmp.compose.ui.search.result.SearchResult
 import timber.log.Timber
@@ -202,6 +203,10 @@ private fun SearchScreen(
                 ) {
                     searchOptions.forEachIndexed { index, label ->
                         SegmentedButton(
+                            colors = SegmentedButtonDefaults.colors(
+                                activeContainerColor = MaterialTheme.colorScheme.primaryContainer
+                                    .copy(alpha = .75f)
+                            ),
                             shape = SegmentedButtonDefaults.itemShape(
                                 index = index,
                                 count = searchOptions.size
