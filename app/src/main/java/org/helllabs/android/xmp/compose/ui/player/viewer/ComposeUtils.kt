@@ -13,9 +13,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.helllabs.android.xmp.BuildConfig
 
+@Suppress("unused")
 internal fun DrawScope.debugPatternViewColumns() {
     if (!BuildConfig.DEBUG) {
-        throw Exception("This class shouldn't be used in non debug builds.")
+        throw Exception("This DrawScope shouldn't be used in non debug builds.")
     }
     for (i in 0 until (size.width / 24.dp.toPx()).toInt()) {
         val xPosition = (i * 3 + 1) * 22.dp.toPx()
@@ -32,6 +33,9 @@ internal fun DrawScope.debugScreen(
     xValue: Float = 24.dp.toPx(),
     yValue: Float = 24.dp.toPx()
 ) {
+    if (!BuildConfig.DEBUG) {
+        throw Exception("This DrawScope shouldn't be used in non debug builds.")
+    }
     for (i in 0 until (size.width / xValue).toInt()) {
         val xPosition = i * xValue
         drawRect(
@@ -72,7 +76,7 @@ internal fun DrawScope.debugScreen(
 
 internal fun composePatternSampleData(): PatternInfo {
     if (!BuildConfig.DEBUG) {
-        throw Exception("This class shouldn't be used in non debug builds.")
+        throw Exception("This function shouldn't be used in non debug builds.")
     }
 
     return PatternInfo(
@@ -103,7 +107,7 @@ internal fun composePatternSampleData(): PatternInfo {
 
 internal fun composeViewerSampleData(): ViewerInfo {
     if (!BuildConfig.DEBUG) {
-        throw Exception("This class shouldn't be used in non debug builds.")
+        throw Exception("This function shouldn't be used in non debug builds.")
     }
     return ViewerInfo(
         time = 109,

@@ -34,5 +34,6 @@ app/app.iml
 
 app/.cxx/
 app/lint-baseline.xml
+app/release/baselineProfiles/
 app/release/output-metadata.json
 app/src/main/jni/libxmp/

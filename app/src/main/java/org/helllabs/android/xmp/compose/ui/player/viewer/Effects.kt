@@ -12,7 +12,7 @@ import timber.log.Timber
 // MMD Common?
 
 object Effects {
-    private val effects669 = mutableMapOf(
+    private val effects669 = mapOf(
         96 to "A", // FX_669_PORTA_UP
         97 to "B", // FX_669_PORTA_DN
         98 to "C", // FX_669_TPORTA
@@ -28,7 +28,7 @@ object Effects {
     // TODO: Unknown Effect: Farandole Composer 1.0 | 104
     // TODO: Unknown Effect: Farandole Composer 1.0 | 105
     // https://github.com/libxmp/libxmp/blob/master/docs/formats/far100.doc
-    private val effectsFarandole = mutableMapOf(
+    private val effectsFarandole = mapOf(
         249 to "1", // FX_FAR_PORTA_UP
         248 to "2", // FX_FAR_PORTA_DN
         122 to "3", // FX_PER_TPORTA
@@ -45,7 +45,7 @@ object Effects {
         Timber.d("Farandole Effects")
     }
 
-    private val effectsImagoOrpheus = mutableMapOf(
+    private val effectsImagoOrpheus = mapOf(
         1 to "1", // FX_S3M_SPEED
         2 to "2", // FX_S3M_BPM
         3 to "3", // FX_TONEPORTA
@@ -85,7 +85,7 @@ object Effects {
         Timber.d("Imago Orpheus Effects")
     }
 
-    private val effectsScream3 = mutableMapOf(
+    private val effectsScream3 = mapOf(
         163 to "A", // FX_S3M_SPEED
         11 to "B", // FX_JUMP
         13 to "C", // FX_BREAK
@@ -113,7 +113,7 @@ object Effects {
         Timber.d("Sream 3 Effects")
     }
 
-    private val effectsImpulse = mutableMapOf(
+    private val effectsImpulse = mapOf(
         163 to "A", // FX_S3M_SPEED
         11 to "B", // FX_JUMP
         142 to "C", // FX_IT_BREAK
@@ -155,7 +155,7 @@ object Effects {
         Timber.d("Impulse Effects")
     }
 
-    private val effectsLiquid = mutableMapOf(
+    private val effectsLiquid = mapOf(
         0 to "A", // FX_ARPEGGIO
         171 to "B", // FX_S3M_BPM
         13 to "C", // FX_BREAK
@@ -178,7 +178,7 @@ object Effects {
         Timber.d("Liquid Effects")
     }
 
-    private val effectsOktalyzer = mutableMapOf(
+    private val effectsOktalyzer = mapOf(
         1 to "1", // FX_PORTA_UP
         2 to "2", // FX_PORTA_DN
         112 to "0", // FX_OKT_ARP3
@@ -201,7 +201,7 @@ object Effects {
         Timber.d("Oktalyzer Effects")
     }
 
-    private val effectsScream2 = mutableMapOf(
+    private val effectsScream2 = mapOf(
         15 to "A", // FX_SPEED
         11 to "B", // FX_JUMP
         13 to "C", // FX_BREAK
@@ -216,7 +216,7 @@ object Effects {
         Timber.d("Scream 2 Effects")
     }
 
-    private val effectsFunk = mutableMapOf(
+    private val effectsFunk = mapOf(
         121 to "A", // A  :Frequency Port Up
         120 to "B", // B  :Frequency Port Dn
         122 to "C", // C  :Frequency Porta
@@ -239,7 +239,7 @@ object Effects {
         Timber.d("FunkTracker Effects")
     }
 
-    private val effectsProTracker = mutableMapOf(
+    private val effectsProTracker = mapOf(
         0 to "0", // FX_ARPEGGIO
         1 to "1", // FX_PORTA_UP
         2 to "2", // FX_PORTA_DN
@@ -275,7 +275,7 @@ object Effects {
         Timber.d("ProTracker Effects")
     }
 
-    fun getEffectList(type: String): MutableMap<Int, String> {
+    fun getEffectList(type: String): Map<Int, String> {
         with(type) {
             return when {
                 contains("669") -> effects669

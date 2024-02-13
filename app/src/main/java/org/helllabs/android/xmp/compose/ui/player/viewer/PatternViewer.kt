@@ -32,7 +32,7 @@ class PatternViewer(context: Context, background: Int) : Viewer(context, backgro
     private var updateRow: Float = 0f
 
     private var currentType: String = ""
-    private lateinit var effectsTable: MutableMap<Int, String>
+    private lateinit var effectsTable: Map<Int, String>
 
     private val allNotes = (0 until MAX_NOTES).map { NOTES[it % 12] + it / 12 }.toMutableList()
     private var hexByte = mutableListOf<String>()
