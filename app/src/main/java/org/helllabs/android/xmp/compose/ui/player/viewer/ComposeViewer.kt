@@ -1,6 +1,5 @@
 package org.helllabs.android.xmp.compose.ui.player.viewer
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,18 +30,11 @@ internal fun XmpCanvas(
     modVars: IntArray,
     insName: Array<String>
 ) {
-    val sampleData by remember {
-        mutableStateOf(SampleData())
-    }
-
-    Box(
-        modifier = modifier
-            .clickable { onChangeViewer() }
-    ) {
+    Box(modifier = modifier) {
         when (currentViewer) {
-            0 -> InstrumentViewer(viewInfo, isMuted, modVars, insName)
-            1 -> ComposePatternViewer(viewInfo, patternInfo, isMuted, modVars)
-            2 -> ComposeChannelViewer(viewInfo, isMuted, modVars, insName)
+            0 -> InstrumentViewer(onChangeViewer, viewInfo, isMuted, modVars, insName)
+            1 -> ComposePatternViewer(onChangeViewer, viewInfo, patternInfo, isMuted, modVars)
+            2 -> ComposeChannelViewer(onChangeViewer, viewInfo, isMuted, modVars, insName)
         }
     }
 }

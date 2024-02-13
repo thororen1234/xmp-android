@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.AnnotatedString
@@ -32,7 +34,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
-import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.accent
@@ -48,8 +49,13 @@ private val allNotes = (0 until MAX_NOTES).map { NOTES[it % 12] + it / 12 }
 
 // TODO: Maybe keep the row numbers in view at all times, and move the channel columns instead?
 
+// TODO Need more room when in landscape mode on this viewer.
+//  Maybe remove TopBar?
+//  Bar centered not in view.
+
 @Composable
 internal fun ComposePatternViewer(
+    onTap: () -> Unit,
     viewInfo: ViewerInfo,
     patternInfo: PatternInfo,
     isMuted: BooleanArray,
@@ -100,10 +106,10 @@ internal fun ComposePatternViewer(
                 text = AnnotatedString((it + 1).toString()),
                 density = density,
                 style = TextStyle(
-                    background = if (view.isInEditMode) Color.Green else Color.Unspecified,
                     color = Color.White,
                     fontFamily = FontFamily.Monospace,
-                    fontSize = 12.sp
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
                 )
             )
         }
@@ -121,7 +127,7 @@ internal fun ComposePatternViewer(
     }
 
     LaunchedEffect(chn) {
-        // Scroll to the top on song change
+        // Scroll to the beginning if the channel number changes
         scope.launch {
             offsetX.animateTo(
                 targetValue = 0f,
@@ -137,6 +143,9 @@ internal fun ComposePatternViewer(
                 orientation = Orientation.Horizontal,
                 state = scrollState
             )
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { onTap() })
+            }
     ) {
         if (canvasSize != size) {
             canvasSize = size
@@ -208,7 +217,6 @@ internal fun ComposePatternViewer(
                 density = density,
                 style = TextStyle(
                     fontSize = 14.sp,
-                    background = if (view.isInEditMode) Color.Green else Color.Unspecified,
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Bold
                 )
@@ -253,7 +261,6 @@ internal fun ComposePatternViewer(
                     style = TextStyle(
                         fontSize = 14.sp,
                         color = if (isMuted[j]) Color.LightGray else Color(140, 140, 160),
-                        background = if (view.isInEditMode) Color.Green else Color.Unspecified,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold
                     )
@@ -275,7 +282,6 @@ internal fun ComposePatternViewer(
                     style = TextStyle(
                         fontSize = 14.sp,
                         color = if (isMuted[j]) Color(80, 40, 40) else Color(160, 80, 80),
-                        background = if (view.isInEditMode) Color.Green else Color.Unspecified,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold
                     )
@@ -300,7 +306,6 @@ internal fun ComposePatternViewer(
                     style = TextStyle(
                         fontSize = 14.sp,
                         color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60),
-                        background = if (view.isInEditMode) Color.Green else Color.Unspecified,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold
                     )
@@ -323,7 +328,6 @@ internal fun ComposePatternViewer(
                     style = TextStyle(
                         fontSize = 14.sp,
                         color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60),
-                        background = if (view.isInEditMode) Color.Green else Color.Unspecified,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold
                     )
@@ -335,28 +339,6 @@ internal fun ComposePatternViewer(
                     topLeft = Offset(fxParmOffsetX, textCenterY)
                 )
             }
-        }
-
-        if (BuildConfig.DEBUG) {
-            if (view.isInEditMode) {
-                debugScreen(
-                    textMeasurer = textMeasurer,
-                    xValue = xAxisMultiplier
-                )
-                // debugPatternViewColumns()
-            }
-
-            drawText(
-                textLayoutResult = textMeasurer.measure(
-                    text = AnnotatedString(
-                        "Row: ${currentRow.toInt()} / Rows: $numRows"
-                    )
-                )
-            )
-            drawText(
-                textMeasurer.measure(text = AnnotatedString("Chn: $chn")),
-                topLeft = Offset(0f, 28f)
-            )
         }
     }
 }
@@ -377,6 +359,7 @@ private fun Preview_PatternViewer() {
 
     XmpTheme(useDarkTheme = true) {
         ComposePatternViewer(
+            onTap = { },
             viewInfo = viewInfo,
             patternInfo = patternInfo,
             isMuted = BooleanArray(modVars[3]) { false },

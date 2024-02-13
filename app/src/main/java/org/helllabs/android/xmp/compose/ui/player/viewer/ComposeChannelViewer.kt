@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.player.viewer
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +19,7 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -35,6 +37,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 @Composable
 fun ComposeChannelViewer(
+    onTap: () -> Unit,
     viewInfo: ViewerInfo,
     isMuted: BooleanArray,
     modVars: IntArray,
@@ -62,6 +65,9 @@ fun ComposeChannelViewer(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(verticalScroll)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { onTap() })
+            }
     ) {
     }
 }

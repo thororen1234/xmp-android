@@ -56,7 +56,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     private var volume = 0
     private var watchdog: Watchdog? = null
 
-    // private val callbacks = RemoteCallbackList<PlayerCallback>()
     private var discardBuffer = false // don't play current buffer if changing module while paused
     private var looped = false
     private var playerAllSequences = false
@@ -73,26 +72,33 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     override fun onCreate() {
         super.onCreate()
         Timber.i("Create service")
+
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         remoteControl = RemoteControl(this, audioManager)
         hasAudioFocus = requestAudioFocus()
+
         if (!hasAudioFocus) {
             Timber.e("Can't get audio focus")
         }
+
         receiverHelper = ReceiverHelper(this)
         receiverHelper!!.registerReceivers()
+
         var bufferMs = PrefManager.bufferMs
         if (bufferMs < MIN_BUFFER_MS) {
             bufferMs = MIN_BUFFER_MS
         } else if (bufferMs > MAX_BUFFER_MS) {
             bufferMs = MAX_BUFFER_MS
         }
+
         sampleRate = PrefManager.samplingRate
+
         if (Xmp.init(sampleRate, bufferMs)) {
             audioInitialized = true
         } else {
             Timber.e("error initializing audio")
         }
+
         volume = Xmp.getVolume()
         isAlive = false
         isLoaded = false
@@ -114,9 +120,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         }
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-        return START_NOT_STICKY
-    }
+    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int = START_NOT_STICKY
 
     override fun onDestroy() {
         receiverHelper?.unregisterReceivers()
@@ -124,11 +128,13 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         notifier?.cancel()
 
         mediaSession.isActive = false
+
         if (audioInitialized) {
             end(if (hasAudioFocus) RESULT_OK else RESULT_NO_AUDIO_FOCUS)
         } else {
             end(RESULT_CANT_OPEN_AUDIO)
         }
+
         super.onDestroy()
     }
 
@@ -163,6 +169,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             if (name.isEmpty()) {
                 name = Files.basename(queue!!.filename)
             }
+
             notifier?.notify(
                 name,
                 Xmp.getModType(),
@@ -174,7 +181,9 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     private fun doPauseAndNotify() {
         isPlayerPaused = isPlayerPaused xor true
+
         updateNotification()
+
         if (isPlayerPaused) {
             Xmp.stopAudio()
             remoteControl!!.setStatePaused()
@@ -186,9 +195,11 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     fun actionStop() {
         Xmp.stopModule()
+
         if (isPlayerPaused) {
             doPauseAndNotify()
         }
+
         cmd = CMD_STOP
     }
 
@@ -197,15 +208,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
         // Notify clients that we paused
         playerServiceCallback?.onPlayerPause()
-//        val numClients = callbacks.beginBroadcast()
-//        for (i in 0 until numClients) {
-//            try {
-//                callbacks.getBroadcastItem(i).pauseCallback()
-//            } catch (e: RemoteException) {
-//                Timber.e("Error notifying pause to client")
-//            }
-//        }
-//        callbacks.finishBroadcast()
     }
 
     fun actionPrev() {
@@ -215,6 +217,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             Xmp.stopModule()
             cmd = CMD_PREV
         }
+
         if (isPlayerPaused) {
             doPauseAndNotify()
             discardBuffer = true
@@ -223,32 +226,29 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     fun actionNext() {
         Xmp.stopModule()
+
         if (isPlayerPaused) {
             doPauseAndNotify()
             discardBuffer = true
         }
+
         cmd = CMD_NEXT
     }
 
     private fun notifyNewSequence() {
         playerServiceCallback?.onNewSequence()
-//        val numClients = callbacks.beginBroadcast()
-//        for (j in 0 until numClients) {
-//            try {
-//                callbacks.getBroadcastItem(j).newSequenceCallback()
-//            } catch (e: RemoteException) {
-//                Timber.e("Error notifying end of module to client")
-//            }
-//        }
-//        callbacks.finishBroadcast()
     }
 
     private inner class PlayRunnable : Runnable {
         override fun run() {
             cmd = CMD_NONE
+
             val vars = IntArray(8)
+
             remoteControl!!.setStatePlaying()
+
             var lastRecognized = 0
+
             do {
                 playerFileName = queue?.filename // Used in reconnection
 
@@ -321,15 +321,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 }
 
                 playerServiceCallback?.onNewMod()
-//                var numClients = callbacks.beginBroadcast()
-//                for (j in 0 until numClients) {
-//                    try {
-//                        callbacks.getBroadcastItem(j).newModCallback()
-//                    } catch (e: RemoteException) {
-//                        Timber.e("Error notifying new module to client")
-//                    }
-//                }
-//                callbacks.finishBroadcast()
+
                 Xmp.setPlayer(Xmp.PLAYER_AMP, volBoost)
                 Xmp.setPlayer(Xmp.PLAYER_MIX, PrefManager.stereoMix)
                 Xmp.setPlayer(Xmp.PLAYER_INTERP, interpType)
@@ -425,33 +417,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                     Timber.e("Sleep interrupted: $e")
                 }
 
-//                numClients = callbacks.beginBroadcast()
-//                if (numClients > 0) {
-//                    canRelease = false
-//                    for (j in 0 until numClients) {
-//                        try {
-//                            Timber.i("Call end of module callback")
-//                            callbacks.getBroadcastItem(j).endModCallback()
-//                        } catch (e: RemoteException) {
-//                            Timber.e("Error notifying end of module to client")
-//                        }
-//                    }
-//                    callbacks.finishBroadcast()
-//
-//                    // if we have clients, make sure we can release module
-//                    var timeout = 0
-//                    try {
-//                        while (!canRelease && timeout < 20) {
-//                            Thread.sleep(100)
-//                            timeout++
-//                        }
-//                    } catch (e: InterruptedException) {
-//                        Timber.e("Sleep interrupted: $e")
-//                    }
-//                } else {
-//                    callbacks.finishBroadcast()
-//                }
-
                 Timber.i("Release module")
                 Xmp.releaseModule()
 
@@ -482,21 +447,16 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     private fun end(result: Int) {
         Timber.i("End service")
+
         playerServiceCallback?.onEndPlayCallback(result)
-//        val numClients = callbacks.beginBroadcast()
-//        for (i in 0 until numClients) {
-//            try {
-//                callbacks.getBroadcastItem(i).endPlayCallback(result)
-//            } catch (e: RemoteException) {
-//                Timber.e("Error notifying end of play to client")
-//            }
-//        }
-//        callbacks.finishBroadcast()
         isAlive = false
+
         Xmp.stopModule()
+
         if (isPlayerPaused) {
             doPauseAndNotify()
         }
+
         Xmp.deinit()
     }
 
@@ -512,11 +472,12 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             stopSelf()
             return
         }
-        queue =
-            QueueManager(fileList.toMutableList(), start, shuffle, loopList, keepFirst)
+
+        queue = QueueManager(fileList.toMutableList(), start, shuffle, loopList, keepFirst)
         notifier?.queueManager = queue!!
 
         cmd = CMD_NONE
+
         if (isPlayerPaused) {
             doPauseAndNotify()
         }
@@ -530,11 +491,13 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             playThread = Thread(PlayRunnable())
             playThread!!.start()
         }
+
         isAlive = true
     }
 
     fun add(fileList: List<String>) {
         queue!!.add(fileList)
+
         updateNotification()
     }
 
@@ -544,6 +507,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     fun pause() {
         doPauseAndNotify()
+
         receiverHelper!!.isHeadsetPaused = false
     }
 
@@ -598,29 +562,37 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     fun nextSong() {
         Xmp.stopModule()
+
         cmd = CMD_NEXT
+
         if (isPlayerPaused) {
             doPauseAndNotify()
         }
+
         discardBuffer = true
     }
 
     fun prevSong() {
         Xmp.stopModule()
+
         cmd = CMD_PREV
+
         if (isPlayerPaused) {
             doPauseAndNotify()
         }
+
         discardBuffer = true
     }
 
     fun toggleLoop(): Boolean {
         looped = looped.xor(true)
+
         return looped
     }
 
     fun toggleAllSequences(): Boolean {
         playerAllSequences = playerAllSequences.xor(true)
+
         return playerAllSequences
     }
 
@@ -636,6 +608,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             sequenceNumber = seq
             notifyNewSequence()
         }
+
         return ret
     }
 
@@ -652,54 +625,30 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     fun getInstruments(): Array<String> = Xmp.getInstruments()!!
 
-    fun getPatternRow(
-        pat: Int,
-        row: Int,
-        rowNotes: ByteArray?,
-        rowInstruments: ByteArray?,
-        rowFxType: IntArray?,
-        rowFxParm: IntArray?
-    ) {
-        if (isAlive) {
-            Xmp.getPatternRow(pat, row, rowNotes!!, rowInstruments!!, rowFxType!!, rowFxParm!!)
-        }
-    }
-
     fun mute(chn: Int, status: Int): Int = Xmp.mute(chn, status)
-
-    fun hasComment(): Boolean = Xmp.getComment() != null
 
     // File management
     fun deleteFile(): Boolean {
         Timber.i("Delete file ${getFileName()}")
         return delete(getFileName())
     }
-
-    // Callback
-//    fun registerCallback(callback: PlayerCallback) {
-//        callbacks.register(callback)
-//    }
-//
-//    fun unregisterCallback(callback: PlayerCallback) {
-//        callbacks.unregister(callback)
-//    }
     // endregion
 
     // for audio focus loss
     private fun autoPause(pause: Boolean): Boolean {
-        Timber.i(
+        Timber.i("Auto pause changed to $pause, previously ${receiverHelper!!.isAutoPaused}")
 
-            "Auto pause changed to " + pause + ", previously " + receiverHelper!!.isAutoPaused
-        )
         if (pause) {
             previousPaused = isPlayerPaused
             receiverHelper!!.isAutoPaused = true
             isPlayerPaused = false // set to complement, flip on doPause()
+
             doPauseAndNotify()
         } else {
             if (receiverHelper!!.isAutoPaused && !receiverHelper!!.isHeadsetPaused) {
                 receiverHelper!!.isAutoPaused = false
                 isPlayerPaused = !previousPaused // set to complement, flip on doPause()
+
                 doPauseAndNotify()
             }
         }

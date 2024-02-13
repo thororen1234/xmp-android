@@ -28,6 +28,7 @@ internal fun DrawScope.debugPatternViewColumns() {
     }
 }
 
+@Suppress("unused")
 internal fun DrawScope.debugScreen(
     textMeasurer: TextMeasurer,
     xValue: Float = 24.dp.toPx(),
@@ -74,6 +75,7 @@ internal fun DrawScope.debugScreen(
     }
 }
 
+@Suppress("unused")
 internal fun composePatternSampleData(): PatternInfo {
     if (!BuildConfig.DEBUG) {
         throw Exception("This function shouldn't be used in non debug builds.")
@@ -105,6 +107,7 @@ internal fun composePatternSampleData(): PatternInfo {
     )
 }
 
+@Suppress("unused")
 internal fun composeViewerSampleData(): ViewerInfo {
     if (!BuildConfig.DEBUG) {
         throw Exception("This function shouldn't be used in non debug builds.")

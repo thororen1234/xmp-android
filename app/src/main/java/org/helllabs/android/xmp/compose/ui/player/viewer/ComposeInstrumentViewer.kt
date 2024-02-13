@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +22,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.AnnotatedString
@@ -41,6 +43,7 @@ private val barShape = CornerRadius(8f, 8f)
 
 @Composable
 internal fun InstrumentViewer(
+    onTap: () -> Unit,
     viewInfo: ViewerInfo,
     isMuted: BooleanArray,
     modVars: IntArray,
@@ -113,6 +116,9 @@ internal fun InstrumentViewer(
                 orientation = Orientation.Vertical,
                 state = scrollState
             )
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { onTap() })
+            }
     ) {
         if (canvasSize != size) {
             canvasSize = size

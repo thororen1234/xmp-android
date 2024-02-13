@@ -1,15 +1,23 @@
 package org.helllabs.android.xmp.compose.ui.player
 
+import android.os.RemoteException
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import org.helllabs.android.xmp.Xmp
+import org.helllabs.android.xmp.compose.ui.player.viewer.PatternInfo
+import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
 import timber.log.Timber
 
 class PlayerViewModel : ViewModel() {
 
+    /** Player States **/
     data class PlayerState(
         val serviceConnected: Boolean = false,
         val currentViewer: Int = 0,
@@ -49,6 +57,7 @@ class PlayerViewModel : ViewModel() {
         val currentSequence: Int = 0
     )
 
+    /** Player Variables **/
     private val _uiState = MutableStateFlow(PlayerState())
     val uiState = _uiState.asStateFlow()
 
@@ -75,6 +84,21 @@ class PlayerViewModel : ViewModel() {
 
     val currentViewer: Int
         get() = _uiState.value.currentViewer
+
+    /** Viewer Variables **/
+    val modVars by mutableStateOf(IntArray(10))
+
+    val patternInfo by mutableStateOf(PatternInfo())
+
+    val seqVars by mutableStateOf(IntArray(Xmp.maxSeqFromHeader))
+
+    val viewInfo by mutableStateOf(ViewerInfo())
+
+    var insName by mutableStateOf(arrayOf<String>())
+
+    var isMuted by mutableStateOf(BooleanArray(0))
+
+    /** Player Functions **/
 
     fun onConnected(value: Boolean) {
         _uiState.update { it.copy(serviceConnected = value) }
@@ -181,8 +205,27 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
-    fun changeCurrentViewer() {
+    /** Viewer Functions **/
+    fun changeViewer() {
         val current = (currentViewer + 1) % 3
         _uiState.update { it.copy(currentViewer = current) }
+    }
+
+    fun setup() {
+        if (_uiState.value.serviceConnected) {
+            insName = Xmp.getInstruments() ?: arrayOf()
+            Xmp.getModVars(modVars)
+            Xmp.getSeqVars(seqVars)
+
+            val chn = modVars[3]
+            isMuted = BooleanArray(chn)
+            for (i in 0 until chn) {
+                try {
+                    isMuted[i] = Xmp.mute(i, -1) == 1
+                } catch (e: RemoteException) {
+                    Timber.w("Can't read channel mute status: ${e.message}")
+                }
+            }
+        }
     }
 }
