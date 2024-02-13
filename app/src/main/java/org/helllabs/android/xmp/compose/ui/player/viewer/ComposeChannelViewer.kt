@@ -1,25 +1,25 @@
 package org.helllabs.android.xmp.compose.ui.player.viewer
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -28,12 +28,16 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
+import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.compose.ui.player.Util
 
-// TODO wider/landscape support
+// TODO: 2 Column support on wider screens or in landscape.
+
+val c = CharArray(2)
 
 @Composable
 fun ComposeChannelViewer(
@@ -43,186 +47,164 @@ fun ComposeChannelViewer(
     modVars: IntArray,
     insName: Array<String>
 ) {
-    val verticalScroll = rememberScrollState()
+    val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
+    val textMeasurer = rememberTextMeasurer()
+    val view = LocalView.current
 
-    val chn by remember(modVars[3]) {
-        mutableIntStateOf(modVars[3])
+    val xAxisMultiplier by remember {
+        mutableFloatStateOf(with(density) { 24.dp.toPx() })
     }
-    val ins by remember(modVars[4]) {
-        mutableIntStateOf(modVars[4])
+
+    // https://m3.material.io/components/lists/specs
+    val yAxisMultiplier by remember {
+        mutableFloatStateOf(with(density) { 56.dp.toPx() })
     }
-    val instrumentNames by remember(insName) {
-        val list = insName.toMutableList().apply {
-            if (size < ins) {
-                addAll(List(ins - size) { "" })
-            }
-        }.ifEmpty { List(ins) { "" } }
+
+    val holdKey by remember(modVars[3]) {
+        mutableStateOf(IntArray(modVars[3]))
+    }
+    val keyRow by remember {
+        mutableStateOf(IntArray(Xmp.MAX_CHANNELS))
+    }
+    val channelNumber by remember(modVars[3]) {
+        val list = arrayOfNulls<String?>(modVars[3])
+
+        (0 until modVars[3]).map {
+            Util.to2d(c, it + 1)
+            list[it] = String(c)
+        }
 
         mutableStateOf(list)
     }
 
-    Column(
+    var canvasSize by remember {
+        mutableStateOf(Size.Zero)
+    }
+    val yOffset = remember {
+        Animatable(0f)
+    }
+
+    val scrollState = rememberScrollableState { delta ->
+        scope.launch {
+            // TODO bounds
+            // val totalContentHeight = with(density) { 24.dp.toPx() * ins }
+            // val maxOffset = (totalContentHeight - canvasSize.height).coerceAtLeast(0f)
+            // val newOffset = (yOffset.value + delta).coerceIn(-maxOffset, 0f)
+            yOffset.snapTo(delta)
+        }
+        delta
+    }
+
+    Canvas(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(verticalScroll)
+            .scrollable(
+                orientation = Orientation.Vertical,
+                state = scrollState
+            )
             .pointerInput(Unit) {
-                detectTapGestures(onTap = { onTap() })
+                detectTapGestures(
+                    onTap = {
+                        // TODO: Find what channel was clicked. and XMP mute that channel
+                        onTap()
+                    },
+                    onLongPress = {
+                        // TODO If a channel is solo, unmute all channels
+                        //  otherwise solo this channel
+                    }
+                )
             }
     ) {
-    }
-}
+        if (canvasSize != size) {
+            canvasSize = size
+        }
 
-@Composable
-private fun ChannelItem(
-    channelNumber: String,
-    channelName: String
+        // TODO doDraw
+        // Xmp.getChannelData()
+        val numChannels = modVars[3]
+        // numInstruments = modVars[4]
+        // row = viewInfo.values[2]
 
-) {
-    val textMeasurer = rememberTextMeasurer()
-    val view = LocalView.current
-
-    Spacer(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(72.dp)
-            .drawWithCache {
-                // Scope background
-                val rectHeight = 66.dp
-                val rectWidthPx = (rectHeight * (16f / 9f)).toPx()
-
-                val endPadding = size.width / 8.dp.toPx()
-                fun xOffset(value: Int): Float = value * 8.dp.toPx()
-                fun yOffset(value: Int): Float = (size.height / 6) * value - 1 / 2
-
-                val chnNumberText = textMeasurer.measure(
-                    text = AnnotatedString(channelNumber),
-                    style = TextStyle(
-                        color = Color(200, 200, 200, 255),
-                        fontSize = 14.sp,
-                        fontFamily = FontFamily.Monospace
-                    )
+        for (chn in 0 until numChannels) {
+            /***** Channel Number *****/
+            val chnText = textMeasurer.measure(
+                text = AnnotatedString(channelNumber[chn].toString()),
+                style = TextStyle(
+                    color = Color(200, 200, 200, 255),
+                    background = if (view.isInEditMode) Color.Magenta else Color.Unspecified,
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily.Monospace
                 )
-                val chnNameText = textMeasurer.measure(
-                    text = AnnotatedString(channelName),
-                    constraints = Constraints.fixedWidth((xOffset(48).toInt() - xOffset(12)).toInt()),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = TextStyle(
-                        color = Color(200, 200, 200, 255),
-                        fontSize = 12.sp,
-                        fontFamily = FontFamily.Monospace
-                    )
+            )
+            val textCenterX = xAxisMultiplier.div(2) - chnText.size.width.div(2)
+            val textCenterY =
+                yAxisMultiplier.times(chn) + yAxisMultiplier.div(2) - chnText.size.height.div(2)
+            drawText(
+                textLayoutResult = chnText,
+                color = Color.White,
+                topLeft = Offset(textCenterX, textCenterY + yOffset.value)
+            )
+
+            /***** Channel Scope Background *****/
+            drawRect(
+                color = Color(40, 40, 40, 255),
+                size = Size(
+                    width = xAxisMultiplier.times(3) - xAxisMultiplier.div(2),
+                    height = yAxisMultiplier - yAxisMultiplier.div(3)
+                ),
+                topLeft = Offset(
+                    x = xAxisMultiplier + xAxisMultiplier.div(4),
+                    y = yAxisMultiplier.times(chn) + yAxisMultiplier.div(6) + yOffset.value
                 )
+            )
 
-                onDrawBehind {
-                    // Channel Number
-                    drawText(
-                        textLayoutResult = chnNumberText,
-                        topLeft = Offset(
-                            xOffset(2) - (chnNumberText.size.width / 2),
-                            yOffset(3) - (chnNumberText.size.height / 2)
-                        )
-                    )
+            /***** Instrument Name *****/
+            val chnNameText = textMeasurer.measure(
+                text = AnnotatedString("TODO"),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = TextStyle(
+                    color = Color(200, 200, 200, 255),
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily.Monospace
+                )
+            )
+            drawText(
+                textLayoutResult = chnNameText,
+                topLeft = Offset(
+                    x = xAxisMultiplier.times(4),
+                    y = yAxisMultiplier.times(chn) + yAxisMultiplier.div(4) + yOffset.value
+                )
+            )
 
-                    // Channel Scope Background
-                    // TODO not wide enough?
-                    drawRect(
-                        color = Color(40, 40, 40, 255),
-                        topLeft = Offset(
-                            x = xOffset(4),
-                            y = yOffset(1)
-                        ),
-                        size = Size(xOffset(4) * (16f / 9f), yOffset(4))
-                    )
+            /***** Volume Bar Background *****/
+            drawRect(
+                color = Color(40, 40, 40, 255),
+                topLeft = Offset(
+                    x = xAxisMultiplier.times(4),
+                    y = yAxisMultiplier.times(chn) - yAxisMultiplier.div(3) + yOffset.value
+                ),
+                size = Size(xAxisMultiplier.times(5), 16f)
+            )
 
-                    // Instrument Name
-                    drawText(
-                        textLayoutResult = chnNameText,
-                        topLeft = Offset(
-                            x = xOffset(12),
-                            y = (size.height / 3) - (chnNameText.size.height / 2)
-                        )
-                    )
+            /***** Pan Bar Background *****/
+            drawRect(
+                color = Color(40, 40, 40, 255),
+                topLeft = Offset(
+                    x = xAxisMultiplier.times(10),
+                    y = yAxisMultiplier.times(chn) - yAxisMultiplier.div(3) + yOffset.value
+                ),
+                size = Size(xAxisMultiplier.times(5), 16f)
+            )
+        }
 
-                    // Volume Bar
-                    val volumeBarWidth = xOffset(29) - xOffset(12)
-                    drawRect(
-                        color = Color(40, 40, 40, 255),
-                        topLeft = Offset(
-                            x = xOffset(12),
-                            y = (size.height / 6) * 4 - 8 / 2
-                        ),
-                        size = Size(volumeBarWidth, 12f)
-                    )
-
-                    // Pan Bar
-                    val panBarWidth = xOffset(48) - xOffset(31)
-                    drawRect(
-                        color = Color(40, 40, 40, 255),
-                        topLeft = Offset(
-                            x = xOffset(31),
-                            y = (size.height / 6) * 4 - 8 / 2
-                        ),
-                        size = Size(panBarWidth, 12f)
-                    )
-
-                    // PLACEHOLDER LINES
-                    if (view.isInEditMode) {
-                        val lineSpacing = 8.dp.toPx()
-                        for (i in 0 until (size.width / lineSpacing).toInt()) {
-                            val xPosition = i * lineSpacing
-                            drawRect(
-                                color = Color.Green.copy(alpha = .12f),
-                                topLeft = Offset(xPosition, 0f),
-                                size = Size(1f, size.height)
-                            )
-                            val text = textMeasurer.measure(
-                                text = AnnotatedString(i.toString()),
-                                style = TextStyle(
-                                    color = Color.White,
-                                    fontSize = 3.sp,
-                                    fontFamily = FontFamily.Monospace
-                                )
-
-                            )
-                            drawText(textLayoutResult = text, topLeft = Offset(xPosition, 0f))
-                        }
-
-                        val segmentHeight = size.height / 6
-                        for (i in 1..5) {
-                            val yPosition = segmentHeight * i - 1 / 2
-                            drawRect(
-                                color = Color.Yellow.copy(alpha = .12f),
-                                topLeft = Offset(0f, yPosition),
-                                size = Size(size.width, 1f)
-                            )
-                        }
-
-                        // Should be even
-                        if (volumeBarWidth != panBarWidth) {
-                            throw IllegalAccessError("Bar widths not the same")
-                        }
-                    }
-                }
-            }
-    )
-}
-
-@Preview
-@Composable
-private fun Preview_ChannelItem() {
-    XmpTheme(useDarkTheme = true) {
-        val name = "A Super Very Long Instrument Name Item That Should Eclipse"
-        Surface {
-            Column {
-                ChannelItem("1", name)
-                Spacer(modifier = Modifier.height(4.dp))
-                ChannelItem("10", name)
-                Spacer(modifier = Modifier.height(4.dp))
-                ChannelItem("28", name)
-                Spacer(modifier = Modifier.height(4.dp))
-                ChannelItem("100", name)
-            }
+        if (view.isInEditMode) {
+            debugScreen(
+                textMeasurer = textMeasurer,
+                xValue = xAxisMultiplier,
+                yValue = yAxisMultiplier
+            )
         }
     }
 }
