@@ -7,7 +7,6 @@ cascadeCompose = "2.3.0" # https://mvnrepository.com/artifact/me.saket.cascade/c
 composeBom = "2024.02.00" # https://mvnrepository.com/artifact/androidx.compose/compose-bom
 coreKtx = "1.12.0" # https://mvnrepository.com/artifact/androidx.core/core-ktx
 daggerHilt = "2.50" # https://mvnrepository.com/artifact/com.google.dagger/hilt-android
-javaVersion = "17"
 kotlinCompiler = "1.5.9" # https://developer.android.com/jetpack/androidx/releases/compose-compiler
 kotlinxSerializationJson = "1.6.2" # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-serialization-json
 ktLintGradle = "11.6.1" # // https://github.com/JLLeitschuh/ktlint-gradle

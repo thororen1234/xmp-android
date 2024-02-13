@@ -99,7 +99,7 @@ class PlaylistMenu : ComponentActivity() {
 
     private val viewModel by viewModels<PlaylistMenuViewModel>()
 
-    private var snackbarHostState = SnackbarHostState()
+    private var snackBarHostState = SnackbarHostState()
 
     private val settingsContract = ActivityResultContracts.StartActivityForResult()
     private val settingsResult = registerForActivityResult(settingsContract) {
@@ -117,7 +117,7 @@ class PlaylistMenu : ComponentActivity() {
             result.data?.getStringExtra("error")?.let {
                 Timber.w("Result with error: $it")
                 lifecycleScope.launch {
-                    snackbarHostState.showSnackbar(message = it)
+                    snackBarHostState.showSnackbar(message = it)
                 }
             }
         }
@@ -310,7 +310,7 @@ class PlaylistMenu : ComponentActivity() {
             XmpTheme {
                 PlaylistMenuScreen(
                     state = state,
-                    snackbarHostState = snackbarHostState,
+                    snackbarHostState = snackBarHostState,
                     permissionState = permission.status.isGranted,
                     permissionRationale = permission.status.shouldShowRationale,
                     onItemClick = { item ->

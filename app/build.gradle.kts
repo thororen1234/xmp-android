@@ -72,17 +72,16 @@ android {
     }
 
     compileOptions {
-        val javaVersion = JavaVersion.toVersion(libs.versions.javaVersion.get().toString())
-        sourceCompatibility = javaVersion
-        targetCompatibility = javaVersion
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.kotlinCompiler.get().toString()
+        kotlinCompilerExtensionVersion = libs.versions.kotlinCompiler.get()
     }
 
     kotlinOptions {
-        jvmTarget = libs.versions.javaVersion.get().toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     kapt {

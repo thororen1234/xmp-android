@@ -4,8 +4,8 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -42,7 +42,7 @@ fun MenuCardItem(
                     imageVector = if (item.isSpecial) {
                         Icons.Default.Folder
                     } else {
-                        Icons.Default.List
+                        Icons.AutoMirrored.Filled.List
                     },
                     contentDescription = null
                 )

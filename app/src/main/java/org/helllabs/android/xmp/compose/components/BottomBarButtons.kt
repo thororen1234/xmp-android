@@ -63,7 +63,7 @@ fun BottomBarButtons(
 @Preview
 @Composable
 private fun Preview_BottomBarButtons() {
-    XmpTheme {
+    XmpTheme(useDarkTheme = true) {
         BottomBarButtons(
             isShuffle = true,
             isLoop = false,

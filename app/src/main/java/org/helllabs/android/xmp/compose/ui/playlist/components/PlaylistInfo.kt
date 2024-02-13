@@ -3,8 +3,8 @@ package org.helllabs.android.xmp.compose.ui.playlist.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -53,7 +53,7 @@ fun PlaylistInfo(
         },
         windowInsets = WindowInsets(right = 16.dp)
     )
-    Divider(modifier = Modifier.fillMaxWidth())
+    HorizontalDivider(modifier = Modifier.fillMaxWidth())
 }
 
 @Preview

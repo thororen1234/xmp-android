@@ -21,10 +21,12 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 @Composable
 fun XmpDropdownMenuHeader(
-    text: String,
-    color: Color = MaterialTheme.colorScheme.primary
+    modifier: Modifier = Modifier,
+    color: Color = MaterialTheme.colorScheme.primary,
+    contentPadding: PaddingValues = PaddingValues(vertical = 4.dp),
+    text: String
 ) {
-    XmpDropdownMenuHeader {
+    XmpDropdownMenuHeader(modifier = modifier, contentPadding = contentPadding) {
         Text(text = text, color = color)
     }
 }
@@ -37,8 +39,8 @@ fun XmpDropdownMenuHeader(
  */
 @Composable
 private fun XmpDropdownMenuHeader(
-    modifier: Modifier = Modifier,
-    contentPadding: PaddingValues = PaddingValues(vertical = 4.dp),
+    modifier: Modifier,
+    contentPadding: PaddingValues,
     text: @Composable () -> Unit
 ) {
     Row(
@@ -75,7 +77,7 @@ private fun XmpDropdownMenuHeader(
 private fun Preview_XmpDropdownMenuHeader() {
     XmpTheme(useDarkTheme = true) {
         Surface {
-            XmpDropdownMenuHeader("Xmp Dropdown Menu Header")
+            XmpDropdownMenuHeader(text = "Xmp Dropdown Menu Header")
         }
     }
 }

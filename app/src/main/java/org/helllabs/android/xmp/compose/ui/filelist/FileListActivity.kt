@@ -18,7 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.PlaylistAdd
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.QuestionMark
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -251,7 +251,7 @@ class FileListActivity : BasePlaylistActivity() {
             var playlistChoiceState: PlaylistChoiceData? by remember { mutableStateOf(null) }
             ListDialog(
                 isShowing = playlistChoiceState != null,
-                icon = Icons.Filled.PlaylistAdd,
+                icon = Icons.AutoMirrored.Filled.PlaylistAdd,
                 title = stringResource(id = R.string.msg_select_playlist),
                 list = PlaylistUtils.listNoSuffix().toList(),
                 onConfirm = { choice ->

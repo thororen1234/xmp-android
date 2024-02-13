@@ -24,7 +24,8 @@ class RemoteControl(context: Context, private val audioManager: AudioManager?) {
             audioManager!!.registerMediaButtonEventReceiver(remoteControlReceiver)
             val intent = Intent(Intent.ACTION_MEDIA_BUTTON)
             intent.component = remoteControlReceiver
-            val pendingIntent = PendingIntent.getBroadcast(context, 0, intent, 0)
+            val pendingIntent =
+                PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
             remoteControlClient = RemoteControlClientCompat(pendingIntent)
             remoteControlClient?.setTransportControlFlags(
                 RemoteControlClient.FLAG_KEY_MEDIA_PLAY_PAUSE or
