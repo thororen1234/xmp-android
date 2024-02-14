@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -35,8 +36,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
+import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.accent
+import org.helllabs.android.xmp.service.PlayerService
 
 private const val VOLUME_STEPS = 32
 private val barShape = CornerRadius(8f, 8f)
@@ -44,6 +47,7 @@ private val barShape = CornerRadius(8f, 8f)
 @Composable
 internal fun InstrumentViewer(
     onTap: () -> Unit,
+    serviceConnected: Boolean,
     viewInfo: ViewerInfo,
     isMuted: BooleanArray,
     modVars: IntArray,
@@ -53,6 +57,24 @@ internal fun InstrumentViewer(
     val scope = rememberCoroutineScope()
     val textMeasurer = rememberTextMeasurer()
     val view = LocalView.current
+
+    // serviceConnected: Bit of a hack to stop a seg fault. We're loading too fast
+    LaunchedEffect(serviceConnected) {
+        while (true) {
+            withFrameMillis {
+                if (PlayerService.isAlive && serviceConnected) {
+                    Xmp.getChannelData(
+                        viewInfo.volumes,
+                        viewInfo.finalVols,
+                        viewInfo.pans,
+                        viewInfo.instruments,
+                        viewInfo.keys,
+                        viewInfo.periods
+                    )
+                }
+            }
+        }
+    }
 
     val textColor by remember {
         val list = (0..VOLUME_STEPS).map {
@@ -193,6 +215,7 @@ private fun Preview_InstrumentViewer() {
     XmpTheme(useDarkTheme = true) {
         XmpCanvas(
             onChangeViewer = {},
+            serviceConnected = false,
             currentViewer = 0,
             viewInfo = viewInfo,
             isMuted = BooleanArray(modVars[3]) { false },

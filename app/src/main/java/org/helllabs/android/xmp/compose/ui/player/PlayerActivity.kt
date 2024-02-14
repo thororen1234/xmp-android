@@ -170,14 +170,14 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                     try {
                         modPlayer!!.getInfo(viewModel.viewInfo.values)
                         viewModel.viewInfo.time = modPlayer!!.time() / 1000
-                        modPlayer!!.getChannelData(
-                            viewModel.viewInfo.volumes,
-                            viewModel.viewInfo.finalVols,
-                            viewModel.viewInfo.pans,
-                            viewModel.viewInfo.instruments,
-                            viewModel.viewInfo.keys,
-                            viewModel.viewInfo.periods
-                        )
+//                        modPlayer!!.getChannelData(
+//                            viewModel.viewInfo.volumes,
+//                            viewModel.viewInfo.finalVols,
+//                            viewModel.viewInfo.pans,
+//                            viewModel.viewInfo.instruments,
+//                            viewModel.viewInfo.keys,
+//                            viewModel.viewInfo.periods
+//                        )
 
                         if (PlayerService.isAlive) {
                             if (viewModel.currentViewer == 2) {
@@ -1006,6 +1006,7 @@ private fun PlayerScreen(
                 modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxSize(),
+                serviceConnected = uiState.serviceConnected,
                 onChangeViewer = onChangeViewer,
                 currentViewer = currentViewer,
                 viewInfo = viewInfo,

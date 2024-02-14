@@ -14,6 +14,7 @@ import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.ui.player.viewer.PatternInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
 import timber.log.Timber
+import java.util.Collections
 
 class PlayerViewModel : ViewModel() {
 
@@ -213,9 +214,9 @@ class PlayerViewModel : ViewModel() {
 
     fun setup() {
         if (_uiState.value.serviceConnected) {
-            insName = Xmp.getInstruments() ?: arrayOf()
             Xmp.getModVars(modVars)
             Xmp.getSeqVars(seqVars)
+            insName = Xmp.getInstruments() ?: Collections.nCopies(modVars[4], "").toTypedArray()
 
             val chn = modVars[3]
             isMuted = BooleanArray(chn)

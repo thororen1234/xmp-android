@@ -19,6 +19,7 @@ data class SampleData(
 @Composable
 internal fun XmpCanvas(
     modifier: Modifier = Modifier,
+    serviceConnected: Boolean,
     onChangeViewer: () -> Unit,
     currentViewer: Int,
     viewInfo: ViewerInfo,
@@ -29,7 +30,7 @@ internal fun XmpCanvas(
 ) {
     Box(modifier = modifier) {
         when (currentViewer) {
-            0 -> InstrumentViewer(onChangeViewer, viewInfo, isMuted, modVars, insName)
+            0 -> InstrumentViewer(onChangeViewer, serviceConnected, viewInfo, isMuted, modVars, insName)
             1 -> ComposePatternViewer(onChangeViewer, viewInfo, patternInfo, isMuted, modVars)
             2 -> ComposeChannelViewer(onChangeViewer, viewInfo, isMuted, modVars, insName)
         }
