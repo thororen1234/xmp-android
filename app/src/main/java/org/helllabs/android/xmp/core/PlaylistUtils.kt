@@ -2,8 +2,8 @@ package org.helllabs.android.xmp.core
 
 import android.content.Context
 import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
 import org.helllabs.android.xmp.PrefManager
+import org.helllabs.android.xmp.StorageManager
 import org.helllabs.android.xmp.Xmp.testModule
 import org.helllabs.android.xmp.model.ModInfo
 import org.helllabs.android.xmp.model.Playlist
@@ -90,22 +90,16 @@ object PlaylistUtils {
         list()[index].substringBeforeLast(Playlist.PLAYLIST_SUFFIX)
 
     fun listNoSuffix2(context: Context): List<String> {
-        val parentUri = Uri.parse(PrefManager.safStoragePath)
-
-        val playlistsDir = DocumentFile.fromTreeUri(context, parentUri)?.findFile("playlists")
-        if (playlistsDir != null && playlistsDir.isFile) {
-            Timber.e("Playlist Directory returned null or is file!")
+        val playlistsDir = StorageManager.getPlaylistDirectory(context)
+        if (playlistsDir == null || playlistsDir.isFile) {
+            Timber.e("listNoSuffix2: Playlist Directory returned null or is file!")
             return emptyList()
         }
 
-        val list = mutableListOf<String>()
-        playlistsDir!!.listFiles().forEach {
-            if (it.name!!.endsWith(Playlist.PLAYLIST_SUFFIX)) {
-                list.add(it.name!!.substringBeforeLast(Playlist.PLAYLIST_SUFFIX))
-            }
-        }
-
-        return list.toList()
+        return playlistsDir.listFiles()
+            .filter { it.name!!.endsWith(Playlist.PLAYLIST_SUFFIX) }
+            .map { it.name!!.substringBeforeLast(Playlist.PLAYLIST_SUFFIX) }
+            .toList()
     }
 
     @Deprecated("Use createEmptyPlaylist2")
@@ -127,12 +121,16 @@ object PlaylistUtils {
 
     fun createEmptyPlaylist2(
         context: Context,
-        playlistsDir: Uri,
+        playlistsDir: Uri?,
         newName: String,
         newComment: String,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
+        if (playlistsDir == null) {
+            onError("Creating Playlist failed, uri null")
+            return
+        }
         Playlist(newName).apply {
             this.comment = newComment
             this.playlistsDir = playlistsDir

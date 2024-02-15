@@ -1,17 +1,17 @@
 package org.helllabs.android.xmp.compose.ui.menu
 
 import android.content.Context
-import android.net.Uri
 import android.os.Environment
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.helllabs.android.xmp.PrefManager
+import org.helllabs.android.xmp.StorageManager
 import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.core.PlaylistUtils
 import org.helllabs.android.xmp.model.Playlist
+import org.helllabs.android.xmp.model.Playlist.Companion.PLAYLIST_SUFFIX
 import org.helllabs.android.xmp.model.PlaylistItem
 import timber.log.Timber
 import java.io.File
@@ -30,6 +30,11 @@ class PlaylistMenuViewModel : ViewModel() {
     val uiState = _uiState.asStateFlow()
 
     fun showError(message: String, isFatal: Boolean) {
+        if (isFatal) {
+            Timber.e(message)
+        } else {
+            Timber.w(message)
+        }
         _uiState.update { it.copy(errorText = message, isFatalError = isFatal) }
     }
 
@@ -56,18 +61,16 @@ class PlaylistMenuViewModel : ViewModel() {
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val parentUri = Uri.parse(PrefManager.safStoragePath)
-
-        val playlistsDir = DocumentFile.fromTreeUri(context, parentUri)?.findFile("playlists")
+        val playlistsDir = StorageManager.getPlaylistDirectory(context)
         if (playlistsDir == null || playlistsDir.isFile) {
-            onError("Playlist Directory returned null or is file!")
+            onError("setupDataDir: Playlist Directory returned null or is file!")
             return
         }
 
         val isPlaylistEmpty = playlistsDir.listFiles().isEmpty()
         if (isPlaylistEmpty) {
-            val playlist = playlistsDir.findFile("$name.playlist")
-            if (playlist == null || playlist.exists()) {
+            val playlist = playlistsDir.findFile(name + PLAYLIST_SUFFIX)
+            if (playlist != null && playlist.exists()) {
                 Timber.w("Attempted to create another empty playlist")
                 onSuccess()
                 return
@@ -84,16 +87,16 @@ class PlaylistMenuViewModel : ViewModel() {
         }
     }
 
-    fun setDefaultPath(context: Context, uri: Uri) {
-        val documentFile = DocumentFile.fromTreeUri(context, uri)
-
-        if (documentFile?.name == null) {
-            throw RuntimeException("Default path name was null")
-        }
-
-        // Timber.d("Default Path: ${documentFile.name}")
-        _uiState.update { it.copy(mediaPath = documentFile.name!!) }
-        updateList(context)
+    fun setDefaultPath(context: Context) {
+        StorageManager.getDefaultPathName(
+            context = context,
+            onSuccess = { name ->
+                _uiState.update { it.copy(mediaPath = name) }
+                updateList(context)
+            }, onError = {
+                showError(it, false)
+            }
+        )
     }
 
     fun updateList(context: Context) {

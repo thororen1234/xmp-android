@@ -47,8 +47,8 @@ class XmpApplication : Application() {
         var instance: XmpApplication? = null
             private set
 
-        private fun setInstance(instance: XmpApplication) {
-            Companion.instance = instance
+        private fun setInstance(app: XmpApplication) {
+            instance = app
         }
     }
 }

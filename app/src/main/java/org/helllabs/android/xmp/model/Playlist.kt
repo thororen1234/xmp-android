@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
+import org.helllabs.android.xmp.StorageManager
 import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.core.InfoCache.fileExists
 import org.helllabs.android.xmp.core.PlaylistMessages
@@ -20,12 +21,13 @@ class Playlist(val name: String) {
 
     private var mCommentChanged = false
     private var mListChanged = false
-    var list = mutableListOf<PlaylistItem>()
-    var comment: String = ""
-    var isLoopMode = false
-    var isShuffleMode = false
 
     var playlistsDir: Uri? = null
+    var comment: String = ""
+    var list = mutableListOf<PlaylistItem>()
+
+    var isLoopMode = false
+    var isShuffleMode = false
 
     private class ListFile : File {
         constructor(name: String) : super(PrefManager.DATA_DIR, name + PLAYLIST_SUFFIX)
@@ -378,34 +380,22 @@ class Playlist(val name: String) {
             onSuccess: (String) -> Unit,
             onError: (String) -> Unit
         ) {
-            val parentUri = Uri.parse(PrefManager.safStoragePath)
-            val playlistsDir = DocumentFile.fromTreeUri(context, parentUri)?.findFile("playlists")
+            val playlistsDir = StorageManager.getPlaylistDirectory(context)
             if (playlistsDir == null || playlistsDir.isFile) {
-                onError("Playlist Directory returned null or is file!")
+                onError("Comment file playlist Directory returned null or is file!")
                 return
             }
 
-            Timber.d("Looking for: $comment")
-            playlistsDir.listFiles().forEach {
-                Timber.d("File: ${it.name}")
-            }
-
-            val commentFile = playlistsDir.findFile("${comment}.comment")
+            val commentFile = playlistsDir.findFile(comment + COMMENT_SUFFIX)
             if (commentFile == null || commentFile.isDirectory) {
-                onError("Playlist Directory returned null or is directory!")
+                onError("Comment file returned null or is directory")
                 return
             }
-
-            try {
-                context.contentResolver.openInputStream(commentFile.uri)?.use { inputStream ->
-                    BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                        val text = reader.readText()
-                        onSuccess(text)
-                    }
+            context.contentResolver.openInputStream(commentFile.uri)?.use { inputStream ->
+                BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                    val text = reader.readText()
+                    onSuccess(text)
                 }
-            } catch (e: Exception) {
-                Timber.w("Why?")
-                e.printStackTrace()
             }
         }
 

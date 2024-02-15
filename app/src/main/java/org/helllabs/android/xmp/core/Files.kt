@@ -85,11 +85,6 @@ object Files {
             ?.toList()
             ?: emptyList()
 
-//  fun localFile(url: String?, path: String): File {
-//     val filename = url!!.substring(url.lastIndexOf('#') + 1, url.length)
-//     return File(path, filename)
-//  }
-
     fun localFile(module: Module?): File? = runBlocking {
         if (module == null || module.url.isBlank()) {
             return@runBlocking null
@@ -104,6 +99,7 @@ object Files {
         File(path, moduleFilename)
     }
 
+    @Deprecated("")
     fun getDownloadPath(module: Module?): String {
         val sb = StringBuilder()
         val mediaPath = PrefManager.mediaPath

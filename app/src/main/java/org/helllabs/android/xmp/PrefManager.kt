@@ -11,8 +11,13 @@ object PrefManager {
 
     private lateinit var prefs: SharedPreferences
 
+    @Deprecated("")
     private lateinit var SD_DIR: File
+
+    @Deprecated("")
     val DATA_DIR by lazy { File(SD_DIR, "Xmp for Android") }
+
+    @Deprecated("")
     val CACHE_DIR by lazy { File(SD_DIR, "Android/data/org.helllabs.android.xmp/cache/") }
 
     fun init(context: Context, sdDir: File = Environment.getExternalStorageDirectory()) {
@@ -47,6 +52,7 @@ object PrefManager {
             prefs.edit { putInt("changelog_version", value) }
         }
 
+    @Deprecated("")
     var mediaPath: String
         get() = prefs.getString("media_path", "$SD_DIR/mod")!!
         set(value) {

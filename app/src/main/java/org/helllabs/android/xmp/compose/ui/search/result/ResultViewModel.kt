@@ -130,6 +130,7 @@ class ResultViewModel(
                     )
                 }
             } catch (e: Exception) {
+                Timber.e(e)
                 _uiState.update {
                     it.copy(
                         isLoading = false,

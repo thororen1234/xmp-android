@@ -61,7 +61,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
@@ -69,6 +68,7 @@ import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
+import org.helllabs.android.xmp.StorageManager
 import org.helllabs.android.xmp.compose.components.ChangeLogDialog
 import org.helllabs.android.xmp.compose.components.EditPlaylistDialog
 import org.helllabs.android.xmp.compose.components.MessageDialog
@@ -123,27 +123,17 @@ class PlaylistMenu : ComponentActivity() {
 
     private val documentTreeContract = ActivityResultContracts.OpenDocumentTree()
     private val documentTreeResult = registerForActivityResult(documentTreeContract) { uri ->
-        uri?.let {
-            val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-
-            contentResolver.takePersistableUriPermission(uri, flags)
-
-            // Create sub directories
-            val parentDocument = DocumentFile.fromTreeUri(this, uri)
-            listOf("mods", "playlists").forEach { directoryName ->
-                val exists = parentDocument?.findFile(directoryName) != null
-                if (!exists) {
-                    parentDocument?.createDirectory(directoryName)
-                }
+        StorageManager.setPlaylistDirectory(
+            context = this,
+            uri = uri,
+            onSuccess = {
+                // Refresh the list
+                viewModel.setDefaultPath(this)
+            },
+            onError = {
+                viewModel.showError(message = it, isFatal = true)
             }
-
-            // Save our Uri
-            PrefManager.safStoragePath = uri.toString()
-
-            // Refresh the list
-            viewModel.setDefaultPath(this, uri)
-        }
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -279,23 +269,10 @@ class PlaylistMenu : ComponentActivity() {
             NewPlaylistDialog(
                 isShowing = newPlaylist,
                 onConfirm = { name, comment ->
-                    val parentUri = Uri.parse(PrefManager.safStoragePath)
-                    val playlistsDir =
-                        DocumentFile.fromTreeUri(context, parentUri)?.findFile("playlists")
-
-                    if (playlistsDir == null) {
-                        viewModel.showError(
-                            message = getString(R.string.error_create_playlist),
-                            isFatal = false
-
-                        )
-                        newPlaylist = false
-                        return@NewPlaylistDialog
-                    }
-
+                    val playlistsDir = StorageManager.getPlaylistDirectory(context)
                     PlaylistUtils.createEmptyPlaylist2(
                         context,
-                        playlistsDir.uri,
+                        playlistsDir?.uri,
                         name,
                         comment,
                         onSuccess = {
@@ -318,14 +295,20 @@ class PlaylistMenu : ComponentActivity() {
 
             // Ask for Permissions
             LaunchedEffect(Unit) {
-                val savedUri = PrefManager.safStoragePath?.let { Uri.parse(it) }
+                val savedUri = PrefManager.safStoragePath.let {
+                    try {
+                        Uri.parse(it)
+                    } catch (e: NullPointerException) {
+                        null
+                    }
+                }
                 val persistedUris = contentResolver.persistedUriPermissions
                 val hasAccess = persistedUris.any { it.uri == savedUri && it.isWritePermission }
 
                 if (savedUri == null || !hasAccess) {
                     documentTreeResult.launch(null)
                 } else {
-                    viewModel.setDefaultPath(context, savedUri)
+                    viewModel.setDefaultPath(context)
                 }
             }
 
@@ -410,6 +393,9 @@ class PlaylistMenu : ComponentActivity() {
 //                            }
 //                            playlistResult.launch(intent)
 //                        }
+                    },
+                    onRequestStorage = {
+                        documentTreeResult.launch(null)
                     }
                 )
             }
@@ -418,7 +404,9 @@ class PlaylistMenu : ComponentActivity() {
 
     public override fun onResume() {
         super.onResume()
-        viewModel.updateList(this)
+        if (!PrefManager.safStoragePath.isNullOrEmpty()) {
+            viewModel.updateList(this)
+        }
     }
 }
 
@@ -436,7 +424,8 @@ private fun PlaylistMenuScreen(
     onTitleClicked: () -> Unit,
     onDownload: () -> Unit,
     onSettings: () -> Unit,
-    onRequestPermission: () -> Unit
+    onRequestPermission: () -> Unit,
+    onRequestStorage: () -> Unit,
 ) {
     val scrollState = rememberLazyListState()
     val isScrolled = remember {
@@ -568,6 +557,12 @@ private fun PlaylistMenuScreen(
                             }
                             Text(text = text)
                         }
+                        OutlinedButton(
+                            modifier = Modifier.padding(top = 16.dp),
+                            onClick = onRequestStorage
+                        ) {
+                            Text(text = "Set Directory")
+                        }
                     }
                 }
             }
@@ -601,7 +596,8 @@ private fun Preview_PlaylistMenuScreen() {
             onTitleClicked = {},
             onDownload = {},
             onSettings = {},
-            onRequestPermission = {}
+            onRequestPermission = {},
+            onRequestStorage = {},
         )
     }
 }
