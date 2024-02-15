@@ -1,13 +1,14 @@
 package org.helllabs.android.xmp.compose.ui.menu
 
 import android.content.Context
+import android.net.Uri
 import android.os.Environment
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.helllabs.android.xmp.PrefManager
-import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.core.PlaylistUtils
 import org.helllabs.android.xmp.model.Playlist
@@ -32,6 +33,7 @@ class PlaylistMenuViewModel : ViewModel() {
         _uiState.update { it.copy(errorText = message, isFatalError = isFatal) }
     }
 
+    @Deprecated("")
     fun checkStorage(): Boolean {
         val state = Environment.getExternalStorageState()
         val result = if (Environment.MEDIA_MOUNTED == state ||
@@ -48,30 +50,53 @@ class PlaylistMenuViewModel : ViewModel() {
 
     // Create application directory and populate with empty playlist
     fun setupDataDir(
+        context: Context,
         name: String,
         comment: String,
         onSuccess: () -> Unit,
-        onError: () -> Unit
+        onError: (String) -> Unit
     ) {
-        if (PrefManager.DATA_DIR.isDirectory) {
+        val parentUri = Uri.parse(PrefManager.safStoragePath)
+
+        val playlistsDir = DocumentFile.fromTreeUri(context, parentUri)?.findFile("playlists")
+        if (playlistsDir == null || playlistsDir.isFile) {
+            onError("Playlist Directory returned null or is file!")
             return
         }
 
-        if (PrefManager.DATA_DIR.mkdirs()) {
-            PlaylistUtils.createEmptyPlaylist(
+        val isPlaylistEmpty = playlistsDir.listFiles().isEmpty()
+        if (isPlaylistEmpty) {
+            val playlist = playlistsDir.findFile("$name.playlist")
+            if (playlist == null || playlist.exists()) {
+                Timber.w("Attempted to create another empty playlist")
+                onSuccess()
+                return
+            }
+
+            PlaylistUtils.createEmptyPlaylist2(
+                context = context,
+                playlistsDir = playlistsDir.uri,
                 newName = name,
                 newComment = comment,
                 onSuccess = onSuccess,
                 onError = onError
             )
-        } else {
-            onError()
         }
     }
 
-    fun updateList(context: Context) {
-        _uiState.update { it.copy(mediaPath = PrefManager.mediaPath) }
+    fun setDefaultPath(context: Context, uri: Uri) {
+        val documentFile = DocumentFile.fromTreeUri(context, uri)
 
+        if (documentFile?.name == null) {
+            throw RuntimeException("Default path name was null")
+        }
+
+        // Timber.d("Default Path: ${documentFile.name}")
+        _uiState.update { it.copy(mediaPath = documentFile.name!!) }
+        updateList(context)
+    }
+
+    fun updateList(context: Context) {
         val items = mutableListOf<PlaylistItem>()
         val browserItem = PlaylistItem(
             type = PlaylistItem.TYPE_SPECIAL,
@@ -80,25 +105,29 @@ class PlaylistMenuViewModel : ViewModel() {
         )
         items.add(browserItem)
 
-        PlaylistUtils.listNoSuffix().forEachIndexed { index, name ->
-            val comment = Playlist.readComment(
+        PlaylistUtils.listNoSuffix2(context).forEachIndexed { index, name ->
+            Playlist.readComment2(
                 context = context,
-                name = name,
-                onError = {
+                comment = name,
+                onSuccess = {
+                    val item = PlaylistItem(PlaylistItem.TYPE_PLAYLIST, name, it)
+                    item.id = index + 1
+
+                    items.add(item)
+                },
+                onError = { error ->
                     _uiState.update {
-                        it.copy(errorText = context.getString(R.string.error_read_comment))
+                        it.copy(errorText = error)
                     }
                 }
             )
-            val item = PlaylistItem(PlaylistItem.TYPE_PLAYLIST, name, comment)
-            item.id = index + 1
-
-            items.add(item)
         }
 
         _uiState.update { it.copy(playlistItems = items) }
     }
 
+    // TODO Replace with SAF alternative
+    @Deprecated("Replace with SAF alternative")
     fun editComment(oldName: String, newComment: String, onError: () -> Unit) {
         val value = newComment.replace("\n", " ")
         val file = File(PrefManager.DATA_DIR, oldName + Playlist.COMMENT_SUFFIX)
@@ -111,6 +140,8 @@ class PlaylistMenuViewModel : ViewModel() {
         }
     }
 
+    // TODO Replace with SAF alternative
+    @Deprecated("Replace with SAF alternative")
     fun editPlaylist(oldName: String, newName: String, onError: () -> Unit) {
         if (!Playlist.rename(oldName, newName)) {
             onError()

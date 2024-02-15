@@ -6,7 +6,6 @@ androidKotlin = "1.9.22" # https://mvnrepository.com/artifact/org.jetbrains.kotl
 cascadeCompose = "2.3.0" # https://mvnrepository.com/artifact/me.saket.cascade/cascade-compose
 composeBom = "2024.02.00" # https://mvnrepository.com/artifact/androidx.compose/compose-bom
 coreKtx = "1.12.0" # https://mvnrepository.com/artifact/androidx.core/core-ktx
-daggerHilt = "2.50" # https://mvnrepository.com/artifact/com.google.dagger/hilt-android
 kotlinCompiler = "1.5.9" # https://developer.android.com/jetpack/androidx/releases/compose-compiler
 kotlinxSerializationJson = "1.6.2" # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-serialization-json
 ktLintGradle = "11.6.1" # // https://github.com/JLLeitschuh/ktlint-gradle
@@ -46,8 +45,6 @@ compose-ui-ui = { module = "androidx.compose.ui:ui" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
 cascade-compose = { module = "me.saket.cascade:cascade-compose", version.ref = "cascadeCompose" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
-hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "daggerHilt" }
-hilt-android-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "daggerHilt" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
@@ -94,5 +91,4 @@ retrofit = [
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "androidKotlin" }
-dagger-hilt = { id = "com.google.dagger.hilt.android", version.ref = "daggerHilt" }
 gradle-ktLint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktLintGradle" }

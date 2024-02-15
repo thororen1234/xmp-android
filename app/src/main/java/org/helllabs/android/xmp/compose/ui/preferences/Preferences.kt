@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
@@ -22,6 +23,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.alorma.compose.settings.ui.SettingsGroup
+import com.alorma.compose.settings.ui.SettingsMenuLink
+import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpTopBar
@@ -68,6 +72,8 @@ class Preferences : ComponentActivity() {
     }
 
     companion object {
+        // TODO Remove caching, we can do it on the fly.
+        @Deprecated("Remove caching, we can do it on the fly.")
         private fun deleteCache(file: File): Boolean {
             if (!file.exists()) {
                 return true
@@ -114,11 +120,37 @@ private fun PreferencesScreen(
                 .padding(paddingValues)
                 .verticalScroll(scrollState)
         ) {
+            val context = LocalContext.current
             SettingsGroupPlaylist(onClearCache = onClearCache)
             SettingsGroupSound()
             SettingsGroupInterface()
             SettingsGroupDownload()
             SettingsGroupInformation(onFormats = onFormats, onAbout = onAbout)
+
+            if (BuildConfig.DEBUG) {
+                SettingsGroup(
+                    title = { Text(text = "Debug") }
+                ) {
+                    SettingsMenuLink(
+                        title = { Text(text = "Revoke all Uri Permissions") },
+                        onClick = {
+                            val uriPermissions = context.contentResolver.persistedUriPermissions
+                            for (permission in uriPermissions) {
+                                try {
+                                    context.contentResolver.releasePersistableUriPermission(
+                                        permission.uri,
+                                        Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                                            Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                                    )
+                                } catch (e: SecurityException) {
+                                    Timber.d("Failed to revoke permissions for URI: ${permission.uri}")
+                                }
+                            }
+                            (context as ComponentActivity).finishAffinity()
+                        }
+                    )
+                }
+            }
         }
     }
 }

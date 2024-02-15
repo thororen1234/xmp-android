@@ -29,6 +29,8 @@ fun SettingsGroupPlaylist(
             Text(text = stringResource(id = R.string.pref_category_files))
         }
     ) {
+
+        // TODO use SAF file picker
         var mediaPathDialog by remember { mutableStateOf(false) }
         var mediaPath by remember { mutableStateOf(PrefManager.mediaPath) }
         TextInputDialog(

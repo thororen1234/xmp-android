@@ -1,6 +1,8 @@
 package org.helllabs.android.xmp.model
 
 import android.content.Context
+import android.net.Uri
+import androidx.documentfile.provider.DocumentFile
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.core.Files
@@ -8,9 +10,11 @@ import org.helllabs.android.xmp.core.InfoCache.fileExists
 import org.helllabs.android.xmp.core.PlaylistMessages
 import org.helllabs.android.xmp.core.PlaylistUtils
 import timber.log.Timber
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
+import java.io.InputStreamReader
 
 class Playlist(val name: String) {
 
@@ -20,6 +24,8 @@ class Playlist(val name: String) {
     var comment: String = ""
     var isLoopMode = false
     var isShuffleMode = false
+
+    var playlistsDir: Uri? = null
 
     private class ListFile : File {
         constructor(name: String) : super(PrefManager.DATA_DIR, name + PLAYLIST_SUFFIX)
@@ -42,7 +48,8 @@ class Playlist(val name: String) {
         if (file.exists()) {
             Timber.i("Read playlist $name")
 
-            val comment = Files.readFromFile(CommentFile(name))
+            // TODO
+            val comment = "" //  Files.readFromFile(CommentFile(name))
 
             // read list contents
             if (readList(name)) {
@@ -62,6 +69,7 @@ class Playlist(val name: String) {
     /**
      * Save the current playlist.
      */
+    @Deprecated("Use commit2")
     fun commit() {
         Timber.i("Commit playlist $name")
 
@@ -89,6 +97,62 @@ class Playlist(val name: String) {
     }
 
     /**
+     * Save the current playlist using SAF
+     */
+    fun commit2(
+        context: Context,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit,
+    ) {
+        if (playlistsDir == null) {
+            onError("playlistsDir URI is null")
+            return
+        }
+
+        val dir = DocumentFile.fromTreeUri(context, playlistsDir!!)
+        if (dir != null && dir.isDirectory && dir.canWrite()) {
+            if (mListChanged) {
+                val plist = dir.createFile("application/octet-stream", "$name.playlist")
+                if (plist != null && list.isNotEmpty()) {
+                    try {
+                        context.contentResolver.openOutputStream(plist.uri)?.use { out ->
+                            list.forEach { item ->
+                                out.write(item.toString().toByteArray())
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "Error writing empty playlist")
+                        onError("Failed to write empty playlist")
+                        return
+                    }
+                }
+
+                mListChanged = false
+            }
+
+            if (mCommentChanged) {
+                val pComment = dir.createFile("application/octet-stream", "$name.comment")
+                if (pComment != null) {
+                    try {
+                        context.contentResolver.openOutputStream(pComment.uri)?.use { out ->
+                            out.write(comment.toByteArray())
+                        }
+                    } catch (e: Exception) {
+                        Timber.e(e, "Error writing empty playlist comment")
+                        onError("Failed to write empty playlist comment")
+                        return
+                    }
+                }
+
+                mCommentChanged = false
+            }
+
+            onSuccess()
+            return
+        }
+    }
+
+    /**
      * Remove an item from the playlist.
      *
      * @param index The index of the item to be removed
@@ -100,6 +164,7 @@ class Playlist(val name: String) {
     }
 
     // Helper methods
+    @Deprecated("")
     private fun readList(name: String): Boolean {
         Timber.d("Reading playlist: $name")
         list.clear()
@@ -145,6 +210,7 @@ class Playlist(val name: String) {
         return true
     }
 
+    @Deprecated("")
     private fun writeList(name: String) {
         Timber.i("Write list")
 
@@ -163,6 +229,7 @@ class Playlist(val name: String) {
         }
     }
 
+    @Deprecated("")
     private fun writeComment(name: String) {
         Timber.i("Write comment")
 
@@ -209,6 +276,8 @@ class Playlist(val name: String) {
          *
          * @return Whether the rename was successful
          */
+        // TODO Replace with SAF alternative
+        @Deprecated("Replace with SAF alternative")
         fun rename(oldName: String, newName: String): Boolean {
             val old1 = ListFile(oldName)
             val old2 = CommentFile(oldName)
@@ -221,6 +290,7 @@ class Playlist(val name: String) {
                     new1.renameTo(old1)
                     false
                 }
+
                 else -> true
             }
 
@@ -249,6 +319,7 @@ class Playlist(val name: String) {
          *
          * @param name The playlist name
          */
+        @Deprecated("")
         fun delete(name: String) {
             ListFile(name).delete()
             CommentFile(name).delete()
@@ -263,6 +334,7 @@ class Playlist(val name: String) {
          * @param items The list of playlist items to add
          * @param onMessage TODO
          */
+        @Deprecated("")
         fun addToList(
             name: String,
             items: List<PlaylistItem>,
@@ -286,6 +358,7 @@ class Playlist(val name: String) {
          *
          * @return The playlist comment
          */
+        @Deprecated("")
         fun readComment(context: Context, name: String, onError: () -> Unit): String {
             var comment: String? = null
             try {
@@ -297,6 +370,43 @@ class Playlist(val name: String) {
                 comment = context.getString(R.string.no_comment)
             }
             return comment
+        }
+
+        fun readComment2(
+            context: Context,
+            comment: String,
+            onSuccess: (String) -> Unit,
+            onError: (String) -> Unit
+        ) {
+            val parentUri = Uri.parse(PrefManager.safStoragePath)
+            val playlistsDir = DocumentFile.fromTreeUri(context, parentUri)?.findFile("playlists")
+            if (playlistsDir == null || playlistsDir.isFile) {
+                onError("Playlist Directory returned null or is file!")
+                return
+            }
+
+            Timber.d("Looking for: $comment")
+            playlistsDir.listFiles().forEach {
+                Timber.d("File: ${it.name}")
+            }
+
+            val commentFile = playlistsDir.findFile("${comment}.comment")
+            if (commentFile == null || commentFile.isDirectory) {
+                onError("Playlist Directory returned null or is directory!")
+                return
+            }
+
+            try {
+                context.contentResolver.openInputStream(commentFile.uri)?.use { inputStream ->
+                    BufferedReader(InputStreamReader(inputStream)).use { reader ->
+                        val text = reader.readText()
+                        onSuccess(text)
+                    }
+                }
+            } catch (e: Exception) {
+                Timber.w("Why?")
+                e.printStackTrace()
+            }
         }
 
         private fun optionName(name: String, option: String): String =

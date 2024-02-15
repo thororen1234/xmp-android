@@ -3,7 +3,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.android.kotlin)
-    alias(libs.plugins.dagger.hilt)
     alias(libs.plugins.gradle.ktLint)
     kotlin("kapt")
     kotlin("plugin.serialization") version libs.versions.androidKotlin.get()
@@ -16,7 +15,7 @@ android {
     defaultConfig {
         applicationId = "org.helllabs.android.xmp"
         minSdk = 23 // Android 6 - Marshmallow
-        targetSdk = 29 // Android 10 - Quince Tart
+        targetSdk = 34 // Android 10 - Quince Tart
 
         versionCode = 87
         versionName = "4.12.0"
@@ -103,10 +102,11 @@ dependencies {
     implementation(libs.bundles.compose)
     implementation(libs.bundles.compose.utils)
 
+    implementation("androidx.documentfile:documentfile:1.0.1")
+
     implementation(libs.bundles.retrofit)
     implementation(libs.bundles.xmlUtils)
     implementation(libs.core.ktx)
-    implementation(libs.hilt.android)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.lifecycle.viewmodel.compose)
@@ -114,6 +114,4 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.preference.ktx)
     implementation(libs.timber)
-
-    kapt(libs.hilt.android.compiler)
 }

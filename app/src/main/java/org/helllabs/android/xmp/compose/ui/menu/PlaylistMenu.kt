@@ -1,10 +1,8 @@
 package org.helllabs.android.xmp.compose.ui.menu
 
-import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -63,12 +61,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
-import com.google.accompanist.permissions.shouldShowRationale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.BuildConfig
@@ -126,7 +121,31 @@ class PlaylistMenu : ComponentActivity() {
         }
     }
 
-    @OptIn(ExperimentalPermissionsApi::class)
+    private val documentTreeContract = ActivityResultContracts.OpenDocumentTree()
+    private val documentTreeResult = registerForActivityResult(documentTreeContract) { uri ->
+        uri?.let {
+            val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+
+            contentResolver.takePersistableUriPermission(uri, flags)
+
+            // Create sub directories
+            val parentDocument = DocumentFile.fromTreeUri(this, uri)
+            listOf("mods", "playlists").forEach { directoryName ->
+                val exists = parentDocument?.findFile(directoryName) != null
+                if (!exists) {
+                    parentDocument?.createDirectory(directoryName)
+                }
+            }
+
+            // Save our Uri
+            PrefManager.safStoragePath = uri.toString()
+
+            // Refresh the list
+            viewModel.setDefaultPath(this, uri)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -137,6 +156,7 @@ class PlaylistMenu : ComponentActivity() {
             )
         )
 
+        // TODO does this even work?
         if (PlayerService.isAlive && PrefManager.startOnPlayer) {
             if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0) {
                 Intent(this, PlayerActivity::class.java).also(::startActivity)
@@ -152,7 +172,6 @@ class PlaylistMenu : ComponentActivity() {
         setContent {
             val context = LocalContext.current
             val state by viewModel.uiState.collectAsStateWithLifecycle()
-            val permission = rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
             // User theme setting? Check this out
             // https://github.com/android/nowinandroid/commit/a3ee09ec3e53412e65c1f01d2e8588fecd2b7157
@@ -190,6 +209,7 @@ class PlaylistMenu : ComponentActivity() {
             /**
              * Change default directory dialog
              */
+            // TODO use SAF file picker
             var changeMediaPath by remember { mutableStateOf(false) }
             TextInputDialog(
                 isShowing = changeMediaPath,
@@ -259,9 +279,25 @@ class PlaylistMenu : ComponentActivity() {
             NewPlaylistDialog(
                 isShowing = newPlaylist,
                 onConfirm = { name, comment ->
-                    PlaylistUtils.createEmptyPlaylist(
-                        newName = name,
-                        newComment = comment,
+                    val parentUri = Uri.parse(PrefManager.safStoragePath)
+                    val playlistsDir =
+                        DocumentFile.fromTreeUri(context, parentUri)?.findFile("playlists")
+
+                    if (playlistsDir == null) {
+                        viewModel.showError(
+                            message = getString(R.string.error_create_playlist),
+                            isFatal = false
+
+                        )
+                        newPlaylist = false
+                        return@NewPlaylistDialog
+                    }
+
+                    PlaylistUtils.createEmptyPlaylist2(
+                        context,
+                        playlistsDir.uri,
+                        name,
+                        comment,
                         onSuccess = {
                             viewModel.updateList(this)
                         },
@@ -282,26 +318,32 @@ class PlaylistMenu : ComponentActivity() {
 
             // Ask for Permissions
             LaunchedEffect(Unit) {
-                if (!permission.status.isGranted) {
-                    permission.launchPermissionRequest()
+                val savedUri = PrefManager.safStoragePath?.let { Uri.parse(it) }
+                val persistedUris = contentResolver.persistedUriPermissions
+                val hasAccess = persistedUris.any { it.uri == savedUri && it.isWritePermission }
+
+                if (savedUri == null || !hasAccess) {
+                    documentTreeResult.launch(null)
+                } else {
+                    viewModel.setDefaultPath(context, savedUri)
                 }
             }
 
-            LaunchedEffect(permission) {
-                if (permission.status.isGranted) {
+            LaunchedEffect(state.mediaPath) {
+                if (state.mediaPath.isNotEmpty()) {
                     if (BuildConfig.VERSION_CODE < PrefManager.changeLogVersion) {
                         changeLogDialog = true
                     }
 
                     viewModel.setupDataDir(
+                        context = context,
                         name = getString(R.string.empty_playlist),
                         comment = getString(R.string.empty_comment),
                         onSuccess = {
                             viewModel.updateList(context)
                         },
                         onError = {
-                            val message = getString(R.string.error_datadir)
-                            viewModel.showError(message, true)
+                            viewModel.showError(it, true)
                         }
                     )
                 }
@@ -311,8 +353,8 @@ class PlaylistMenu : ComponentActivity() {
                 PlaylistMenuScreen(
                     state = state,
                     snackbarHostState = snackBarHostState,
-                    permissionState = permission.status.isGranted,
-                    permissionRationale = permission.status.shouldShowRationale,
+                    permissionState = state.mediaPath.isNotEmpty(), // TODO not really a state
+                    permissionRationale = false, // TODO: permission.status.shouldShowRationale
                     onItemClick = { item ->
                         if (item.isSpecial) {
                             playlistResult.launch(
@@ -354,19 +396,20 @@ class PlaylistMenu : ComponentActivity() {
                         settingsResult.launch(Intent(this, Preferences::class.java))
                     },
                     onRequestPermission = {
-                        if (permission.status.shouldShowRationale) {
-                            permission.launchPermissionRequest()
-                        } else {
-                            val intent = Intent().apply {
-                                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                                data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-                                addCategory(Intent.CATEGORY_DEFAULT)
-                                addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                                addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-                            }
-                            playlistResult.launch(intent)
-                        }
+                        TODO("onRequestPermission")
+//                        if (permission.status.shouldShowRationale) {
+//                            permission.launchPermissionRequest()
+//                        } else {
+//                            val intent = Intent().apply {
+//                                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+//                                data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+//                                addCategory(Intent.CATEGORY_DEFAULT)
+//                                addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+//                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+//                                addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+//                            }
+//                            playlistResult.launch(intent)
+//                        }
                     }
                 )
             }

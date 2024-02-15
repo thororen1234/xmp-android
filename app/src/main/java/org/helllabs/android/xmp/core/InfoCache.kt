@@ -63,8 +63,6 @@ object InfoCache {
         return testModule(filename)
     }
 
-    fun testModule(filename: String): Boolean = testModule(filename, ModInfo())
-
     @Throws(IOException::class)
     private fun checkIfCacheValid(file: File, cacheFile: File, info: ModInfo): Boolean {
         return BufferedReader(FileReader(cacheFile), 512).use { reader ->
@@ -79,61 +77,67 @@ object InfoCache {
         }
     }
 
+    fun testModule(filename: String): Boolean {
+        return testModule(filename, ModInfo())
+    }
+
     private fun testModule(filename: String, info: ModInfo): Boolean {
-        if (!PrefManager.CACHE_DIR.isDirectory && !PrefManager.CACHE_DIR.mkdirs()) {
-            // Can't use cache
-            return Xmp.testModule(filename, info)
-        }
+        return Xmp.testModule(filename, info)
 
-        val file = File(filename)
-        val cacheFile = File(PrefManager.CACHE_DIR, "$filename.cache")
-        val skipFile = File(PrefManager.CACHE_DIR, "$filename.skip")
-
-        return try {
-            // If cache file exists and size matches, file is mod
-            if (cacheFile.isFile) {
-                // If we have cache and skip, delete skip
-                if (skipFile.isFile) {
-                    skipFile.delete()
-                }
-
-                // Check if our cache data is good
-                if (checkIfCacheValid(file, cacheFile, info)) {
-                    return true
-                }
-
-                cacheFile.delete() // Invalid or outdated cache file
-            }
-
-            if (skipFile.isFile) {
-                return false
-            }
-
-            val isMod = Xmp.testModule(filename, info)
-            if (isMod) {
-                val lines = arrayOf<String?>(
-                    file.length().toString(),
-                    info.name,
-                    filename,
-                    info.type
-                )
-                val dir: File = cacheFile.parentFile!!
-                if (!dir.isDirectory) {
-                    dir.mkdirs()
-                }
-                cacheFile.createNewFile()
-                Files.writeToFile(cacheFile, lines)
-            } else {
-                val dir: File = skipFile.parentFile!!
-                if (!dir.isDirectory) {
-                    dir.mkdirs()
-                }
-                skipFile.createNewFile()
-            }
-
-            isMod
-        } catch (e: IOException) {
-            Xmp.testModule(filename, info)
-        }
+//        if (!PrefManager.CACHE_DIR.isDirectory && !PrefManager.CACHE_DIR.mkdirs()) {
+//            // Can't use cache
+//            return Xmp.testModule(filename, info)
+//        }
+//
+//        val file = File(filename)
+//        val cacheFile = File(PrefManager.CACHE_DIR, "$filename.cache")
+//        val skipFile = File(PrefManager.CACHE_DIR, "$filename.skip")
+//
+//        return try {
+//            // If cache file exists and size matches, file is mod
+//            if (cacheFile.isFile) {
+//                // If we have cache and skip, delete skip
+//                if (skipFile.isFile) {
+//                    skipFile.delete()
+//                }
+//
+//                // Check if our cache data is good
+//                if (checkIfCacheValid(file, cacheFile, info)) {
+//                    return true
+//                }
+//
+//                cacheFile.delete() // Invalid or outdated cache file
+//            }
+//
+//            if (skipFile.isFile) {
+//                return false
+//            }
+//
+//            val isMod = Xmp.testModule(filename, info)
+//            if (isMod) {
+//                val lines = arrayOf<String?>(
+//                    file.length().toString(),
+//                    info.name,
+//                    filename,
+//                    info.type
+//                )
+//                val dir: File = cacheFile.parentFile!!
+//                if (!dir.isDirectory) {
+//                    dir.mkdirs()
+//                }
+//                cacheFile.createNewFile()
+//                Files.writeToFile(cacheFile, lines)
+//            } else {
+//                val dir: File = skipFile.parentFile!!
+//                if (!dir.isDirectory) {
+//                    dir.mkdirs()
+//                }
+//                skipFile.createNewFile()
+//            }
+//
+//            isMod
+//        } catch (e: IOException) {
+//            Xmp.testModule(filename, info)
+//        }
     }
 }

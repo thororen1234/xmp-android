@@ -32,6 +32,15 @@ object PrefManager {
         prefs.edit { remove(key) }
     }
 
+    /**
+     * The URI where the app can store mods and playlists.
+     */
+    var safStoragePath: String?
+        get() = prefs.getString("saf_storage_path", null)
+        set(value) {
+            prefs.edit { putString("saf_storage_path", value) }
+        }
+
     var changeLogVersion: Int
         get() = prefs.getInt("changelog_version", 0)
         set(value) {
