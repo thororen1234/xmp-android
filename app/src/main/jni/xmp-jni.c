@@ -12,8 +12,6 @@
 #include "common.h"
 #include "audio.h"
 
-/*  <android/log.h> */
-
 #define PERIOD_BASE 13696
 
 static xmp_context ctx = NULL;
@@ -139,7 +137,6 @@ Java_org_helllabs_android_xmp_Xmp_testModule(JNIEnv *env, jobject obj, jstring n
     struct xmp_test_info ti;
 
     filename = (*env)->GetStringUTFChars(env, name, NULL);
-    /* __android_log_print(ANDROID_LOG_DEBUG, "libxmp", "%s", filename); */
     res = xmp_test_module((char *) filename, &ti);
 
     /* If the module title is empty, use the file basename */
@@ -540,7 +537,7 @@ Java_org_helllabs_android_xmp_Xmp_getModType(JNIEnv *env, jobject obj) {
 
 // TODO lazy hack to sanitize comments to valid utf-8
 void sanitizeUTF8(char *str) {
-    unsigned char *bytes = (unsigned char *)str;
+    unsigned char *bytes = (unsigned char *) str;
     while (*bytes) {
         if (*bytes < 0x80) {
             // ASCII byte, move to the next one
@@ -561,7 +558,8 @@ void sanitizeUTF8(char *str) {
             }
         } else if ((*bytes & 0xF8) == 0xF0) {
             // Possible 4-byte sequence
-            if ((bytes[1] & 0xC0) == 0x80 && (bytes[2] & 0xC0) == 0x80 && (bytes[3] & 0xC0) == 0x80) {
+            if ((bytes[1] & 0xC0) == 0x80 && (bytes[2] & 0xC0) == 0x80 &&
+                (bytes[3] & 0xC0) == 0x80) {
                 bytes += 4; // Valid 4-byte sequence
             } else {
                 *bytes++ = '?'; // Invalid sequence, replace and move

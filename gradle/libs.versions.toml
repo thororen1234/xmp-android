@@ -22,10 +22,6 @@ settings = "1.0.3" # https://mvnrepository.com/artifact/com.github.alorma/compos
 timber = "5.0.1" # https://mvnrepository.com/artifact/com.jakewharton.timber/timber
 xmlUtil = "0.86.3" # https://mvnrepository.com/artifact/io.github.pdvrieze.xmlutil/core-android
 
-# TODO bruh, material 3 is not having a good time
-# See: (Slider Bug) https://issuetracker.google.com/issues/32226995
-# See: (Animation Core / CircularProgressIndicator) https://issuetracker.google.com/issues/322214617
-
 [libraries]
 compose-activity = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
 compose-animation-animation = { module = "androidx.compose.animation:animation" }

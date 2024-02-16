@@ -237,9 +237,15 @@ fun EditPlaylistDialog(
             Column {
                 Text(text = "Enter a new name or comment for ${playlistItem.name}")
                 Spacer(modifier = Modifier.height(10.dp))
-                OutlinedTextField(value = newName, onValueChange = { newName = it })
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = newName,
+                    onValueChange = { newName = it })
                 Spacer(modifier = Modifier.height(10.dp))
-                OutlinedTextField(value = newComment, onValueChange = { newComment = it })
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth(),
+                    value = newComment,
+                    onValueChange = { newComment = it })
 
                 if (confirmDelete) {
                     Spacer(modifier = Modifier.height(24.dp))
