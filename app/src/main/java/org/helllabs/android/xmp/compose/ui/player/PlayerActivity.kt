@@ -77,6 +77,7 @@ import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.XmpCanvas
 import org.helllabs.android.xmp.compose.ui.player.viewer.composePatternSampleData
 import org.helllabs.android.xmp.compose.ui.player.viewer.composeViewerSampleData
+import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.service.PlayerServiceCallback
 import timber.log.Timber
@@ -114,7 +115,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             Timber.i("Service connected")
             synchronized(playerLock) {
-                modPlayer = (service as PlayerService.LocalBinder).getService()
+                modPlayer = (service as PlayerBinder).getService()
                 modPlayer!!.setCallback(this@PlayerActivity)
 
                 if (fileList != null && fileList!!.isNotEmpty()) {

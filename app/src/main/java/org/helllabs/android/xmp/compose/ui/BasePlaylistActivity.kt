@@ -17,6 +17,7 @@ import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.model.PlaylistItem
+import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 
@@ -59,7 +60,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
     // Connection
     private val connection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
-            mModPlayer = (service as PlayerService.LocalBinder).getService()
+            mModPlayer = (service as PlayerBinder).getService()
             try {
                 // TODO ehh? Should care about null or empty
                 mModPlayer!!.add(mAddList?.toList().orEmpty())

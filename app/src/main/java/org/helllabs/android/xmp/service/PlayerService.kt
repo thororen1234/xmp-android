@@ -18,6 +18,7 @@ import org.helllabs.android.xmp.service.utils.QueueManager
 import org.helllabs.android.xmp.service.utils.RemoteControl
 import org.helllabs.android.xmp.service.utils.Watchdog
 import timber.log.Timber
+import java.lang.ref.WeakReference
 
 interface PlayerServiceCallback {
     fun onPlayerPause()
@@ -27,14 +28,16 @@ interface PlayerServiceCallback {
     fun onEndPlayCallback(result: Int)
 }
 
+class PlayerBinder(playerService: PlayerService) : Binder() {
+    private val service = WeakReference(playerService)
+
+    fun getService(): PlayerService? = service.get()
+}
+
 class PlayerService : Service(), OnAudioFocusChangeListener {
 
     private var playerServiceCallback: PlayerServiceCallback? = null
-    private val binder = LocalBinder()
-
-    inner class LocalBinder : Binder() {
-        fun getService(): PlayerService = this@PlayerService
-    }
+    private val binder = PlayerBinder(this)
 
     internal lateinit var mediaSession: MediaSessionCompat
     private var notifier: ModernNotifier? = null
