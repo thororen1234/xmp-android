@@ -1,23 +1,24 @@
 package org.helllabs.android.xmp.service.utils
 
+import android.net.Uri
 import java.util.Collections
 
 class QueueManager(
-    fileList: MutableList<String>,
+    fileList: MutableList<Uri>,
     private var start: Int,
     shuffle: Boolean,
     loop: Boolean,
     keepFirst: Boolean
 ) {
 
-    private val list: MutableList<String>
+    private val list: MutableList<Uri>
     private val loopListMode: Boolean
     private val ridx: RandomIndex
     private val shuffleMode: Boolean
     private var randomStart = 0
     var index: Int
 
-    val filename: String
+    val filename: Uri
         get() {
             val idx = if (shuffleMode) ridx.getIndex(index) else index
             return list[idx]
@@ -41,7 +42,7 @@ class QueueManager(
         shuffleMode = shuffle
     }
 
-    fun add(fileList: List<String>) {
+    fun add(fileList: List<Uri>) {
         if (fileList.isNotEmpty()) {
             ridx.extend(fileList.size, index + 1)
             list.addAll(fileList)

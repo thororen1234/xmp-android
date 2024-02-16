@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
@@ -76,7 +77,6 @@ import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.XmpCanvas
 import org.helllabs.android.xmp.compose.ui.player.viewer.composePatternSampleData
 import org.helllabs.android.xmp.compose.ui.player.viewer.composeViewerSampleData
-import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.service.PlayerServiceCallback
 import timber.log.Timber
@@ -96,7 +96,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
     private var job: Job? = null
     private val playerLock = Any() // for sync
 
-    private var fileList: MutableList<String>? = null
+    private var fileList: MutableList<Uri>? = null
 
     private var keepFirst = false
     private var loopListMode = false
@@ -284,7 +284,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                 allSeq = modPlayer!!.getAllSequences()
                 loop = modPlayer!!.getLoop()
                 if (name.trim().isEmpty()) {
-                    name = Files.basename(modPlayer!!.getFileName())
+                    name = modPlayer!!.getFileName() // TODO filename, no extension
                 }
             } catch (e: RemoteException) {
                 name = ""
@@ -713,12 +713,14 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         if (path != null) {
             // from intent filter
             Timber.i("Player started from intent filter")
-            fileList = mutableListOf()
-            fileList!!.add(path)
-            shuffleMode = false
-            loopListMode = false
-            keepFirst = false
-            start = 0
+            throw RuntimeException("Not implemented")
+            // TODO URI support
+//            fileList = mutableListOf()
+//            fileList!!.add(path)
+//            shuffleMode = false
+//            loopListMode = false
+//            keepFirst = false
+//            start = 0
         } else if (fromHistory) {
             // Oops. We don't want to start service if launched from history and service is not running
             // so run the browser instead.
@@ -734,8 +736,8 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         } else {
             val extras = intent.extras
             if (extras != null) {
-                val app = application as XmpApplication
-                fileList = app.fileList
+                val app = XmpApplication.instance
+                fileList = app!!.fileListUri
                 shuffleMode = extras.getBoolean(PARM_SHUFFLE)
                 loopListMode = extras.getBoolean(PARM_LOOP)
                 keepFirst = extras.getBoolean(PARM_KEEPFIRST)
@@ -835,7 +837,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         }
     }
 
-    private fun playNewMod(fileList: List<String>, start: Int) {
+    private fun playNewMod(fileList: List<Uri>, start: Int) {
         synchronized(playerLock) {
             try {
                 modPlayer?.play(fileList, start, shuffleMode, loopListMode, keepFirst)

@@ -425,7 +425,7 @@ private fun PlaylistMenuScreen(
     onDownload: () -> Unit,
     onSettings: () -> Unit,
     onRequestPermission: () -> Unit,
-    onRequestStorage: () -> Unit,
+    onRequestStorage: () -> Unit
 ) {
     val scrollState = rememberLazyListState()
     val isScrolled = remember {
@@ -597,7 +597,7 @@ private fun Preview_PlaylistMenuScreen() {
             onDownload = {},
             onSettings = {},
             onRequestPermission = {},
-            onRequestStorage = {},
+            onRequestStorage = {}
         )
     }
 }

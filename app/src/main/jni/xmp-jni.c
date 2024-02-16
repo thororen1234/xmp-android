@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <jni.h>
+#include <sys/stat.h>
 #include "xmp.h"
 #include "common.h"
 #include "audio.h"
@@ -76,6 +77,36 @@ Java_org_helllabs_android_xmp_Xmp_deinit(JNIEnv *env, jobject obj) {
     close_audio();
 
     return 0;
+}
+
+JNIEXPORT jint JNICALL
+Java_org_helllabs_android_xmp_Xmp_loadModuleFd(JNIEnv *env, jobject obj, jint fd) {
+    (void) env;
+    (void) obj;
+
+    FILE *file = fdopen(fd, "r");
+    if (file == NULL) {
+        return -1;
+    }
+
+    struct stat statbuf;
+    if (fstat(fd, &statbuf) != 0) {
+        fclose(file);
+        return -1;
+    }
+    off_t size = statbuf.st_size;
+
+    int res = xmp_load_module_from_file(ctx, file, size);
+
+    xmp_get_module_info(ctx, &mi);
+
+    memset(_pos, 0, XMP_MAX_CHANNELS * sizeof(int));
+    _sequence = 0;
+    _mod_is_loaded = 1;
+
+    fclose(file);
+
+    return res;
 }
 
 JNIEXPORT jint JNICALL

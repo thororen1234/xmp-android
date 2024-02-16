@@ -66,7 +66,6 @@ import org.helllabs.android.xmp.compose.ui.BasePlaylistActivity
 import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
 import org.helllabs.android.xmp.compose.ui.filelist.components.FileListCard
 import org.helllabs.android.xmp.core.Assets
-import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.core.InfoCache
 import org.helllabs.android.xmp.core.PlaylistMessages
 import org.helllabs.android.xmp.core.PlaylistUtils
@@ -81,7 +80,7 @@ class FileListActivity : BasePlaylistActivity() {
     private val viewModel by viewModels<FileListViewModel>()
 
     override val allFiles: List<String>
-        get() = Files.recursiveList(viewModel.currentPath)
+        get() = listOf() // TODO // Files.recursiveList(viewModel.currentPath)
 
     override val isShuffleMode: Boolean
         get() = viewModel.uiState.value.isShuffle
@@ -110,7 +109,7 @@ class FileListActivity : BasePlaylistActivity() {
     private val addCurrentRecursiveChoice: PlaylistChoice = object : PlaylistChoice {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
             PlaylistUtils.filesToPlaylist(
-                fileList = Files.recursiveList(viewModel.currentPath),
+                fileList = listOf(), // TODO // Files.recursiveList(viewModel.currentPath),
                 playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
                 onMessage = ::playlistMessage
             )
@@ -123,7 +122,7 @@ class FileListActivity : BasePlaylistActivity() {
     private val addRecursiveToPlaylistChoice: PlaylistChoice = object : PlaylistChoice {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
             PlaylistUtils.filesToPlaylist(
-                fileList = Files.recursiveList(viewModel.getItems()[fileSelection].file),
+                fileList = listOf(), // TODO // Files.recursiveList(viewModel.getItems()[fileSelection].file),
                 playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
                 onMessage = ::playlistMessage
             )
@@ -284,9 +283,7 @@ class FileListActivity : BasePlaylistActivity() {
                     },
                     icon = Icons.Default.QuestionMark,
                     title = "Delete directory",
-                    text = "Are you sure you want to delete directory \"${
-                    Files.basename(deleteDirectory)
-                    }\" and all its contents?",
+                    text = "Are you sure you want to delete directory /*Files.basename(deleteDirectory)*/and all its contents?", // TODO
                     confirmText = stringResource(id = R.string.menu_delete),
                     onConfirm = {
                         val text = if (InfoCache.deleteRecursive(deleteDirectory!!)) {
@@ -312,7 +309,7 @@ class FileListActivity : BasePlaylistActivity() {
                 isShowing = deleteFile != null,
                 icon = Icons.Default.QuestionMark,
                 title = "Delete File",
-                text = "Are you sure you want to delete ${Files.basename(deleteFile)}?",
+                text = "Are you sure you want to delete Files.basename(deleteFile)", // TODO
                 confirmText = stringResource(id = R.string.menu_delete),
                 onConfirm = {
                     if (InfoCache.delete(deleteFile!!)) {
@@ -385,8 +382,8 @@ class FileListActivity : BasePlaylistActivity() {
                                     playlistChoiceState =
                                         PlaylistChoiceData(index, addRecursiveToPlaylistChoice)
 
-                                1 -> addToQueue(Files.recursiveList(item.file))
-                                2 -> playModule(Files.recursiveList(item.file))
+                                1 -> addToQueue(listOf()) // TODO // Files.recursiveList(item.file))
+                                2 -> playModule(listOf()) // TODO // Files.recursiveList(item.file))
                                 3 -> deleteDirectory = item.file!!.path
                             }
                         } else {

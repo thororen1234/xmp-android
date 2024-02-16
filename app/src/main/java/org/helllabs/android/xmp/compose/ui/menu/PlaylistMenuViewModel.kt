@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.StorageManager
-import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.core.PlaylistUtils
 import org.helllabs.android.xmp.model.Playlist
 import org.helllabs.android.xmp.model.Playlist.Companion.PLAYLIST_SUFFIX
@@ -93,7 +92,8 @@ class PlaylistMenuViewModel : ViewModel() {
             onSuccess = { name ->
                 _uiState.update { it.copy(mediaPath = name) }
                 updateList(context)
-            }, onError = {
+            },
+            onError = {
                 showError(it, false)
             }
         )
@@ -137,7 +137,7 @@ class PlaylistMenuViewModel : ViewModel() {
         try {
             file.delete()
             file.createNewFile()
-            Files.writeToFile(file, value)
+            // Files.writeToFile(file, value) // TODO
         } catch (e: IOException) {
             onError()
         }

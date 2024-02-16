@@ -3,6 +3,7 @@ package org.helllabs.android.xmp.compose.ui
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
+import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
@@ -44,7 +45,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
         }
     }
 
-    private var mAddList: MutableList<String>? = null
+    private var mAddList: MutableList<Uri>? = null
     private var mModPlayer: PlayerService? = null
 
     protected abstract val isShuffleMode: Boolean
@@ -165,42 +166,44 @@ abstract class BasePlaylistActivity : ComponentActivity() {
         }
     }
 
+    // TODO
     protected fun addToQueue(filename: String) {
-        if (InfoCache.testModule(filename)) {
-            if (PlayerService.isAlive) {
-                val service = Intent(this, PlayerService::class.java)
-                mAddList = listOf(filename).toMutableList()
-                bindService(service, connection, 0)
-            } else {
-                val item = listOf(filename)
-                playModule(modList = item)
-            }
-        }
+//        if (InfoCache.testModule(filename)) {
+//            if (PlayerService.isAlive) {
+//                val service = Intent(this, PlayerService::class.java)
+//                mAddList = listOf(filename).toMutableList()
+//                bindService(service, connection, 0)
+//            } else {
+//                val item = listOf(filename)
+//                playModule(modList = item)
+//            }
+//        }
     }
 
+    // TODO
     protected fun addToQueue(list: List<String>) {
-        val realList: MutableList<String> = ArrayList()
-        var realSize = 0
-        var invalid = false
-        for (filename in list) {
-            if (InfoCache.testModule(filename)) {
-                realList.add(filename)
-                realSize++
-            } else {
-                invalid = true
-            }
-        }
-        if (invalid) {
-            showSnack(getString(R.string.msg_only_valid_files_sent))
-        }
-        if (realSize > 0) {
-            if (PlayerService.isAlive) {
-                val service = Intent(this, PlayerService::class.java)
-                mAddList = realList
-                bindService(service, connection, 0)
-            } else {
-                playModule(modList = realList)
-            }
-        }
+//        val realList: MutableList<String> = ArrayList()
+//        var realSize = 0
+//        var invalid = false
+//        for (filename in list) {
+//            if (InfoCache.testModule(filename)) {
+//                realList.add(filename)
+//                realSize++
+//            } else {
+//                invalid = true
+//            }
+//        }
+//        if (invalid) {
+//            showSnack(getString(R.string.msg_only_valid_files_sent))
+//        }
+//        if (realSize > 0) {
+//            if (PlayerService.isAlive) {
+//                val service = Intent(this, PlayerService::class.java)
+//                mAddList = realList
+//                bindService(service, connection, 0)
+//            } else {
+//                playModule(modList = realList)
+//            }
+//        }
     }
 }

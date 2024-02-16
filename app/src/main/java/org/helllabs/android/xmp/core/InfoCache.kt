@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.core
 
+import android.net.Uri
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.model.ModInfo
@@ -8,6 +9,7 @@ import java.io.File
 import java.io.FileReader
 import java.io.IOException
 
+@Deprecated("Don't really need to use caching anymore")
 object InfoCache {
     fun clearCache(fileList: List<String>) {
         fileList.forEach { fileName ->
@@ -77,10 +79,16 @@ object InfoCache {
         }
     }
 
+    // TODO use for URI
+    fun testModule(uri: Uri): Boolean {
+        return testModule("", ModInfo())
+    }
+
     fun testModule(filename: String): Boolean {
         return testModule(filename, ModInfo())
     }
 
+    // TODO update for fd use
     private fun testModule(filename: String, info: ModInfo): Boolean {
         return Xmp.testModule(filename, info)
 

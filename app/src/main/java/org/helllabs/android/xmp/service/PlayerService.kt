@@ -4,6 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.media.AudioManager
 import android.media.AudioManager.OnAudioFocusChangeListener
+import android.net.Uri
 import android.os.Binder
 import android.os.IBinder
 import android.support.v4.media.session.MediaSessionCompat
@@ -12,9 +13,7 @@ import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp
-import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.core.InfoCache.delete
-import org.helllabs.android.xmp.core.InfoCache.testModule
 import org.helllabs.android.xmp.service.notifier.ModernNotifier
 import org.helllabs.android.xmp.service.utils.QueueManager
 import org.helllabs.android.xmp.service.utils.RemoteControl
@@ -59,7 +58,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     private var discardBuffer = false // don't play current buffer if changing module while paused
     private var looped = false
     private var playerAllSequences = false
-    private var playerFileName: String? = null // currently playing file
+    private var playerFileName: Uri? = null // currently playing file
     private var previousPaused = false // save previous pause state
     private var queue: QueueManager? = null
     private var receiverHelper: ReceiverHelper? = null
@@ -167,7 +166,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         if (queue != null) {
             var name = Xmp.getModName()
             if (name.isEmpty()) {
-                name = Files.basename(queue!!.filename)
+                name = queue!!.filename.path ?: "AAA"// TODO Files.basename(queue!!.filename)
             }
 
             notifier?.notify(
@@ -254,7 +253,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
                 // If this file is unrecognized, and we're going backwards, go to previous
                 // If we're at the start of the list, go to the last recognized file
-                if (playerFileName == null || !testModule(playerFileName!!)) {
+                if (playerFileName == null /*|| !testModule(playerFileName!!)*/) { // TODO testModule
                     Timber.w("$playerFileName: unrecognized format")
                     if (cmd == CMD_PREV) {
                         if (queue!!.index <= 0) {
@@ -274,7 +273,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
                 // Ditto if we can't load the module
                 Timber.i("Load $playerFileName")
-                if (Xmp.loadModule(playerFileName) < 0) {
+                if (Xmp.loadFromFd(this@PlayerService, playerFileName!!) < 0) {
                     Timber.e("Error loading $playerFileName")
                     if (cmd == CMD_PREV) {
                         if (queue!!.index <= 0) {
@@ -289,7 +288,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 cmd = CMD_NONE
                 var name = Xmp.getModName()
                 if (name.isEmpty()) {
-                    name = Files.basename(playerFileName)
+                    name = playerFileName?.path ?: "CCC" // TODO Files.basename(playerFileName)
                 }
 
                 notifier?.notify(name, Xmp.getModType(), queue!!.index, ModernNotifier.TYPE_TICKER)
@@ -462,7 +461,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     // region [Region] Was Stub
     fun play(
-        fileList: List<String>,
+        fileList: List<Uri>,
         start: Int,
         shuffle: Boolean,
         loopList: Boolean,
@@ -495,7 +494,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         isAlive = true
     }
 
-    fun add(fileList: List<String>) {
+    fun add(fileList: List<Uri>) {
         queue!!.add(fileList)
 
         updateNotification()
@@ -621,7 +620,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     }
 
     // for Reconnection
-    fun getFileName(): String = playerFileName.orEmpty()
+    fun getFileName(): String = playerFileName?.path ?: "BBB" // TODO
 
     fun getInstruments(): Array<String> = Xmp.getInstruments()!!
 

@@ -1,5 +1,7 @@
 package org.helllabs.android.xmp
 
+import android.content.Context
+import android.net.Uri
 import org.helllabs.android.xmp.model.ModInfo
 
 object Xmp {
@@ -45,6 +47,7 @@ object Xmp {
     external fun hasFreeBuffer(): Boolean
     external fun init(rate: Int, ms: Int): Boolean
     external fun loadModule(name: String?): Int
+    external fun loadModuleFd(fd: Int): Int
     external fun mute(chn: Int, status: Int): Int
     external fun playAudio(): Int
     external fun releaseModule(): Int
@@ -103,6 +106,21 @@ object Xmp {
     external fun setPosition(num: Int): Int
     external fun setSequence(seq: Int): Boolean
     external fun setVolume(vol: Int): Int
+
+    /**
+     * Load module from File Descriptor
+     */
+    fun loadFromFd(context: Context, uri: Uri): Int {
+        val pfd = context.contentResolver.openFileDescriptor(uri, "r")
+        val res = if (pfd != null) {
+            val fd = pfd.detachFd()
+            pfd.close()
+
+            loadModuleFd(fd)
+        } else -1
+
+        return res
+    }
 
     init {
         System.loadLibrary("xmp-jni")

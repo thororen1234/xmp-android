@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
+import org.helllabs.android.xmp.core.Constants.DEFAULT_DOWNLOAD_DIR
+import org.helllabs.android.xmp.core.Strings.asHtml
+import org.helllabs.android.xmp.model.Module
 import timber.log.Timber
 
 /**
@@ -14,7 +17,7 @@ object StorageManager {
     /**
      * Get our parent/root directory
      */
-    fun getParentDirectory(context: Context, onError: (String) -> Unit): DocumentFile? {
+    private fun getParentDirectory(context: Context, onError: (String) -> Unit): DocumentFile? {
         val prefUri = PrefManager.safStoragePath.let { Uri.parse(it) }
 
         if (prefUri == null) {
@@ -34,11 +37,12 @@ object StorageManager {
     /**
      * Get the playlist directory that was set
      */
-    fun getPlaylistDirectory(context: Context): DocumentFile? {
+    fun getPlaylistDirectory(context: Context, onError: (String) -> Unit = {}): DocumentFile? {
         return getParentDirectory(
             context = context,
             onError = {
                 Timber.e(it)
+                onError(it)
             }
         )?.findFile("playlists")
     }
@@ -48,11 +52,12 @@ object StorageManager {
      * This will be where modules are downloaded,
      * and where File Explorer should start
      */
-    fun getModDirectory(context: Context): DocumentFile? {
+    fun getModDirectory(context: Context, onError: (String) -> Unit = {}): DocumentFile? {
         return getParentDirectory(
             context = context,
             onError = {
                 Timber.e(it)
+                onError(it)
             }
         )?.findFile("mods")
     }
@@ -123,5 +128,96 @@ object StorageManager {
      * @see [PrefManager.modArchiveFolder] if the pref was set to download
      * @see [PrefManager.artistFolder]
      */
+    fun getDownloadPath(
+        context: Context,
+        module: Module,
+        onSuccess: (DocumentFile) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val useModFolder = PrefManager.modArchiveFolder
+        val useArtistFolder = PrefManager.artistFolder
 
+        var parentDir = getModDirectory(
+            context = context,
+            onError = onError
+        )
+
+        if (useModFolder) {
+            val modArchiveDir = parentDir?.findFile(DEFAULT_DOWNLOAD_DIR)
+            parentDir = if (modArchiveDir != null && modArchiveDir.isDirectory) {
+                modArchiveDir
+            } else {
+                parentDir?.createDirectory(DEFAULT_DOWNLOAD_DIR)
+            }
+        }
+
+        if (useArtistFolder) {
+            val artist = module.getArtist().asHtml().toString()
+            val artistDir = parentDir?.findFile(artist)
+            parentDir = if (artistDir != null && artistDir.isDirectory) {
+                artistDir
+            } else {
+                parentDir?.createDirectory(artist)
+            }
+        }
+
+        if (parentDir == null) {
+            onError("Unable to create folder. TMA:$useModFolder, Artist $useArtistFolder")
+            return
+        }
+
+        onSuccess(parentDir)
+    }
+
+    fun doesModuleExist(context: Context, module: Module?): Boolean {
+        if (module == null || module.url.isBlank()) {
+            return false
+        }
+
+        var exists = false
+        doesModuleExist(
+            context = context,
+            module = module,
+            onFound = { exists = true },
+            onNotFound = { exists = false },
+            onError = { exists = false }
+        )
+
+        return exists
+    }
+
+    /**
+     * Check if a module exists in a location given the preferences
+     * @see [PrefManager.artistFolder]
+     * @see [PrefManager.modArchiveFolder]
+     */
+    fun doesModuleExist(
+        context: Context,
+        module: Module?,
+        onFound: (Uri) -> Unit,
+        onNotFound: (DocumentFile) -> Unit,
+        onError: (String) -> Unit,
+    ) {
+        if (module == null || module.url.isBlank()) {
+            onError("Module or module url is null")
+            return
+        }
+
+        getDownloadPath(
+            context = context,
+            module = module,
+            onSuccess = {
+                val url = module.url
+                val moduleFilename = url.substring(url.lastIndexOf('#') + 1, url.length)
+
+                val exists = it.findFile(moduleFilename)?.exists() ?: false
+                if (exists) {
+                    onFound(it.findFile(moduleFilename)!!.uri)
+                } else {
+                    onNotFound(it)
+                }
+            },
+            onError = onError,
+        )
+    }
 }

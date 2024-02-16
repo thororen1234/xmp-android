@@ -48,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.R
+import org.helllabs.android.xmp.StorageManager
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.MessageDialog
@@ -58,7 +59,6 @@ import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.search.Search
 import org.helllabs.android.xmp.compose.ui.search.SearchError
 import org.helllabs.android.xmp.compose.ui.search.components.ModuleLayout
-import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.model.Artist
 import org.helllabs.android.xmp.model.ArtistInfo
 import org.helllabs.android.xmp.model.License
@@ -85,7 +85,7 @@ open class Result : ComponentActivity() {
             }
         }
         if (result.resultCode == 2) {
-            viewModel.update()
+            viewModel.update(this)
         }
     }
 
@@ -102,9 +102,9 @@ open class Result : ComponentActivity() {
 
         val id = intent.getIntExtra(Search.MODULE_ID, -1)
         if (id < 0) {
-            viewModel.getRandomModule()
+            viewModel.getRandomModule(this)
         } else {
-            viewModel.getModuleById(id)
+            viewModel.getModuleById(this, id)
         }
 
         snackbarHostState = SnackbarHostState()
@@ -132,7 +132,7 @@ open class Result : ComponentActivity() {
                 ),
                 confirmText = stringResource(id = R.string.menu_delete),
                 onConfirm = {
-                    viewModel.deleteModule()
+                    viewModel.deleteModule(this)
                     deleteModule = false
                 },
                 onDismiss = { deleteModule = false }
@@ -148,10 +148,18 @@ open class Result : ComponentActivity() {
                 confirmText = stringResource(id = R.string.ok),
                 onConfirm = {
                     val module = moduleExists
-                    val mod = module!!.filename
-                    val modDir = Files.getDownloadPath(module)
-                    val url = module.url
-                    viewModel.downloadModule(mod, url, modDir)
+                    StorageManager.getDownloadPath(
+                        context = this,
+                        module = module!!,
+                        onSuccess = {
+                            val mod = module.filename
+                            val url = module.url
+                            viewModel.downloadModule(this, mod, url, it.uri)
+                        },
+                        onError = viewModel::showSoftError
+                    )
+
+
                     moduleExists = null
                 },
                 onDismiss = { moduleExists = null }
@@ -162,34 +170,34 @@ open class Result : ComponentActivity() {
                     state = state,
                     snackbarHostState = snackbarHostState,
                     onBack = { onBackPressedDispatcher.onBackPressed() },
-                    onRandom = viewModel::getRandomModule,
+                    onRandom = { viewModel.getRandomModule(this) },
                     onDelete = { deleteModule = true },
                     onShare = ::shareLink,
                     onPlay = { module ->
-                        if (Files.localFile(module)!!.exists()) {
-                            val path = Files.localFile(module)!!.path
-                            val modList = ArrayList<String>()
+                        StorageManager.doesModuleExist(
+                            context = this,
+                            module = module,
+                            onFound = {
+                                val modListUri = arrayListOf(it)
 
-                            modList.add(path)
-                            XmpApplication.instance?.fileList = modList
+                                XmpApplication.instance?.fileListUri = modListUri
 
-                            Timber.i("Play $path")
-                            Intent(this@Result, PlayerActivity::class.java).apply {
-                                putExtra(PlayerActivity.PARM_START, 0)
-                            }.also { playerResult.launch(it) }
-                        } else {
-                            // Does not exist, download module
-                            val modDir = Files.getDownloadPath(module)
-                            val url = module.url
-
-                            if (Files.localFile(state.module?.module)?.exists() == true) {
-                                moduleExists = module
-                            } else {
-                                Timber.i("Downloading $url to $modDir")
-                                val mod = module.filename
-                                viewModel.downloadModule(mod, url, modDir)
-                            }
-                        }
+                                Timber.i("Play ${it.path}")
+                                Intent(this@Result, PlayerActivity::class.java).apply {
+                                    putExtra(PlayerActivity.PARM_START, 0)
+                                }.also(playerResult::launch)
+                            },
+                            onNotFound = {
+                                Timber.i("Downloading ${module.url} to ${it.uri.path}")
+                                viewModel.downloadModule(
+                                    this,
+                                    module.filename,
+                                    module.url,
+                                    it.uri
+                                )
+                            },
+                            onError = viewModel::showSoftError
+                        )
                     }
                 )
             }

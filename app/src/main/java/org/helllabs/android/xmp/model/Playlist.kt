@@ -6,7 +6,6 @@ import androidx.documentfile.provider.DocumentFile
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.StorageManager
-import org.helllabs.android.xmp.core.Files
 import org.helllabs.android.xmp.core.InfoCache.fileExists
 import org.helllabs.android.xmp.core.PlaylistMessages
 import org.helllabs.android.xmp.core.PlaylistUtils
@@ -202,7 +201,7 @@ class Playlist(val name: String) {
                 array[i] = iterator.next()
             }
             try {
-                Files.removeLineFromFile(file, array)
+                // Files.removeLineFromFile(file, array) // TODO
             } catch (e: FileNotFoundException) {
                 Timber.e("Playlist file ${file.path} not found")
             } catch (e: IOException) {
@@ -364,7 +363,7 @@ class Playlist(val name: String) {
         fun readComment(context: Context, name: String, onError: () -> Unit): String {
             var comment: String? = null
             try {
-                comment = Files.readFromFile(CommentFile(name))
+                comment = "" // Files.readFromFile(CommentFile(name)) // TODO
             } catch (e: IOException) {
                 onError()
             }
