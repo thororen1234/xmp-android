@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.PrefManager
-import org.helllabs.android.xmp.core.InfoCache
 import org.helllabs.android.xmp.core.PlaylistUtils
 import org.helllabs.android.xmp.model.PlaylistItem
 import timber.log.Timber
@@ -171,8 +170,4 @@ class FileListViewModel : ViewModel() {
         _uiState.value.list.takeWhile { it.isDirectory }.count()
 
     fun getItems(): List<PlaylistItem> = _uiState.value.list
-
-    fun clearCachedEntries() {
-        InfoCache.clearCache(getFilenameList())
-    }
 }

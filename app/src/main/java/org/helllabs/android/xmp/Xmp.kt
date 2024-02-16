@@ -107,6 +107,8 @@ object Xmp {
     external fun setSequence(seq: Int): Boolean
     external fun setVolume(vol: Int): Int
 
+    // TODO add testModule helper
+
     /**
      * Load module from File Descriptor
      */

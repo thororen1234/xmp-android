@@ -66,7 +66,6 @@ import org.helllabs.android.xmp.compose.ui.BasePlaylistActivity
 import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
 import org.helllabs.android.xmp.compose.ui.filelist.components.FileListCard
 import org.helllabs.android.xmp.core.Assets
-import org.helllabs.android.xmp.core.InfoCache
 import org.helllabs.android.xmp.core.PlaylistMessages
 import org.helllabs.android.xmp.core.PlaylistUtils
 import org.helllabs.android.xmp.model.PlaylistItem
@@ -286,13 +285,14 @@ class FileListActivity : BasePlaylistActivity() {
                     text = "Are you sure you want to delete directory /*Files.basename(deleteDirectory)*/and all its contents?", // TODO
                     confirmText = stringResource(id = R.string.menu_delete),
                     onConfirm = {
-                        val text = if (InfoCache.deleteRecursive(deleteDirectory!!)) {
-                            viewModel.onRefresh()
-                            getString(R.string.msg_dir_deleted)
-                        } else {
-                            getString(R.string.msg_cant_delete_dir)
-                        }
-                        showSnack(message = text)
+                        // TODO delete recursively
+//                        val text = if (InfoCache.deleteRecursive(deleteDirectory!!)) {
+//                            viewModel.onRefresh()
+//                            getString(R.string.msg_dir_deleted)
+//                        } else {
+//                            getString(R.string.msg_cant_delete_dir)
+//                        }
+//                        showSnack(message = text)
                         deleteDirectory = null
                     },
                     onDismiss = {
@@ -312,12 +312,13 @@ class FileListActivity : BasePlaylistActivity() {
                 text = "Are you sure you want to delete Files.basename(deleteFile)", // TODO
                 confirmText = stringResource(id = R.string.menu_delete),
                 onConfirm = {
-                    if (InfoCache.delete(deleteFile!!)) {
-                        viewModel.onRefresh()
-                        showSnack(message = getString(R.string.msg_file_deleted))
-                    } else {
-                        showSnack(message = getString(R.string.msg_cant_delete))
-                    }
+                    // TODO delete file
+//                    if (InfoCache.delete(deleteFile!!)) {
+//                        viewModel.onRefresh()
+//                        showSnack(message = getString(R.string.msg_file_deleted))
+//                    } else {
+//                        showSnack(message = getString(R.string.msg_cant_delete))
+//                    }
                     deleteFile = null
                 },
                 onDismiss = {
@@ -354,8 +355,6 @@ class FileListActivity : BasePlaylistActivity() {
                                 showSnack(message = "Set as default module path")
                                 PrefManager.mediaPath = viewModel.currentPath
                             }
-
-                            4 -> viewModel.clearCachedEntries()
                         }
                     },
                     onCrumbClick = { crumb, _ ->

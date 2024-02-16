@@ -16,7 +16,6 @@ import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
-import org.helllabs.android.xmp.core.InfoCache
 import org.helllabs.android.xmp.model.PlaylistItem
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
@@ -117,10 +116,11 @@ abstract class BasePlaylistActivity : ComponentActivity() {
                 showSnack("Invalid file path")
                 return
             }
-            if (!InfoCache.testModuleForceIfInvalid(filename)) {
-                showSnack("Unrecognized file format")
-                return
-            }
+            // TODO test module first
+//            if (!InfoCache.testModuleForceIfInvalid(filename)) {
+//                showSnack("Unrecognized file format")
+//                return
+//            }
             val item = listOf(filename)
             playModule(modList = item)
         }
@@ -131,10 +131,11 @@ abstract class BasePlaylistActivity : ComponentActivity() {
                 showSnack("Invalid file path")
                 return
             }
-            if (!InfoCache.testModuleForceIfInvalid(filename)) {
-                showSnack("Unrecognized file format")
-                return
-            }
+            //  TODO test module first
+//            if (!InfoCache.testModuleForceIfInvalid(filename)) {
+//                showSnack("Unrecognized file format")
+//                return
+//            }
             addToQueue(filename)
             showSnack("Added to queue")
         }

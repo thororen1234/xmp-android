@@ -6,7 +6,6 @@ import androidx.documentfile.provider.DocumentFile
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.StorageManager
-import org.helllabs.android.xmp.core.InfoCache.fileExists
 import org.helllabs.android.xmp.core.PlaylistMessages
 import org.helllabs.android.xmp.core.PlaylistUtils
 import timber.log.Timber
@@ -179,7 +178,7 @@ class Playlist(val name: String) {
                 val filename = fields[0]
                 val comment = if (fields.size > 1) fields[1] else ""
                 val title = if (fields.size > 2) fields[2] else ""
-                if (fileExists(filename)) {
+                if (true) { // TODO validate valid playlist items.
                     val item = PlaylistItem(PlaylistItem.TYPE_FILE, title, comment)
                     item.file = File(filename)
                     // item.imageRes = R.drawable.grabber

@@ -13,7 +13,6 @@ import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp
-import org.helllabs.android.xmp.core.InfoCache.delete
 import org.helllabs.android.xmp.service.notifier.ModernNotifier
 import org.helllabs.android.xmp.service.utils.QueueManager
 import org.helllabs.android.xmp.service.utils.RemoteControl
@@ -628,8 +627,9 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     // File management
     fun deleteFile(): Boolean {
+        // TODO: Delete file, then skip to next song
         Timber.i("Delete file ${getFileName()}")
-        return delete(getFileName())
+        return false
     }
     // endregion
 
