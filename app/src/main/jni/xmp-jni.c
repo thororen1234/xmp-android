@@ -107,25 +107,55 @@ Java_org_helllabs_android_xmp_Xmp_loadModuleFd(JNIEnv *env, jobject obj, jint fd
     return res;
 }
 
-JNIEXPORT jint JNICALL
-Java_org_helllabs_android_xmp_Xmp_loadModule(JNIEnv *env, jobject obj, jstring name) {
+//JNIEXPORT jint JNICALL
+//Java_org_helllabs_android_xmp_Xmp_loadModule(JNIEnv *env, jobject obj, jstring name) {
+//    (void) obj;
+//
+//    const char *filename;
+//    int res;
+//
+//    filename = (*env)->GetStringUTFChars(env, name, NULL);
+//    res = xmp_load_module(ctx, (char *) filename);
+//    (*env)->ReleaseStringUTFChars(env, name, filename);
+//
+//    xmp_get_module_info(ctx, &mi);
+//
+//    memset(_pos, 0, XMP_MAX_CHANNELS * sizeof(int));
+//    _sequence = 0;
+//    _mod_is_loaded = 1;
+//
+//    return res;
+//}
+
+JNIEXPORT jboolean JNICALL
+Java_org_helllabs_android_xmp_Xmp_testModuleFd(JNIEnv *env, jobject obj, jint fd, jobject info) {
     (void) obj;
 
-    const char *filename;
-    int res;
+    FILE *file = fdopen(fd, "rb");
+    if (file == NULL) {
+        return JNI_FALSE;
+    }
 
-    filename = (*env)->GetStringUTFChars(env, name, NULL);
-    /* __android_log_print(ANDROID_LOG_DEBUG, "libxmp", "%s", filename); */
-    res = xmp_load_module(ctx, (char *) filename);
-    (*env)->ReleaseStringUTFChars(env, name, filename);
+    struct xmp_test_info ti;
+    int res = xmp_test_module_from_file(file, &ti);
+    fclose(file);
 
-    xmp_get_module_info(ctx, &mi);
+    if (res == 0 && info != NULL) {
+        jclass modInfoClass = (*env)->FindClass(env, "org/helllabs/android/xmp/model/ModInfo");
+        if (modInfoClass == NULL) return JNI_FALSE;
 
-    memset(_pos, 0, XMP_MAX_CHANNELS * sizeof(int));
-    _sequence = 0;
-    _mod_is_loaded = 1;
+        jfieldID fieldName = (*env)->GetFieldID(env, modInfoClass, "name", "Ljava/lang/String;");
+        jfieldID fieldType = (*env)->GetFieldID(env, modInfoClass, "type", "Ljava/lang/String;");
+        if (fieldName == NULL || fieldType == NULL) return JNI_FALSE;
 
-    return res;
+        jstring nameString = (*env)->NewStringUTF(env, ti.name);
+        jstring typeString = (*env)->NewStringUTF(env, ti.type);
+
+        (*env)->SetObjectField(env, info, fieldName, nameString);
+        (*env)->SetObjectField(env, info, fieldType, typeString);
+    }
+
+    return res == 0 ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT jboolean JNICALL

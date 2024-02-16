@@ -38,6 +38,14 @@ object Xmp {
     val maxSeqFromHeader: Int
         get() = getMaxSequences()
 
+    init {
+        System.loadLibrary("xmp-jni")
+    }
+
+    // external fun loadModule(name: String?): Int
+    external fun testModule(name: String?, info: ModInfo?): Boolean //TODO: deprecate
+
+    external fun loadModuleFd(fd: Int): Int
     external fun deinit(): Int
     external fun dropAudio()
     external fun endPlayer(): Int
@@ -46,8 +54,6 @@ object Xmp {
     external fun getPlayer(parm: Int): Int
     external fun hasFreeBuffer(): Boolean
     external fun init(rate: Int, ms: Int): Boolean
-    external fun loadModule(name: String?): Int
-    external fun loadModuleFd(fd: Int): Int
     external fun mute(chn: Int, status: Int): Int
     external fun playAudio(): Int
     external fun releaseModule(): Int
@@ -57,7 +63,7 @@ object Xmp {
     external fun startPlayer(rate: Int): Int
     external fun stopAudio(): Boolean
     external fun stopModule(): Int
-    external fun testModule(name: String?, info: ModInfo?): Boolean
+    external fun testModuleFd(fd: Int, info: ModInfo?): Boolean
     external fun time(): Int
 
     external fun getChannelData(
@@ -107,7 +113,22 @@ object Xmp {
     external fun setSequence(seq: Int): Boolean
     external fun setVolume(vol: Int): Int
 
-    // TODO add testModule helper
+    /**
+     * Test module from File Descriptor
+     */
+    fun testFromFd(context: Context, uri: Uri, modInfo: ModInfo = ModInfo()): Boolean {
+        val pfd = context.contentResolver.openFileDescriptor(uri, "r")
+        val res = if (pfd != null) {
+            val fd = pfd.detachFd()
+            pfd.close()
+
+            testModuleFd(fd, modInfo)
+        } else {
+            false
+        }
+
+        return res
+    }
 
     /**
      * Load module from File Descriptor
@@ -119,12 +140,10 @@ object Xmp {
             pfd.close()
 
             loadModuleFd(fd)
-        } else -1
+        } else {
+            -1
+        }
 
         return res
-    }
-
-    init {
-        System.loadLibrary("xmp-jni")
     }
 }
