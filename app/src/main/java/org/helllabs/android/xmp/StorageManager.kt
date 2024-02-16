@@ -5,14 +5,30 @@ import android.content.Intent
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import org.helllabs.android.xmp.core.Constants.DEFAULT_DOWNLOAD_DIR
-import org.helllabs.android.xmp.core.Strings.asHtml
 import org.helllabs.android.xmp.model.Module
+import org.helllabs.android.xmp.model.PlaylistItem
 import timber.log.Timber
 
 /**
  * This object class is kinda of a mash up of anything related to SAF and the Document Tree
  */
 object StorageManager {
+
+    /**
+     * Checks if we have a URI in preferences, then checks to see if we have R/W access
+     */
+    fun checkPermissions(context: Context): Boolean {
+        val isPreferenceEmpty = PrefManager.safStoragePath.isNullOrBlank()
+        if (isPreferenceEmpty) {
+            return false
+        }
+
+        val preference = Uri.parse(PrefManager.safStoragePath)
+        val persistedUriPermissions = context.contentResolver.persistedUriPermissions
+        return persistedUriPermissions.any {
+            it.uri == preference && it.isReadPermission && it.isWritePermission
+        }
+    }
 
     /**
      * Get our parent/root directory
@@ -134,39 +150,40 @@ object StorageManager {
         onSuccess: (DocumentFile) -> Unit,
         onError: (String) -> Unit
     ) {
-        val useModFolder = PrefManager.modArchiveFolder
-        val useArtistFolder = PrefManager.artistFolder
-
-        var parentDir = getModDirectory(
-            context = context,
-            onError = onError
-        )
-
-        if (useModFolder) {
-            val modArchiveDir = parentDir?.findFile(DEFAULT_DOWNLOAD_DIR)
-            parentDir = if (modArchiveDir != null && modArchiveDir.isDirectory) {
-                modArchiveDir
-            } else {
-                parentDir?.createDirectory(DEFAULT_DOWNLOAD_DIR)
-            }
-        }
-
-        if (useArtistFolder) {
-            val artist = module.getArtist().asHtml().toString()
-            val artistDir = parentDir?.findFile(artist)
-            parentDir = if (artistDir != null && artistDir.isDirectory) {
-                artistDir
-            } else {
-                parentDir?.createDirectory(artist)
-            }
-        }
-
-        if (parentDir == null) {
-            onError("Unable to create folder. TMA:$useModFolder, Artist $useArtistFolder")
+        val rootDir = getModDirectory(context)
+        if (rootDir == null || !rootDir.isDirectory) {
+            onError("Unable to access the mod directory.")
             return
         }
 
-        onSuccess(parentDir)
+        var targetDir = rootDir
+
+        if (PrefManager.modArchiveFolder) {
+            val modArchiveDir = targetDir.findFile(DEFAULT_DOWNLOAD_DIR)
+                ?: targetDir.createDirectory(DEFAULT_DOWNLOAD_DIR)
+
+            if (modArchiveDir == null || !modArchiveDir.isDirectory) {
+                onError("Failed to access or create TMA directory.")
+                return
+            }
+
+            targetDir = modArchiveDir
+        }
+
+        if (PrefManager.artistFolder) {
+            val artistName = module.getArtist()
+            val artistDir = targetDir.findFile(artistName)
+                ?: targetDir.createDirectory(artistName)
+
+            if (artistDir == null || !artistDir.isDirectory) {
+                onError("Failed to access or create the artist directory.")
+                return
+            }
+
+            targetDir = artistDir
+        }
+
+        onSuccess(targetDir)
     }
 
     fun doesModuleExist(context: Context, module: Module?): Boolean {
@@ -196,28 +213,63 @@ object StorageManager {
         module: Module?,
         onFound: (Uri) -> Unit,
         onNotFound: (DocumentFile) -> Unit,
-        onError: (String) -> Unit,
+        onError: (String) -> Unit
     ) {
         if (module == null || module.url.isBlank()) {
-            onError("Module or module url is null")
+            onError("Module or module URL is null or blank.")
             return
         }
 
         getDownloadPath(
             context = context,
             module = module,
-            onSuccess = {
-                val url = module.url
-                val moduleFilename = url.substring(url.lastIndexOf('#') + 1, url.length)
-
-                val exists = it.findFile(moduleFilename)?.exists() ?: false
-                if (exists) {
-                    onFound(it.findFile(moduleFilename)!!.uri)
-                } else {
-                    onNotFound(it)
-                }
+            onSuccess = { directory ->
+                val moduleFilename = module.url.substringAfterLast('#')
+                directory.findFile(moduleFilename)?.let { file ->
+                    if (file.exists() && !file.isDirectory) {
+                        onFound(file.uri)
+                    } else {
+                        onNotFound(directory)
+                    }
+                } ?: onNotFound(directory)
             },
-            onError = onError,
+            onError = onError
         )
+    }
+
+    fun renamePlaylist(
+        context: Context,
+        item: PlaylistItem,
+        name: String
+    ): Boolean {
+        TODO()
+
+        // TODO make sure to update the playlist preference
+//        with(PrefManager) {
+//            putBoolean(
+//                key = Playlist.optionName(newName, Playlist.SHUFFLE_MODE),
+//                value = getBoolean(
+//                    Playlist.optionName(oldName, Playlist.SHUFFLE_MODE),
+//                    Playlist.DEFAULT_SHUFFLE_MODE
+//                )
+//            )
+//            putBoolean(
+//                key = Playlist.optionName(newName, Playlist.LOOP_MODE),
+//                value = getBoolean(
+//                    Playlist.optionName(oldName, Playlist.LOOP_MODE),
+//                    Playlist.DEFAULT_LOOP_MODE
+//                )
+//            )
+//            remove(Playlist.optionName(oldName, Playlist.SHUFFLE_MODE))
+//            remove(Playlist.optionName(oldName, Playlist.LOOP_MODE))
+//        }
+    }
+
+    fun editPlaylistComment(context: Context, item: PlaylistItem, comment: String): Boolean {
+        TODO()
+    }
+
+    fun deletePlaylist(context: Context, name: String) {
+        TODO()
     }
 }

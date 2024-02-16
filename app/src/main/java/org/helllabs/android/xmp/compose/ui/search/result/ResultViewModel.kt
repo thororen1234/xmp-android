@@ -141,7 +141,7 @@ class ResultViewModel(
                                 var totalBytesRead: Long = 0
                                 var bytesRead: Long
                                 while (input.read(sink.buffer, 8192)
-                                        .also { bytesRead = it } != -1L
+                                    .also { bytesRead = it } != -1L
                                 ) {
                                     totalBytesRead += bytesRead
                                     sink.emit()

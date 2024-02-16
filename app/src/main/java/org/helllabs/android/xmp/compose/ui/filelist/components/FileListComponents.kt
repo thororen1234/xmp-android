@@ -58,7 +58,7 @@ private val crumbDropDownItems = listOf(
     DropDownItem("Add to playlist", 0),
     DropDownItem("Recursive add to playlist", 1),
     DropDownItem("Add to play queue", 2),
-    DropDownItem("Set as default path", 3),
+    DropDownItem("Set as default path", 3)
 )
 
 private val directoryDropDownItems = listOf(

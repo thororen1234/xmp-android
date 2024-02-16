@@ -159,7 +159,6 @@ open class Result : ComponentActivity() {
                         onError = viewModel::showSoftError
                     )
 
-
                     moduleExists = null
                 },
                 onDismiss = { moduleExists = null }

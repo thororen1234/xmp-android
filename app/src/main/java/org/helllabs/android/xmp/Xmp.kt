@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package org.helllabs.android.xmp
 
 import android.content.Context

@@ -1,20 +1,20 @@
-//package org.helllabs.android.xmp.core
+// package org.helllabs.android.xmp.core
 //
-//import kotlinx.coroutines.runBlocking
-//import org.helllabs.android.xmp.PrefManager
-//import org.helllabs.android.xmp.core.Strings.asHtml
-//import org.helllabs.android.xmp.model.Module
-//import timber.log.Timber
-//import java.io.BufferedReader
-//import java.io.BufferedWriter
-//import java.io.File
-//import java.io.FileWriter
-//import java.io.IOException
+// import kotlinx.coroutines.runBlocking
+// import org.helllabs.android.xmp.PrefManager
+// import org.helllabs.android.xmp.core.Strings.asHtml
+// import org.helllabs.android.xmp.model.Module
+// import timber.log.Timber
+// import java.io.BufferedReader
+// import java.io.BufferedWriter
+// import java.io.File
+// import java.io.FileWriter
+// import java.io.IOException
 //
-///**
+// /**
 // * General helper functions related to Files
 // */
-//object Files {
+// object Files {
 //
 //    @Throws(IOException::class)
 //    fun writeToFile(file: File, lines: Array<String?>) {
@@ -162,4 +162,4 @@
 //
 //        return@runBlocking true
 //    }
-//}
+// }

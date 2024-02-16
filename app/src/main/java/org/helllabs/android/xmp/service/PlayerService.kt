@@ -168,7 +168,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         if (queue != null) {
             var name = Xmp.getModName()
             if (name.isEmpty()) {
-                name = queue!!.filename.path ?: "AAA"// TODO Files.basename(queue!!.filename)
+                name = queue!!.filename.path ?: "AAA" // TODO Files.basename(queue!!.filename)
             }
 
             notifier?.notify(

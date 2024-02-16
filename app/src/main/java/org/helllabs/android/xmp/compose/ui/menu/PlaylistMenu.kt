@@ -21,8 +21,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Download
-import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -73,7 +73,6 @@ import org.helllabs.android.xmp.compose.components.ChangeLogDialog
 import org.helllabs.android.xmp.compose.components.EditPlaylistDialog
 import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.NewPlaylistDialog
-import org.helllabs.android.xmp.compose.components.TextInputDialog
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.themedText
@@ -84,7 +83,6 @@ import org.helllabs.android.xmp.compose.ui.playlist.PlaylistActivity
 import org.helllabs.android.xmp.compose.ui.preferences.Preferences
 import org.helllabs.android.xmp.compose.ui.search.Search
 import org.helllabs.android.xmp.core.PlaylistUtils
-import org.helllabs.android.xmp.model.Playlist
 import org.helllabs.android.xmp.model.PlaylistItem
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
@@ -146,16 +144,10 @@ class PlaylistMenu : ComponentActivity() {
             )
         )
 
-        // TODO does this even work?
         if (PlayerService.isAlive && PrefManager.startOnPlayer) {
             if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0) {
                 Intent(this, PlayerActivity::class.java).also(::startActivity)
             }
-        }
-
-        if (!viewModel.checkStorage()) {
-            val message = getString(R.string.error_storage)
-            viewModel.showError(message, true)
         }
 
         Timber.d("onCreate")
@@ -197,27 +189,6 @@ class PlaylistMenu : ComponentActivity() {
             )
 
             /**
-             * Change default directory dialog
-             */
-            // TODO use SAF file picker
-            var changeMediaPath by remember { mutableStateOf(false) }
-            TextInputDialog(
-                isShowing = changeMediaPath,
-                icon = Icons.Default.Folder,
-                title = "Change directory",
-                text = "Enter the mod directory:",
-                defaultText = state.mediaPath,
-                onConfirm = { value ->
-                    PrefManager.mediaPath = value
-                    viewModel.updateList(this)
-                    changeMediaPath = false
-                },
-                onDismiss = {
-                    changeMediaPath = false
-                }
-            )
-
-            /**
              * Edit playlist dialog
              */
             var changePlaylist by remember { mutableStateOf(false) }
@@ -225,39 +196,38 @@ class PlaylistMenu : ComponentActivity() {
             EditPlaylistDialog(
                 isShowing = changePlaylist,
                 playlistItem = changePlaylistInfo,
-                onConfirm = { oldName, newName, oldComment, newComment ->
-                    if (oldComment != newComment) {
-                        with(viewModel) {
-                            editComment(oldName, newComment) {
-                                showError(
-                                    message = getString(R.string.error_edit_comment),
-                                    isFatal = false
-                                )
-                            }
+                onConfirm = { item, newName, newComment ->
+                    if (item.comment != newComment) {
+                        if (!StorageManager.editPlaylistComment(this, item, newComment)) {
+                            viewModel.showError(
+                                message = getString(R.string.error_edit_comment),
+                                isFatal = false
+                            )
                         }
                     }
 
-                    if (oldName != newName) {
-                        with(viewModel) {
-                            editPlaylist(oldName, newName) {
-                                showError(
-                                    message = getString(R.string.error_rename_playlist),
-                                    isFatal = false
-                                )
-                            }
+                    if (item.name != newName) {
+                        if (!StorageManager.renamePlaylist(this, item, newName)) {
+                            viewModel.showError(
+                                message = getString(R.string.error_rename_playlist),
+                                isFatal = false
+                            )
                         }
                     }
 
                     changePlaylist = false
+                    changePlaylistInfo = null
                     viewModel.updateList(context)
                 },
                 onDismiss = {
                     changePlaylist = false
+                    changePlaylistInfo = null
                     viewModel.updateList(context)
                 },
                 onDelete = { name ->
-                    Playlist.delete(name)
+                    StorageManager.deletePlaylist(this, name)
                     changePlaylist = false
+                    changePlaylistInfo = null
                     viewModel.updateList(context)
                 }
             )
@@ -335,9 +305,8 @@ class PlaylistMenu : ComponentActivity() {
             XmpTheme {
                 PlaylistMenuScreen(
                     state = state,
-                    snackbarHostState = snackBarHostState,
-                    permissionState = state.mediaPath.isNotEmpty(), // TODO not really a state
-                    permissionRationale = false, // TODO: permission.status.shouldShowRationale
+                    snackBarHostState = snackBarHostState,
+                    permissionState = StorageManager.checkPermissions(this),
                     onItemClick = { item ->
                         if (item.isSpecial) {
                             playlistResult.launch(
@@ -353,7 +322,7 @@ class PlaylistMenu : ComponentActivity() {
                     },
                     onItemLongClick = { item ->
                         if (item.isSpecial) {
-                            changeMediaPath = true
+                            documentTreeResult.launch(null)
                         } else {
                             changePlaylistInfo = item
                             changePlaylist = true
@@ -378,21 +347,15 @@ class PlaylistMenu : ComponentActivity() {
                     onSettings = {
                         settingsResult.launch(Intent(this, Preferences::class.java))
                     },
-                    onRequestPermission = {
-                        TODO("onRequestPermission")
-//                        if (permission.status.shouldShowRationale) {
-//                            permission.launchPermissionRequest()
-//                        } else {
-//                            val intent = Intent().apply {
-//                                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-//                                data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-//                                addCategory(Intent.CATEGORY_DEFAULT)
-//                                addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
-//                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-//                                addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
-//                            }
-//                            playlistResult.launch(intent)
-//                        }
+                    onRequestSettings = {
+                        Intent().apply {
+                            action = android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                            addCategory(Intent.CATEGORY_DEFAULT)
+                            addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS)
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY)
+                        }.also(playlistResult::launch)
                     },
                     onRequestStorage = {
                         documentTreeResult.launch(null)
@@ -414,9 +377,8 @@ class PlaylistMenu : ComponentActivity() {
 @Composable
 private fun PlaylistMenuScreen(
     state: PlaylistMenuViewModel.PlaylistMenuState,
-    snackbarHostState: SnackbarHostState,
+    snackBarHostState: SnackbarHostState,
     permissionState: Boolean,
-    permissionRationale: Boolean,
     onItemClick: (item: PlaylistItem) -> Unit,
     onItemLongClick: (item: PlaylistItem) -> Unit,
     onRefresh: () -> Unit,
@@ -424,8 +386,8 @@ private fun PlaylistMenuScreen(
     onTitleClicked: () -> Unit,
     onDownload: () -> Unit,
     onSettings: () -> Unit,
-    onRequestPermission: () -> Unit,
-    onRequestStorage: () -> Unit
+    onRequestStorage: () -> Unit,
+    onRequestSettings: () -> Unit
 ) {
     val scrollState = rememberLazyListState()
     val isScrolled = remember {
@@ -435,7 +397,7 @@ private fun PlaylistMenuScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         topBar = {
             val topBarContainerColor = if (isScrolled.value) {
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .5f)
@@ -509,7 +471,7 @@ private fun PlaylistMenuScreen(
             }
         }
 
-        if (permissionState) {
+        if (permissionState && state.mediaPath.isNotEmpty()) {
             Box(
                 modifier = Modifier
                     .padding(paddingValues)
@@ -545,24 +507,17 @@ private fun PlaylistMenuScreen(
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(text = "Permissions Not Granted")
+                        Text(text = "Unable to access storage for Xmp to use")
+                        Button(
+                            modifier = Modifier.padding(top = 16.dp),
+                            onClick = onRequestStorage,
+                            content = { Text(text = "Set Directory") }
+                        )
                         OutlinedButton(
                             modifier = Modifier.padding(top = 16.dp),
-                            onClick = onRequestPermission
-                        ) {
-                            val text = if (permissionRationale) {
-                                "Grant Write Permission"
-                            } else {
-                                "Goto Settings"
-                            }
-                            Text(text = text)
-                        }
-                        OutlinedButton(
-                            modifier = Modifier.padding(top = 16.dp),
-                            onClick = onRequestStorage
-                        ) {
-                            Text(text = "Set Directory")
-                        }
+                            onClick = onRequestSettings,
+                            content = { Text(text = "Goto Settings") }
+                        )
                     }
                 }
             }
@@ -586,9 +541,8 @@ private fun Preview_PlaylistMenuScreen() {
                     )
                 }
             ),
-            snackbarHostState = SnackbarHostState(),
+            snackBarHostState = SnackbarHostState(),
             permissionState = true,
-            permissionRationale = true,
             onItemClick = {},
             onItemLongClick = {},
             onRefresh = {},
@@ -596,8 +550,8 @@ private fun Preview_PlaylistMenuScreen() {
             onTitleClicked = {},
             onDownload = {},
             onSettings = {},
-            onRequestPermission = {},
-            onRequestStorage = {}
+            onRequestStorage = {},
+            onRequestSettings = {}
         )
     }
 }

@@ -4,16 +4,13 @@ import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import org.helllabs.android.xmp.PrefManager
-import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.StorageManager
 import org.helllabs.android.xmp.core.PlaylistMessages
 import org.helllabs.android.xmp.core.PlaylistUtils
 import timber.log.Timber
-import java.io.BufferedReader
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.IOException
-import java.io.InputStreamReader
 
 class Playlist(val name: String) {
 
@@ -102,7 +99,7 @@ class Playlist(val name: String) {
     fun commit2(
         context: Context,
         onSuccess: () -> Unit,
-        onError: (String) -> Unit,
+        onError: (String) -> Unit
     ) {
         if (playlistsDir == null) {
             onError("playlistsDir URI is null")
@@ -110,46 +107,60 @@ class Playlist(val name: String) {
         }
 
         val dir = DocumentFile.fromTreeUri(context, playlistsDir!!)
-        if (dir != null && dir.isDirectory && dir.canWrite()) {
-            if (mListChanged) {
-                val plist = dir.createFile("application/octet-stream", "$name.playlist")
-                if (plist != null && list.isNotEmpty()) {
-                    try {
-                        context.contentResolver.openOutputStream(plist.uri)?.use { out ->
-                            list.forEach { item ->
-                                out.write(item.toString().toByteArray())
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Error writing empty playlist")
-                        onError("Failed to write empty playlist")
-                        return
-                    }
-                }
+        if (dir == null || dir.isDirectory) {
+            onError("Playlist directory is null or file in Playlist.kt")
+            return
+        }
 
-                mListChanged = false
-            }
+        if (!dir.canWrite()) {
+            onError("Playlist directory isn't writable")
+            return
+        }
 
-            if (mCommentChanged) {
-                val pComment = dir.createFile("application/octet-stream", "$name.comment")
-                if (pComment != null) {
-                    try {
-                        context.contentResolver.openOutputStream(pComment.uri)?.use { out ->
-                            out.write(comment.toByteArray())
-                        }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Error writing empty playlist comment")
-                        onError("Failed to write empty playlist comment")
-                        return
-                    }
-                }
-
-                mCommentChanged = false
-            }
-
+        if (dir.listFiles().isNotEmpty()) {
+            // Don't make an empty playlist if there are items already in it.
             onSuccess()
             return
         }
+
+        if (mListChanged) {
+            val plist = dir.createFile("application/octet-stream", "$name.playlist")
+            if (plist != null && list.isNotEmpty()) {
+                try {
+                    context.contentResolver.openOutputStream(plist.uri)?.use { out ->
+                        list.forEach { item ->
+                            out.write(item.toString().toByteArray())
+                        }
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error writing empty playlist")
+                    onError("Failed to write empty playlist")
+                    return
+                }
+            }
+
+            mListChanged = false
+        }
+
+        if (mCommentChanged) {
+            val pComment = dir.createFile("application/octet-stream", "$name.comment")
+            if (pComment != null) {
+                try {
+                    context.contentResolver.openOutputStream(pComment.uri)?.use { out ->
+                        out.write(comment.toByteArray())
+                    }
+                } catch (e: Exception) {
+                    Timber.e(e, "Error writing empty playlist comment")
+                    onError("Failed to write empty playlist comment")
+                    return
+                }
+            }
+
+            mCommentChanged = false
+        }
+
+        onSuccess()
+        return
     }
 
     /**
@@ -267,6 +278,7 @@ class Playlist(val name: String) {
         private const val LOOP_MODE = "_loopMode"
         private const val DEFAULT_SHUFFLE_MODE = true
         private const val DEFAULT_LOOP_MODE = false
+
         // Static utilities
         /**
          * Rename a playlist.
@@ -350,50 +362,28 @@ class Playlist(val name: String) {
             }
         }
 
-        /**
-         * Read comment from a playlist file.
-         *
-         * @param context The activity we're running
-         * @param name The playlist name
-         *
-         * @return The playlist comment
-         */
-        @Deprecated("")
-        fun readComment(context: Context, name: String, onError: () -> Unit): String {
-            var comment: String? = null
-            try {
-                comment = "" // Files.readFromFile(CommentFile(name)) // TODO
-            } catch (e: IOException) {
-                onError()
-            }
-            if (comment == null || comment.trim().isEmpty()) {
-                comment = context.getString(R.string.no_comment)
-            }
-            return comment
-        }
-
         fun readComment2(
             context: Context,
             comment: String,
             onSuccess: (String) -> Unit,
             onError: (String) -> Unit
         ) {
-            val playlistsDir = StorageManager.getPlaylistDirectory(context)
-            if (playlistsDir == null || playlistsDir.isFile) {
-                onError("Comment file playlist Directory returned null or is file!")
-                return
-            }
+            val playlistsDir =
+                StorageManager.getPlaylistDirectory(context)?.takeIf { it.isDirectory }
+                    ?: return onError("Playlist directory is not accessible.")
 
-            val commentFile = playlistsDir.findFile(comment + COMMENT_SUFFIX)
-            if (commentFile == null || commentFile.isDirectory) {
-                onError("Comment file returned null or is directory")
-                return
-            }
-            context.contentResolver.openInputStream(commentFile.uri)?.use { inputStream ->
-                BufferedReader(InputStreamReader(inputStream)).use { reader ->
-                    val text = reader.readText()
-                    onSuccess(text)
+            val commentFile =
+                playlistsDir.findFile(comment + COMMENT_SUFFIX)?.takeIf { !it.isDirectory }
+                    ?: return onError("Comment file is not accessible.")
+
+            runCatching {
+                context.contentResolver.openInputStream(commentFile.uri)?.use { inputStream ->
+                    inputStream.bufferedReader().readText()
                 }
+            }.onSuccess { text ->
+                text?.let(onSuccess) ?: onError("Failed to read comment file.")
+            }.onFailure {
+                onError("Error reading comment file: ${it.message}")
             }
         }
 

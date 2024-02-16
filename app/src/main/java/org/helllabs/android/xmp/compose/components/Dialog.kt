@@ -209,9 +209,9 @@ fun NewPlaylistDialog(
 fun EditPlaylistDialog(
     isShowing: Boolean,
     playlistItem: PlaylistItem?,
-    onConfirm: (oldName: String, newName: String, oldComment: String, newComment: String) -> Unit,
+    onConfirm: (PlaylistItem, String, String) -> Unit,
     onDismiss: () -> Unit,
-    onDelete: (name: String) -> Unit
+    onDelete: (String) -> Unit
 ) {
     if (!isShowing || playlistItem == null) {
         return
@@ -240,12 +240,14 @@ fun EditPlaylistDialog(
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = newName,
-                    onValueChange = { newName = it })
+                    onValueChange = { newName = it }
+                )
                 Spacer(modifier = Modifier.height(10.dp))
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
                     value = newComment,
-                    onValueChange = { newComment = it })
+                    onValueChange = { newComment = it }
+                )
 
                 if (confirmDelete) {
                     Spacer(modifier = Modifier.height(24.dp))
@@ -258,9 +260,8 @@ fun EditPlaylistDialog(
                 enabled = newName.isNotEmpty(),
                 onClick = {
                     onConfirm(
-                        playlistItem.name,
+                        playlistItem,
                         newName,
-                        playlistItem.comment,
                         newComment
                     )
                 }
@@ -442,7 +443,7 @@ fun Preview_EditPlaylistDialog() {
                     "Playlist Name",
                     "Playlist Comment"
                 ),
-                onConfirm = { _, _, _, _ -> },
+                onConfirm = { _, _, _ -> },
                 onDismiss = {},
                 onDelete = {}
             )

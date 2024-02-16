@@ -131,6 +131,7 @@ object PlaylistUtils {
             onError("Creating Playlist failed, uri null")
             return
         }
+
         Playlist(newName).apply {
             this.comment = newComment
             this.playlistsDir = playlistsDir
