@@ -36,19 +36,15 @@ import org.helllabs.android.xmp.compose.components.XmpDropdownMenuHeader
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.DropDownItem
+import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.PlaylistItem
 
-private val playlistItemDropDownItems: List<DropDownItem>
-    get() {
-        val mode = PrefManager.playlistMode
-        return mutableListOf<DropDownItem>().apply {
-            add(DropDownItem("Remove from playlist", 0))
-            add(DropDownItem("Add to play queue", 1))
-            add(DropDownItem("Add all to play queue", 2))
-            if (mode != 2) add(DropDownItem("Play this module", 3))
-            if (mode != 1) add(DropDownItem("Play all starting here", 4))
-        }
-    }
+private val playlistItemDropDownItems: List<DropDownItem> = listOf(
+    DropDownItem("Add to play queue", DropDownSelection.FILE_ADD_TO_QUEUE),
+    DropDownItem("Play all starting here", DropDownSelection.FILE_PLAY_HERE),
+    DropDownItem("Play this module", DropDownSelection.FILE_PLAY_THIS_ONLY),
+    DropDownItem("Remove from playlist", DropDownSelection.DELETE),
+)
 
 @Composable
 fun PlaylistCardItem(
@@ -56,7 +52,7 @@ fun PlaylistCardItem(
     elevation: Dp,
     item: PlaylistItem,
     onItemClick: () -> Unit,
-    onMenuClick: (Int) -> Unit
+    onMenuClick: (DropDownSelection) -> Unit
 ) {
     var isContextMenuVisible by rememberSaveable { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
@@ -116,7 +112,7 @@ fun PlaylistCardItem(
                                 haptic.performHapticFeedback(
                                     HapticFeedbackType.LongPress
                                 )
-                                onMenuClick(it.index)
+                                onMenuClick(it.selection)
                                 isContextMenuVisible = false
                             }
                         )

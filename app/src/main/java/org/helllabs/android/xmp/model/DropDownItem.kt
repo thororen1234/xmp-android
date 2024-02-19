@@ -8,5 +8,5 @@ import androidx.compose.material3.DropdownMenu
  */
 data class DropDownItem(
     val text: String,
-    val index: Int
+    val selection: DropDownSelection
 )

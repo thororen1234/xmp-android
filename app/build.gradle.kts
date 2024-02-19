@@ -107,12 +107,12 @@ dependencies {
     implementation(libs.bundles.compose)
     implementation(libs.bundles.compose.utils)
 
-    // implementation("androidx.documentfile:documentfile:1.0.1")
-    // https://mvnrepository.com/artifact/com.lazygeniouz/dfc
-    implementation("com.lazygeniouz:dfc:1.0.8")
-    // https://mvnrepository.com/artifact/com.squareup.moshi/moshi-kotlin
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
+    implementation("androidx.media3:media3-ui:1.2.1")
+    implementation("androidx.media3:media3-common:1.2.1")
+    implementation("androidx.media3:media3-session:1.2.1")
 
+    implementation(libs.dfc)
+    implementation(libs.moshi.kotlin)
     implementation(libs.bundles.retrofit)
     implementation(libs.bundles.xmlUtils)
     implementation(libs.core.ktx)

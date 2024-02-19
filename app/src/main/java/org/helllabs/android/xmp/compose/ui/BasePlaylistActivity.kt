@@ -138,6 +138,10 @@ abstract class BasePlaylistActivity : ComponentActivity() {
             showSnack("Added to queue")
         }
 
+        // TODO
+        Timber.d("items: $items, filenameList: $filenameList, directoryCount: $directoryCount, position: $position, ")
+        return
+
         /**
          * mode:
          * 1. Start playing at selection
@@ -154,6 +158,15 @@ abstract class BasePlaylistActivity : ComponentActivity() {
 
     // TODO: We're not keeping first with shuffle enabled when clicking an item
     protected fun playModule(modList: List<Uri>, start: Int = 0, keepFirst: Boolean = false) {
+        if (modList.isEmpty()) {
+            showSnack("List is empty to play module(s)")
+            return
+        }
+
+        // TODO
+        Timber.d("List: $modList, Start: $start, KeepFirst: $keepFirst")
+        return
+
         (application as XmpApplication).fileListUri = modList.toMutableList()
         Intent(this, PlayerActivity::class.java).apply {
             putExtra(PlayerActivity.PARM_SHUFFLE, isShuffleMode)
@@ -166,7 +179,16 @@ abstract class BasePlaylistActivity : ComponentActivity() {
         }
     }
 
-    protected fun addToQueue(filename: Uri) {
+    protected fun addToQueue(filename: Uri?) {
+        if (filename == null) {
+            showSnack("Unable to add to queue")
+            return
+        }
+
+        // TODO
+        Timber.d("Add to Queue: $filename")
+        return
+
         if (PlayerService.isAlive) {
             val service = Intent(this, PlayerService::class.java)
             mAddList = listOf(filename)
@@ -185,5 +207,12 @@ abstract class BasePlaylistActivity : ComponentActivity() {
         } else {
             playModule(modList = list)
         }
+    }
+
+    protected fun addToQueue2(
+        list: List<Uri>,
+
+    ) {
+
     }
 }

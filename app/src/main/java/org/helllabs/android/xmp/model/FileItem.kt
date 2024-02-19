@@ -20,7 +20,10 @@ data class FileItem(
         }
     }
 
-    val isValid = isSpecial || docFile!!.isDirectory() || isValidModule
+    val isValid = isSpecial || docFile?.isDirectory() == true || isValidModule
+
+    val isFile: Boolean
+        get() = docFile?.isFile() ?: false
 
     override fun compareTo(other: FileItem): Int {
         if (isSpecial != other.isSpecial) {

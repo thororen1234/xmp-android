@@ -50,39 +50,35 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.filelist.FileListViewModel
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.DropDownItem
+import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.FileItem
 
 private val crumbDropDownItems = listOf(
-    DropDownItem("Add to playlist", 0),
-    DropDownItem("Recursive add to playlist", 1),
-    DropDownItem("Add to play queue", 2),
-    DropDownItem("Set as default path", 3)
+    DropDownItem("Add to playlist", DropDownSelection.DIR_ADD_TO_PLAYLIST),
+    DropDownItem("Add to play queue", DropDownSelection.DIR_ADD_TO_QUEUE),
+    DropDownItem("Play contents", DropDownSelection.DIR_PLAY_CONTENTS),
 )
 
 private val directoryDropDownItems = listOf(
-    DropDownItem("Add to playlist", 0),
-    DropDownItem("Add to play queue", 1),
-    DropDownItem("Play contents", 2),
-    DropDownItem("Delete directory", 4)
+    DropDownItem("Add to playlist", DropDownSelection.DIR_ADD_TO_PLAYLIST),
+    DropDownItem("Add to play queue", DropDownSelection.DIR_ADD_TO_QUEUE),
+    DropDownItem("Play contents", DropDownSelection.DIR_PLAY_CONTENTS),
+    DropDownItem("Delete directory", DropDownSelection.DELETE)
 )
 
-private val fileDropDownItems: List<DropDownItem>
-    get() {
-        val mode = PrefManager.playlistMode
-        return mutableListOf<DropDownItem>().apply {
-            add(DropDownItem("Add to playlist", 0))
-            add(DropDownItem("Delete file", 4))
-            if (mode != 3) add(1, DropDownItem("Add to play queue", 1))
-            if (mode != 2) add(2, DropDownItem("Play this file", 2))
-            if (mode != 1) add(3, DropDownItem("Play all starting here", 3))
-        }
-    }
+private val fileDropDownItems: List<DropDownItem> = listOf(
+    DropDownItem("Add to playlist", DropDownSelection.FILE_ADD_TO_PLAYLIST),
+    DropDownItem("Delete file", DropDownSelection.DELETE),
+    DropDownItem("Add to play queue", DropDownSelection.FILE_ADD_TO_QUEUE),
+    DropDownItem("Play this file", DropDownSelection.FILE_PLAY_THIS_ONLY),
+    DropDownItem("Play all starting here", DropDownSelection.FILE_PLAY_HERE),
+)
 
 @Composable
 fun FileListCard(
     item: FileItem,
     onItemClick: () -> Unit,
-    onItemLongClick: (Int) -> Unit
+    onItemLongClick: (DropDownSelection) -> Unit
 ) {
     var isContextMenuVisible by rememberSaveable { mutableStateOf(false) }
     val haptic = LocalHapticFeedback.current
@@ -100,7 +96,7 @@ fun FileListCard(
             ),
             modifier = Modifier.fillMaxWidth(),
             leadingContent = {
-                val icon = if (item.docFile!!.isFile()) {
+                val icon = if (item.isFile) {
                     Icons.AutoMirrored.Filled.InsertDriveFile
                 } else {
                     Icons.Default.Folder
@@ -127,22 +123,26 @@ fun FileListCard(
                     )
                 }
 
-                val list = if (item.docFile!!.isFile()) fileDropDownItems else directoryDropDownItems
+                val list = if (item.isFile) fileDropDownItems else directoryDropDownItems
                 CascadeDropdownMenu(
                     expanded = isContextMenuVisible,
                     onDismissRequest = { isContextMenuVisible = false }
                 ) {
                     XmpDropdownMenuHeader(
-                        text = if (item.docFile.isFile()) "This File" else "This Directory"
+                        text = if (item.isFile) "This File" else "This Directory"
                     )
 
                     list.forEach {
                         DropdownMenuItem(
                             text = { Text(text = it.text) },
-                            enabled = if (it.index == 4) true else item.isValid,
+                            enabled = if (it.selection == DropDownSelection.DELETE) {
+                                true
+                            } else {
+                                item.isValid
+                            },
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onItemLongClick(it.index)
+                                onItemLongClick(it.selection)
                                 isContextMenuVisible = false
                             }
                         )
@@ -151,7 +151,7 @@ fun FileListCard(
             },
             supportingContent = {
                 Text(
-                    text = if (!item.docFile!!.isFile()) {
+                    text = if (!item.isFile) {
                         stringResource(id = R.string.directory)
                     } else {
                         item.comment
@@ -169,7 +169,7 @@ fun BreadCrumbs(
     modifier: Modifier = Modifier,
     crumbScrollState: LazyListState,
     crumbs: List<FileListViewModel.BreadCrumb>,
-    onCrumbMenu: (Int) -> Unit,
+    onCrumbMenu: (DropDownSelection) -> Unit,
     onCrumbClick: (FileListViewModel.BreadCrumb, Int) -> Unit
 ) {
     Row(modifier = modifier.fillMaxWidth()) {
@@ -207,7 +207,7 @@ fun BreadCrumbs(
                                     text = { Text(text = it.text) },
                                     onClick = {
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        onCrumbMenu(it.index)
+                                        onCrumbMenu(it.selection)
                                         isContextMenuVisible = false
                                     }
                                 )

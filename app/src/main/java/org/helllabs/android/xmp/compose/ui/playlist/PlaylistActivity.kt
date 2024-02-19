@@ -60,6 +60,7 @@ import org.helllabs.android.xmp.compose.ui.playlist.components.dragContainer
 import org.helllabs.android.xmp.compose.ui.playlist.components.rememberDragDropState
 import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.Playlist
 import org.helllabs.android.xmp.model.PlaylistItem
 import timber.log.Timber
@@ -102,7 +103,7 @@ class PlaylistActivity : BasePlaylistActivity() {
             XmpTheme {
                 PlaylistScreen(
                     state = state,
-                    onBack = { onBackPressedDispatcher.onBackPressed() },
+                    onBack = onBackPressedDispatcher::onBackPressed,
                     onRefresh = ::update,
                     onClick = { index ->
                         onItemClick(
@@ -112,17 +113,23 @@ class PlaylistActivity : BasePlaylistActivity() {
                             index
                         )
                     },
-                    onMenuClick = { item, index, menuIndex ->
-                        when (menuIndex) {
-                            0 -> {
+                    onMenuClick = { item, index, sel ->
+                        when (sel) {
+                            DropDownSelection.DELETE -> {
                                 viewModel.removeItem(index)
-                                update()
+                                // update()
                             }
 
-                            1 -> addToQueue(item.uri!!)
-                            2 -> addToQueue(viewModel.getUriItems())
-                            3 -> playModule(listOf(item.uri!!))
-                            4 -> playModule(viewModel.getUriItems(), index)
+                            DropDownSelection.FILE_ADD_TO_QUEUE ->
+                                addToQueue(item.uri!!)
+
+                            DropDownSelection.FILE_PLAY_HERE ->
+                                playModule(viewModel.getUriItems(), index)
+
+                            DropDownSelection.FILE_PLAY_THIS_ONLY ->
+                                playModule(listOf(item.uri!!))
+
+                            else -> Unit
                         }
                     },
                     onPlayAll = ::onPlayAll,
@@ -142,7 +149,7 @@ private fun PlaylistScreen(
     onBack: () -> Unit,
     onRefresh: () -> Unit,
     onClick: (index: Int) -> Unit,
-    onMenuClick: (item: PlaylistItem, index: Int, menuIndex: Int) -> Unit,
+    onMenuClick: (item: PlaylistItem, index: Int, sel: DropDownSelection) -> Unit,
     onShuffle: (value: Boolean) -> Unit,
     onLoop: (value: Boolean) -> Unit,
     onPlayAll: () -> Unit,

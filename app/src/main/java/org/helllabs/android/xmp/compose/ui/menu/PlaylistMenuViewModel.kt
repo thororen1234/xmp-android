@@ -93,7 +93,7 @@ class PlaylistMenuViewModel : ViewModel() {
 
         PlaylistManager.listPlaylistsDF().forEach {
             val playlist = PlaylistManager()
-            playlist.load(it.uri)
+            if(!playlist.load(it.uri)) return@forEach
 
             FileItem(
                 name = playlist.playlist.name,

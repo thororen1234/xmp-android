@@ -6,6 +6,7 @@ androidKotlin = "1.9.22" # https://mvnrepository.com/artifact/org.jetbrains.kotl
 cascadeCompose = "2.3.0" # https://mvnrepository.com/artifact/me.saket.cascade/cascade-compose
 composeBom = "2024.02.00" # https://mvnrepository.com/artifact/androidx.compose/compose-bom
 coreKtx = "1.12.0" # https://mvnrepository.com/artifact/androidx.core/core-ktx
+dfc = "1.0.8" # https://mvnrepository.com/artifact/com.lazygeniouz/dfc
 kotlinCompiler = "1.5.9" # https://developer.android.com/jetpack/androidx/releases/compose-compiler
 kotlinxSerializationJson = "1.6.3" # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-serialization-json
 ktLintGradle = "11.6.1" # // https://github.com/JLLeitschuh/ktlint-gradle
@@ -14,6 +15,7 @@ lifecycleRuntimeCompose = "2.7.0" # https://mvnrepository.com/artifact/androidx.
 lifecycleRuntimeKtx = "2.7.0" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-ktx
 lifecycleViewModelCompose = "2.7.0" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-viewmodel-compose
 media = "1.7.0" # https://mvnrepository.com/artifact/androidx.media/media # TODO: Look into newer media?
+moshiKotlin = "1.15.1" # https://mvnrepository.com/artifact/com.squareup.moshi/moshi-kotlin
 okhttp = "5.0.0-alpha.12" # https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
 preferenceKtx = "1.2.0" # https://mvnrepository.com/artifact/androidx.preference/preference-ktx
 retrofit = "2.9.0" # https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
@@ -41,12 +43,14 @@ compose-ui-ui = { module = "androidx.compose.ui:ui" }
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
 cascade-compose = { module = "me.saket.cascade:cascade-compose", version.ref = "cascadeCompose" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
+dfc = { module = "com.lazygeniouz:dfc", version.ref = "dfc" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanaryAndroid" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewModelCompose" }
 media = { module = "androidx.media:media", version.ref = "media" }
+moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshiKotlin" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 preference-ktx = { module = "androidx.preference:preference-ktx", version.ref = "preferenceKtx" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }

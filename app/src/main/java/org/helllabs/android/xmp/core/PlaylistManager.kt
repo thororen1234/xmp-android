@@ -31,6 +31,11 @@ class PlaylistManager {
     }
 
     fun load(uri: Uri): Boolean {
+        if (!uri.pathSegments.last().contains(".json")) {
+            Timber.w("Uri: $uri is not a .json file")
+            return false
+        }
+
         moshi = Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
             .add(UriAdapter())
@@ -124,12 +129,17 @@ class PlaylistManager {
                 return emptyList()
             }
 
-            return playlistsDir.listFiles().map {
+            val list = mutableListOf<Playlist>()
+            for (dfc in playlistsDir.listFiles()) {
+                if (dfc.extension != ".json") continue
+
                 PlaylistManager().run {
-                    load(it.uri)
+                    load(dfc.uri)
                     playlist
-                }
+                }.also(list::add)
             }
+
+            return list
         }
 
         fun delete(name: String): Boolean {

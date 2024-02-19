@@ -57,6 +57,7 @@ object PrefManager {
      * 2. Play selected file
      * 3. Enqueue selected file
      */
+    @Deprecated("")
     var playlistMode: Int
         get() = prefs.getInt("playlist_mode", 1)
         set(value) {
