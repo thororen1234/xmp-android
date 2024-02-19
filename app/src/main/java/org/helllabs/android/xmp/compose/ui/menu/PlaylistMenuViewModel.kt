@@ -1,15 +1,13 @@
 package org.helllabs.android.xmp.compose.ui.menu
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import org.helllabs.android.xmp.StorageManager
-import org.helllabs.android.xmp.core.PlaylistUtils
-import org.helllabs.android.xmp.model.Playlist
-import org.helllabs.android.xmp.model.Playlist.Companion.PLAYLIST_SUFFIX
-import org.helllabs.android.xmp.model.PlaylistItem
+import org.helllabs.android.xmp.core.PlaylistManager
+import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.core.StorageManager
+import org.helllabs.android.xmp.model.FileItem
 import timber.log.Timber
 
 class PlaylistMenuViewModel : ViewModel() {
@@ -18,7 +16,7 @@ class PlaylistMenuViewModel : ViewModel() {
         val errorText: String = "",
         val isFatalError: Boolean = false,
         val mediaPath: String = "",
-        val playlistItems: List<PlaylistItem> = listOf()
+        val playlistItems: List<FileItem> = listOf()
     )
 
     private val _uiState = MutableStateFlow(PlaylistMenuState())
@@ -35,44 +33,42 @@ class PlaylistMenuViewModel : ViewModel() {
 
     // Create application directory and populate with empty playlist
     fun setupDataDir(
-        context: Context,
         name: String,
         comment: String,
         onSuccess: () -> Unit,
         onError: (String) -> Unit
     ) {
-        val playlistsDir = StorageManager.getPlaylistDirectory(context)
-        if (playlistsDir == null || playlistsDir.isFile) {
+        val playlistsDir = StorageManager.getPlaylistDirectory()
+        if (playlistsDir == null || playlistsDir.isFile()) {
             onError("setupDataDir: Playlist Directory returned null or is file!")
+            return
+        }
+
+        if (PrefManager.installedExamplePlaylist) {
+            onSuccess()
             return
         }
 
         val isPlaylistEmpty = playlistsDir.listFiles().isEmpty()
         if (isPlaylistEmpty) {
-            val playlist = playlistsDir.findFile(name + PLAYLIST_SUFFIX)
-            if (playlist != null && playlist.exists()) {
-                Timber.w("Attempted to create another empty playlist")
-                onSuccess()
-                return
+            val res = PlaylistManager().run {
+                new(name, comment)
             }
 
-            PlaylistUtils.createEmptyPlaylist2(
-                context = context,
-                playlistsDir = playlistsDir.uri,
-                newName = name,
-                newComment = comment,
-                onSuccess = onSuccess,
-                onError = onError
-            )
+            if (res) {
+                PrefManager.installedExamplePlaylist = true
+                onSuccess()
+            } else {
+                onError("Unable to create Example playlist")
+            }
         }
     }
 
-    fun setDefaultPath(context: Context) {
+    fun setDefaultPath() {
         StorageManager.getDefaultPathName(
-            context = context,
             onSuccess = { name ->
                 _uiState.update { it.copy(mediaPath = name) }
-                updateList(context)
+                updateList()
             },
             onError = { error ->
                 showError(error, false)
@@ -81,33 +77,31 @@ class PlaylistMenuViewModel : ViewModel() {
         )
     }
 
-    fun updateList(context: Context) {
-        val items = mutableListOf<PlaylistItem>()
-        val browserItem = PlaylistItem(
-            type = PlaylistItem.TYPE_SPECIAL,
+    fun updateList() {
+        if (uiState.value.mediaPath.isEmpty()) {
+            return
+        }
+
+        val items = mutableListOf<FileItem>()
+        val browserItem = FileItem(
             name = "File browser",
-            comment = "Files in ${uiState.value.mediaPath}"
+            comment = "Files in ${uiState.value.mediaPath}",
+            isSpecial = true,
+            docFile = null
         )
         items.add(browserItem)
 
-        PlaylistUtils.listNoSuffix2(context).forEachIndexed { index, name ->
-            Playlist.readComment2(
-                context = context,
-                comment = name,
-                onSuccess = {
-                    val item = PlaylistItem(PlaylistItem.TYPE_PLAYLIST, name, it)
-                    item.id = index + 1
+        PlaylistManager.listPlaylistsDF().forEach {
+            val playlist = PlaylistManager()
+            playlist.load(it.uri)
 
-                    items.add(item)
-                },
-                onError = { error ->
-                    _uiState.update {
-                        it.copy(errorText = error)
-                    }
-                }
-            )
+            FileItem(
+                name = playlist.playlist.name,
+                comment = playlist.playlist.comment,
+                docFile = it
+            ).also(items::add)
         }
 
-        _uiState.update { it.copy(playlistItems = items) }
+        _uiState.update { it.copy(playlistItems = items.sorted()) }
     }
 }

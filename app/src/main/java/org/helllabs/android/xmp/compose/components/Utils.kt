@@ -73,7 +73,7 @@ fun annotatedLinkString(
 @Composable
 private fun Preview_Utils() {
     val linkStringCombined = annotatedLinkStringCombined(
-        text = "Link String Combined",
+        text = "Link String",
         url = "https://developer.android.com/"
     )
     val linkString = annotatedLinkString(

@@ -16,12 +16,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.model.PlaylistItem
+import org.helllabs.android.xmp.model.FileItem
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MenuCardItem(
-    item: PlaylistItem,
+    item: FileItem,
     onClick: () -> Unit,
     onLongClick: () -> Unit
 ) {
@@ -58,10 +58,10 @@ fun MenuCardItem(
 private fun Preview_MenuCardItem() {
     XmpTheme(useDarkTheme = true) {
         MenuCardItem(
-            item = PlaylistItem(
-                PlaylistItem.TYPE_PLAYLIST,
+            item = FileItem(
                 name = "Menu Card Item",
-                comment = "Menu Card Comment"
+                comment = "Menu Card Comment",
+                docFile = null
             ),
             onClick = { },
             onLongClick = { }

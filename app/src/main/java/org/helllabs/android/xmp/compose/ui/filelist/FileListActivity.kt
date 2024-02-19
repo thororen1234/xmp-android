@@ -1,6 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.filelist
 
 import android.annotation.SuppressLint
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
@@ -20,7 +21,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.QuestionMark
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -50,10 +50,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.BottomBarButtons
 import org.helllabs.android.xmp.compose.components.ErrorScreen
@@ -65,21 +63,21 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.BasePlaylistActivity
 import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
 import org.helllabs.android.xmp.compose.ui.filelist.components.FileListCard
-import org.helllabs.android.xmp.core.Assets
-import org.helllabs.android.xmp.core.PlaylistMessages
-import org.helllabs.android.xmp.core.PlaylistUtils
-import org.helllabs.android.xmp.model.PlaylistItem
+import org.helllabs.android.xmp.core.PlaylistManager
+import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.core.StorageManager
+import org.helllabs.android.xmp.model.FileItem
+import org.helllabs.android.xmp.model.PlaylistChoice
+import org.helllabs.android.xmp.model.PlaylistChoiceData
 import timber.log.Timber
-import java.io.File
-import java.io.IOException
 import kotlin.time.Duration.Companion.seconds
 
 class FileListActivity : BasePlaylistActivity() {
 
     private val viewModel by viewModels<FileListViewModel>()
 
-    override val allFiles: List<String>
-        get() = listOf() // TODO // Files.recursiveList(viewModel.currentPath)
+    override val allFiles: List<Uri>
+        get() = StorageManager.walkDownTree(viewModel.currentPath!!.uri)
 
     override val isShuffleMode: Boolean
         get() = viewModel.uiState.value.isShuffle
@@ -91,27 +89,17 @@ class FileListActivity : BasePlaylistActivity() {
         viewModel.onRefresh()
     }
 
-    fun playlistMessage(playlistMessages: PlaylistMessages) {
-        val message = when (playlistMessages) {
-            PlaylistMessages.AddingFiles -> "Scanning module files..."
-            PlaylistMessages.CantWriteToPlaylist -> getString(R.string.error_write_to_playlist)
-            PlaylistMessages.UnrecognizedFormat -> getString(R.string.unrecognized_format)
-            PlaylistMessages.ValidFormatsAdded -> getString(R.string.msg_only_valid_files_added)
-        }
-
-        showSnack(message)
-    }
-
     /**
      * Recursively add current directory to playlist
      */
     private val addCurrentRecursiveChoice: PlaylistChoice = object : PlaylistChoice {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
-            PlaylistUtils.filesToPlaylist(
-                fileList = listOf(), // TODO // Files.recursiveList(viewModel.currentPath),
-                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
-                onMessage = ::playlistMessage
-            )
+            // TODO
+//            PlaylistUtils.filesToPlaylist(
+//                fileList = listOf(), // Files.recursiveList(viewModel.currentPath),
+//                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
+//                onMessage = ::playlistMessage
+//            )
         }
     }
 
@@ -120,11 +108,12 @@ class FileListActivity : BasePlaylistActivity() {
      */
     private val addRecursiveToPlaylistChoice: PlaylistChoice = object : PlaylistChoice {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
-            PlaylistUtils.filesToPlaylist(
-                fileList = listOf(), // TODO // Files.recursiveList(viewModel.getItems()[fileSelection].file),
-                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
-                onMessage = ::playlistMessage
-            )
+            // TODO
+//            PlaylistUtils.filesToPlaylist(
+//                fileList = listOf(), // Files.recursiveList(viewModel.getItems()[fileSelection].file),
+//                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
+//                onMessage = ::playlistMessage
+//            )
         }
     }
 
@@ -133,11 +122,12 @@ class FileListActivity : BasePlaylistActivity() {
      */
     private val addFileToPlaylistChoice: PlaylistChoice = object : PlaylistChoice {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
-            PlaylistUtils.filesToPlaylist(
-                filename = viewModel.getItems()[fileSelection].file?.path.orEmpty(),
-                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
-                onMessage = ::playlistMessage
-            )
+            // TODO
+//            PlaylistUtils.filesToPlaylist(
+//                filename = viewModel.getItems()[fileSelection].uri,
+//                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
+//                onMessage = ::playlistMessage
+//            )
         }
     }
 
@@ -146,25 +136,14 @@ class FileListActivity : BasePlaylistActivity() {
      */
     private val addFileListToPlaylistChoice: PlaylistChoice = object : PlaylistChoice {
         override fun execute(fileSelection: Int, playlistSelection: Int) {
-            PlaylistUtils.filesToPlaylist(
-                fileList = viewModel.getItems().filter { it.isFile }.mapNotNull { it.file?.path },
-                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
-                onMessage = ::playlistMessage
-            )
+            // TODO
+//            PlaylistUtils.filesToPlaylist(
+//                fileList = viewModel.getItems().filter { it.isDocFile }.map { it.uri },
+//                playlistName = PlaylistUtils.getPlaylistName(playlistSelection),
+//                onMessage = ::playlistMessage
+//            )
         }
     }
-
-    /**
-     * For actions based on playlist selection made using choosePlaylist()
-     */
-    interface PlaylistChoice {
-        fun execute(fileSelection: Int, playlistSelection: Int)
-    }
-
-    data class PlaylistChoiceData(
-        val fileSelection: Int,
-        val playlistChoice: PlaylistChoice
-    )
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -208,91 +187,44 @@ class FileListActivity : BasePlaylistActivity() {
             }
 
             /**
-             * Path not found dialog
-             */
-            MessageDialog(
-                isShowing = state.pathNotFound,
-                icon = Icons.Default.Warning,
-                title = stringResource(id = R.string.file_no_path_title),
-                text = stringResource(
-                    id = R.string.file_no_path_text,
-                    viewModel.currentPath
-                ),
-                confirmText = stringResource(id = R.string.create),
-                onConfirm = {
-                    try {
-                        Assets.install(
-                            this@FileListActivity,
-                            viewModel.currentPath,
-                            PrefManager.examples
-                        )
-                        viewModel.onRefresh()
-                    } catch (e: IOException) {
-                        showSnack(
-                            message = "Error creating directory ${viewModel.currentPath}.",
-                            actionLabel = getString(R.string.ok)
-                        )
-
-                        finish()
-                    }
-                    viewModel.showPathNotFound(false)
-                },
-                onDismiss = {
-                    viewModel.showPathNotFound(false)
-                    finish()
-                }
-            )
-
-            /**
              * Playlist choice dialog
              */
-            var playlistChoiceState: PlaylistChoiceData? by remember { mutableStateOf(null) }
+            var choiceState: PlaylistChoiceData? by remember { mutableStateOf(null) }
             ListDialog(
-                isShowing = playlistChoiceState != null,
+                isShowing = choiceState != null,
                 icon = Icons.AutoMirrored.Filled.PlaylistAdd,
                 title = stringResource(id = R.string.msg_select_playlist),
-                list = PlaylistUtils.listNoSuffix().toList(),
+                list = PlaylistManager.listPlaylists(),
                 onConfirm = { choice ->
-                    with(playlistChoiceState!!) {
+                    with(choiceState!!) {
                         playlistChoice.execute(fileSelection, choice)
                     }
-                    playlistChoiceState = null
+                    choiceState = null
                 },
-                onDismiss = { playlistChoiceState = null },
+                onDismiss = { choiceState = null },
                 onEmpty = {
                     showSnack(message = getString(R.string.msg_no_playlists))
-                    playlistChoiceState = null
+                    choiceState = null
                 }
             )
 
             /**
              * Delete directory dialog
              */
-            var deleteDirectory: String? by remember { mutableStateOf(null) }
+            var deleteDirectory: Uri? by remember { mutableStateOf(null) }
             if (deleteDirectory != null) {
                 MessageDialog(
                     isShowing = true,
-                    precondition = deleteDirectory!!.startsWith(PrefManager.mediaPath) &&
-                        deleteDirectory != PrefManager.mediaPath,
-                    onPrecondition = {
-                        // Prevent deletion of files outside preferred mod dir.
-                        showSnack(message = getString(R.string.error_dir_not_under_moddir))
-
-                        deleteDirectory = null
-                    },
                     icon = Icons.Default.QuestionMark,
                     title = "Delete directory",
-                    text = "Are you sure you want to delete directory /*Files.basename(deleteDirectory)*/and all its contents?", // TODO
+                    text = "Are you sure you want to delete directory " +
+                        "${StorageManager.getFilename(deleteDirectory)} and all its contents?",
                     confirmText = stringResource(id = R.string.menu_delete),
                     onConfirm = {
-                        // TODO delete recursively
-//                        val text = if (InfoCache.deleteRecursive(deleteDirectory!!)) {
-//                            viewModel.onRefresh()
-//                            getString(R.string.msg_dir_deleted)
-//                        } else {
-//                            getString(R.string.msg_cant_delete_dir)
-//                        }
-//                        showSnack(message = text)
+                        val res = StorageManager.deleteFileOrDirectory(deleteDirectory)
+                        if (!res) {
+                            showSnack("Unable to delete directory")
+                        }
                         deleteDirectory = null
                     },
                     onDismiss = {
@@ -304,21 +236,19 @@ class FileListActivity : BasePlaylistActivity() {
             /**
              * Delete file dialog
              */
-            var deleteFile: String? by remember { mutableStateOf(null) }
+            var deleteFile: Uri? by remember { mutableStateOf(null) }
             MessageDialog(
                 isShowing = deleteFile != null,
                 icon = Icons.Default.QuestionMark,
                 title = "Delete File",
-                text = "Are you sure you want to delete Files.basename(deleteFile)", // TODO
+                text = "Are you sure you want to delete ${StorageManager.getFilename(deleteFile)}",
                 confirmText = stringResource(id = R.string.menu_delete),
                 onConfirm = {
-                    // TODO delete file
-//                    if (InfoCache.delete(deleteFile!!)) {
-//                        viewModel.onRefresh()
-//                        showSnack(message = getString(R.string.msg_file_deleted))
-//                    } else {
-//                        showSnack(message = getString(R.string.msg_cant_delete))
-//                    }
+                    val res = StorageManager.deleteFileOrDirectory(deleteFile)
+                    if (!res) {
+                        showSnack("Unable to delete file")
+                    }
+                    update()
                     deleteFile = null
                 },
                 onDismiss = {
@@ -329,7 +259,7 @@ class FileListActivity : BasePlaylistActivity() {
             XmpTheme {
                 FileListScreen(
                     state = state,
-                    snackbarHostState = snackbarHostState,
+                    snackBarHostState = snackBarHostState,
                     onBack = {
                         callback.remove()
                         onBackPressedDispatcher.onBackPressed()
@@ -343,59 +273,58 @@ class FileListActivity : BasePlaylistActivity() {
                     onCrumbMenu = { index ->
                         when (index) {
                             0 ->
-                                playlistChoiceState =
+                                choiceState =
                                     PlaylistChoiceData(0, addFileListToPlaylistChoice)
 
                             1 ->
-                                playlistChoiceState =
+                                choiceState =
                                     PlaylistChoiceData(0, addCurrentRecursiveChoice)
 
                             2 -> addToQueue(viewModel.getFilenameList())
                             3 -> {
                                 showSnack(message = "Set as default module path")
-                                PrefManager.mediaPath = viewModel.currentPath
+                                PrefManager.safStoragePath = viewModel.currentPath!!.uri.toString()
                             }
                         }
                     },
                     onCrumbClick = { crumb, _ ->
-                        val file = File(crumb.path)
-                        viewModel.onNavigate(file)
+                        viewModel.onNavigate(crumb.path)
                     },
                     onItemClick = { item, index ->
-                        if (item.file?.isDirectory == true) {
-                            viewModel.onNavigate(item.file!!)
-                        } else {
+                        if (item.docFile!!.isFile()) {
                             onItemClick(
                                 viewModel.getItems(),
                                 viewModel.getFilenameList(),
                                 viewModel.getDirectoryCount(),
                                 index
                             )
+                        } else {
+                            viewModel.onNavigate(item.docFile)
                         }
                     },
                     onItemLongClick = { item, index, menuIndex ->
-                        if (item.isDirectory) {
-                            // Directories
-                            when (menuIndex) {
-                                0 ->
-                                    playlistChoiceState =
-                                        PlaylistChoiceData(index, addRecursiveToPlaylistChoice)
-
-                                1 -> addToQueue(listOf()) // TODO // Files.recursiveList(item.file))
-                                2 -> playModule(listOf()) // TODO // Files.recursiveList(item.file))
-                                3 -> deleteDirectory = item.file!!.path
-                            }
-                        } else {
+                        if (item.docFile!!.isFile()) {
                             // Files
                             when (menuIndex) {
                                 0 ->
-                                    playlistChoiceState =
+                                    choiceState =
                                         PlaylistChoiceData(index, addFileToPlaylistChoice)
 
-                                1 -> addToQueue(item.file!!.path)
-                                2 -> playModule(listOf(item.file!!.path))
+                                1 -> addToQueue(item.docFile.uri)
+                                2 -> playModule(listOf(item.docFile.uri))
                                 3 -> playModule(viewModel.getFilenameList(), index)
-                                4 -> deleteFile = item.file!!.path
+                                4 -> deleteFile = item.docFile.uri
+                            }
+                        } else {
+                            // Directories
+                            when (menuIndex) {
+                                0 ->
+                                    choiceState =
+                                        PlaylistChoiceData(index, addRecursiveToPlaylistChoice)
+
+                                1 -> addToQueue(StorageManager.walkDownTree(item.docFile.uri))
+                                2 -> playModule(StorageManager.walkDownTree(item.docFile.uri))
+                                3 -> deleteDirectory = item.docFile.uri
                             }
                         }
                     }
@@ -409,7 +338,7 @@ class FileListActivity : BasePlaylistActivity() {
 @Composable
 private fun FileListScreen(
     state: FileListViewModel.FileListState,
-    snackbarHostState: SnackbarHostState,
+    snackBarHostState: SnackbarHostState,
     onBack: () -> Unit,
     onScrollPosition: (Int) -> Unit,
     onRefresh: () -> Unit,
@@ -419,8 +348,8 @@ private fun FileListScreen(
     onPlayAll: () -> Unit,
     onCrumbMenu: (index: Int) -> Unit,
     onCrumbClick: (crumb: FileListViewModel.BreadCrumb, index: Int) -> Unit,
-    onItemClick: (item: PlaylistItem, index: Int) -> Unit,
-    onItemLongClick: (item: PlaylistItem, index: Int, menuIndex: Int) -> Unit
+    onItemClick: (item: FileItem, index: Int) -> Unit,
+    onItemLongClick: (item: FileItem, index: Int, menuIndex: Int) -> Unit
 ) {
     val scrollState = rememberLazyListState(initialFirstVisibleItemIndex = state.lastScrollPosition)
     val crumbScrollState = rememberLazyListState()
@@ -441,6 +370,8 @@ private fun FileListScreen(
 
     // Refresh our list's scroll position if our crumbs changes.
     LaunchedEffect(state.crumbs) {
+        if (state.crumbs.isEmpty()) return@LaunchedEffect
+
         scrollState.animateScrollToItem(state.lastScrollPosition)
         crumbScrollState.animateScrollToItem(state.crumbs.lastIndex)
     }
@@ -471,18 +402,14 @@ private fun FileListScreen(
                 onPlayAll = onPlayAll
             )
         },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
     ) { paddingValues ->
+        // Outer Box() to properly hide Pull-Refresh
         Box(modifier = Modifier.padding(paddingValues)) {
-            var refreshing by remember { mutableStateOf(false) }
-
             val pullRefreshState = rememberPullToRefreshState()
             if (pullRefreshState.isRefreshing) {
                 LaunchedEffect(true) {
-                    refreshing = true
-                    delay(1.seconds)
                     onRefresh()
-                    refreshing = false
                     pullRefreshState.endRefresh()
                 }
             }
@@ -510,10 +437,8 @@ private fun FileListScreen(
                     ErrorScreen(
                         text = stringResource(id = R.string.empty_directory),
                         content = {
-                            if (!state.pathNotFound) {
-                                OutlinedButton(onClick = onRestore) {
-                                    Text(text = stringResource(id = R.string.go_back))
-                                }
+                            OutlinedButton(onClick = onRestore) {
+                                Text(text = stringResource(id = R.string.go_back))
                             }
                         }
                     )
@@ -534,32 +459,30 @@ private fun FileListScreen(
 @Composable
 private fun Preview_FileListScreen() {
     val context = LocalContext.current
-    PrefManager.init(context, File(""))
+    PrefManager.init(context)
 
     XmpTheme(useDarkTheme = true) {
         FileListScreen(
             state = FileListViewModel.FileListState(
                 isLoading = true,
                 error = "An error has occurred.",
-                list = List(15) {
-                    PlaylistItem(
-                        type = if (it < 5) PlaylistItem.TYPE_DIRECTORY else PlaylistItem.TYPE_FILE,
+                list = List(10) {
+                    FileItem(
                         name = "Name $it",
-                        comment = "Comment $it"
-                    ).apply {
-                        file = File("file/$it")
-                    }
+                        comment = "Comment $it",
+                        docFile = null
+                    )
                 },
-                crumbs = List(10) {
+                crumbs = List(4) {
                     FileListViewModel.BreadCrumb(
                         name = "Crumb $it",
-                        path = "\\Some\\Current\\File\\$it"
+                        path = null
                     )
                 },
                 isLoop = true,
                 isShuffle = false
             ),
-            snackbarHostState = SnackbarHostState(),
+            snackBarHostState = SnackbarHostState(),
             onBack = {},
             onScrollPosition = {},
             onRefresh = {},

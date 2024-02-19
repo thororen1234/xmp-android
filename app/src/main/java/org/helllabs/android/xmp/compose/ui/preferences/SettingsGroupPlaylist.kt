@@ -3,10 +3,6 @@ package org.helllabs.android.xmp.compose.ui.preferences
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import com.alorma.compose.settings.storage.base.rememberBooleanSettingState
@@ -14,44 +10,24 @@ import com.alorma.compose.settings.storage.base.rememberIntSettingState
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsList
 import com.alorma.compose.settings.ui.SettingsMenuLink
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.compose.components.TextInputDialog
 import org.helllabs.android.xmp.compose.ui.preferences.components.FixedSettingsSwitch
+import org.helllabs.android.xmp.core.PrefManager
 import timber.log.Timber
 
 @Composable
 fun SettingsGroupPlaylist(
-    onClearCache: () -> Unit
+    onChangeDir: () -> Unit
 ) {
     SettingsGroup(
         title = {
             Text(text = stringResource(id = R.string.pref_category_files))
         }
     ) {
-        // TODO use SAF file picker
-        var mediaPathDialog by remember { mutableStateOf(false) }
-        var mediaPath by remember { mutableStateOf(PrefManager.mediaPath) }
-        TextInputDialog(
-            isShowing = mediaPathDialog,
-            title = stringResource(id = R.string.pref_media_path_title),
-            defaultText = mediaPath,
-            onConfirm = {
-                mediaPath = it
-                PrefManager.mediaPath = it
-                mediaPathDialog = false
-            },
-            onDismiss = {
-                mediaPathDialog = false
-            }
-        )
-
         SettingsMenuLink(
             title = { Text(text = stringResource(id = R.string.pref_media_path_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_media_path_summary)) },
-            onClick = {
-                mediaPathDialog = true
-            }
+            onClick = onChangeDir
         )
 
         val installModules = rememberBooleanSettingState(PrefManager.examples)
@@ -103,12 +79,6 @@ fun SettingsGroupPlaylist(
             onCheckedChange = {
                 PrefManager.backButtonNavigation = it
             }
-        )
-
-        SettingsMenuLink(
-            title = { Text(text = stringResource(id = R.string.pref_clear_cache_title)) },
-            subtitle = { Text(text = stringResource(id = R.string.pref_clear_cache_summary)) },
-            onClick = onClearCache
         )
     }
 }

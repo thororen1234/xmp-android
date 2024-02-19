@@ -10,10 +10,10 @@ import com.alorma.compose.settings.storage.base.rememberFloatSettingState
 import com.alorma.compose.settings.storage.base.rememberIntSettingState
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsList
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.ui.preferences.components.FixedSettingsSwitch
 import org.helllabs.android.xmp.compose.ui.preferences.components.XmpSettingsSlider
+import org.helllabs.android.xmp.core.PrefManager
 import timber.log.Timber
 
 @Composable

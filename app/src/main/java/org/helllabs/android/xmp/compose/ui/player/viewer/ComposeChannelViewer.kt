@@ -60,11 +60,13 @@ fun ComposeChannelViewer(
     val view = LocalView.current
 
     val xAxisMultiplier by remember {
-        mutableFloatStateOf(with(density) { 24.dp.toPx() })
+        mutableFloatStateOf(with(density) {
+            24.dp.toPx() })
     }
     val yAxisMultiplier by remember {
         // https://m3.material.io/components/lists/specs
-        mutableFloatStateOf(with(density) { 56.dp.toPx() })
+        mutableFloatStateOf(with(density) {
+            56.dp.toPx() })
     }
     var canvasSize by remember {
         mutableStateOf(Size.Zero)
@@ -115,7 +117,7 @@ fun ComposeChannelViewer(
     LaunchedEffect(Unit) {
         while (true) {
             withFrameMillis {
-                if (PlayerService.isAlive) {
+                if (PlayerService.isAlive && PlayerService.isLoaded) {
                     Xmp.getChannelData(
                         viewInfo.volumes,
                         viewInfo.finalVols,

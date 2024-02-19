@@ -30,7 +30,6 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.serialization.json.Json
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.MessageDialog
@@ -38,6 +37,7 @@ import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.search.components.ItemModule
 import org.helllabs.android.xmp.compose.ui.search.result.Result
+import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.Module
 import timber.log.Timber
 

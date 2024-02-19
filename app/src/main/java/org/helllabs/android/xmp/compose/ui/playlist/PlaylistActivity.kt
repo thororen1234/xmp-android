@@ -1,6 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.playlist
 
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -46,7 +47,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.BottomBarButtons
 import org.helllabs.android.xmp.compose.components.ErrorScreen
@@ -58,10 +58,11 @@ import org.helllabs.android.xmp.compose.ui.playlist.components.PlaylistCardItem
 import org.helllabs.android.xmp.compose.ui.playlist.components.PlaylistInfo
 import org.helllabs.android.xmp.compose.ui.playlist.components.dragContainer
 import org.helllabs.android.xmp.compose.ui.playlist.components.rememberDragDropState
+import org.helllabs.android.xmp.core.PlaylistManager
+import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.Playlist
 import org.helllabs.android.xmp.model.PlaylistItem
 import timber.log.Timber
-import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
 class PlaylistActivity : BasePlaylistActivity() {
@@ -74,8 +75,8 @@ class PlaylistActivity : BasePlaylistActivity() {
     override val isLoopMode: Boolean
         get() = viewModel.uiState.value.isLoop
 
-    override val allFiles: List<String>
-        get() = viewModel.getFilenameList()
+    override val allFiles: List<Uri>
+        get() = viewModel.getUriItems()
 
     override fun update() {
         val extras = intent.extras ?: return
@@ -105,9 +106,9 @@ class PlaylistActivity : BasePlaylistActivity() {
                     onRefresh = ::update,
                     onClick = { index ->
                         onItemClick(
-                            viewModel.getItems(),
-                            viewModel.getFilenameList(),
-                            viewModel.getDirectoryCount(),
+                            viewModel.getUriItems(),
+                            viewModel.getUriItems(), // TODO what?
+                            0,
                             index
                         )
                     },
@@ -118,24 +119,19 @@ class PlaylistActivity : BasePlaylistActivity() {
                                 update()
                             }
 
-                            1 -> addToQueue(item.file!!.path)
-                            2 -> addToQueue(viewModel.getFilenameList())
-                            3 -> playModule(listOf(item.file!!.path))
-                            4 -> playModule(viewModel.getFilenameList(), index)
+                            1 -> addToQueue(item.uri!!)
+                            2 -> addToQueue(viewModel.getUriItems())
+                            3 -> playModule(listOf(item.uri!!))
+                            4 -> playModule(viewModel.getUriItems(), index)
                         }
                     },
                     onPlayAll = ::onPlayAll,
                     onShuffle = viewModel::setShuffle,
                     onLoop = viewModel::setLoop,
-                    onDragEnd = viewModel::saveList
+                    onDragEnd = viewModel::onDragEnd
                 )
             }
         }
-    }
-
-    public override fun onPause() {
-        super.onPause()
-        viewModel.savePlaylist()
     }
 }
 
@@ -172,8 +168,8 @@ private fun PlaylistScreen(
                 )
                 PlaylistInfo(
                     isScrolled = isScrolled.value,
-                    playlistName = state.playlist!!.name,
-                    playlistComment = state.playlist.comment
+                    playlistName = state.manager.playlist.name,
+                    playlistComment = state.manager.playlist.comment
                 )
             }
         },
@@ -206,8 +202,8 @@ private fun PlaylistScreen(
                 modifier = Modifier.nestedScroll(pullRefreshState.nestedScrollConnection),
                 contentAlignment = Alignment.Center
             ) {
-                var list by remember(state.playlist!!.list) {
-                    mutableStateOf(state.playlist.list.toList())
+                var list by remember(state.manager.playlist) {
+                    mutableStateOf(state.manager.playlist.list.toList())
                 }
                 val dragDropState = rememberDragDropState(
                     lazyListState = scrollState,
@@ -252,7 +248,7 @@ private fun PlaylistScreen(
                     }
                 }
 
-                if (state.playlist?.list.isNullOrEmpty()) {
+                if (state.manager.playlist.list.isEmpty()) {
                     ErrorScreen(
                         text = stringResource(id = R.string.empty_playlist),
                         content = {
@@ -276,26 +272,25 @@ private fun PlaylistScreen(
 @Composable
 private fun Preview_PlaylistScreen() {
     val context = LocalContext.current
-    PrefManager.init(context, File(""))
-
-    val list = List(15) {
-        PlaylistItem(
-            type = PlaylistItem.TYPE_PLAYLIST,
-            name = "Name $it",
-            comment = "Comment $it"
-        ).also { item -> item.id = it }
-    }
+    PrefManager.init(context)
 
     XmpTheme {
         PlaylistScreen(
             state = PlaylistActivityViewModel.PlaylistState(
-                playlist = Playlist(stringResource(id = R.string.empty_playlist)).apply {
-                    comment = stringResource(id = R.string.empty_comment)
-                    setNewList(list)
-                },
-
-                isShuffle = false,
-                isLoop = true
+                manager = PlaylistManager().apply {
+                    playlist = Playlist(
+                        name = stringResource(id = R.string.empty_playlist),
+                        comment = stringResource(id = R.string.empty_comment),
+                        isShuffle = false,
+                        isLoop = true,
+                        list = List(15) {
+                            PlaylistItem(
+                                name = "Name $it",
+                                type = "Comment $it"
+                            )
+                        }
+                    )
+                }
             ),
             onRefresh = {},
             onClick = { _ -> },

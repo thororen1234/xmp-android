@@ -66,10 +66,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.BuildConfig
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.StorageManager
-import org.helllabs.android.xmp.compose.components.ChangeLogDialog
 import org.helllabs.android.xmp.compose.components.EditPlaylistDialog
 import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.NewPlaylistDialog
@@ -82,8 +79,10 @@ import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.playlist.PlaylistActivity
 import org.helllabs.android.xmp.compose.ui.preferences.Preferences
 import org.helllabs.android.xmp.compose.ui.search.Search
-import org.helllabs.android.xmp.core.PlaylistUtils
-import org.helllabs.android.xmp.model.PlaylistItem
+import org.helllabs.android.xmp.core.PlaylistManager
+import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.core.StorageManager
+import org.helllabs.android.xmp.model.FileItem
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 import kotlin.time.Duration.Companion.seconds
@@ -96,12 +95,12 @@ class PlaylistMenu : ComponentActivity() {
 
     private val settingsContract = ActivityResultContracts.StartActivityForResult()
     private val settingsResult = registerForActivityResult(settingsContract) {
-        viewModel.updateList(this)
+        viewModel.updateList()
     }
 
     private val playlistContract = ActivityResultContracts.StartActivityForResult()
     private val playlistResult = registerForActivityResult(playlistContract) {
-        viewModel.updateList(this)
+        viewModel.updateList()
     }
 
     private val playerContract = ActivityResultContracts.StartActivityForResult()
@@ -115,18 +114,17 @@ class PlaylistMenu : ComponentActivity() {
             }
         }
         if (result.resultCode == 2) {
-            viewModel.updateList(this)
+            viewModel.updateList()
         }
     }
 
     private val documentTreeContract = ActivityResultContracts.OpenDocumentTree()
     private val documentTreeResult = registerForActivityResult(documentTreeContract) { uri ->
         StorageManager.setPlaylistDirectory(
-            context = this,
             uri = uri,
             onSuccess = {
                 // Refresh the list
-                viewModel.setDefaultPath(this)
+                viewModel.setDefaultPath()
             },
             onError = {
                 viewModel.showError(message = it, isFatal = true)
@@ -180,55 +178,40 @@ class PlaylistMenu : ComponentActivity() {
             )
 
             /**
-             * Changelog dialog
-             */
-            var changeLogDialog by remember { mutableStateOf(false) }
-            ChangeLogDialog(
-                isShowing = changeLogDialog,
-                onDismiss = { PrefManager.changeLogVersion = BuildConfig.VERSION_CODE }
-            )
-
-            /**
              * Edit playlist dialog
              */
             var changePlaylist by remember { mutableStateOf(false) }
-            var changePlaylistInfo: PlaylistItem? by remember { mutableStateOf(null) }
+            var changePlaylistInfo: FileItem? by remember { mutableStateOf(null) }
             EditPlaylistDialog(
                 isShowing = changePlaylist,
-                playlistItem = changePlaylistInfo,
+                fileItem = changePlaylistInfo,
                 onConfirm = { item, newName, newComment ->
-                    if (item.comment != newComment) {
-                        if (!StorageManager.editPlaylistComment(this, item, newComment)) {
-                            viewModel.showError(
-                                message = getString(R.string.error_edit_comment),
-                                isFatal = false
-                            )
-                        }
+                    val res = PlaylistManager().run {
+                        load(item.docFile!!.uri)
+                        rename(newName, newComment)
                     }
 
-                    if (item.name != newName) {
-                        if (!StorageManager.renamePlaylist(this, item, newName)) {
-                            viewModel.showError(
-                                message = getString(R.string.error_rename_playlist),
-                                isFatal = false
-                            )
+                    if (!res) {
+                        lifecycleScope.launch {
+                            val msg = "Failed to edit playlist"
+                            snackBarHostState.showSnackbar(msg, "OK")
                         }
                     }
 
                     changePlaylist = false
                     changePlaylistInfo = null
-                    viewModel.updateList(context)
+                    viewModel.updateList()
                 },
                 onDismiss = {
                     changePlaylist = false
                     changePlaylistInfo = null
-                    viewModel.updateList(context)
+                    viewModel.updateList()
                 },
-                onDelete = { name ->
-                    StorageManager.deletePlaylist(this, name)
+                onDelete = { item ->
+                    PlaylistManager.delete(item.name)
                     changePlaylist = false
                     changePlaylistInfo = null
-                    viewModel.updateList(context)
+                    viewModel.updateList()
                 }
             )
 
@@ -239,22 +222,18 @@ class PlaylistMenu : ComponentActivity() {
             NewPlaylistDialog(
                 isShowing = newPlaylist,
                 onConfirm = { name, comment ->
-                    val playlistsDir = StorageManager.getPlaylistDirectory(context)
-                    PlaylistUtils.createEmptyPlaylist2(
-                        context,
-                        playlistsDir?.uri,
-                        name,
-                        comment,
-                        onSuccess = {
-                            viewModel.updateList(this)
-                        },
-                        onError = {
-                            viewModel.showError(
-                                message = getString(R.string.error_create_playlist),
-                                isFatal = false
-                            )
-                        }
-                    )
+                    val res = PlaylistManager().run {
+                        new(name, comment)
+                    }
+
+                    if (res) {
+                        viewModel.updateList()
+                    } else {
+                        viewModel.showError(
+                            message = getString(R.string.error_create_playlist),
+                            isFatal = false
+                        )
+                    }
 
                     newPlaylist = false
                 },
@@ -278,22 +257,17 @@ class PlaylistMenu : ComponentActivity() {
                 if (savedUri == null || !hasAccess) {
                     documentTreeResult.launch(null)
                 } else {
-                    viewModel.setDefaultPath(context)
+                    viewModel.setDefaultPath()
                 }
             }
 
             LaunchedEffect(state.mediaPath) {
                 if (state.mediaPath.isNotEmpty()) {
-                    if (BuildConfig.VERSION_CODE < PrefManager.changeLogVersion) {
-                        changeLogDialog = true
-                    }
-
                     viewModel.setupDataDir(
-                        context = context,
                         name = getString(R.string.empty_playlist),
                         comment = getString(R.string.empty_comment),
                         onSuccess = {
-                            viewModel.updateList(context)
+                            viewModel.updateList()
                         },
                         onError = {
                             viewModel.showError(it, true)
@@ -306,7 +280,7 @@ class PlaylistMenu : ComponentActivity() {
                 PlaylistMenuScreen(
                     state = state,
                     snackBarHostState = snackBarHostState,
-                    permissionState = StorageManager.checkPermissions(this),
+                    permissionState = StorageManager.checkPermissions(),
                     onItemClick = { item ->
                         if (item.isSpecial) {
                             playlistResult.launch(
@@ -315,7 +289,7 @@ class PlaylistMenu : ComponentActivity() {
                         } else {
                             playlistResult.launch(
                                 Intent(context, PlaylistActivity::class.java).apply {
-                                    putExtra("name", item.name)
+                                    putExtra("name", item.docFile!!.uri.toString())
                                 }
                             )
                         }
@@ -329,7 +303,7 @@ class PlaylistMenu : ComponentActivity() {
                         }
                     },
                     onRefresh = {
-                        viewModel.updateList(this)
+                        viewModel.updateList()
                     },
                     onNewPlaylist = {
                         newPlaylist = true
@@ -368,7 +342,7 @@ class PlaylistMenu : ComponentActivity() {
     public override fun onResume() {
         super.onResume()
         if (!PrefManager.safStoragePath.isNullOrEmpty()) {
-            viewModel.updateList(this)
+            viewModel.updateList()
         }
     }
 }
@@ -379,8 +353,8 @@ private fun PlaylistMenuScreen(
     state: PlaylistMenuViewModel.PlaylistMenuState,
     snackBarHostState: SnackbarHostState,
     permissionState: Boolean,
-    onItemClick: (item: PlaylistItem) -> Unit,
-    onItemLongClick: (item: PlaylistItem) -> Unit,
+    onItemClick: (item: FileItem) -> Unit,
+    onItemLongClick: (item: FileItem) -> Unit,
     onRefresh: () -> Unit,
     onNewPlaylist: () -> Unit,
     onTitleClicked: () -> Unit,
@@ -534,10 +508,11 @@ private fun Preview_PlaylistMenuScreen() {
                 isRefreshing = false,
                 mediaPath = "sdcard\\some\\path",
                 playlistItems = List(15) {
-                    PlaylistItem(
-                        type = if (it < 1) PlaylistItem.TYPE_DIRECTORY else PlaylistItem.TYPE_SPECIAL,
+                    FileItem(
+                        isSpecial = it >= 1,
                         name = "Name $it",
-                        comment = "Comment $it"
+                        comment = "Comment $it",
+                        docFile = null
                     )
                 }
             ),

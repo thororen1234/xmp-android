@@ -1,19 +1,17 @@
 package org.helllabs.android.xmp.compose.ui.playlist
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import org.helllabs.android.xmp.PrefManager
-import org.helllabs.android.xmp.core.PlaylistUtils
-import org.helllabs.android.xmp.model.Playlist
+import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.model.PlaylistItem
-import timber.log.Timber
-import java.io.IOException
 
 class PlaylistActivityViewModel : ViewModel() {
+
     data class PlaylistState(
-        val playlist: Playlist? = null,
+        val manager: PlaylistManager = PlaylistManager(),
         val useFileName: Boolean = false,
         val isLoop: Boolean = false,
         val isShuffle: Boolean = false
@@ -23,58 +21,36 @@ class PlaylistActivityViewModel : ViewModel() {
     val uiState = _uiState.asStateFlow()
 
     fun setShuffle(value: Boolean) {
-        _uiState.value.playlist?.isShuffleMode = value
+        _uiState.value.manager.setShuffle(value)
         _uiState.update { it.copy(isShuffle = value) }
-        savePlaylist()
     }
 
     fun setLoop(value: Boolean) {
-        _uiState.value.playlist?.isLoopMode = value
+        _uiState.value.manager.setLoop(value)
         _uiState.update { it.copy(isLoop = value) }
-        savePlaylist()
     }
 
-    fun savePlaylist() {
-        uiState.value.playlist?.commit()
+    fun onDragEnd(list: List<PlaylistItem>) {
+        _uiState.value.manager.setList(list)
     }
 
-    fun saveList(newList: List<PlaylistItem>) {
-        _uiState.value.playlist?.apply {
-            setNewList(newList)
-            setListChanged(true)
-            commit()
-        }
-    }
-
-    fun getItems(): List<PlaylistItem> = _uiState.value.playlist?.list.orEmpty()
-
-    fun getDirectoryCount(): Int =
-        _uiState.value.playlist?.list?.takeWhile { it.isDirectory }?.count() ?: 0
-
-    fun getFilenameList(): List<String> =
-        _uiState.value.playlist?.list?.filter { it.isFile }?.map { it.file!!.path }.orEmpty()
+    fun getUriItems(): List<Uri> = _uiState.value.manager.playlist.list.map { it.uri!! }
 
     fun onRefresh(name: String) {
-        try {
-            val playlist = Playlist(name)
-            PlaylistUtils.renumberIds(playlist.list)
-            _uiState.update {
-                it.copy(
-                    playlist = playlist,
-                    useFileName = PrefManager.useFileName,
-                    isLoop = playlist.isLoopMode,
-                    isShuffle = playlist.isShuffleMode
-                )
-            }
-        } catch (e: IOException) {
-            Timber.e("Can't read playlist $name")
+        _uiState.value.manager.load(Uri.parse(name))
+
+        _uiState.update {
+            it.copy(
+                isLoop = _uiState.value.manager.playlist.isLoop,
+                isShuffle = _uiState.value.manager.playlist.isShuffle
+            )
         }
     }
 
     fun removeItem(index: Int) {
-        _uiState.value.playlist?.apply {
-            remove(index)
-            commit()
-        }
+        val list = _uiState.value.manager.playlist.list.toMutableList()
+        list.removeAt(index)
+
+        _uiState.value.manager.setList(list)
     }
 }

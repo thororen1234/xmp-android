@@ -14,11 +14,15 @@ android {
 
     defaultConfig {
         applicationId = "org.helllabs.android.xmp"
-        minSdk = 23 // Android 6 - Marshmallow
-        targetSdk = 34 // Android 10 - Quince Tart
 
-        versionCode = 87
-        versionName = "4.12.0"
+        /**
+         * @see https://apilevels.com/
+         */
+        minSdk = 23 // Android 6 - Marshmallow
+        targetSdk = 34 // Android 14 - Upside Down Cake
+
+        versionCode = 100
+        versionName = "5.0"
 
         vectorDrawables.useSupportLibrary = true
 
@@ -44,6 +48,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            isJniDebuggable = true
         }
         release {
             isMinifyEnabled = true
@@ -102,7 +107,11 @@ dependencies {
     implementation(libs.bundles.compose)
     implementation(libs.bundles.compose.utils)
 
-    implementation("androidx.documentfile:documentfile:1.0.1")
+    // implementation("androidx.documentfile:documentfile:1.0.1")
+    // https://mvnrepository.com/artifact/com.lazygeniouz/dfc
+    implementation("com.lazygeniouz:dfc:1.0.8")
+    // https://mvnrepository.com/artifact/com.squareup.moshi/moshi-kotlin
+    implementation("com.squareup.moshi:moshi-kotlin:1.15.1")
 
     implementation(libs.bundles.retrofit)
     implementation(libs.bundles.xmlUtils)

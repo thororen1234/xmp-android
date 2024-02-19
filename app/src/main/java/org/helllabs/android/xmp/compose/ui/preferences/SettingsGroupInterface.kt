@@ -5,9 +5,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.alorma.compose.settings.storage.base.rememberBooleanSettingState
 import com.alorma.compose.settings.ui.SettingsGroup
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.ui.preferences.components.FixedSettingsSwitch
+import org.helllabs.android.xmp.core.PrefManager
 
 @Composable
 fun SettingsGroupInterface() {

@@ -50,13 +50,12 @@ private fun XmpDropdownMenuHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         val headerColor = LocalContentColor.current.copy(alpha = 0.6f)
-        val headerStyle =
-            MaterialTheme.typography.labelLarge.run { // labelLarge is also used by DropdownMenuItem().
-                copy(
-                    fontSize = fontSize * 0.9f,
-                    letterSpacing = letterSpacing * 0.9f
-                )
-            }
+        val headerStyle = MaterialTheme.typography.labelLarge.run {
+            copy(
+                fontSize = fontSize * 0.9f,
+                letterSpacing = letterSpacing * 0.9f
+            )
+        }
         CompositionLocalProvider(
             LocalContentColor provides headerColor,
             LocalTextStyle provides headerStyle

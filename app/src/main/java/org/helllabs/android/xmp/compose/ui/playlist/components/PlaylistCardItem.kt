@@ -32,9 +32,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import me.saket.cascade.CascadeDropdownMenu
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.compose.components.XmpDropdownMenuHeader
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.DropDownItem
 import org.helllabs.android.xmp.model.PlaylistItem
 
@@ -86,7 +86,7 @@ fun PlaylistCardItem(
                 Text(text = item.name)
             },
             supportingContent = {
-                Text(text = item.comment)
+                Text(text = item.type)
             },
             trailingContent = {
                 IconButton(
@@ -152,9 +152,8 @@ private fun Preview_PlaylistCardItem() {
                 elevationColor = elevationColor,
                 elevation = elevation,
                 item = PlaylistItem(
-                    type = PlaylistItem.TYPE_PLAYLIST,
                     name = "Playlist title",
-                    comment = "Playlist comment"
+                    type = "Playlist comment"
                 ),
                 onItemClick = { },
                 onMenuClick = { }

@@ -2,12 +2,12 @@ package org.helllabs.android.xmp.compose.ui.search.result
 
 import android.content.Context
 import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.lazygeniouz.dfc.file.DocumentFileCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,11 +22,11 @@ import okio.Buffer
 import okio.ForwardingSource
 import okio.buffer
 import okio.sink
-import org.helllabs.android.xmp.PrefManager
-import org.helllabs.android.xmp.StorageManager
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.api.Repository
 import org.helllabs.android.xmp.core.Constants.isSupported
+import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.Module
 import org.helllabs.android.xmp.model.ModuleResult
 import timber.log.Timber
@@ -117,7 +117,7 @@ class ResultViewModel(
                             }
                         }
 
-                        val dir = DocumentFile.fromTreeUri(context, file)
+                        val dir = DocumentFileCompat.fromTreeUri(context, file)
                         val modFile = dir?.createFile("application/octet-stream", mod)
 
                         if (dir == null || modFile == null) {
@@ -168,12 +168,12 @@ class ResultViewModel(
                     )
                 }
             } finally {
-                update(context)
+                update()
             }
         }
     }
 
-    fun getModuleById(context: Context, id: Int) {
+    fun getModuleById(id: Int) {
         viewModelScope.launch {
             _uiState.update { it.copy(isRandom = false, isLoading = true) }
 
@@ -186,7 +186,7 @@ class ResultViewModel(
                     _uiState.update {
                         it.copy(
                             module = result,
-                            moduleExists = doesModuleExist(context, result),
+                            moduleExists = doesModuleExist(result),
                             moduleSupported = isModuleSupported(result)
                         )
                     }
@@ -200,7 +200,7 @@ class ResultViewModel(
         }
     }
 
-    fun getRandomModule(context: Context) {
+    fun getRandomModule() {
         viewModelScope.launch {
             _uiState.update { it.copy(isRandom = true, isLoading = true) }
 
@@ -213,7 +213,7 @@ class ResultViewModel(
                     _uiState.update {
                         it.copy(
                             module = result,
-                            moduleExists = doesModuleExist(context, result),
+                            moduleExists = doesModuleExist(result),
                             moduleSupported = isModuleSupported(result)
                         )
                     }
@@ -227,23 +227,23 @@ class ResultViewModel(
         }
     }
 
-    fun deleteModule(context: Context) {
-        val result = "" // TODO Files.deleteModuleFile(_uiState.value.module?.module!!)
+    fun deleteModule() {
+        val result = StorageManager.deleteModule(_uiState.value.module?.module)
         Timber.d("Module deleted was: $result")
-        update(context)
+        update()
     }
 
-    fun update(context: Context) {
+    fun update() {
         _uiState.update {
             it.copy(
-                moduleExists = doesModuleExist(context, _uiState.value.module),
+                moduleExists = doesModuleExist(_uiState.value.module),
                 moduleSupported = isModuleSupported(_uiState.value.module)
             )
         }
     }
 
-    private fun doesModuleExist(context: Context, result: ModuleResult?): Boolean {
-        val exists = StorageManager.doesModuleExist(context, result?.module)
+    private fun doesModuleExist(result: ModuleResult?): Boolean {
+        val exists = StorageManager.doesModuleExist(result?.module)
         Timber.d("Does module exist? -> $exists")
         return exists
     }

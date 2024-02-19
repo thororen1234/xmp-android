@@ -51,7 +51,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -59,7 +58,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.XmpApplication
@@ -77,6 +75,7 @@ import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.XmpCanvas
 import org.helllabs.android.xmp.compose.ui.player.viewer.composePatternSampleData
 import org.helllabs.android.xmp.compose.ui.player.viewer.composeViewerSampleData
+import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.service.PlayerServiceCallback
@@ -171,21 +170,6 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                     try {
                         modPlayer!!.getInfo(viewModel.viewInfo.values)
                         viewModel.viewInfo.time = modPlayer!!.time() / 1000
-//                        modPlayer!!.getChannelData(
-//                            viewModel.viewInfo.volumes,
-//                            viewModel.viewInfo.finalVols,
-//                            viewModel.viewInfo.pans,
-//                            viewModel.viewInfo.instruments,
-//                            viewModel.viewInfo.keys,
-//                            viewModel.viewInfo.periods
-//                        )
-
-                        if (PlayerService.isAlive) {
-                            if (viewModel.currentViewer == 2) {
-                                // TODO: Channel Viewer
-                                Unit
-                            }
-                        }
                     } catch (e: RemoteException) {
                         // fail silently
                     }
@@ -1026,7 +1010,7 @@ private fun PlayerScreen(
 @Composable
 private fun Preview_PlayerScreen() {
     val context = LocalContext.current
-    PrefManager.init(context, File(""))
+    PrefManager.init(context)
 
     val modVars by remember {
         val array = intArrayOf(190968, 30, 25, 12, 40, 18, 1, 0, 0, 0)
@@ -1091,7 +1075,7 @@ private fun Preview_PlayerScreen() {
 @Composable
 private fun Preview_PlayerScreenDrawerOpen() {
     val context = LocalContext.current
-    PrefManager.init(context, File(""))
+    PrefManager.init(context)
 
     val modVars by remember {
         val array = intArrayOf(190968, 30, 25, 12, 40, 18, 1, 0, 0, 0)

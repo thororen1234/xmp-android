@@ -62,7 +62,9 @@ internal fun InstrumentViewer(
     LaunchedEffect(serviceConnected) {
         while (true) {
             withFrameMillis {
-                if (PlayerService.isAlive && serviceConnected) {
+                // Make sure everything is a-okay to prevent a NPE in jni
+                // We're immediatly starting to draw before everything is loaded.
+                if (PlayerService.isAlive && PlayerService.isLoaded && serviceConnected) {
                     Xmp.getChannelData(
                         viewInfo.volumes,
                         viewInfo.finalVols,

@@ -565,7 +565,7 @@ Java_org_helllabs_android_xmp_Xmp_getModType(JNIEnv *env, jobject obj) {
     return (*env)->NewStringUTF(env, s);
 }
 
-// TODO lazy hack to sanitize comments to valid utf-8
+// lazy hack to sanitize comments to valid utf-8
 void sanitizeUTF8(char *str) {
     unsigned char *bytes = (unsigned char *) str;
     while (*bytes) {

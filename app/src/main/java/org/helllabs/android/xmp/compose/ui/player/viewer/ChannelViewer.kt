@@ -9,12 +9,12 @@ import android.graphics.Rect
 import android.graphics.Typeface
 import android.os.RemoteException
 import android.view.Surface
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.channelViewChannelFontSize
 import org.helllabs.android.xmp.compose.theme.channelViewFontSize
 import org.helllabs.android.xmp.compose.theme.toPx
 import org.helllabs.android.xmp.compose.ui.player.Util
+import org.helllabs.android.xmp.core.PrefManager
 import timber.log.Timber
 import java.util.Collections
 

@@ -35,7 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.model.PlaylistItem
+import org.helllabs.android.xmp.model.FileItem
+import org.helllabs.android.xmp.model.Playlist
 
 private val maxDialogHeight = 256.dp
 
@@ -44,7 +45,7 @@ fun ListDialog(
     isShowing: Boolean,
     icon: ImageVector,
     title: String,
-    list: List<String>,
+    list: List<Playlist>,
     confirmText: String = stringResource(id = R.string.ok),
     dismissText: String = stringResource(id = R.string.cancel),
     onConfirm: (index: Int) -> Unit,
@@ -74,8 +75,8 @@ fun ListDialog(
                     .selectableGroup()
                     .verticalScroll(scrollState)
             ) {
-                list.forEachIndexed { index, text ->
-                    RadioButtonItem(index = index, selection = selection, text = text) {
+                list.forEachIndexed { index, item ->
+                    RadioButtonItem(index = index, selection = selection, text = item.name) {
                         selection = index
                     }
                 }
@@ -97,8 +98,6 @@ fun ListDialog(
 @Composable
 fun MessageDialog(
     isShowing: Boolean,
-    precondition: Boolean? = null,
-    onPrecondition: (() -> Unit)? = null,
     icon: ImageVector = Icons.Default.Error,
     title: String,
     text: String,
@@ -109,14 +108,6 @@ fun MessageDialog(
 ) {
     if (!isShowing) {
         return
-    }
-
-    // I can't brain a better way right now.
-    precondition?.let {
-        if (!it) {
-            onPrecondition?.invoke()
-            return
-        }
     }
 
     AlertDialog(
@@ -208,17 +199,17 @@ fun NewPlaylistDialog(
 @Composable
 fun EditPlaylistDialog(
     isShowing: Boolean,
-    playlistItem: PlaylistItem?,
-    onConfirm: (PlaylistItem, String, String) -> Unit,
+    fileItem: FileItem?,
+    onConfirm: (FileItem, String, String) -> Unit,
     onDismiss: () -> Unit,
-    onDelete: (String) -> Unit
+    onDelete: (FileItem) -> Unit
 ) {
-    if (!isShowing || playlistItem == null) {
+    if (!isShowing || fileItem == null) {
         return
     }
 
-    var newName by remember { mutableStateOf(playlistItem.name) }
-    var newComment by remember { mutableStateOf(playlistItem.comment) }
+    var newName by remember { mutableStateOf(fileItem.name) }
+    var newComment by remember { mutableStateOf(fileItem.comment) }
     var confirmDelete by remember { mutableStateOf(false) }
 
     AlertDialog(
@@ -235,7 +226,7 @@ fun EditPlaylistDialog(
         },
         text = {
             Column {
-                Text(text = "Enter a new name or comment for ${playlistItem.name}")
+                Text(text = "Enter a new name or comment for ${fileItem.name}")
                 Spacer(modifier = Modifier.height(10.dp))
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth(),
@@ -260,7 +251,7 @@ fun EditPlaylistDialog(
                 enabled = newName.isNotEmpty(),
                 onClick = {
                     onConfirm(
-                        playlistItem,
+                        fileItem,
                         newName,
                         newComment
                     )
@@ -277,52 +268,13 @@ fun EditPlaylistDialog(
                         return@TextButton
                     }
 
-                    onDelete(playlistItem.name)
+                    onDelete(fileItem)
                 }
             ) {
                 Text(text = stringResource(id = R.string.menu_delete))
             }
             TextButton(onClick = onDismiss) {
                 Text(text = stringResource(id = R.string.cancel))
-            }
-        }
-    )
-}
-
-@Composable
-fun ChangeLogDialog(
-    isShowing: Boolean,
-    onDismiss: () -> Unit
-) {
-    if (!isShowing) {
-        return
-    }
-
-    AlertDialog(
-        modifier = Modifier.heightIn(max = maxDialogHeight),
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(imageVector = Icons.Default.Info, contentDescription = null)
-        },
-        title = {
-            Text(text = stringResource(id = R.string.changelog))
-        },
-        text = {
-            val scrollState = rememberScrollState()
-
-            Column {
-                Text(text = stringResource(id = R.string.changelog_title))
-                Spacer(modifier = Modifier.height(10.dp))
-                Column(
-                    modifier = Modifier.verticalScroll(scrollState)
-                ) {
-                    Text(text = stringResource(id = R.string.changelog_text))
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = stringResource(id = R.string.dismiss))
             }
         }
     )
@@ -390,7 +342,10 @@ fun Preview_ListDialog() {
                 icon = Icons.AutoMirrored.Filled.PlaylistAdd,
                 title = stringResource(id = R.string.msg_select_playlist),
                 list = List(20) {
-                    "List Item $it"
+                    Playlist(
+                        name = "Playlist $it",
+                        comment = ""
+                    )
                 },
                 onConfirm = { },
                 onDismiss = { },
@@ -438,27 +393,14 @@ fun Preview_EditPlaylistDialog() {
         Box(modifier = Modifier.fillMaxWidth()) {
             EditPlaylistDialog(
                 isShowing = true,
-                playlistItem = PlaylistItem(
-                    PlaylistItem.TYPE_PLAYLIST,
-                    "Playlist Name",
-                    "Playlist Comment"
+                fileItem = FileItem(
+                    name = "Playlist Name",
+                    comment = "Playlist Comment",
+                    docFile = null
                 ),
                 onConfirm = { _, _, _ -> },
                 onDismiss = {},
                 onDelete = {}
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-fun Preview_ChangeLogDialog() {
-    XmpTheme(useDarkTheme = true) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            ChangeLogDialog(
-                isShowing = true,
-                onDismiss = {}
             )
         }
     }

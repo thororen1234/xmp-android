@@ -1,28 +1,16 @@
-package org.helllabs.android.xmp
+package org.helllabs.android.xmp.core
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.os.Environment
 import androidx.core.content.edit
 import androidx.preference.PreferenceManager
-import java.io.File
 
 object PrefManager {
 
     private lateinit var prefs: SharedPreferences
 
-    @Deprecated("")
-    private lateinit var SD_DIR: File
-
-    @Deprecated("")
-    val DATA_DIR by lazy { File(SD_DIR, "Xmp for Android") }
-
-    @Deprecated("")
-    val CACHE_DIR by lazy { File(SD_DIR, "Android/data/org.helllabs.android.xmp/cache/") }
-
-    fun init(context: Context, sdDir: File = Environment.getExternalStorageDirectory()) {
+    fun init(context: Context) {
         prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        SD_DIR = sdDir
     }
 
     fun getBoolean(key: String, defaultValue: Boolean): Boolean {
@@ -50,13 +38,6 @@ object PrefManager {
         get() = prefs.getInt("changelog_version", 0)
         set(value) {
             prefs.edit { putInt("changelog_version", value) }
-        }
-
-    @Deprecated("")
-    var mediaPath: String
-        get() = prefs.getString("media_path", "$SD_DIR/mod")!!
-        set(value) {
-            prefs.edit { putString("media_path", value) }
         }
 
     var startOnPlayer: Boolean
@@ -110,6 +91,12 @@ object PrefManager {
         get() = prefs.getBoolean("use_filename", false)
         set(value) {
             prefs.edit { putBoolean("use_filename", value) }
+        }
+
+    var installedExamplePlaylist: Boolean
+        get() = prefs.getBoolean("example_playlist_created", false)
+        set(value) {
+            prefs.edit { putBoolean("example_playlist_created", value) }
         }
 
     var examples: Boolean

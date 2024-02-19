@@ -11,8 +11,8 @@ import android.support.v4.media.session.MediaSessionCompat
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.Xmp
+import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.service.notifier.ModernNotifier
 import org.helllabs.android.xmp.service.utils.QueueManager
 import org.helllabs.android.xmp.service.utils.RemoteControl
@@ -255,7 +255,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
                 // If this file is unrecognized, and we're going backwards, go to previous
                 // If we're at the start of the list, go to the last recognized file
-                if (playerFileName == null /*|| !testModule(playerFileName!!)*/) { // TODO testModule
+                if (playerFileName == null || !Xmp.testFromFd(playerFileName!!)) {
                     Timber.w("$playerFileName: unrecognized format")
                     if (cmd == CMD_PREV) {
                         if (queue!!.index <= 0) {
@@ -275,7 +275,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
                 // Ditto if we can't load the module
                 Timber.i("Load $playerFileName")
-                if (Xmp.loadFromFd(this@PlayerService, playerFileName!!) < 0) {
+                if (Xmp.loadFromFd(playerFileName!!) < 0) {
                     Timber.e("Error loading $playerFileName")
                     if (cmd == CMD_PREV) {
                         if (queue!!.index <= 0) {
@@ -529,21 +529,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     fun getModName(): String = Xmp.getModName()
 
     fun getModType(): String = Xmp.getModType()
-
-    fun getChannelData(
-        volumes: IntArray,
-        finalvols: IntArray,
-        pans: IntArray,
-        instruments: IntArray,
-        keys: IntArray,
-        periods: IntArray
-    ) {
-        if (updateData) {
-            synchronized(playThread!!) {
-                Xmp.getChannelData(volumes, finalvols, pans, instruments, keys, periods)
-            }
-        }
-    }
 
     fun getSampleData(
         trigger: Boolean,

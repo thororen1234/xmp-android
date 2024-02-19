@@ -1,18 +1,21 @@
 package org.helllabs.android.xmp.compose.ui.preferences
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -23,17 +26,38 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.lifecycleScope
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
+import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.BuildConfig
-import org.helllabs.android.xmp.PrefManager
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.core.StorageManager
 import timber.log.Timber
-import java.io.File
 
 class Preferences : ComponentActivity() {
+
+    private var snackBarHostState = SnackbarHostState()
+
+    private val documentTreeContract = ActivityResultContracts.OpenDocumentTree()
+    private val documentTreeResult = registerForActivityResult(documentTreeContract) { uri ->
+        StorageManager.setPlaylistDirectory(
+            uri = uri,
+            onSuccess = {
+                lifecycleScope.launch {
+                    snackBarHostState.showSnackbar("Default directory changed")
+                }
+            },
+            onError = {
+                lifecycleScope.launch {
+                    snackBarHostState.showSnackbar("Failed to change default directory")
+                }
+            }
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,54 +73,31 @@ class Preferences : ComponentActivity() {
         setContent {
             XmpTheme {
                 PreferencesScreen(
-                    onBack = {
-                        onBackPressedDispatcher.onBackPressed()
+                    snackBarHostState = snackBarHostState,
+                    onBack = onBackPressedDispatcher::onBackPressed,
+                    onChangeDir = {
+                        val dir = PrefManager.safStoragePath.run { Uri.parse(this) }
+                        documentTreeResult.launch(dir)
                     },
                     onFormats = {
                         Intent(this, PreferencesFormats::class.java).also(::startActivity)
                     },
                     onAbout = {
                         Intent(this, PreferencesAbout::class.java).also(::startActivity)
-                    },
-                    onClearCache = {
-                        val result = if (deleteCache(PrefManager.CACHE_DIR)) {
-                            getString(R.string.cache_clear)
-                        } else {
-                            getString(R.string.cache_clear_error)
-                        }
-                        Toast.makeText(this, result, Toast.LENGTH_SHORT).show()
                     }
                 )
             }
-        }
-    }
-
-    companion object {
-        // TODO Remove caching, we can do it on the fly.
-        @Deprecated("Remove caching, we can do it on the fly.")
-        private fun deleteCache(file: File): Boolean {
-            if (!file.exists()) {
-                return true
-            }
-
-            if (file.isDirectory) {
-                file.listFiles().orEmpty().forEach { cacheFile ->
-                    if (!deleteCache(cacheFile)) {
-                        return false
-                    }
-                }
-            }
-            return file.delete()
         }
     }
 }
 
 @Composable
 private fun PreferencesScreen(
+    snackBarHostState: SnackbarHostState,
     onBack: () -> Unit,
+    onChangeDir: () -> Unit,
     onFormats: () -> Unit,
-    onAbout: () -> Unit,
-    onClearCache: () -> Unit
+    onAbout: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val isScrolled = remember {
@@ -106,6 +107,7 @@ private fun PreferencesScreen(
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         topBar = {
             XmpTopBar(
                 title = stringResource(id = R.string.settings),
@@ -121,7 +123,7 @@ private fun PreferencesScreen(
                 .verticalScroll(scrollState)
         ) {
             val context = LocalContext.current
-            SettingsGroupPlaylist(onClearCache = onClearCache)
+            SettingsGroupPlaylist(onChangeDir = onChangeDir)
             SettingsGroupSound()
             SettingsGroupInterface()
             SettingsGroupDownload()
@@ -159,13 +161,14 @@ private fun PreferencesScreen(
 @Composable
 private fun Preview_PreferencesScreen() {
     val context = LocalContext.current
-    PrefManager.init(context, File("sdcard"))
+    PrefManager.init(context)
     XmpTheme(useDarkTheme = true) {
         PreferencesScreen(
+            snackBarHostState = SnackbarHostState(),
             onBack = {},
+            onChangeDir = {},
             onFormats = {},
-            onAbout = {},
-            onClearCache = {}
+            onAbout = {}
         )
     }
 }

@@ -3,13 +3,15 @@ package org.helllabs.android.xmp
 import android.app.Application
 import android.net.Uri
 import android.util.Log
+import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.di.ModArchiveModule
 import org.helllabs.android.xmp.di.ModArchiveModuleImpl
 import timber.log.Timber
 
+// TODO add migration tool for older playlists.
+
 class XmpApplication : Application() {
 
-    var fileList: MutableList<String>? = null
     var fileListUri: MutableList<Uri>? = null
 
     override fun onCreate() {
@@ -38,7 +40,7 @@ class XmpApplication : Application() {
     }
 
     fun clearFileList() {
-        fileList = null
+        fileListUri = null
     }
 
     companion object {

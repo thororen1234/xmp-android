@@ -48,7 +48,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.StorageManager
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.MessageDialog
@@ -59,6 +58,7 @@ import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.search.Search
 import org.helllabs.android.xmp.compose.ui.search.SearchError
 import org.helllabs.android.xmp.compose.ui.search.components.ModuleLayout
+import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.Artist
 import org.helllabs.android.xmp.model.ArtistInfo
 import org.helllabs.android.xmp.model.License
@@ -85,7 +85,7 @@ open class Result : ComponentActivity() {
             }
         }
         if (result.resultCode == 2) {
-            viewModel.update(this)
+            viewModel.update()
         }
     }
 
@@ -102,9 +102,9 @@ open class Result : ComponentActivity() {
 
         val id = intent.getIntExtra(Search.MODULE_ID, -1)
         if (id < 0) {
-            viewModel.getRandomModule(this)
+            viewModel.getRandomModule()
         } else {
-            viewModel.getModuleById(this, id)
+            viewModel.getModuleById(id)
         }
 
         snackbarHostState = SnackbarHostState()
@@ -132,7 +132,7 @@ open class Result : ComponentActivity() {
                 ),
                 confirmText = stringResource(id = R.string.menu_delete),
                 onConfirm = {
-                    viewModel.deleteModule(this)
+                    viewModel.deleteModule()
                     deleteModule = false
                 },
                 onDismiss = { deleteModule = false }
@@ -149,7 +149,6 @@ open class Result : ComponentActivity() {
                 onConfirm = {
                     val module = moduleExists
                     StorageManager.getDownloadPath(
-                        context = this,
                         module = module!!,
                         onSuccess = {
                             val mod = module.filename
@@ -169,12 +168,11 @@ open class Result : ComponentActivity() {
                     state = state,
                     snackbarHostState = snackbarHostState,
                     onBack = { onBackPressedDispatcher.onBackPressed() },
-                    onRandom = { viewModel.getRandomModule(this) },
+                    onRandom = { viewModel.getRandomModule() },
                     onDelete = { deleteModule = true },
                     onShare = ::shareLink,
                     onPlay = { module ->
                         StorageManager.doesModuleExist(
-                            context = this,
                             module = module,
                             onFound = {
                                 val modListUri = arrayListOf(it)

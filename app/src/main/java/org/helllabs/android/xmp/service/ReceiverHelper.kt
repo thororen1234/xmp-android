@@ -5,7 +5,7 @@ import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.content.IntentFilter
 import android.view.KeyEvent
-import org.helllabs.android.xmp.PrefManager
+import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.service.receiver.BluetoothConnectionReceiver
 import org.helllabs.android.xmp.service.receiver.HeadsetPlugReceiver
 import org.helllabs.android.xmp.service.receiver.MediaButtonsReceiver

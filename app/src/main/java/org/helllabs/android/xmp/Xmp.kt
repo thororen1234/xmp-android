@@ -2,9 +2,9 @@
 
 package org.helllabs.android.xmp
 
-import android.content.Context
 import android.net.Uri
 import org.helllabs.android.xmp.model.ModInfo
+import timber.log.Timber
 
 object Xmp {
     // Return codes
@@ -45,7 +45,7 @@ object Xmp {
     }
 
     // external fun loadModule(name: String?): Int
-    external fun testModule(name: String?, info: ModInfo?): Boolean //TODO: deprecate
+    // external fun testModule(name: String?, info: ModInfo?): Boolean
 
     external fun loadModuleFd(fd: Int): Int
     external fun deinit(): Int
@@ -65,7 +65,7 @@ object Xmp {
     external fun startPlayer(rate: Int): Int
     external fun stopAudio(): Boolean
     external fun stopModule(): Int
-    external fun testModuleFd(fd: Int, info: ModInfo?): Boolean
+    private external fun testModuleFd(fd: Int, info: ModInfo?): Boolean
     external fun time(): Int
 
     external fun getChannelData(
@@ -118,7 +118,8 @@ object Xmp {
     /**
      * Test module from File Descriptor
      */
-    fun testFromFd(context: Context, uri: Uri, modInfo: ModInfo = ModInfo()): Boolean {
+    fun testFromFd(uri: Uri, modInfo: ModInfo = ModInfo()): Boolean {
+        val context = XmpApplication.instance!!.applicationContext
         val pfd = context.contentResolver.openFileDescriptor(uri, "r")
         val res = if (pfd != null) {
             val fd = pfd.detachFd()
@@ -129,13 +130,20 @@ object Xmp {
             false
         }
 
+        // Timber.d("Testing $uri returned $res")
         return res
     }
 
     /**
      * Load module from File Descriptor
      */
-    fun loadFromFd(context: Context, uri: Uri): Int {
+    fun loadFromFd(uri: Uri): Int {
+        if (!testFromFd(uri)) {
+            Timber.d("Load Module: $uri, Result failed")
+            return -1
+        }
+
+        val context = XmpApplication.instance!!.applicationContext
         val pfd = context.contentResolver.openFileDescriptor(uri, "r")
         val res = if (pfd != null) {
             val fd = pfd.detachFd()
@@ -146,6 +154,7 @@ object Xmp {
             -1
         }
 
+        Timber.d("Load Module: Result $res")
         return res
     }
 }

@@ -1,17 +1,18 @@
 package org.helllabs.android.xmp.compose.ui.filelist
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.lazygeniouz.dfc.file.DocumentFileCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.helllabs.android.xmp.PrefManager
-import org.helllabs.android.xmp.core.PlaylistUtils
-import org.helllabs.android.xmp.model.PlaylistItem
+import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.core.StorageManager
+import org.helllabs.android.xmp.model.FileItem
 import timber.log.Timber
-import java.io.File
 import java.text.DateFormat
 
 class FileListViewModel : ViewModel() {
@@ -19,7 +20,7 @@ class FileListViewModel : ViewModel() {
     // Bread crumbs are the back bone of the file explorer. :)
     data class BreadCrumb(
         val name: String,
-        val path: String,
+        val path: DocumentFileCompat?,
         val enabled: Boolean = false
     )
 
@@ -30,19 +31,17 @@ class FileListViewModel : ViewModel() {
         val isLoading: Boolean = false,
         val isLoop: Boolean = false,
         val isShuffle: Boolean = false,
-        val lastPath: String? = null,
-        val list: List<PlaylistItem> = listOf(),
-        val pathNotFound: Boolean = false,
-        val lastScrollPosition: Int = 0
+        val lastScrollPosition: Int = 0,
+        val list: List<FileItem> = listOf()
     )
 
     private val _uiState = MutableStateFlow(FileListState())
     val uiState = _uiState.asStateFlow()
 
-    val currentPath: String
+    val currentPath: DocumentFileCompat?
         get() {
             val crumbs = uiState.value.crumbs
-            return if (crumbs.isEmpty()) "" else crumbs.last().path
+            return if (crumbs.isEmpty()) null else crumbs.last().path
         }
 
     init {
@@ -53,8 +52,9 @@ class FileListViewModel : ViewModel() {
             )
         }
 
-        val initialPath = File(PrefManager.mediaPath)
-        onNavigate(initialPath)
+        val init = StorageManager.getModDirectory()
+        Timber.d("Initial Path: ${init!!.uri}")
+        onNavigate(init)
     }
 
     fun setScrollPosition(value: Int) {
@@ -66,18 +66,14 @@ class FileListViewModel : ViewModel() {
      * @return *true* if successful, otherwise false
      */
     fun onBackPressed(): Boolean {
-        val popCrumb = _uiState.value.crumbs.dropLast(1).lastOrNull()
+        val currentCrumb = _uiState.value.crumbs.last().path
 
-        popCrumb?.let {
-            if (!popCrumb.enabled) {
-                return false
-            }
-
-            val file = File(it.path)
-            onNavigate(file)
+        currentCrumb?.parentFile?.let {
+            onNavigate(it)
+            return true
         }
 
-        return popCrumb != null
+        return false
     }
 
     fun onLoop(value: Boolean) {
@@ -91,83 +87,69 @@ class FileListViewModel : ViewModel() {
     }
 
     fun onRefresh() {
-        if (currentPath.isNotEmpty()) {
-            val file = File(currentPath)
-            onNavigate(file)
-        }
+        onNavigate(currentPath)
     }
 
     fun onRestore() {
-        val file = _uiState.value.lastPath?.let { File(it) } ?: return
-        onNavigate(file)
+        onNavigate(uiState.value.crumbs.last().path!!.parentFile)
     }
 
-    fun onNavigate(modDir: File) {
+    fun onNavigate(modDir: DocumentFileCompat?) {
+        if (modDir == null) {
+            return
+        }
+
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            // Snapshot our last known path.
-            if (currentPath.isNotEmpty()) {
-                val checkPath = File(currentPath).list()?.isNotEmpty() ?: false
-                if (checkPath) {
-                    _uiState.update { it.copy(lastPath = currentPath) }
-                }
-            }
-
-            Timber.d("File: ${modDir.path}")
-            if (!modDir.exists()) {
-                _uiState.update { it.copy(pathNotFound = true, isLoading = false) }
-            }
+            Timber.d("Path: ${modDir.uri}")
 
             // Rebuild our bread crumbs
-            val crumbParts = modDir.path.split("/")
-            var currentCrumbPath = ""
-            val crumbs = crumbParts.filter { it.isNotEmpty() }.map { crumb ->
-                currentCrumbPath += "/$crumb"
-                BreadCrumb(
-                    name = crumb,
-                    path = currentCrumbPath,
-                    enabled = File(currentCrumbPath).canRead()
+            val crumbs = mutableListOf<BreadCrumb>()
+            var docFile: DocumentFileCompat? = modDir
+            while (docFile != null) {
+                val crumb = BreadCrumb(
+                    name = docFile.name,
+                    path = docFile,
+                    enabled = docFile.canRead()
                 )
-            }
-            _uiState.update { it.copy(crumbs = crumbs) }
 
-            val list = modDir.listFiles()?.map { file ->
-                val item = if (file.isDirectory) {
-                    PlaylistItem(
-                        type = PlaylistItem.TYPE_DIRECTORY,
+                crumbs.add(crumb)
+                docFile = docFile.parentFile
+            }
+            _uiState.update { it.copy(crumbs = crumbs.reversed()) }
+
+            val list = modDir.listFiles().map { file ->
+                val item = if (file.isDirectory()) {
+                    FileItem(
                         name = file.name,
-                        comment = ""
+                        comment = "",
+                        docFile = file
                     )
                 } else {
-                    val date = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
-                        .format(file.lastModified())
+                    val date = DateFormat
+                        .getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM)
+                        .format(file.lastModified)
 
-                    PlaylistItem(
-                        type = PlaylistItem.TYPE_FILE,
+                    FileItem(
                         name = file.name,
-                        comment = "$date (${file.length() / 1024} kB)"
+                        comment = "$date (${file.length / 1024} kB)",
+                        docFile = file
                     )
                 }
-                item.file = file
-                item
-            }?.sorted() ?: mutableListOf()
 
-            PlaylistUtils.renumberIds(list)
+                item
+            }.sorted()
 
             _uiState.update { it.copy(list = list, isLoading = false, lastScrollPosition = 0) }
         }
     }
 
-    fun showPathNotFound(value: Boolean) {
-        _uiState.update { it.copy(pathNotFound = value) }
-    }
-
-    fun getFilenameList(): List<String> =
-        _uiState.value.list.filter { it.isFile }.map { it.file!!.path }
+    fun getFilenameList(): List<Uri> =
+        _uiState.value.list.filter { it.isValid && it.docFile!!.isFile() }.map { it.docFile!!.uri }
 
     fun getDirectoryCount(): Int =
-        _uiState.value.list.takeWhile { it.isDirectory }.count()
+        _uiState.value.list.takeWhile { it.docFile!!.isDirectory() }.count()
 
-    fun getItems(): List<PlaylistItem> = _uiState.value.list
+    fun getItems(): List<Uri> = _uiState.value.list.map { it.docFile!!.uri }
 }
