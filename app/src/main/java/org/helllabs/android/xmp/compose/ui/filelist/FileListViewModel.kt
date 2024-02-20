@@ -1,6 +1,9 @@
 package org.helllabs.android.xmp.compose.ui.filelist
 
 import android.net.Uri
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lazygeniouz.dfc.file.DocumentFileCompat
@@ -9,9 +12,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.helllabs.android.xmp.Xmp
+import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.FileItem
+import org.helllabs.android.xmp.model.ModInfo
+import org.helllabs.android.xmp.model.Playlist
+import org.helllabs.android.xmp.model.PlaylistItem
 import timber.log.Timber
 import java.text.DateFormat
 
@@ -43,6 +51,9 @@ class FileListViewModel : ViewModel() {
             val crumbs = uiState.value.crumbs
             return if (crumbs.isEmpty()) null else crumbs.last().path
         }
+
+    var playlistList: List<Playlist> by mutableStateOf(listOf())
+    var playlistChoice: DocumentFileCompat? by mutableStateOf(null)
 
     init {
         _uiState.update {
@@ -142,6 +153,70 @@ class FileListViewModel : ViewModel() {
             }.sorted()
 
             _uiState.update { it.copy(list = list, isLoading = false, lastScrollPosition = 0) }
+        }
+    }
+
+    // todo
+    fun addToPlaylist(choice: Playlist) {
+        _uiState.update { it.copy(isLoading = true) }
+
+        viewModelScope.launch {
+            val path = currentPath
+            if (path == null) {
+                _uiState.update { it.copy(error = "Current path is null") }
+                return@launch
+            }
+
+            val manager = PlaylistManager()
+            if (!manager.load(choice.uri!!)) {
+                _uiState.update { it.copy(error = "Playlist manager failed to load playlist") }
+                return@launch
+            }
+
+            val modInfo = ModInfo()
+            if (path.isFile()) {
+                if (!Xmp.testFromFd(path.uri, modInfo)) {
+                    _uiState.update { it.copy(error = "Failed to validate file") }
+                    return@launch
+                }
+
+                val playlist = PlaylistItem(
+                    name = modInfo.name,
+                    type = modInfo.type,
+                    uri = path.uri,
+                )
+                val list = listOf(playlist)
+                val res = manager.add(list)
+
+                if (!res) {
+                    _uiState.update { it.copy(error = "Couldn't add module to playlist") }
+                }
+
+                return@launch
+            } else if (path.isDirectory()) {
+                val list = mutableListOf<PlaylistItem>()
+                StorageManager.walkDownTree(path.uri).forEach {
+                    if (!Xmp.testFromFd(it, modInfo)) {
+                        Timber.w("Invalid playlist item $it")
+                        return@forEach
+                    }
+
+                    val playlist = PlaylistItem(
+                        name = modInfo.name,
+                        type = modInfo.type,
+                        uri = it,
+                    )
+
+                    list.add(playlist)
+                }
+
+                val res = manager.add(list)
+                if (!res) {
+                    _uiState.update { it.copy(error = "Couldn't add modules to playlist") }
+                }
+            }
+
+            _uiState.update { it.copy(isLoading = false) }
         }
     }
 

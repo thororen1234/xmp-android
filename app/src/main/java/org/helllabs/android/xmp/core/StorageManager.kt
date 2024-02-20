@@ -2,11 +2,13 @@ package org.helllabs.android.xmp.core
 
 import android.content.Intent
 import android.net.Uri
+import androidx.documentfile.provider.DocumentFile
 import com.lazygeniouz.dfc.file.DocumentFileCompat
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.core.Constants.DEFAULT_DOWNLOAD_DIR
 import org.helllabs.android.xmp.model.Module
 import timber.log.Timber
+
 
 /**
  * This object class is kinda of a mash up of anything related to SAF and the Document Tree
@@ -229,32 +231,36 @@ object StorageManager {
         onSuccess(targetDir)
     }
 
+    // TODO, this seems to list the parent dir, then parse through playlists when we actually want 'mod' like we're passing
     fun walkDownTree(uri: Uri?): List<Uri> {
         if (uri == null) {
             return emptyList()
         }
 
-        val context = XmpApplication.instance!!.applicationContext
-
-        fun collectFromDocumentFile(directory: DocumentFileCompat, uris: MutableList<Uri>) {
-            for (file in directory.listFiles()) {
-                uris.add(file.uri)
-
-                if (file.isDirectory()) {
-                    collectFromDocumentFile(file, uris)
-                }
+        fun collect(directory: DocumentFileCompat, uris: MutableList<Uri>) {
+            Timber.d("Parent: ${directory.parentFile?.name}")
+            directory.listFiles().forEach {
+                Timber.d("-> ${it.uri}")
             }
+//            Timber.d("Processing: ${directory.name}")
+//            if (directory.isFile()) {
+//                uris.add(directory.uri)
+//            } else if (directory.isDirectory()) {
+//                val files = directory.listFiles()
+//                for (file in files) {
+//                    Timber.d("Dir: ${file.uri}")
+//                    collect(file, uris)
+//                }
+//            }
         }
 
-        fun collectFromDirectory(directoryUri: Uri): List<Uri> {
-            val dir = DocumentFileCompat.fromTreeUri(context, directoryUri) ?: return emptyList()
-            val uris = mutableListOf<Uri>()
+        Timber.d("Walking down $uri")
+        val context = XmpApplication.instance!!.applicationContext
+        val startTree = DocumentFileCompat.fromTreeUri(context, uri) ?: return emptyList()
+        val uris: MutableList<Uri> = mutableListOf()
+        collect(startTree, uris)
 
-            collectFromDocumentFile(dir, uris)
-            return uris
-        }
-
-        return collectFromDirectory(uri)
+        return uris
     }
 
     fun getFilename(uri: Uri?): String {

@@ -21,7 +21,18 @@ class PlaylistManager {
 
     private var oldName: String? = null
 
+    fun init() {
+        moshi = Moshi.Builder()
+            .add(KotlinJsonAdapterFactory())
+            .add(UriAdapter())
+            .build()
+
+        adapter = moshi.adapter(Playlist::class.java)
+    }
+
     fun new(name: String, comment: String): Boolean {
+        init()
+
         playlist = Playlist(
             name = name,
             comment = comment
@@ -36,12 +47,7 @@ class PlaylistManager {
             return false
         }
 
-        moshi = Moshi.Builder()
-            .add(KotlinJsonAdapterFactory())
-            .add(UriAdapter())
-            .build()
-
-        adapter = moshi.adapter(Playlist::class.java)
+        init()
 
         val context = XmpApplication.instance!!.applicationContext
         context.contentResolver.openInputStream(uri)?.use { inputStream ->
@@ -61,10 +67,9 @@ class PlaylistManager {
         } else {
             val file =
                 StorageManager.getPlaylistDirectory()?.findFile(playlist.name + Playlist.SUFFIX)
-            file!!.delete()
+            file?.delete()
         }
 
-        // New playlist
         val file = StorageManager.getPlaylistDirectory()
         if (file == null) {
             Timber.e("Saving playlist failed, unable to get playlist directory")
@@ -111,6 +116,17 @@ class PlaylistManager {
         return save()
     }
 
+    fun add(list: List<PlaylistItem>): Boolean {
+        val currentList = playlist.list.toMutableList()
+        val res = currentList.addAll(list)
+
+        if (res) {
+            save()
+        }
+
+        return res
+    }
+
     companion object {
         fun listPlaylistsDF(): List<DocumentFileCompat> {
             val playlistsDir = StorageManager.getPlaylistDirectory()
@@ -131,7 +147,7 @@ class PlaylistManager {
 
             val list = mutableListOf<Playlist>()
             for (dfc in playlistsDir.listFiles()) {
-                if (dfc.extension != ".json") continue
+                if (dfc.extension != "json") continue
 
                 PlaylistManager().run {
                     load(dfc.uri)

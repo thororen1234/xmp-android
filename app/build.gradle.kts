@@ -15,8 +15,8 @@ android {
     defaultConfig {
         applicationId = "org.helllabs.android.xmp"
 
-        /**
-         * @see https://apilevels.com/
+        /*
+         * https://apilevels.com/
          */
         minSdk = 23 // Android 6 - Marshmallow
         targetSdk = 34 // Android 14 - Upside Down Cake
@@ -107,19 +107,20 @@ dependencies {
     implementation(libs.bundles.compose)
     implementation(libs.bundles.compose.utils)
 
-    implementation("androidx.media3:media3-ui:1.2.1")
-    implementation("androidx.media3:media3-common:1.2.1")
-    implementation("androidx.media3:media3-session:1.2.1")
+    // Media3?
+//    implementation("androidx.media3:media3-ui:1.2.1")
+//    implementation("androidx.media3:media3-common:1.2.1")
+//    implementation("androidx.media3:media3-session:1.2.1")
 
-    implementation(libs.dfc)
-    implementation(libs.moshi.kotlin)
     implementation(libs.bundles.retrofit)
     implementation(libs.bundles.xmlUtils)
     implementation(libs.core.ktx)
+    implementation(libs.dfc)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.media)
+    implementation(libs.moshi.kotlin)
     implementation(libs.okhttp)
     implementation(libs.preference.ktx)
     implementation(libs.timber)

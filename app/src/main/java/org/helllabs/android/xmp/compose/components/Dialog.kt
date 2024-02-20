@@ -1,6 +1,5 @@
 package org.helllabs.android.xmp.compose.components
 
-import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -49,7 +48,7 @@ fun ListDialog(
     list: List<Playlist>,
     confirmText: String = stringResource(id = R.string.ok),
     dismissText: String = stringResource(id = R.string.cancel),
-    onConfirm: (uri: Uri) -> Unit,
+    onConfirm: (Playlist) -> Unit,
     onDismiss: () -> Unit,
     onEmpty: () -> Unit
 ) {
@@ -84,7 +83,7 @@ fun ListDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(list[selection].uri!!) }) {
+            TextButton(onClick = { onConfirm(list[selection]) }) {
                 Text(text = confirmText)
             }
         },

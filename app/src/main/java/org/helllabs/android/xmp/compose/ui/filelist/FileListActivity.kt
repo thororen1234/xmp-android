@@ -133,19 +133,19 @@ class FileListActivity : BasePlaylistActivity() {
              * Playlist choice dialog
              */
             // TODO Add to playlist dialog
-            var choiceState: Boolean? by remember { mutableStateOf(null) }
             ListDialog(
-                isShowing = choiceState != null,
+                isShowing = viewModel.playlistChoice != null,
                 icon = Icons.AutoMirrored.Filled.PlaylistAdd,
                 title = stringResource(id = R.string.msg_select_playlist),
-                list = PlaylistManager.listPlaylists(),
+                list = viewModel.playlistList,
                 onConfirm = { choice ->
-                    choiceState = null
+                    viewModel.addToPlaylist(choice)
+                    viewModel.playlistChoice = null
                 },
-                onDismiss = { choiceState = null },
+                onDismiss = { viewModel.playlistChoice = null },
                 onEmpty = {
                     showSnack(message = getString(R.string.msg_no_playlists))
-                    choiceState = null
+                    viewModel.playlistChoice = null
                 }
             )
 
@@ -213,9 +213,17 @@ class FileListActivity : BasePlaylistActivity() {
                     onPlayAll = ::onPlayAll,
                     onCrumbMenu = { selection ->
                         when (selection) {
-                            DropDownSelection.DIR_ADD_TO_PLAYLIST -> TODO()
-                            DropDownSelection.DIR_ADD_TO_QUEUE -> addToQueue(viewModel.getFilenameList())
-                            DropDownSelection.DIR_PLAY_CONTENTS -> playModule(viewModel.getFilenameList())
+                            DropDownSelection.DIR_ADD_TO_PLAYLIST -> {
+                                viewModel.playlistList = PlaylistManager.listPlaylists()
+                                viewModel.playlistChoice = viewModel.currentPath
+                            }
+
+                            DropDownSelection.DIR_ADD_TO_QUEUE ->
+                                addToQueue(viewModel.getFilenameList())
+
+                            DropDownSelection.DIR_PLAY_CONTENTS ->
+                                playModule(viewModel.getFilenameList())
+
                             else -> Unit
                         }
                     },
@@ -239,8 +247,10 @@ class FileListActivity : BasePlaylistActivity() {
                             DropDownSelection.DELETE ->
                                 deleteFile = item.docFile?.uri
 
-                            DropDownSelection.DIR_ADD_TO_PLAYLIST ->
-                                TODO()
+                            DropDownSelection.DIR_ADD_TO_PLAYLIST -> {
+                                viewModel.playlistList = PlaylistManager.listPlaylists()
+                                viewModel.playlistChoice = item.docFile
+                            }
 
                             DropDownSelection.DIR_ADD_TO_QUEUE ->
                                 addToQueue(StorageManager.walkDownTree(item.docFile?.uri))
@@ -248,8 +258,10 @@ class FileListActivity : BasePlaylistActivity() {
                             DropDownSelection.DIR_PLAY_CONTENTS ->
                                 playModule(StorageManager.walkDownTree(item.docFile?.uri))
 
-                            DropDownSelection.FILE_ADD_TO_PLAYLIST ->
-                                TODO()
+                            DropDownSelection.FILE_ADD_TO_PLAYLIST -> {
+                                viewModel.playlistList = PlaylistManager.listPlaylists()
+                                viewModel.playlistChoice = item.docFile
+                            }
 
                             DropDownSelection.FILE_ADD_TO_QUEUE ->
                                 addToQueue(item.docFile?.uri)
