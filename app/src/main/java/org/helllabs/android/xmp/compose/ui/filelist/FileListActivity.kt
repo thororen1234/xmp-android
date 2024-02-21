@@ -76,7 +76,7 @@ class FileListActivity : BasePlaylistActivity() {
     private val viewModel by viewModels<FileListViewModel>()
 
     override val allFiles: List<Uri>
-        get() = StorageManager.walkDownDirectory(viewModel.currentPath!!.uri, false)
+        get() = viewModel.onAllFiles()
 
     override val isShuffleMode: Boolean
         get() = viewModel.uiState.value.isShuffle
@@ -218,10 +218,10 @@ class FileListActivity : BasePlaylistActivity() {
                             }
 
                             DropDownSelection.DIR_ADD_TO_QUEUE ->
-                                addToQueue(viewModel.getFilenameList())
+                                addToQueue(viewModel.getItems())
 
                             DropDownSelection.DIR_PLAY_CONTENTS ->
-                                playModule(viewModel.getFilenameList())
+                                playModule(viewModel.getItems())
 
                             else -> Unit
                         }
@@ -233,7 +233,6 @@ class FileListActivity : BasePlaylistActivity() {
                         if (item.docFile!!.isFile()) {
                             onItemClick(
                                 viewModel.getItems(),
-                                viewModel.getFilenameList(),
                                 viewModel.getDirectoryCount(),
                                 index
                             )
@@ -272,7 +271,7 @@ class FileListActivity : BasePlaylistActivity() {
                                 addToQueue(item.docFile?.uri)
 
                             DropDownSelection.FILE_PLAY_HERE ->
-                                playModule(viewModel.getFilenameList(), index)
+                                playModule(viewModel.getItems(), index, true)
 
                             DropDownSelection.FILE_PLAY_THIS_ONLY ->
                                 playModule(item.docFile?.uri?.let { listOf(it) }.orEmpty())

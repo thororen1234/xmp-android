@@ -99,7 +99,6 @@ abstract class BasePlaylistActivity : ComponentActivity() {
 
     open fun onItemClick(
         items: List<Uri>,
-        filenameList: List<Uri>,
         directoryCount: Int,
         position: Int
     ) {
@@ -108,7 +107,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
             if (count < 0) {
                 throw RuntimeException("Play count is negative")
             }
-            playModule(modList = filenameList, start = count, keepFirst = isShuffleMode)
+            playModule(modList = items, start = count, keepFirst = true)
         }
 
         fun playThisFile() {
@@ -121,7 +120,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
                 showSnack("Unrecognized file format")
                 return
             }
-            playModule(modList = listOf(filename))
+            playModule(filename)
         }
 
         fun addToQueue() {
@@ -138,10 +137,6 @@ abstract class BasePlaylistActivity : ComponentActivity() {
             showSnack("Added to queue")
         }
 
-        // TODO
-        Timber.d("items: $items, filenameList: $filenameList, directoryCount: $directoryCount, position: $position, ")
-        return
-
         /**
          * mode:
          * 1. Start playing at selection
@@ -156,6 +151,15 @@ abstract class BasePlaylistActivity : ComponentActivity() {
         }
     }
 
+    protected fun playModule(uri: Uri?) {
+        if (uri == null) {
+            showSnack("Null uri when playing module")
+            return
+        }
+
+        listOf(uri).also(::playModule)
+    }
+
     // TODO: We're not keeping first with shuffle enabled when clicking an item
     protected fun playModule(modList: List<Uri>, start: Int = 0, keepFirst: Boolean = false) {
         if (modList.isEmpty()) {
@@ -163,11 +167,7 @@ abstract class BasePlaylistActivity : ComponentActivity() {
             return
         }
 
-        // TODO
-        Timber.d("List: $modList, Start: $start, KeepFirst: $keepFirst")
-        return
-
-        (application as XmpApplication).fileListUri = modList.toMutableList()
+        XmpApplication.instance!!.fileListUri = modList
         Intent(this, PlayerActivity::class.java).apply {
             putExtra(PlayerActivity.PARM_SHUFFLE, isShuffleMode)
             putExtra(PlayerActivity.PARM_LOOP, isLoopMode)
@@ -179,40 +179,40 @@ abstract class BasePlaylistActivity : ComponentActivity() {
         }
     }
 
-    protected fun addToQueue(filename: Uri?) {
-        if (filename == null) {
-            showSnack("Unable to add to queue")
+    /**
+     * Add an URI to the queue.
+     *
+     * If the service alive, connect to it and append the play queue. @see [connection].
+     * Else start the service normally with @see [playModule].
+     */
+    protected fun addToQueue(uri: Uri?) {
+        if (uri == null) {
+            showSnack("Null uri when adding to Queue")
             return
         }
 
-        // TODO
-        Timber.d("Add to Queue: $filename")
-        return
-
-        if (PlayerService.isAlive) {
-            val service = Intent(this, PlayerService::class.java)
-            mAddList = listOf(filename)
-            bindService(service, connection, 0)
-        } else {
-            val item = listOf(filename)
-            playModule(modList = item)
-        }
+        listOf(uri).also(::addToQueue)
     }
 
+    /**
+     * Add a list of URI's to the queue.
+     *
+     * If the service alive, connect to it and append the play queue. @see [connection].
+     * Else start the service normally with @see [playModule].
+     */
     protected fun addToQueue(list: List<Uri>) {
+        if (list.isEmpty()) {
+            showSnack("Empty uri list when adding to Queue")
+            return
+        }
+
         if (PlayerService.isAlive) {
-            val service = Intent(this, PlayerService::class.java)
             mAddList = list
-            bindService(service, connection, 0)
+            Intent(this, PlayerService::class.java).also {
+                bindService(it, connection, 0)
+            }
         } else {
             playModule(modList = list)
         }
-    }
-
-    protected fun addToQueue2(
-        list: List<Uri>,
-
-    ) {
-
     }
 }

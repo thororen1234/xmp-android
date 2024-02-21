@@ -94,7 +94,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
     private var job: Job? = null
     private val playerLock = Any() // for sync
 
-    private var fileList: MutableList<Uri>? = null
+    private var fileList: List<Uri>? = null
 
     private var keepFirst = false
     private var loopListMode = false
@@ -671,8 +671,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         if (path != null) {
             // from intent filter
             Timber.i("Player started from intent filter")
-            fileList = mutableListOf()
-            fileList!!.add(path)
+            fileList = listOf(path)
             shuffleMode = false
             loopListMode = false
             keepFirst = false

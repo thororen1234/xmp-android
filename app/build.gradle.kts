@@ -112,6 +112,8 @@ dependencies {
 //    implementation("androidx.media3:media3-common:1.2.1")
 //    implementation("androidx.media3:media3-session:1.2.1")
 
+    implementation("sh.calvin.reorderable:reorderable:1.3.1")
+
     implementation(libs.bundles.retrofit)
     implementation(libs.bundles.xmlUtils)
     implementation(libs.core.ktx)

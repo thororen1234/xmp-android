@@ -36,8 +36,8 @@ fun PlayerSeekBar(
     // TODO: https://issuetracker.google.com/issues/322269951#comment8
     val onValueChangeFinished: () -> Unit = remember {
         {
-            onIsSeeking(false)
             onSeek(newPosition)
+            onIsSeeking(false)
         }
     }
 

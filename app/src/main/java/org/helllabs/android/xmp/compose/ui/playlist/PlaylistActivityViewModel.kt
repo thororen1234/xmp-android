@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.model.Playlist
-import org.helllabs.android.xmp.model.PlaylistItem
+import timber.log.Timber
 
 class PlaylistActivityViewModel : ViewModel() {
 
@@ -33,9 +33,17 @@ class PlaylistActivityViewModel : ViewModel() {
         _uiState.update { it.copy(isLoop = value) }
     }
 
-    fun onDragEnd(list: List<PlaylistItem>) {
+    fun onMove(from: Int, to: Int) {
+        val list = _uiState.value.list.toMutableList().apply {
+            add(to, removeAt(from))
+        }
+
         _uiState.update { it.copy(list = list) }
-        save() // Save just in-case
+    }
+
+    fun onDragStopped() {
+        Timber.d("Drag stopped")
+        save()
     }
 
     fun getUriItems(): List<Uri> = _uiState.value.list.map { it.uri }
@@ -43,6 +51,10 @@ class PlaylistActivityViewModel : ViewModel() {
     fun onRefresh(name: String) {
         manager = PlaylistManager()
         manager.load(Uri.parse(name))
+
+        manager.playlist.list.forEachIndexed { index, playlistItem ->
+            playlistItem.id = index
+        }
 
         _uiState.update {
             it.copy(

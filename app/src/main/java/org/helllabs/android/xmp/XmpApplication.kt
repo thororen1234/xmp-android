@@ -12,7 +12,7 @@ import timber.log.Timber
 
 class XmpApplication : Application() {
 
-    var fileListUri: MutableList<Uri>? = null
+    var fileListUri: List<Uri>? = null
 
     override fun onCreate() {
         super.onCreate()

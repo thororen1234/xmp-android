@@ -87,6 +87,21 @@ class FileListViewModel : ViewModel() {
         return false
     }
 
+    /**
+     * Play all valid files
+     */
+    fun onAllFiles(): List<Uri> {
+        _uiState.update { it.copy(isLoading = true) }
+
+        val list = StorageManager
+            .walkDownDirectory(currentPath!!.uri, false)
+            .filter(Xmp::testFromFd)
+
+        _uiState.update { it.copy(isLoading = false) }
+
+        return list
+    }
+
     fun onLoop(value: Boolean) {
         PrefManager.loopMode = value
         _uiState.update { it.copy(isLoop = value) }
@@ -217,9 +232,6 @@ class FileListViewModel : ViewModel() {
             _uiState.update { it.copy(isLoading = false) }
         }
     }
-
-    fun getFilenameList(): List<Uri> =
-        _uiState.value.list.filter { it.isValid && it.docFile!!.isFile() }.map { it.docFile!!.uri }
 
     fun getDirectoryCount(): Int =
         _uiState.value.list.takeWhile { it.docFile!!.isDirectory() }.count()

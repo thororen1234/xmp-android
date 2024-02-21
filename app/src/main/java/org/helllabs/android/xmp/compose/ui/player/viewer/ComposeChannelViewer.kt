@@ -40,7 +40,6 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.accent
 import org.helllabs.android.xmp.compose.ui.player.Util
 import org.helllabs.android.xmp.service.PlayerService
-import timber.log.Timber
 
 // TODO: 2 Column support on wider screens or in landscape.
 
@@ -60,13 +59,19 @@ fun ComposeChannelViewer(
     val view = LocalView.current
 
     val xAxisMultiplier by remember {
-        mutableFloatStateOf(with(density) {
-            24.dp.toPx() })
+        mutableFloatStateOf(
+            with(density) {
+                24.dp.toPx()
+            }
+        )
     }
     val yAxisMultiplier by remember {
         // https://m3.material.io/components/lists/specs
-        mutableFloatStateOf(with(density) {
-            56.dp.toPx() })
+        mutableFloatStateOf(
+            with(density) {
+                56.dp.toPx()
+            }
+        )
     }
     var canvasSize by remember {
         mutableStateOf(Size.Zero)
@@ -145,8 +150,7 @@ fun ComposeChannelViewer(
                         onTap()
                     },
                     onLongPress = {
-                        // TODO If a channel is solo, unmute all channels
-                        //  otherwise solo this channel
+                        // TODO If a channel is solo, unmute all channels, otherwise solo this channel
                     }
                 )
             }
@@ -154,7 +158,6 @@ fun ComposeChannelViewer(
         if (canvasSize != size) {
             canvasSize = size
         }
-
 
         val numInstruments = modVars[4]
         // row = viewInfo.values[2]
@@ -195,9 +198,9 @@ fun ComposeChannelViewer(
             )
 
             /***** Instrument Name *****/
-            if (ins in 0..<numInstruments) {
+            for (name in 0 until numInstruments) {
                 val chnNameText = textMeasurer.measure(
-                    text = AnnotatedString(insName[ins]),
+                    text = AnnotatedString(insName[name]),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = TextStyle(
@@ -318,8 +321,11 @@ fun ComposeChannelViewer(
                     val scaledByteValue = byteValue * (halfHeight / 256f)
                     val y = centerY - scaledByteValue
 
-                    if (index == 0) waveformPath.moveTo(x, y)
-                    else waveformPath.lineTo(x, y)
+                    if (index == 0) {
+                        waveformPath.moveTo(x, y)
+                    } else {
+                        waveformPath.lineTo(x, y)
+                    }
                 }
 
                 drawPath(
