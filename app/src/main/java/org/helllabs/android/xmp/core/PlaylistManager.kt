@@ -34,8 +34,8 @@ class PlaylistManager {
         init()
 
         playlist = Playlist(
-            name = name,
-            comment = comment
+            name = name.trim(),
+            comment = comment.trim()
         )
 
         return save()
@@ -59,31 +59,33 @@ class PlaylistManager {
     }
 
     fun save(): Boolean {
-        if (!oldName.isNullOrEmpty()) {
-            val file = StorageManager.getPlaylistDirectory()?.findFile(oldName + Playlist.SUFFIX)
-            if (file == null || !file.delete()) {
-                Timber.e("Failed to delete old file")
-            }
-        } else {
-            val file =
-                StorageManager.getPlaylistDirectory()?.findFile(playlist.name + Playlist.SUFFIX)
-            file?.delete()
-        }
+        val playlistDir = StorageManager.getPlaylistDirectory()
 
-        val file = StorageManager.getPlaylistDirectory()
-        if (file == null) {
+        if (playlistDir == null) {
             Timber.e("Saving playlist failed, unable to get playlist directory")
             return false
         }
 
+        if (!oldName.isNullOrEmpty()) {
+            playlistDir.findFile(oldName + Playlist.SUFFIX)
+
+            if (!playlistDir.delete()) {
+                Timber.e("Failed to delete old file")
+            }
+        } else {
+            playlistDir
+                .findFile(playlist.name + Playlist.SUFFIX)
+                ?.delete()
+        }
+
         val mimeType = "application/octet-stream"
-        val newFile = file.createFile(mimeType, playlist.name + Playlist.SUFFIX)
+        val newFile = playlistDir.createFile(mimeType, playlist.name + Playlist.SUFFIX)
 
         playlist.uri = newFile!!.uri
 
         val jsonString = adapter.toJson(playlist)
         val context = XmpApplication.instance!!.applicationContext
-        context.contentResolver.openOutputStream(playlist.uri!!)?.use { outputStream ->
+        context.contentResolver.openOutputStream(playlist.uri)?.use { outputStream ->
             outputStream.writer().use { it.write(jsonString) }
         }
 
@@ -101,30 +103,29 @@ class PlaylistManager {
         return save()
     }
 
-    fun setLoop(value: Boolean): Boolean {
-        playlist.isLoop = value
-        return save()
-    }
-
-    fun setShuffle(value: Boolean): Boolean {
-        playlist.isShuffle = value
-        return save()
-    }
-
-    fun setList(list: List<PlaylistItem>): Boolean {
-        playlist.list = list
-        return save()
-    }
-
     fun add(list: List<PlaylistItem>): Boolean {
-        val currentList = playlist.list.toMutableList()
-        val res = currentList.addAll(list)
+        val newList = playlist.list.toMutableList()
+        var res = newList.addAll(list)
+
+        playlist.list = newList
 
         if (res) {
-            save()
+            res = save()
         }
 
         return res
+    }
+
+    fun setLoop(value: Boolean) {
+        playlist.isLoop = value
+    }
+
+    fun setShuffle(value: Boolean) {
+        playlist.isShuffle = value
+    }
+
+    fun setList(list: List<PlaylistItem>) {
+        playlist.list = list
     }
 
     companion object {

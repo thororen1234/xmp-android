@@ -140,19 +140,22 @@ Java_org_helllabs_android_xmp_Xmp_testModuleFd(JNIEnv *env, jobject obj, jint fd
     int res = xmp_test_module_from_file(file, &ti);
     fclose(file);
 
+    // Should re-handle getting filename if ti->name is empty.
+
     if (res == 0 && info != NULL) {
         jclass modInfoClass = (*env)->FindClass(env, "org/helllabs/android/xmp/model/ModInfo");
-        if (modInfoClass == NULL) return JNI_FALSE;
+
+        if (modInfoClass == NULL)
+            return JNI_FALSE;
 
         jfieldID fieldName = (*env)->GetFieldID(env, modInfoClass, "name", "Ljava/lang/String;");
         jfieldID fieldType = (*env)->GetFieldID(env, modInfoClass, "type", "Ljava/lang/String;");
-        if (fieldName == NULL || fieldType == NULL) return JNI_FALSE;
 
-        jstring nameString = (*env)->NewStringUTF(env, ti.name);
-        jstring typeString = (*env)->NewStringUTF(env, ti.type);
+        if (fieldName == NULL || fieldType == NULL)
+            return JNI_FALSE;
 
-        (*env)->SetObjectField(env, info, fieldName, nameString);
-        (*env)->SetObjectField(env, info, fieldType, typeString);
+        (*env)->SetObjectField(env, info, fieldName, (*env)->NewStringUTF(env, ti.name));
+        (*env)->SetObjectField(env, info, fieldType, (*env)->NewStringUTF(env, ti.type));
     }
 
     return res == 0 ? JNI_TRUE : JNI_FALSE;

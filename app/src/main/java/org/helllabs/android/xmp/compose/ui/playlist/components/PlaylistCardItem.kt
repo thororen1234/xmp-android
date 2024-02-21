@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.playlist.components
 
+import android.net.Uri
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.clickable
@@ -34,7 +35,6 @@ import androidx.compose.ui.unit.dp
 import me.saket.cascade.CascadeDropdownMenu
 import org.helllabs.android.xmp.compose.components.XmpDropdownMenuHeader
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.DropDownItem
 import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.PlaylistItem
@@ -43,7 +43,7 @@ private val playlistItemDropDownItems: List<DropDownItem> = listOf(
     DropDownItem("Add to play queue", DropDownSelection.FILE_ADD_TO_QUEUE),
     DropDownItem("Play all starting here", DropDownSelection.FILE_PLAY_HERE),
     DropDownItem("Play this module", DropDownSelection.FILE_PLAY_THIS_ONLY),
-    DropDownItem("Remove from playlist", DropDownSelection.DELETE),
+    DropDownItem("Remove from playlist", DropDownSelection.DELETE)
 )
 
 @Composable
@@ -149,7 +149,8 @@ private fun Preview_PlaylistCardItem() {
                 elevation = elevation,
                 item = PlaylistItem(
                     name = "Playlist title",
-                    type = "Playlist comment"
+                    type = "Playlist comment",
+                    uri = Uri.EMPTY
                 ),
                 onItemClick = { },
                 onMenuClick = { }

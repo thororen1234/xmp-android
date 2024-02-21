@@ -61,12 +61,11 @@ private fun XmpDropdownMenuHeader(
             LocalTextStyle provides headerStyle
         ) {
             Box(
-                Modifier
+                modifier = Modifier
                     .weight(1f)
-                    .padding(start = 12.dp, top = 16.dp)
-            ) {
-                text()
-            }
+                    .padding(start = 12.dp, top = 16.dp),
+                content = { text() }
+            )
         }
     }
 }

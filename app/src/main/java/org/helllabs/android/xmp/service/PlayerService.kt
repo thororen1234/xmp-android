@@ -13,6 +13,7 @@ import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.service.notifier.ModernNotifier
 import org.helllabs.android.xmp.service.utils.QueueManager
 import org.helllabs.android.xmp.service.utils.RemoteControl
@@ -124,6 +125,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int = START_NOT_STICKY
 
     override fun onDestroy() {
+        Timber.d("onDestroy")
         receiverHelper?.unregisterReceivers()
         watchdog?.stop()
         notifier?.cancel()
@@ -141,7 +143,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     override fun onBind(intent: Intent): IBinder = binder
 
-    fun setCallback(callback: PlayerServiceCallback) {
+    fun setCallback(callback: PlayerServiceCallback?) {
         playerServiceCallback = callback
     }
 
@@ -168,7 +170,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         if (queue != null) {
             var name = Xmp.getModName()
             if (name.isEmpty()) {
-                name = queue!!.filename.path ?: "AAA" // TODO Files.basename(queue!!.filename)
+                name = StorageManager.getFileName(queue?.filename) ?: "<Unknown Title>"
             }
 
             notifier?.notify(
@@ -290,7 +292,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 cmd = CMD_NONE
                 var name = Xmp.getModName()
                 if (name.isEmpty()) {
-                    name = playerFileName?.path ?: "CCC" // TODO Files.basename(playerFileName)
+                    name = StorageManager.getFileName(playerFileName) ?: "<Unkown Title>"
                 }
 
                 notifier?.notify(name, Xmp.getModType(), queue!!.index, ModernNotifier.TYPE_TICKER)
@@ -607,7 +609,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     }
 
     // for Reconnection
-    fun getFileName(): String = playerFileName?.path ?: "BBB" // TODO
+    fun getFileName(): String = StorageManager.getFileName(playerFileName) ?: "<Unknown Title>"
 
     fun getInstruments(): Array<String> = Xmp.getInstruments()!!
 
@@ -615,9 +617,8 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     // File management
     fun deleteFile(): Boolean {
-        // TODO: Delete file, then skip to next song
         Timber.i("Delete file ${getFileName()}")
-        return false
+        return StorageManager.deleteFileOrDirectory(playerFileName)
     }
     // endregion
 

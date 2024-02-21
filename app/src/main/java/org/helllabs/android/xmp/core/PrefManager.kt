@@ -13,18 +13,6 @@ object PrefManager {
         prefs = PreferenceManager.getDefaultSharedPreferences(context)
     }
 
-    fun getBoolean(key: String, defaultValue: Boolean): Boolean {
-        return prefs.getBoolean(key, defaultValue)
-    }
-
-    fun putBoolean(key: String, value: Boolean) {
-        prefs.edit { putBoolean(key, value) }
-    }
-
-    fun remove(key: String) {
-        prefs.edit { remove(key) }
-    }
-
     /**
      * The URI where the app can store mods and playlists.
      */
@@ -32,12 +20,6 @@ object PrefManager {
         get() = prefs.getString("saf_storage_path", null)
         set(value) {
             prefs.edit { putString("saf_storage_path", value) }
-        }
-
-    var changeLogVersion: Int
-        get() = prefs.getInt("changelog_version", 0)
-        set(value) {
-            prefs.edit { putInt("changelog_version", value) }
         }
 
     var startOnPlayer: Boolean

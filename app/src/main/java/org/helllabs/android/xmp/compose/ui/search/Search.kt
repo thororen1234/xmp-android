@@ -66,11 +66,6 @@ import org.helllabs.android.xmp.compose.ui.search.result.Result
 import org.helllabs.android.xmp.compose.ui.search.result.SearchResult
 import timber.log.Timber
 
-enum class SearchType {
-    TYPE_ARTIST,
-    TYPE_TITLE_OR_FILENAME
-}
-
 class Search : ComponentActivity() {
 
     public override fun onCreate(savedInstanceState: Bundle?) {

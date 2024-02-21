@@ -11,7 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -23,7 +22,6 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -63,13 +61,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.EditPlaylistDialog
+import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.NewPlaylistDialog
+import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.themedText
@@ -85,7 +84,6 @@ import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.FileItem
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
-import kotlin.time.Duration.Companion.seconds
 
 class PlaylistMenu : ComponentActivity() {
 
@@ -389,16 +387,18 @@ private fun PlaylistMenuScreen(
                 actions = {
                     IconButton(
                         enabled = permissionState,
-                        onClick = onDownload
-                    ) {
-                        Icon(imageVector = Icons.Default.Download, contentDescription = null)
-                    }
+                        onClick = onDownload,
+                        content = {
+                            Icon(imageVector = Icons.Default.Download, contentDescription = null)
+                        }
+                    )
                     IconButton(
                         enabled = permissionState,
-                        onClick = onSettings
-                    ) {
-                        Icon(imageVector = Icons.Default.Settings, contentDescription = null)
-                    }
+                        onClick = onSettings,
+                        content = {
+                            Icon(imageVector = Icons.Default.Settings, contentDescription = null)
+                        }
+                    )
                 },
                 title = {
                     TextButton(
@@ -432,25 +432,23 @@ private fun PlaylistMenuScreen(
             }
         }
     ) { paddingValues ->
-        var refreshing by remember { mutableStateOf(false) }
 
         val pullRefreshState = rememberPullToRefreshState()
         if (pullRefreshState.isRefreshing) {
             LaunchedEffect(true) {
-                refreshing = true
-                delay(1.seconds)
                 onRefresh()
-                refreshing = false
                 pullRefreshState.endRefresh()
             }
         }
 
-        if (permissionState && state.mediaPath.isNotEmpty()) {
-            Box(
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .nestedScroll(pullRefreshState.nestedScrollConnection)
-            ) {
+        Box(
+            modifier = Modifier
+                .padding(paddingValues)
+                .fillMaxSize()
+                .nestedScroll(pullRefreshState.nestedScrollConnection),
+            contentAlignment = Alignment.Center
+        ) {
+            if (state.playlistItems.isNotEmpty()) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = 16.dp),
@@ -461,40 +459,31 @@ private fun PlaylistMenuScreen(
                         MenuCardItem(
                             item = item,
                             onClick = { onItemClick(item) },
-                            onLongClick = {
-                                onItemLongClick(item)
-                            }
+                            onLongClick = { onItemLongClick(item) }
                         )
                     }
                 }
+            }
 
-                PullToRefreshContainer(
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    state = pullRefreshState
-                )
-            }
-        } else {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Card {
-                    Column(
-                        modifier = Modifier.padding(32.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(text = "Unable to access storage for Xmp to use")
-                        Button(
-                            modifier = Modifier.padding(top = 16.dp),
-                            onClick = onRequestStorage,
-                            content = { Text(text = "Set Directory") }
-                        )
-                        OutlinedButton(
-                            modifier = Modifier.padding(top = 16.dp),
-                            onClick = onRequestSettings,
-                            content = { Text(text = "Goto Settings") }
-                        )
-                    }
+            if (!state.isLoading && !permissionState) {
+                ErrorScreen(text = "Unable to access storage for Xmp to use") {
+                    Button(
+                        onClick = onRequestStorage,
+                        content = { Text(text = "Set Directory") }
+                    )
+                    OutlinedButton(
+                        onClick = onRequestSettings,
+                        content = { Text(text = "Goto Settings") }
+                    )
                 }
             }
+
+            PullToRefreshContainer(
+                modifier = Modifier.align(Alignment.TopCenter),
+                state = pullRefreshState
+            )
+
+            ProgressbarIndicator(isLoading = state.isLoading)
         }
     }
 }
@@ -505,8 +494,8 @@ private fun Preview_PlaylistMenuScreen() {
     XmpTheme(useDarkTheme = true) {
         PlaylistMenuScreen(
             state = PlaylistMenuViewModel.PlaylistMenuState(
-                isRefreshing = false,
                 mediaPath = "sdcard\\some\\path",
+                isLoading = true,
                 playlistItems = List(15) {
                     FileItem(
                         isSpecial = it >= 1,
@@ -517,7 +506,7 @@ private fun Preview_PlaylistMenuScreen() {
                 }
             ),
             snackBarHostState = SnackbarHostState(),
-            permissionState = true,
+            permissionState = false,
             onItemClick = {},
             onItemLongClick = {},
             onRefresh = {},

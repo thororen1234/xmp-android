@@ -1,9 +1,12 @@
 package org.helllabs.android.xmp.compose.ui.menu
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.core.StorageManager
@@ -12,9 +15,9 @@ import timber.log.Timber
 
 class PlaylistMenuViewModel : ViewModel() {
     data class PlaylistMenuState(
-        val isRefreshing: Boolean = false,
         val errorText: String = "",
         val isFatalError: Boolean = false,
+        val isLoading: Boolean = true,
         val mediaPath: String = "",
         val playlistItems: List<FileItem> = listOf()
     )
@@ -78,30 +81,33 @@ class PlaylistMenuViewModel : ViewModel() {
     }
 
     fun updateList() {
-        if (uiState.value.mediaPath.isEmpty()) {
-            return
-        }
+        _uiState.update { it.copy(isLoading = true) }
+        viewModelScope.launch(Dispatchers.IO) {
+            if (uiState.value.mediaPath.isEmpty()) {
+                _uiState.update { it.copy(isLoading = false) }
+                return@launch
+            }
 
-        val items = mutableListOf<FileItem>()
-        val browserItem = FileItem(
-            name = "File browser",
-            comment = "Files in ${uiState.value.mediaPath}",
-            isSpecial = true,
-            docFile = null
-        )
-        items.add(browserItem)
-
-        PlaylistManager.listPlaylistsDF().forEach {
-            val playlist = PlaylistManager()
-            if(!playlist.load(it.uri)) return@forEach
-
+            val items = mutableListOf<FileItem>()
             FileItem(
-                name = playlist.playlist.name,
-                comment = playlist.playlist.comment,
-                docFile = it
+                name = "File browser",
+                comment = "Files in ${uiState.value.mediaPath}",
+                isSpecial = true,
+                docFile = null
             ).also(items::add)
-        }
 
-        _uiState.update { it.copy(playlistItems = items.sorted()) }
+            PlaylistManager.listPlaylistsDF().forEach {
+                val playlist = PlaylistManager()
+                if (!playlist.load(it.uri)) return@forEach
+
+                FileItem(
+                    name = playlist.playlist.name,
+                    comment = playlist.playlist.comment,
+                    docFile = it
+                ).also(items::add)
+            }
+
+            _uiState.update { it.copy(playlistItems = items.sorted(), isLoading = false) }
+        }
     }
 }

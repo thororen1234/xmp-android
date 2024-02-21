@@ -58,7 +58,6 @@ import org.helllabs.android.xmp.compose.ui.playlist.components.PlaylistCardItem
 import org.helllabs.android.xmp.compose.ui.playlist.components.PlaylistInfo
 import org.helllabs.android.xmp.compose.ui.playlist.components.dragContainer
 import org.helllabs.android.xmp.compose.ui.playlist.components.rememberDragDropState
-import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.Playlist
@@ -117,17 +116,17 @@ class PlaylistActivity : BasePlaylistActivity() {
                         when (sel) {
                             DropDownSelection.DELETE -> {
                                 viewModel.removeItem(index)
-                                // update()
+                                update()
                             }
 
                             DropDownSelection.FILE_ADD_TO_QUEUE ->
-                                addToQueue(item.uri!!)
+                                addToQueue(item.uri)
 
                             DropDownSelection.FILE_PLAY_HERE ->
                                 playModule(viewModel.getUriItems(), index)
 
                             DropDownSelection.FILE_PLAY_THIS_ONLY ->
-                                playModule(listOf(item.uri!!))
+                                playModule(listOf(item.uri))
 
                             else -> Unit
                         }
@@ -140,12 +139,18 @@ class PlaylistActivity : BasePlaylistActivity() {
             }
         }
     }
+
+    override fun onPause() {
+        super.onPause()
+        Timber.d("onPause")
+        viewModel.save()
+    }
 }
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun PlaylistScreen(
-    state: PlaylistActivityViewModel.PlaylistState,
+    state: Playlist,
     onBack: () -> Unit,
     onRefresh: () -> Unit,
     onClick: (index: Int) -> Unit,
@@ -166,8 +171,6 @@ private fun PlaylistScreen(
     Scaffold(
         topBar = {
             Column {
-                // Headline TopAppBars use two TopAppBars in a Column for the effect.
-                // why not mimic it here!
                 XmpTopBar(
                     title = stringResource(id = R.string.browser_playlist_title),
                     isScrolled = isScrolled.value,
@@ -175,8 +178,8 @@ private fun PlaylistScreen(
                 )
                 PlaylistInfo(
                     isScrolled = isScrolled.value,
-                    playlistName = state.manager.playlist.name,
-                    playlistComment = state.manager.playlist.comment
+                    playlistName = state.name,
+                    playlistComment = state.comment
                 )
             }
         },
@@ -209,8 +212,10 @@ private fun PlaylistScreen(
                 modifier = Modifier.nestedScroll(pullRefreshState.nestedScrollConnection),
                 contentAlignment = Alignment.Center
             ) {
-                var list by remember(state.manager.playlist) {
-                    mutableStateOf(state.manager.playlist.list.toList())
+                // TODO not working right
+                //  Maybe: https://github.com/Calvin-LL/Reorderable/
+                var list by remember(state.list) {
+                    mutableStateOf(state.list.toList())
                 }
                 val dragDropState = rememberDragDropState(
                     lazyListState = scrollState,
@@ -255,7 +260,7 @@ private fun PlaylistScreen(
                     }
                 }
 
-                if (state.manager.playlist.list.isEmpty()) {
+                if (state.list.isEmpty()) {
                     ErrorScreen(
                         text = stringResource(id = R.string.empty_playlist),
                         content = {
@@ -283,19 +288,16 @@ private fun Preview_PlaylistScreen() {
 
     XmpTheme {
         PlaylistScreen(
-            state = PlaylistActivityViewModel.PlaylistState(
-                manager = PlaylistManager().apply {
-                    playlist = Playlist(
-                        name = stringResource(id = R.string.empty_playlist),
-                        comment = stringResource(id = R.string.empty_comment),
-                        isShuffle = false,
-                        isLoop = true,
-                        list = List(15) {
-                            PlaylistItem(
-                                name = "Name $it",
-                                type = "Comment $it"
-                            )
-                        }
+            state = Playlist(
+                comment = stringResource(id = R.string.empty_comment),
+                isLoop = true,
+                isShuffle = false,
+                name = stringResource(id = R.string.empty_playlist),
+                list = List(15) {
+                    PlaylistItem(
+                        name = "Name $it",
+                        type = "Comment $it",
+                        uri = Uri.EMPTY
                     )
                 }
             ),

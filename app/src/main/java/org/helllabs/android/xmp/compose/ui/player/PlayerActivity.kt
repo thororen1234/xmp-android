@@ -11,7 +11,6 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.RemoteException
-import android.provider.OpenableColumns
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -80,7 +79,6 @@ import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.service.PlayerServiceCallback
 import timber.log.Timber
-import java.io.File
 
 class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
 
@@ -269,7 +267,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                 allSeq = modPlayer!!.getAllSequences()
                 loop = modPlayer!!.getLoop()
                 if (name.trim().isEmpty()) {
-                    name = modPlayer!!.getFileName() // TODO filename, no extension
+                    name = modPlayer!!.getFileName()
                 }
             } catch (e: RemoteException) {
                 name = ""
@@ -377,7 +375,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                     try {
                         if (modPlayer!!.deleteFile()) {
                             showSnack("File deleted")
-                            setResult(2)
+                            setResult(2) // Why this?
                             modPlayer!!.nextSong()
                         } else {
                             showSnack("Can\'t delete file")
@@ -551,6 +549,8 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         unregisterReceiver(screenReceiver)
 
         try {
+            modPlayer?.setCallback(null)
+            modPlayer = null
             unbindService(connection)
             Timber.i("Unbind service")
         } catch (e: IllegalArgumentException) {
@@ -666,46 +666,17 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
             fromHistory = true
         }
 
-        var path: String? = null
-        if (intent.data != null) {
-            path = if (intent.action == Intent.ACTION_VIEW) {
-                val cursor = contentResolver.query(intent.data!!, null, null, null, null)!!
-                val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                cursor.moveToFirst()
-                val name = cursor.getString(nameIndex)
-
-                cursor.close()
-
-                val dest = File(this.cacheDir, name)
-                try {
-                    contentResolver.openInputStream(intent.data!!).use { ins ->
-                        dest.outputStream().use { out ->
-                            ins!!.copyTo(out)
-                            out.flush()
-                            out.close()
-                        }
-                    }
-                } catch (ex: Exception) {
-                    Timber.e("URI Get File: ${ex.message}")
-                    ex.printStackTrace()
-                }
-                dest.path
-            } else {
-                intent.data!!.path
-            }
-        }
+        val path: Uri? = intent.data
 
         if (path != null) {
             // from intent filter
             Timber.i("Player started from intent filter")
-            throw RuntimeException("Not implemented")
-            // TODO URI support
-//            fileList = mutableListOf()
-//            fileList!!.add(path)
-//            shuffleMode = false
-//            loopListMode = false
-//            keepFirst = false
-//            start = 0
+            fileList = mutableListOf()
+            fileList!!.add(path)
+            shuffleMode = false
+            loopListMode = false
+            keepFirst = false
+            start = 0
         } else if (fromHistory) {
             // Oops. We don't want to start service if launched from history and service is not running
             // so run the browser instead.

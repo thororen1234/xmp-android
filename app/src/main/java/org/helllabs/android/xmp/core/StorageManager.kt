@@ -2,13 +2,13 @@ package org.helllabs.android.xmp.core
 
 import android.content.Intent
 import android.net.Uri
-import androidx.documentfile.provider.DocumentFile
+import android.provider.DocumentsContract
+import android.provider.OpenableColumns
 import com.lazygeniouz.dfc.file.DocumentFileCompat
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.core.Constants.DEFAULT_DOWNLOAD_DIR
 import org.helllabs.android.xmp.model.Module
 import timber.log.Timber
-
 
 /**
  * This object class is kinda of a mash up of anything related to SAF and the Document Tree
@@ -231,49 +231,6 @@ object StorageManager {
         onSuccess(targetDir)
     }
 
-    // TODO, this seems to list the parent dir, then parse through playlists when we actually want 'mod' like we're passing
-    fun walkDownTree(uri: Uri?): List<Uri> {
-        if (uri == null) {
-            return emptyList()
-        }
-
-        fun collect(directory: DocumentFileCompat, uris: MutableList<Uri>) {
-            Timber.d("Parent: ${directory.parentFile?.name}")
-            directory.listFiles().forEach {
-                Timber.d("-> ${it.uri}")
-            }
-//            Timber.d("Processing: ${directory.name}")
-//            if (directory.isFile()) {
-//                uris.add(directory.uri)
-//            } else if (directory.isDirectory()) {
-//                val files = directory.listFiles()
-//                for (file in files) {
-//                    Timber.d("Dir: ${file.uri}")
-//                    collect(file, uris)
-//                }
-//            }
-        }
-
-        Timber.d("Walking down $uri")
-        val context = XmpApplication.instance!!.applicationContext
-        val startTree = DocumentFileCompat.fromTreeUri(context, uri) ?: return emptyList()
-        val uris: MutableList<Uri> = mutableListOf()
-        collect(startTree, uris)
-
-        return uris
-    }
-
-    fun getFilename(uri: Uri?): String {
-        if (uri == null) {
-            return ""
-        }
-
-        val context = XmpApplication.instance!!.applicationContext
-        val docFile = DocumentFileCompat.fromSingleUri(context, uri)
-
-        return docFile?.name ?: ""
-    }
-
     fun deleteFileOrDirectory(uri: Uri?): Boolean {
         if (uri == null) {
             return false
@@ -351,5 +308,70 @@ object StorageManager {
             onError = { }
         )
         return res
+    }
+
+    /**
+     * A Top-Down File Walker
+     *
+     * @param uri the URI to begin walking
+     * @param includeDirectories whether to add directories in the list to return
+     */
+    fun walkDownDirectory(
+        uri: Uri?,
+        includeDirectories: Boolean = true
+    ): List<Uri> {
+        if (uri == null) {
+            return emptyList()
+        }
+
+        val context = XmpApplication.instance!!.applicationContext
+        val docId = DocumentsContract.getDocumentId(uri)
+        val childDocUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, docId)
+        val projection = arrayOf(
+            DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+            DocumentsContract.Document.COLUMN_MIME_TYPE
+        )
+        val uris = mutableListOf<Uri>()
+
+        context.contentResolver.query(childDocUri, projection, null, null, null)?.use { cursor ->
+            val idCol = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
+            val mimeCol = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE)
+
+            while (cursor.moveToNext()) {
+                val childDocumentId = cursor.getString(idCol)
+                val mimeType = cursor.getString(mimeCol)
+                val childUri = DocumentsContract.buildDocumentUriUsingTree(uri, childDocumentId)
+                if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                    if (includeDirectories) {
+                        uris.add(childUri)
+                    }
+                    uris.addAll(walkDownDirectory(childUri, includeDirectories))
+                } else {
+                    uris.add(childUri)
+                }
+            }
+        }
+
+        return uris
+    }
+
+    /**
+     * Gets the filename from a URI path.
+     */
+    fun getFileName(uri: Uri?): String? {
+        if (uri == null) {
+            return null
+        }
+
+        val context = XmpApplication.instance!!.applicationContext
+        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val displayNameColumnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (displayNameColumnIndex != -1) {
+                    return cursor.getString(displayNameColumnIndex)
+                }
+            }
+        }
+        return null
     }
 }

@@ -62,11 +62,11 @@ import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.BasePlaylistActivity
 import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
-import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.compose.ui.filelist.components.FileListCard
 import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.core.StorageManager
+import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.FileItem
 import timber.log.Timber
 import kotlin.time.Duration.Companion.seconds
@@ -76,7 +76,7 @@ class FileListActivity : BasePlaylistActivity() {
     private val viewModel by viewModels<FileListViewModel>()
 
     override val allFiles: List<Uri>
-        get() = StorageManager.walkDownTree(viewModel.currentPath!!.uri)
+        get() = StorageManager.walkDownDirectory(viewModel.currentPath!!.uri, false)
 
     override val isShuffleMode: Boolean
         get() = viewModel.uiState.value.isShuffle
@@ -132,7 +132,6 @@ class FileListActivity : BasePlaylistActivity() {
             /**
              * Playlist choice dialog
              */
-            // TODO Add to playlist dialog
             ListDialog(
                 isShowing = viewModel.playlistChoice != null,
                 icon = Icons.AutoMirrored.Filled.PlaylistAdd,
@@ -159,7 +158,7 @@ class FileListActivity : BasePlaylistActivity() {
                     icon = Icons.Default.QuestionMark,
                     title = "Delete directory",
                     text = "Are you sure you want to delete directory " +
-                        "${StorageManager.getFilename(deleteDirectory)} and all its contents?",
+                        "${StorageManager.getFileName(deleteDirectory)} and all its contents?",
                     confirmText = stringResource(id = R.string.menu_delete),
                     onConfirm = {
                         val res = StorageManager.deleteFileOrDirectory(deleteDirectory)
@@ -182,7 +181,7 @@ class FileListActivity : BasePlaylistActivity() {
                 isShowing = deleteFile != null,
                 icon = Icons.Default.QuestionMark,
                 title = "Delete File",
-                text = "Are you sure you want to delete ${StorageManager.getFilename(deleteFile)}",
+                text = "Are you sure you want to delete ${StorageManager.getFileName(deleteFile)}",
                 confirmText = stringResource(id = R.string.menu_delete),
                 onConfirm = {
                     val res = StorageManager.deleteFileOrDirectory(deleteFile)
@@ -253,10 +252,16 @@ class FileListActivity : BasePlaylistActivity() {
                             }
 
                             DropDownSelection.DIR_ADD_TO_QUEUE ->
-                                addToQueue(StorageManager.walkDownTree(item.docFile?.uri))
+                                StorageManager.walkDownDirectory(
+                                    uri = item.docFile?.uri,
+                                    includeDirectories = false
+                                ).also(::playModule)
 
                             DropDownSelection.DIR_PLAY_CONTENTS ->
-                                playModule(StorageManager.walkDownTree(item.docFile?.uri))
+                                StorageManager.walkDownDirectory(
+                                    uri = item.docFile?.uri,
+                                    includeDirectories = false
+                                ).also(::playModule)
 
                             DropDownSelection.FILE_ADD_TO_PLAYLIST -> {
                                 viewModel.playlistList = PlaylistManager.listPlaylists()

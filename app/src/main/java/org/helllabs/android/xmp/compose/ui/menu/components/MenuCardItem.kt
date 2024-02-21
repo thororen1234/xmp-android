@@ -14,7 +14,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.model.FileItem
 
@@ -48,7 +50,13 @@ fun MenuCardItem(
                 )
             },
             headlineContent = { Text(text = item.name) },
-            supportingContent = { Text(text = item.comment) }
+            supportingContent = {
+                Text(
+                    text = item.comment.ifEmpty {
+                        stringResource(id = R.string.no_comment)
+                    }
+                )
+            }
         )
     }
 }

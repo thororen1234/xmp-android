@@ -41,7 +41,12 @@ fun XmpTopBar(
             onBack?.let {
                 IconButton(
                     onClick = onBack,
-                    content = { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
+                    content = {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = null
+                        )
+                    }
                 )
             }
         },

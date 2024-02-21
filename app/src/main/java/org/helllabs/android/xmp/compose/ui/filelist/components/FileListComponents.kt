@@ -56,7 +56,7 @@ import org.helllabs.android.xmp.model.FileItem
 private val crumbDropDownItems = listOf(
     DropDownItem("Add to playlist", DropDownSelection.DIR_ADD_TO_PLAYLIST),
     DropDownItem("Add to play queue", DropDownSelection.DIR_ADD_TO_QUEUE),
-    DropDownItem("Play contents", DropDownSelection.DIR_PLAY_CONTENTS),
+    DropDownItem("Play contents", DropDownSelection.DIR_PLAY_CONTENTS)
 )
 
 private val directoryDropDownItems = listOf(
@@ -71,7 +71,7 @@ private val fileDropDownItems: List<DropDownItem> = listOf(
     DropDownItem("Delete file", DropDownSelection.DELETE),
     DropDownItem("Add to play queue", DropDownSelection.FILE_ADD_TO_QUEUE),
     DropDownItem("Play this file", DropDownSelection.FILE_PLAY_THIS_ONLY),
-    DropDownItem("Play all starting here", DropDownSelection.FILE_PLAY_HERE),
+    DropDownItem("Play all starting here", DropDownSelection.FILE_PLAY_HERE)
 )
 
 @Composable

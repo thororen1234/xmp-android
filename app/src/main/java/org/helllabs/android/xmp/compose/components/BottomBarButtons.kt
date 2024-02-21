@@ -33,7 +33,7 @@ fun BottomBarButtons(
                     checkedContentColor = Color.Green
                 ),
                 content = {
-                    Icon(Icons.Filled.Shuffle, contentDescription = null)
+                    Icon(imageVector = Icons.Filled.Shuffle, contentDescription = null)
                 }
             )
             IconToggleButton(
@@ -43,7 +43,7 @@ fun BottomBarButtons(
                     checkedContentColor = Color.Green
                 ),
                 content = {
-                    Icon(Icons.Filled.Repeat, contentDescription = null)
+                    Icon(imageVector = Icons.Filled.Repeat, contentDescription = null)
                 }
             )
         },

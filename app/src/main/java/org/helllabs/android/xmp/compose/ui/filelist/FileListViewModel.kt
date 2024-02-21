@@ -110,9 +110,8 @@ class FileListViewModel : ViewModel() {
             return
         }
 
+        _uiState.update { it.copy(isLoading = true, error = null) }
         viewModelScope.launch(Dispatchers.IO) {
-            _uiState.update { it.copy(isLoading = true, error = null) }
-
             Timber.d("Path: ${modDir.uri}")
 
             // Rebuild our bread crumbs
@@ -156,11 +155,10 @@ class FileListViewModel : ViewModel() {
         }
     }
 
-    // todo
     fun addToPlaylist(choice: Playlist) {
         _uiState.update { it.copy(isLoading = true) }
 
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             val path = currentPath
             if (path == null) {
                 _uiState.update { it.copy(error = "Current path is null") }
@@ -168,7 +166,7 @@ class FileListViewModel : ViewModel() {
             }
 
             val manager = PlaylistManager()
-            if (!manager.load(choice.uri!!)) {
+            if (!manager.load(choice.uri)) {
                 _uiState.update { it.copy(error = "Playlist manager failed to load playlist") }
                 return@launch
             }
@@ -183,7 +181,7 @@ class FileListViewModel : ViewModel() {
                 val playlist = PlaylistItem(
                     name = modInfo.name,
                     type = modInfo.type,
-                    uri = path.uri,
+                    uri = path.uri
                 )
                 val list = listOf(playlist)
                 val res = manager.add(list)
@@ -191,20 +189,20 @@ class FileListViewModel : ViewModel() {
                 if (!res) {
                     _uiState.update { it.copy(error = "Couldn't add module to playlist") }
                 }
-
-                return@launch
             } else if (path.isDirectory()) {
                 val list = mutableListOf<PlaylistItem>()
-                StorageManager.walkDownTree(path.uri).forEach {
-                    if (!Xmp.testFromFd(it, modInfo)) {
-                        Timber.w("Invalid playlist item $it")
+                StorageManager.walkDownDirectory(path.uri, false).forEach { uri ->
+                    if (!Xmp.testFromFd(uri, modInfo)) {
+                        Timber.w("Invalid playlist item $uri")
                         return@forEach
                     }
 
                     val playlist = PlaylistItem(
-                        name = modInfo.name,
+                        name = modInfo.name.ifEmpty {
+                            StorageManager.getFileName(uri)
+                        } ?: "",
                         type = modInfo.type,
-                        uri = it,
+                        uri = uri
                     )
 
                     list.add(playlist)

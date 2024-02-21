@@ -25,6 +25,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 @Composable
 fun ErrorScreen(
+    modifier: Modifier = Modifier,
     text: String?,
     content: (@Composable () -> Unit)? = null
 ) {
@@ -34,7 +35,7 @@ fun ErrorScreen(
         shadowElevation = 8.dp
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = modifier.padding(16.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
