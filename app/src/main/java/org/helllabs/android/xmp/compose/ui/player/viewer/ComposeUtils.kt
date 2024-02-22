@@ -14,14 +14,16 @@ import androidx.compose.ui.unit.sp
 import org.helllabs.android.xmp.BuildConfig
 
 @Suppress("unused")
-internal fun DrawScope.debugPatternViewColumns() {
+internal fun DrawScope.debugPatternViewColumns(
+    xValue: Float = 24.dp.toPx()
+) {
     if (!BuildConfig.DEBUG) {
         throw Exception("This DrawScope shouldn't be used in non debug builds.")
     }
-    for (i in 0 until (size.width / 24.dp.toPx()).toInt()) {
+    for (i in 0 until (size.width / xValue).toInt()) {
         val xPosition = (i * 3 + 1) * 22.dp.toPx()
         drawRect(
-            color = (if (i % 2 == 0) Color.Magenta else Color.Cyan).copy(alpha = .15f),
+            color = (if (i % 2 == 0) Color.Magenta else Color.Cyan).copy(alpha = .05f),
             topLeft = Offset(xPosition, 0f),
             size = Size(66.dp.toPx(), size.height)
         )

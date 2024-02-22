@@ -841,7 +841,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         const val PARM_START = "start"
 
         private var stopUpdate = false // this MUST be static (volatile doesn't work!)
-        private var canChangeViewer = false
+        var canChangeViewer = false
 
         // Phone CPU's are more than capable enough to do more work with drawing.
         // With android O+, we can use hardware rendering on the canvas, if supported.
@@ -1017,7 +1017,7 @@ private fun Preview_PlayerScreen() {
                 numOfSequences = List(8) { it },
                 currentSequence = 2
             ),
-            currentViewer = 0,
+            currentViewer = 1,
             viewInfo = composeViewerSampleData(),
             patternInfo = composePatternSampleData(),
             isMuted = BooleanArray(modVars[3]) { false },

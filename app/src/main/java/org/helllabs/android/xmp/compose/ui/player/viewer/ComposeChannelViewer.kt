@@ -198,9 +198,9 @@ fun ComposeChannelViewer(
             )
 
             /***** Instrument Name *****/
-            for (name in 0 until numInstruments) {
+            if (ins in 0..<numInstruments) {
                 val chnNameText = textMeasurer.measure(
-                    text = AnnotatedString(insName[name]),
+                    text = AnnotatedString(insName[ins]),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = TextStyle(

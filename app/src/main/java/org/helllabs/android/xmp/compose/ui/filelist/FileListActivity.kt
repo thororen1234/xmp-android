@@ -75,6 +75,7 @@ class FileListActivity : BasePlaylistActivity() {
 
     private val viewModel by viewModels<FileListViewModel>()
 
+    // TODO tombstones when loading lots of items
     override val allFiles: List<Uri>
         get() = viewModel.onAllFiles()
 

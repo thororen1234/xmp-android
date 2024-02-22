@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.accent
-import org.helllabs.android.xmp.service.PlayerService
+import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 
 private const val VOLUME_STEPS = 32
 private val barShape = CornerRadius(8f, 8f)
@@ -58,13 +58,12 @@ internal fun InstrumentViewer(
     val textMeasurer = rememberTextMeasurer()
     val view = LocalView.current
 
-    // serviceConnected: Bit of a hack to stop a seg fault. We're loading too fast
     LaunchedEffect(serviceConnected) {
         while (true) {
             withFrameMillis {
                 // Make sure everything is a-okay to prevent a NPE in jni
-                // We're immediatly starting to draw before everything is loaded.
-                if (PlayerService.isAlive && PlayerService.isLoaded && serviceConnected) {
+                // We're immediately starting to draw before everything is loaded.
+                if (PlayerActivity.canChangeViewer) {
                     Xmp.getChannelData(
                         viewInfo.volumes,
                         viewInfo.finalVols,
@@ -148,13 +147,19 @@ internal fun InstrumentViewer(
             canvasSize = size
         }
 
+        var maxVol: Int
+        var yPos: Float
+        var vol: Int
+
+        var totalPadding: Float
+        var availableWidth: Float
+        var boxWidth: Float
+        var start: Float
+
         for (i in 0 until ins) {
-            var maxVol = 0
-            val yPos = yOffset.value + (24.dp.toPx() * i)
+            maxVol = 0
+            yPos = yOffset.value + (24.dp.toPx() * i)
 
-            // Timber.d(String.format("%s %02X", "Processing: ", i + 1))
-
-            // TODO culling methods aren't perfect.
             // Top Culling || Bottom Culling
             if (yPos < -measuredText[0].size.height || yPos > size.height) {
                 // Timber.d(String.format("%s %02X", "Culling: ", i+1))
@@ -162,8 +167,6 @@ internal fun InstrumentViewer(
             }
 
             for (j in 0 until chn) {
-                var vol: Int
-
                 if (isMuted[j]) {
                     continue
                 }
@@ -171,10 +174,10 @@ internal fun InstrumentViewer(
                 if (i == viewInfo.instruments[j]) {
                     vol = (viewInfo.volumes[j] / 2).coerceAtMost(VOLUME_STEPS)
 
-                    val totalPadding = (chn - 1) * 2.dp.toPx()
-                    val availableWidth = size.width - totalPadding
-                    val boxWidth = availableWidth / modVars[3]
-                    val start = j * (boxWidth + 2.dp.toPx())
+                    totalPadding = (chn - 1) * 2.dp.toPx()
+                    availableWidth = size.width - totalPadding
+                    boxWidth = availableWidth / modVars[3]
+                    start = j * (boxWidth + 2.dp.toPx())
 
                     if (vol > maxVol) {
                         maxVol = vol
@@ -204,6 +207,9 @@ internal fun InstrumentViewer(
 }
 
 @Preview(device = "id:Nexus One")
+@Preview(device = "id:pixel_xl")
+@Preview(device = "id:pixel_4a")
+@Preview(device = "id:pixel_8_pro")
 @Composable
 private fun Preview_InstrumentViewer() {
     val viewInfo = remember {

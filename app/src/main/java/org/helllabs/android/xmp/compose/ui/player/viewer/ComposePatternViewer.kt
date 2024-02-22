@@ -24,13 +24,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -44,14 +41,7 @@ private const val MAX_NOTES = 120
 private val NOTES = arrayOf("C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B ")
 private val allNotes = (0 until MAX_NOTES).map { NOTES[it % 12] + it / 12 }
 
-// TODO: I don't like the text centering. Row numbers >99 clash into the next row
-//  and columns are too close to one another
-
-// TODO: Maybe keep the row numbers in view at all times, and move the channel columns instead?
-
-// TODO Need more room when in landscape mode on this viewer.
-//  Maybe remove TopBar?
-//  Bar centered not in view.
+// Maybe keep the row numbers in view at all times, and move the channel columns instead?
 
 @Composable
 internal fun ComposePatternViewer(
@@ -71,11 +61,15 @@ internal fun ComposePatternViewer(
     }
 
     val xAxisMultiplier by remember {
-        mutableFloatStateOf(with(density) { 22.dp.toPx() })
+        mutableFloatStateOf(with(density) { 24.dp.toPx() })
     }
 
     val yAxisMultiplier by remember {
         mutableFloatStateOf(with(density) { 24.dp.toPx() })
+    }
+
+    val rowTextSize by remember {
+        mutableStateOf(14.sp)
     }
 
     val instHexByte by remember {
@@ -151,14 +145,14 @@ internal fun ComposePatternViewer(
             canvasSize = size
         }
 
-        // Column Shadows, even numbers
+        /***** Column Shadows (Even) *****/
         for (i in 0 until chn) {
             if (i == 0) {
                 // Shadow for number row
                 drawRect(
                     color = Color.Gray.copy(.05f),
                     topLeft = Offset(0f, 0f),
-                    size = Size(xAxisMultiplier + offsetX.value, canvasSize.height)
+                    size = Size(xAxisMultiplier.plus(offsetX.value), canvasSize.height)
                 )
                 continue
             }
@@ -166,18 +160,18 @@ internal fun ComposePatternViewer(
             drawRect(
                 color = if (i % 2 == 0) Color.Unspecified else Color.Gray.copy(.05f),
                 topLeft = Offset(xPosition, 0f),
-                size = Size(66.dp.toPx(), canvasSize.height)
+                size = Size(xAxisMultiplier.times(3), canvasSize.height)
             )
         }
 
-        // Header Text Background
+        /***** Header Text Background *****/
         drawRect(
             color = accent,
             size = Size(canvasSize.width, yAxisMultiplier),
             topLeft = Offset(0f, 0f)
         )
 
-        // Header Text Numbers
+        /***** Header Text Numbers *****/
         for (i in 0 until chn) {
             val text = headerText[i]
             val division = xAxisMultiplier + (i * 3 * xAxisMultiplier) + (xAxisMultiplier * 1.5f)
@@ -190,8 +184,9 @@ internal fun ComposePatternViewer(
             )
         }
 
-        // Line Bar
-        val barLineY = yAxisMultiplier * 17
+        /***** Line Bar *****/
+        val middle = canvasSize.height.div(2)
+        val barLineY = middle.div(yAxisMultiplier).toInt().times(yAxisMultiplier)
         drawRect(
             color = Color.DarkGray,
             topLeft = Offset(0f, barLineY),
@@ -199,11 +194,9 @@ internal fun ComposePatternViewer(
         )
 
         val currentRow = viewInfo.values[2].toFloat()
-        val rowHeight = yAxisMultiplier
-        val rowYOffset = barLineY - (currentRow * rowHeight)
+        val rowYOffset = barLineY - (currentRow * yAxisMultiplier)
         patternInfo.pat = viewInfo.values[1]
 
-        // Row numbers
         val numRows = viewInfo.values[3]
         if (numRows == 0) {
             // If row numbers is 0, let's stop drawing for now. (Song change)
@@ -212,18 +205,22 @@ internal fun ComposePatternViewer(
         for (i in 0 until numRows) {
             patternInfo.lineInPattern = i
 
+            /***** Row numbers *****/
             val rowText = textMeasurer.measure(
                 text = AnnotatedString(i.toString()),
                 density = density,
                 style = TextStyle(
-                    fontSize = 14.sp,
+                    fontSize = 11.sp,
+                    background = if (view.isInEditMode) Color.Green else Color.Unspecified,
                     fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    platformStyle = PlatformTextStyle(includeFontPadding = true)
                 )
             )
-            val textCenterX = 11.dp.toPx() - (rowText.size.width / 2)
-            val textCenterY = rowYOffset + (i * rowHeight) +
-                (rowHeight / 2) - (rowText.size.height / 2)
+            val textCenterX = xAxisMultiplier.div(2).minus(rowText.size.width.div(2))
+            val textCenterY = rowYOffset
+                .plus(i.times(yAxisMultiplier))
+                .plus(yAxisMultiplier.div(2).minus(rowText.size.height.div(2)))
             if (textCenterY < yAxisMultiplier || textCenterY + rowText.size.height > size.height) {
                 // Top culling || Bottom Culling
                 continue
@@ -231,7 +228,7 @@ internal fun ComposePatternViewer(
             drawText(
                 textLayoutResult = rowText,
                 color = Color.White,
-                topLeft = Offset(offsetX.value + textCenterX, textCenterY)
+                topLeft = Offset(textCenterX.plus(offsetX.value), textCenterY)
             )
 
             for (j in 0 until chn) {
@@ -250,103 +247,94 @@ internal fun ComposePatternViewer(
                     )
                 }
 
-                /****** Notes *****/
-                val notes = when (val note = patternInfo.rowNotes[j]) {
-                    in 1..MAX_NOTES -> allNotes[note - 1]
-                    else -> if (note < 0) "===" else "---"
-                }
-                val noteText = textMeasurer.measure(
-                    text = AnnotatedString(notes),
+                val info = textMeasurer.measure(
+                    text = buildAnnotatedString {
+                        withStyle(
+                            style = SpanStyle(
+                                color = if (isMuted[j]) Color.LightGray else Color(140, 140, 160)
+                            )
+                        ) {
+                            /****** Notes *****/
+                            val notes = when (val note = patternInfo.rowNotes[j]) {
+                                in 1..MAX_NOTES -> allNotes[note - 1]
+                                else -> if (note < 0) "===" else "---"
+                            }
+                            append(notes)
+                        }
+                        withStyle(
+                            style = SpanStyle(
+                                color = if (isMuted[j]) Color(80, 40, 40) else Color(160, 80, 80)
+                            )
+                        ) {
+                            /***** Instruments *****/
+                            val inst = if (patternInfo.rowInsts[j] > 0) {
+                                instHexByte[patternInfo.rowInsts[j].toInt()]
+                            } else {
+                                "--"
+                            }
+                            append(inst)
+                        }
+                        withStyle(
+                            style = SpanStyle(
+                                color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60)
+                            )
+                        ) {
+                            /***** Effects *****/
+                            val effectType = effectsTable[patternInfo.rowFxType[j]]
+                            val effect: String = when {
+                                patternInfo.rowFxType[j] > -1 -> effectType ?: "?"
+                                else -> "-"
+                            }
+                            append(effect)
+                        }
+                        withStyle(
+                            style = SpanStyle(
+                                color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60)
+                            )
+                        ) {
+                            /***** Effects Params *****/
+                            val effectParam: String = when {
+                                patternInfo.rowFxParm[j] > -1 ->
+                                    instHexByte[patternInfo.rowFxParm[j]]
+
+                                else -> "--"
+                            }
+                            append(effectParam)
+                        }
+                    },
                     density = density,
                     style = TextStyle(
-                        fontSize = 14.sp,
-                        color = if (isMuted[j]) Color.LightGray else Color(140, 140, 160),
+                        fontSize = rowTextSize,
+                        background = if (view.isInEditMode) Color.Green else Color.Unspecified,
                         fontFamily = FontFamily.Monospace,
                         fontWeight = FontWeight.Bold
                     )
                 )
                 // TODO culling
-                val noteDivision = (j * 3 + 1) * xAxisMultiplier
-                val noteCenterX = offsetX.value + noteDivision
+                val noteRowCenterX = xAxisMultiplier.times((j * 3 + 2))
+                val noteCenterX = noteRowCenterX.minus(info.size.width.div(3))
                 drawText(
-                    textLayoutResult = noteText,
-                    topLeft = Offset(noteCenterX, textCenterY)
-                )
-
-                /***** Instruments *****/
-                val inst = if (patternInfo.rowInsts[j] > 0) {
-                    instHexByte[patternInfo.rowInsts[j].toInt()]
-                } else {
-                    "--"
-                }
-                val instText = textMeasurer.measure(
-                    text = AnnotatedString(inst),
-                    density = density,
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        color = if (isMuted[j]) Color(80, 40, 40) else Color(160, 80, 80),
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                )
-                // TODO culling
-                val instOffsetX = noteCenterX + noteText.size.width.toDp().toPx()
-                drawText(
-                    textLayoutResult = instText,
-                    topLeft = Offset(instOffsetX, textCenterY)
-                )
-
-                /***** Effects *****/
-                val effectType = effectsTable[patternInfo.rowFxType[j]]
-                val effect: String = when {
-                    patternInfo.rowFxType[j] > -1 -> effectType ?: "?"
-                    else -> "-"
-                }
-                val fxText = textMeasurer.measure(
-                    text = AnnotatedString(effect),
-                    density = density,
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60),
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                // TODO culling
-                val fxOffsetX = instOffsetX + instText.size.width.toDp().toPx()
-                drawText(
-                    textLayoutResult = fxText,
-                    topLeft = Offset(fxOffsetX, textCenterY)
-                )
-
-                // Effects Params
-                val effectParam: String = when {
-                    patternInfo.rowFxParm[j] > -1 -> instHexByte[patternInfo.rowFxParm[j]]
-                    else -> "--"
-                }
-                val fxParmText = textMeasurer.measure(
-                    text = AnnotatedString(effectParam),
-                    density = density,
-                    style = TextStyle(
-                        fontSize = 14.sp,
-                        color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60),
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-                // TODO culling
-                val fxParmOffsetX = fxOffsetX + fxText.size.width.toDp().toPx()
-                drawText(
-                    textLayoutResult = fxParmText,
-                    topLeft = Offset(fxParmOffsetX, textCenterY)
+                    textLayoutResult = info,
+                    topLeft = Offset(noteCenterX.plus(offsetX.value), textCenterY)
                 )
             }
+        }
+
+        if (view.isInEditMode) {
+            // debugPatternViewColumns()
+            debugScreen(textMeasurer, xAxisMultiplier, yAxisMultiplier)
         }
     }
 }
 
-@Preview
+@Preview(device = "id:Nexus One")
+@Preview(device = "spec:parent=Nexus One,orientation=landscape")
+@Preview(device = "id:pixel_xl")
+@Preview(device = "spec:parent=pixel_xl,orientation=landscape")
+@Preview(device = "id:pixel_4a")
+@Preview(device = "spec:parent=pixel_4a,orientation=landscape")
+@Preview(device = "id:pixel_8_pro")
+@Preview(device = "spec:parent=pixel_8_pro,orientation=landscape")
 @Composable
 private fun Preview_PatternViewer() {
     val viewInfo = remember {
