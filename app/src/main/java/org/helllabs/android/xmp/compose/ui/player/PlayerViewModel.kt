@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import java.util.Collections
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -14,7 +15,6 @@ import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.ui.player.viewer.PatternInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
 import timber.log.Timber
-import java.util.Collections
 
 class PlayerViewModel : ViewModel() {
 

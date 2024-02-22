@@ -219,10 +219,11 @@ private fun SegmentedButtons(searchType: SearchType, onSearchType: (Int) -> Unit
             .padding(horizontal = 32.dp)
             .fillMaxWidth()
     ) {
+        val activeColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .75f)
         searchOptions.forEachIndexed { index, label ->
             SegmentedButton(
                 colors = SegmentedButtonDefaults.colors(
-                    activeContainerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .75f)
+                    activeContainerColor = activeColor
                 ),
                 shape = SegmentedButtonDefaults.itemShape(
                     index = index,

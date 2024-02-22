@@ -145,7 +145,8 @@ private fun PreferencesScreen(
                                             Intent.FLAG_GRANT_WRITE_URI_PERMISSION
                                     )
                                 } catch (e: SecurityException) {
-                                    Timber.d("Failed to revoke permissions for URI: ${permission.uri}")
+                                    val uri = permission.uri
+                                    Timber.d("Failed to revoke perms for URI: $uri")
                                 }
                             }
                             (context as ComponentActivity).finishAffinity()

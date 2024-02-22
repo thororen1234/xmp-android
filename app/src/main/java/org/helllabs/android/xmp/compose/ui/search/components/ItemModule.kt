@@ -86,7 +86,9 @@ private fun Preview_ItemModule() {
             item = Module(
                 format = "XM",
                 songtitle = "Some History Song Title",
-                artistInfo = ArtistInfo(artist = listOf(Artist(alias = "Some History Artist Info"))),
+                artistInfo = ArtistInfo(
+                    artist = listOf(Artist(alias = "Some History Artist Info"))
+                ),
                 bytes = 6690000
             ),
             onClick = {}

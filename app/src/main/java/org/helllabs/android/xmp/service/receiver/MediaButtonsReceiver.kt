@@ -20,10 +20,16 @@ open class MediaButtonsReceiver : BroadcastReceiver() {
             }
             var code: Int
             when (event.keyCode.also { code = it }) {
-                KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_MEDIA_PREVIOUS, KeyEvent.KEYCODE_MEDIA_STOP, KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                KeyEvent.KEYCODE_MEDIA_NEXT,
+                KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+                KeyEvent.KEYCODE_MEDIA_STOP,
+                KeyEvent.KEYCODE_MEDIA_PAUSE,
+                KeyEvent.KEYCODE_MEDIA_PLAY,
+                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
                     Timber.i("Key code $code")
                     keyCode = code
                 }
+
                 else -> Timber.i("Unhandled key code $code")
             }
             if (ordered) {

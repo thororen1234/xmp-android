@@ -37,60 +37,57 @@ class SearchResultViewModel(
     private val _uiState = MutableStateFlow(SearchResultState())
     val uiState = _uiState.asStateFlow()
 
-    fun getFileOrTitle(string: String, query: String) =
-        viewModelScope.launch {
-            _uiState.update { it.copy(title = string, isLoading = true) }
+    fun getFileOrTitle(string: String, query: String) = viewModelScope.launch {
+        _uiState.update { it.copy(title = string, isLoading = true) }
 
-            try {
-                val result = repository.getFileNameOrTitle(query)
-                if (!result.error.isNullOrBlank()) {
-                    _uiState.update { it.copy(softError = result.error) }
-                } else {
-                    _uiState.update { it.copy(result = result, softError = "") }
-                }
-            } catch (e: Exception) {
-                Timber.e(e)
-                _uiState.update { it.copy(hardError = e) }
-            } finally {
-                _uiState.update { it.copy(isLoading = false) }
+        try {
+            val result = repository.getFileNameOrTitle(query)
+            if (!result.error.isNullOrBlank()) {
+                _uiState.update { it.copy(softError = result.error) }
+            } else {
+                _uiState.update { it.copy(result = result, softError = "") }
             }
+        } catch (e: Exception) {
+            Timber.e(e)
+            _uiState.update { it.copy(hardError = e) }
+        } finally {
+            _uiState.update { it.copy(isLoading = false) }
         }
+    }
 
-    fun getArtistById(id: Int) =
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+    fun getArtistById(id: Int) = viewModelScope.launch {
+        _uiState.update { it.copy(isLoading = true) }
 
-            try {
-                val result = repository.getArtistById(id)
-                if (!result.error.isNullOrBlank()) {
-                    _uiState.update { it.copy(softError = result.error) }
-                } else {
-                    _uiState.update { it.copy(result = result, softError = "") }
-                }
-            } catch (e: Exception) {
-                Timber.e(e)
-                _uiState.update { it.copy(hardError = e) }
-            } finally {
-                _uiState.update { it.copy(isLoading = false) }
+        try {
+            val result = repository.getArtistById(id)
+            if (!result.error.isNullOrBlank()) {
+                _uiState.update { it.copy(softError = result.error) }
+            } else {
+                _uiState.update { it.copy(result = result, softError = "") }
             }
+        } catch (e: Exception) {
+            Timber.e(e)
+            _uiState.update { it.copy(hardError = e) }
+        } finally {
+            _uiState.update { it.copy(isLoading = false) }
         }
+    }
 
-    fun getArtists(string: String, query: String) =
-        viewModelScope.launch {
-            _uiState.update { it.copy(title = string, isLoading = true) }
+    fun getArtists(string: String, query: String) = viewModelScope.launch {
+        _uiState.update { it.copy(title = string, isLoading = true) }
 
-            try {
-                val result = repository.getArtistSearch(query)
-                if (!result.error.isNullOrBlank()) {
-                    _uiState.update { it.copy(softError = result.error) }
-                } else {
-                    _uiState.update { it.copy(result = result, softError = "") }
-                }
-            } catch (e: Exception) {
-                Timber.e(e)
-                _uiState.update { it.copy(hardError = e) }
-            } finally {
-                _uiState.update { it.copy(isLoading = false) }
+        try {
+            val result = repository.getArtistSearch(query)
+            if (!result.error.isNullOrBlank()) {
+                _uiState.update { it.copy(softError = result.error) }
+            } else {
+                _uiState.update { it.copy(result = result, softError = "") }
             }
+        } catch (e: Exception) {
+            Timber.e(e)
+            _uiState.update { it.copy(hardError = e) }
+        } finally {
+            _uiState.update { it.copy(isLoading = false) }
         }
+    }
 }

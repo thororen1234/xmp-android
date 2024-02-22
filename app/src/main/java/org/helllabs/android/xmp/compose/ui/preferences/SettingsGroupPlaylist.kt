@@ -73,8 +73,12 @@ fun SettingsGroupPlaylist(
 
         val backButton = rememberBooleanSettingState(PrefManager.backButtonNavigation)
         FixedSettingsSwitch(
-            title = { Text(text = stringResource(id = R.string.pref_back_button_navigation_title)) },
-            subtitle = { Text(text = stringResource(id = R.string.pref_back_button_navigation_summary)) },
+            title = {
+                Text(text = stringResource(id = R.string.pref_back_button_navigation_title))
+            },
+            subtitle = {
+                Text(text = stringResource(id = R.string.pref_back_button_navigation_summary))
+            },
             state = backButton,
             onCheckedChange = {
                 PrefManager.backButtonNavigation = it

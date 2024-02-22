@@ -89,7 +89,9 @@ fun SettingsGroupInterface() {
         val useMediaStyle = rememberBooleanSettingState(PrefManager.useMediaStyle)
         FixedSettingsSwitch(
             title = { Text(text = "Use media style notification") },
-            subtitle = { Text(text = "Use a standard notification for media controls if disabled") },
+            subtitle = {
+                Text(text = "Use a standard notification for media controls if disabled")
+            },
             state = useMediaStyle,
             onCheckedChange = {
                 useMediaStyle.value = it

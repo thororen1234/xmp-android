@@ -407,7 +407,9 @@ private fun PlaylistMenuScreen(
                     ) {
                         ProvideTextStyle(
                             LocalTextStyle.current.merge(
-                                TextStyle(platformStyle = PlatformTextStyle(includeFontPadding = false))
+                                TextStyle(
+                                    platformStyle = PlatformTextStyle(includeFontPadding = false)
+                                )
                             )
                         ) {
                             Text(

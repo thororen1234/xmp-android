@@ -11,7 +11,6 @@ import timber.log.Timber
 // TODO add migration tool for older playlists.
 
 class XmpApplication : Application() {
-
     var fileListUri: List<Uri>? = null
 
     override fun onCreate() {
@@ -44,7 +43,6 @@ class XmpApplication : Application() {
     }
 
     companion object {
-
         lateinit var modArchiveModule: ModArchiveModule
 
         @get:Synchronized

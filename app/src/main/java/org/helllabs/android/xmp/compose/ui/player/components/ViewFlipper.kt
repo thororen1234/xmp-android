@@ -53,13 +53,23 @@ fun ViewFlipper(
                 targetState = info,
                 transitionSpec = {
                     if (skipToPrevious) {
-                        (slideInHorizontally(animationSpec = tween(ANIMATION_DURATION)) { width -> -width } + fadeIn()).togetherWith(
-                            slideOutHorizontally(animationSpec = tween(ANIMATION_DURATION)) { width -> width } + fadeOut()
-                        )
+                        val slideIn = slideInHorizontally(
+                            animationSpec = tween(ANIMATION_DURATION)
+                        ) { width -> -width } + fadeIn()
+                        val slideOut = slideOutHorizontally(
+                            animationSpec = tween(ANIMATION_DURATION)
+                        ) { width -> width } + fadeOut()
+
+                        slideIn.togetherWith(slideOut)
                     } else {
-                        (slideInHorizontally(animationSpec = tween(ANIMATION_DURATION)) { width -> width } + fadeIn()).togetherWith(
-                            slideOutHorizontally(animationSpec = tween(ANIMATION_DURATION)) { width -> -width } + fadeOut()
-                        )
+                        val slideIn = slideInHorizontally(
+                            animationSpec = tween(ANIMATION_DURATION)
+                        ) { width -> width } + fadeIn()
+                        val slideOut = slideOutHorizontally(
+                            animationSpec = tween(ANIMATION_DURATION)
+                        ) { width -> -width } + fadeOut()
+
+                        slideIn.togetherWith(slideOut)
                     }.using(
                         SizeTransform(clip = false)
                     )

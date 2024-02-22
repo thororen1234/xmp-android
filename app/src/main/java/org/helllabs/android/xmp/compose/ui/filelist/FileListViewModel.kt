@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lazygeniouz.dfc.file.DocumentFileCompat
+import java.text.DateFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +22,6 @@ import org.helllabs.android.xmp.model.ModInfo
 import org.helllabs.android.xmp.model.Playlist
 import org.helllabs.android.xmp.model.PlaylistItem
 import timber.log.Timber
-import java.text.DateFormat
 
 class FileListViewModel : ViewModel() {
 

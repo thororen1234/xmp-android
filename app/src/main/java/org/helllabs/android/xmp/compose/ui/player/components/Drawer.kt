@@ -37,13 +37,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.random.Random
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.RadioButtonItem
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.gray
 import org.helllabs.android.xmp.compose.theme.lightGray
 import org.helllabs.android.xmp.compose.theme.sectionBackground
-import kotlin.random.Random
 
 @Composable
 fun PlayerDrawer(
@@ -74,7 +74,10 @@ fun PlayerDrawer(
                 horizontalArrangement = Arrangement.Start
             ) {
                 IconButton(onClick = onMenuClose) {
-                    Icon(imageVector = Icons.AutoMirrored.Filled.MenuOpen, contentDescription = null)
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.MenuOpen,
+                        contentDescription = null
+                    )
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))

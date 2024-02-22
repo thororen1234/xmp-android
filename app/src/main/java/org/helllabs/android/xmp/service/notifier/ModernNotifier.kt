@@ -8,14 +8,14 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.media.app.NotificationCompat.MediaStyle as MediaStyle
+import java.util.Locale
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.service.receiver.NotificationActionReceiver
 import org.helllabs.android.xmp.service.utils.QueueManager
-import java.util.Locale
-import androidx.media.app.NotificationCompat.MediaStyle as MediaStyle
 
 class ModernNotifier(private val service: PlayerService) {
 

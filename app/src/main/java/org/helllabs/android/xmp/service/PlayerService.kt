@@ -11,6 +11,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
+import java.lang.ref.WeakReference
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.core.StorageManager
@@ -19,7 +20,6 @@ import org.helllabs.android.xmp.service.utils.QueueManager
 import org.helllabs.android.xmp.service.utils.RemoteControl
 import org.helllabs.android.xmp.service.utils.Watchdog
 import timber.log.Timber
-import java.lang.ref.WeakReference
 
 interface PlayerServiceCallback {
     fun onPlayerPause()

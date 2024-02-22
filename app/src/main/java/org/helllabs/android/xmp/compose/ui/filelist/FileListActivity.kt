@@ -49,6 +49,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
@@ -69,7 +70,6 @@ import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.FileItem
 import timber.log.Timber
-import kotlin.time.Duration.Companion.seconds
 
 class FileListActivity : BasePlaylistActivity() {
 

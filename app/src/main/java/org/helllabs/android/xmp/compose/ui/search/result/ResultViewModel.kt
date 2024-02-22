@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.lazygeniouz.dfc.file.DocumentFileCompat
+import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +31,6 @@ import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.Module
 import org.helllabs.android.xmp.model.ModuleResult
 import timber.log.Timber
-import java.io.IOException
 
 class ResultViewModel(
     private val okHttpClient: OkHttpClient,
@@ -124,7 +124,9 @@ class ResultViewModel(
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
-                                    downloadStatus = DownloadStatus.ErrorMsg("Failed to create file to download")
+                                    downloadStatus = DownloadStatus.ErrorMsg(
+                                        "Failed to create file to download"
+                                    )
                                 )
                             }
                             return@let
@@ -139,12 +141,11 @@ class ResultViewModel(
 
                             progressSource.use { input ->
                                 var totalBytesRead: Long = 0
-                                var bytesRead: Long
-                                while (input.read(sink.buffer, 8192)
-                                    .also { bytesRead = it } != -1L
-                                ) {
+                                var bytesRead = input.read(sink.buffer, 8192)
+                                while (bytesRead != -1L) {
                                     totalBytesRead += bytesRead
                                     sink.emit()
+                                    bytesRead = input.read(sink.buffer, 8192)
                                 }
                             }
 

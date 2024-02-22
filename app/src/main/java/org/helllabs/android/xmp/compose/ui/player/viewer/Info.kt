@@ -13,7 +13,17 @@ data class ViewerInfo(
     val volumes: IntArray = IntArray(64)
 ) {
     override fun toString(): String {
-        return "ViewerInfo(finalVols=${finalVols.contentToString()}, instruments=${instruments.contentToString()}, keys=${keys.contentToString()}, pans=${pans.contentToString()}, periods=${periods.contentToString()}, time=$time, type='$type', values=${values.contentToString()}, volumes=${volumes.contentToString()})"
+        return "ViewerInfo(" +
+            "finalVols=${finalVols.contentToString()}, " +
+            "instruments=${instruments.contentToString()}, " +
+            "keys=${keys.contentToString()}, " +
+            "pans=${pans.contentToString()}, " +
+            "periods=${periods.contentToString()}, " +
+            "time=$time, " +
+            "type='$type', " +
+            "values=${values.contentToString()}, " +
+            "volumes=${volumes.contentToString()}" +
+            ")"
     }
 }
 
@@ -27,6 +37,13 @@ data class PatternInfo(
     val rowNotes: ByteArray = ByteArray(64)
 ) {
     override fun toString(): String {
-        return "PatternInfo(lineInPattern=$lineInPattern, pat=$pat, rowFxParm=${rowFxParm.contentToString()}, rowFxType=${rowFxType.contentToString()}, rowInsts=${rowInsts.contentToString()}, rowNotes=${rowNotes.contentToString()})"
+        return "PatternInfo(" +
+            "lineInPattern=$lineInPattern, " +
+            "pat=$pat, " +
+            "rowFxParm=${rowFxParm.contentToString()}, " +
+            "rowFxType=${rowFxType.contentToString()}, " +
+            "rowInsts=${rowInsts.contentToString()}, " +
+            "rowNotes=${rowNotes.contentToString()}" +
+            ")"
     }
 }

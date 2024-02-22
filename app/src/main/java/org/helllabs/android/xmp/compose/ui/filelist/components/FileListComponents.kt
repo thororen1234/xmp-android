@@ -107,7 +107,11 @@ fun FileListCard(
             headlineContent = {
                 Text(
                     text = item.name,
-                    textDecoration = if (item.isValid) TextDecoration.None else TextDecoration.LineThrough
+                    textDecoration = if (item.isValid) {
+                        TextDecoration.None
+                    } else {
+                        TextDecoration.LineThrough
+                    }
                 )
             },
             trailingContent = {

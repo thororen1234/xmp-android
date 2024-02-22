@@ -3,10 +3,10 @@ package org.helllabs.android.xmp.service
 import android.content.ComponentName
 import android.content.Context
 import android.media.AudioManager
-import org.helllabs.android.xmp.service.receiver.MediaButtonsReceiver
-import timber.log.Timber
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import org.helllabs.android.xmp.service.receiver.MediaButtonsReceiver
+import timber.log.Timber
 
 // for media buttons
 // see http://android-developers.blogspot.com/2010/06/allowing-applications-to-play-nicer.html

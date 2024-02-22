@@ -13,9 +13,9 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
 import android.view.View.OnTouchListener
+import kotlin.math.abs
 import org.helllabs.android.xmp.Xmp
 import timber.log.Timber
-import kotlin.math.abs
 
 // http://developer.android.com/guide/topics/graphics/2d-graphics.html
 // http://www.independent-software.com/android-speeding-up-canvas-drawbitmap.html

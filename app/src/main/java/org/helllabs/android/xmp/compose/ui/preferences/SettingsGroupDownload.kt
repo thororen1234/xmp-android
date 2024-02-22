@@ -17,7 +17,9 @@ fun SettingsGroupDownload() {
         val modArchive = rememberBooleanSettingState(PrefManager.modArchiveFolder)
         FixedSettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_modarchive_folder_title)) },
-            subtitle = { Text(text = stringResource(id = R.string.pref_modarchive_folder_summary)) },
+            subtitle = {
+                Text(text = stringResource(id = R.string.pref_modarchive_folder_summary))
+            },
             state = modArchive,
             onCheckedChange = {
                 modArchive.value = it

@@ -274,8 +274,11 @@ internal fun ComposePatternViewer(
                 )
 
                 /***** Instruments *****/
-                val inst =
-                    if (patternInfo.rowInsts[j] > 0) instHexByte[patternInfo.rowInsts[j].toInt()] else "--"
+                val inst = if (patternInfo.rowInsts[j] > 0) {
+                    instHexByte[patternInfo.rowInsts[j].toInt()]
+                } else {
+                    "--"
+                }
                 val instText = textMeasurer.measure(
                     text = AnnotatedString(inst),
                     density = density,
