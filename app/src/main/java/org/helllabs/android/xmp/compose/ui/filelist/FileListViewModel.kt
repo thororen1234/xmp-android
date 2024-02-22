@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.core.PrefManager
@@ -90,6 +91,7 @@ class FileListViewModel : ViewModel() {
     /**
      * Play all valid files
      */
+    @Deprecated("This is Blocking")
     fun onAllFiles(): List<Uri> {
         _uiState.update { it.copy(isLoading = true) }
 
@@ -100,6 +102,20 @@ class FileListViewModel : ViewModel() {
         _uiState.update { it.copy(isLoading = false) }
 
         return list
+    }
+
+    suspend fun onAllFiles2(): List<Uri> {
+        return withContext(Dispatchers.IO) {
+            _uiState.update { it.copy(isLoading = true) }
+
+            val list = StorageManager
+                .walkDownDirectory(currentPath!!.uri, false)
+                .filter(Xmp::testFromFd)
+
+            _uiState.update { it.copy(isLoading = false) }
+
+            list
+        }
     }
 
     fun onLoop(value: Boolean) {

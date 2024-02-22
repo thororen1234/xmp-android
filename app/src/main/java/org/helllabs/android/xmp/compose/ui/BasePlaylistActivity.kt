@@ -50,8 +50,13 @@ abstract class BasePlaylistActivity : ComponentActivity() {
 
     protected abstract val isShuffleMode: Boolean
     protected abstract val isLoopMode: Boolean
+
+    @Deprecated("This is Blocking")
     protected abstract val allFiles: List<Uri>
+
     protected abstract fun update()
+
+    protected abstract suspend fun getAllFiles(): List<Uri>
 
     internal fun showSnack(message: String, actionLabel: String? = null) = lifecycleScope.launch {
         snackBarHostState.showSnackbar(message = message, actionLabel = actionLabel)
@@ -88,13 +93,28 @@ abstract class BasePlaylistActivity : ComponentActivity() {
     /**
      * Play all `playable` modules in the current path we're in.
      */
+    @Deprecated("This is Blocking")
     open fun onPlayAll() {
-        if (allFiles.isEmpty()) {
+        val files = allFiles
+        if (files.isEmpty()) {
             showSnack(getString(R.string.error_no_files_to_play))
             return
         }
 
-        playModule(modList = allFiles)
+        playModule(modList = files)
+    }
+
+    open fun onPlayAll2() {
+        lifecycleScope.launch {
+            val files = getAllFiles()
+
+            if (files.isEmpty()) {
+                showSnack(getString(R.string.error_no_files_to_play))
+                return@launch
+            }
+
+            playModule(modList = files)
+        }
     }
 
     open fun onItemClick(

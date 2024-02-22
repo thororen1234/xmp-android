@@ -69,6 +69,10 @@ class PlaylistActivity : BasePlaylistActivity() {
     override val allFiles: List<Uri>
         get() = viewModel.getUriItems()
 
+    override suspend fun getAllFiles(): List<Uri> {
+        TODO("Not yet implemented")
+    }
+
     override fun update() {
         val extras = intent.extras ?: return
         val name = extras.getString("name").orEmpty()
