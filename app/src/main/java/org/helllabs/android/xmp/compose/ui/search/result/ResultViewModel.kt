@@ -1,7 +1,5 @@
 package org.helllabs.android.xmp.compose.ui.search.result
 
-import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -80,13 +78,15 @@ class ResultViewModel(
         _uiState.update { it.copy(softError = message) }
     }
 
-    fun downloadModule(context: Context, mod: String, url: String, file: Uri) {
-        currentDownloadJob?.cancel()
+    fun downloadModule(mod: Module, docFile: DocumentFileCompat) {
+        if (currentDownloadJob != null && currentDownloadJob!!.isActive) {
+            currentDownloadJob!!.cancel()
+        }
 
         currentDownloadJob = viewModelScope.launch(Dispatchers.IO) {
             try {
                 val request = Request.Builder()
-                    .url(url)
+                    .url(mod.url)
                     .build()
 
                 _uiState.update {
@@ -117,10 +117,9 @@ class ResultViewModel(
                             }
                         }
 
-                        val dir = DocumentFileCompat.fromTreeUri(context, file)
-                        val modFile = dir?.createFile("application/octet-stream", mod)
+                        val modDoc = docFile.createFile("application/octet-stream", mod.filename)
 
-                        if (dir == null || modFile == null) {
+                        if (modDoc == null) {
                             _uiState.update {
                                 it.copy(
                                     isLoading = false,
@@ -132,7 +131,8 @@ class ResultViewModel(
                             return@let
                         }
 
-                        val outputStream = modFile.uri.let { uri ->
+                        val outputStream = modDoc.uri.let { uri ->
+                            val context = XmpApplication.instance!!.applicationContext
                             context.contentResolver.openOutputStream(uri)
                         }
 

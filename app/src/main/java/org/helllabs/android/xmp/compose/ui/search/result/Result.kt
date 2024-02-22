@@ -151,9 +151,7 @@ open class Result : ComponentActivity() {
                     StorageManager.getDownloadPath(
                         module = module!!,
                         onSuccess = {
-                            val mod = module.filename
-                            val url = module.url
-                            viewModel.downloadModule(this, mod, url, it.uri)
+                            viewModel.downloadModule(module, it)
                         },
                         onError = viewModel::showSoftError
                     )
@@ -185,13 +183,7 @@ open class Result : ComponentActivity() {
                                 }.also(playerResult::launch)
                             },
                             onNotFound = {
-                                Timber.i("Downloading ${module.url} to ${it.uri.path}")
-                                viewModel.downloadModule(
-                                    this,
-                                    module.filename,
-                                    module.url,
-                                    it.uri
-                                )
+                                viewModel.downloadModule(module, it)
                             },
                             onError = viewModel::showSoftError
                         )
