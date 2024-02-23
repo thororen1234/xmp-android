@@ -249,8 +249,5 @@ class FileListViewModel : ViewModel() {
         }
     }
 
-    fun getDirectoryCount(): Int =
-        _uiState.value.list.takeWhile { it.docFile!!.isDirectory() }.count()
-
     fun getItems(): List<Uri> = _uiState.value.list.map { it.docFile!!.uri }
 }

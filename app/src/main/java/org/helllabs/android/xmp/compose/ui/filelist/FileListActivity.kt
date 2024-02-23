@@ -71,6 +71,8 @@ import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.FileItem
 import timber.log.Timber
 
+// TODO adding to playlist adds everything
+
 class FileListActivity : BasePlaylistActivity() {
 
     private val viewModel by viewModels<FileListViewModel>()
@@ -232,7 +234,6 @@ class FileListActivity : BasePlaylistActivity() {
                         if (item.docFile!!.isFile()) {
                             onItemClick(
                                 viewModel.getItems(),
-                                viewModel.getDirectoryCount(),
                                 index
                             )
                         } else {

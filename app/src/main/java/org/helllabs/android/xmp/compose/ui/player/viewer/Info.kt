@@ -31,8 +31,8 @@ data class ViewerInfo(
 data class PatternInfo(
     var lineInPattern: Int = 0,
     var pat: Int = 0,
-    val rowFxParm: IntArray = IntArray(64),
-    val rowFxType: IntArray = IntArray(64),
+    val rowFxParm: ByteArray = ByteArray(64),
+    val rowFxType: ByteArray = ByteArray(64),
     val rowInsts: ByteArray = ByteArray(64),
     val rowNotes: ByteArray = ByteArray(64)
 ) {

@@ -104,15 +104,13 @@ abstract class BasePlaylistActivity : ComponentActivity() {
 
     open fun onItemClick(
         items: List<Uri>,
-        directoryCount: Int,
         position: Int
     ) {
         fun playAllStaringAtPosition() {
-            val count = position - directoryCount
-            if (count < 0) {
+            if (position < 0) {
                 throw RuntimeException("Play count is negative")
             }
-            playModule(modList = items, start = count, keepFirst = true)
+            playModule(modList = items, start = position, keepFirst = true)
         }
 
         fun playThisFile() {
@@ -165,7 +163,6 @@ abstract class BasePlaylistActivity : ComponentActivity() {
         listOf(uri).also(::playModule)
     }
 
-    // TODO: We're not keeping first with shuffle enabled when clicking an item
     protected fun playModule(modList: List<Uri>, start: Int = 0, keepFirst: Boolean = false) {
         if (modList.isEmpty()) {
             showSnack("List is empty to play module(s)")

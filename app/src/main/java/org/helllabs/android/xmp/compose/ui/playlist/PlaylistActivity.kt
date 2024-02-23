@@ -97,7 +97,6 @@ class PlaylistActivity : BasePlaylistActivity() {
                     onItemClick = { index ->
                         onItemClick(
                             viewModel.getUriItems(),
-                            0,
                             index
                         )
                     },

@@ -22,13 +22,13 @@ android {
         targetSdk = 34 // Android 14 - Upside Down Cake
 
         versionCode = 100
-        versionName = "5.0"
+        versionName = "5.0-SNAPSHOT"
 
         vectorDrawables.useSupportLibrary = true
 
         ndk.abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         externalNativeBuild.cmake.arguments += listOf(
-            "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_BUILD_TYPE=Release", // DEBUG
             "-DBUILD_SHARED=OFF"
         )
 

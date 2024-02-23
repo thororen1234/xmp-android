@@ -739,14 +739,14 @@ Java_org_helllabs_android_xmp_Xmp_getChannelData(JNIEnv *env, jobject obj, jintA
 JNIEXPORT void JNICALL
 Java_org_helllabs_android_xmp_Xmp_getPatternRow(JNIEnv *env, jobject obj, jint pat, jint row,
                                                 jbyteArray rowNotes, jbyteArray rowInstruments,
-                                                jintArray rowFxType, jintArray rowFxParm) {
+                                                jbyteArray rowFxType, jbyteArray rowFxParm) {
     (void) obj;
 
     struct xmp_pattern *xxp;
     jbyte row_note[XMP_MAX_CHANNELS];
     jbyte row_ins[XMP_MAX_CHANNELS];
-    jint row_fxt[XMP_MAX_CHANNELS];
-    jint row_fxp[XMP_MAX_CHANNELS];
+    jbyte row_fxt[XMP_MAX_CHANNELS];
+    jbyte row_fxp[XMP_MAX_CHANNELS];
     int chn;
     int i;
 
@@ -787,8 +787,8 @@ Java_org_helllabs_android_xmp_Xmp_getPatternRow(JNIEnv *env, jobject obj, jint p
 
     (*env)->SetByteArrayRegion(env, rowNotes, 0, chn, row_note);
     (*env)->SetByteArrayRegion(env, rowInstruments, 0, chn, row_ins);
-    (*env)->SetIntArrayRegion(env, rowFxType, 0, chn, row_fxt);
-    (*env)->SetIntArrayRegion(env, rowFxParm, 0, chn, row_fxp);
+    (*env)->SetByteArrayRegion(env, rowFxType, 0, chn, row_fxt);
+    (*env)->SetByteArrayRegion(env, rowFxParm, 0, chn, row_fxp);
 }
 
 JNIEXPORT void JNICALL

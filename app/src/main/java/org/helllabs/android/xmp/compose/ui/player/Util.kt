@@ -8,6 +8,8 @@ object Util {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     )
 
+    val noteName = arrayOf("C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B ")
+
     fun to2d(res: CharArray, value: Int) {
         res[0] = if (value < 10) ' ' else digits[value / 10]
         res[1] = digits[value % 10]

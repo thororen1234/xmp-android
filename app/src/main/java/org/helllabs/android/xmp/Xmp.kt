@@ -118,8 +118,8 @@ object Xmp {
         row: Int,
         rowNotes: ByteArray,
         rowInstruments: ByteArray,
-        rowFxType: IntArray,
-        rowFxParm: IntArray
+        rowFxType: ByteArray,
+        rowFxParm: ByteArray
     )
 
     external fun getSampleData(

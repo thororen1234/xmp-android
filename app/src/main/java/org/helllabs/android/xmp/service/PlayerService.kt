@@ -476,7 +476,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             return
         }
 
-        queue = QueueManager(fileList.toMutableList(), start, shuffle, loopList, keepFirst)
+        queue = QueueManager(fileList, start, shuffle, loopList, keepFirst)
         notifier?.queueManager = queue!!
 
         cmd = CMD_NONE

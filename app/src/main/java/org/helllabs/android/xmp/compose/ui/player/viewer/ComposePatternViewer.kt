@@ -36,10 +36,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.accent
 import org.helllabs.android.xmp.compose.ui.player.Util
 import org.helllabs.android.xmp.service.PlayerService
-
-private const val MAX_NOTES = 120
-private val NOTES = arrayOf("C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B ")
-private val allNotes = (0 until MAX_NOTES).map { NOTES[it % 12] + it / 12 }
+import timber.log.Timber
 
 // Maybe keep the row numbers in view at all times, and move the channel columns instead?
 
@@ -81,8 +78,36 @@ internal fun ComposePatternViewer(
         mutableStateOf(inst)
     }
 
+    var currentType by remember {
+        mutableStateOf("")
+    }
     val effectsTable by remember(viewInfo.type) {
-        val list = Effects.getEffectList(viewInfo.type)
+        with(viewInfo.type) {
+            Timber.d("New FX table: $this")
+            currentType = this
+            val list = Effects.getEffectList(this)
+            mutableStateOf(list)
+        }
+    }
+
+    val numRows by remember(viewInfo.values[3]) {
+        mutableIntStateOf(viewInfo.values[3])
+    }
+
+    val rowText by remember(numRows) {
+        val list = (0..numRows).map {
+            textMeasurer.measure(
+                text = AnnotatedString(it.toString()),
+                density = density,
+                style = TextStyle(
+                    fontSize = 11.sp,
+                    background = if (view.isInEditMode) Color.Green else Color.Unspecified,
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                    platformStyle = PlatformTextStyle(includeFontPadding = true)
+                )
+            )
+        }
         mutableStateOf(list)
     }
 
@@ -146,16 +171,7 @@ internal fun ComposePatternViewer(
         }
 
         /***** Column Shadows (Even) *****/
-        for (i in 0 until chn) {
-            if (i == 0) {
-                // Shadow for number row
-                drawRect(
-                    color = Color.Gray.copy(.05f),
-                    topLeft = Offset(0f, 0f),
-                    size = Size(xAxisMultiplier.plus(offsetX.value), canvasSize.height)
-                )
-                continue
-            }
+        for (i in 1 until chn) {
             val xPosition = (i * 3 + 1) * xAxisMultiplier + offsetX.value
             drawRect(
                 color = if (i % 2 == 0) Color.Unspecified else Color.Gray.copy(.05f),
@@ -177,7 +193,12 @@ internal fun ComposePatternViewer(
             val division = xAxisMultiplier + (i * 3 * xAxisMultiplier) + (xAxisMultiplier * 1.5f)
             val textCenterX = offsetX.value + (division - (text.size.width / 2))
             val textCenterY = (yAxisMultiplier / 2) - (text.size.height / 2)
-            // TODO culling
+
+            // Left Culling || Right Culling
+            if (textCenterX + text.size.width < 0 || textCenterX > canvasSize.width) {
+                continue
+            }
+
             drawText(
                 textLayoutResult = text,
                 topLeft = Offset(textCenterX, textCenterY)
@@ -197,39 +218,13 @@ internal fun ComposePatternViewer(
         val rowYOffset = barLineY - (currentRow * yAxisMultiplier)
         patternInfo.pat = viewInfo.values[1]
 
-        val numRows = viewInfo.values[3]
         if (numRows == 0) {
             // If row numbers is 0, let's stop drawing for now. (Song change)
             return@Canvas
         }
+
         for (i in 0 until numRows) {
             patternInfo.lineInPattern = i
-
-            /***** Row numbers *****/
-            val rowText = textMeasurer.measure(
-                text = AnnotatedString(i.toString()),
-                density = density,
-                style = TextStyle(
-                    fontSize = 11.sp,
-                    background = if (view.isInEditMode) Color.Green else Color.Unspecified,
-                    fontFamily = FontFamily.Monospace,
-                    fontWeight = FontWeight.Bold,
-                    platformStyle = PlatformTextStyle(includeFontPadding = true)
-                )
-            )
-            val textCenterX = xAxisMultiplier.div(2).minus(rowText.size.width.div(2))
-            val textCenterY = rowYOffset
-                .plus(i.times(yAxisMultiplier))
-                .plus(yAxisMultiplier.div(2).minus(rowText.size.height.div(2)))
-            if (textCenterY < yAxisMultiplier || textCenterY + rowText.size.height > size.height) {
-                // Top culling || Bottom Culling
-                continue
-            }
-            drawText(
-                textLayoutResult = rowText,
-                color = Color.White,
-                topLeft = Offset(textCenterX.plus(offsetX.value), textCenterY)
-            )
 
             for (j in 0 until chn) {
                 // Be very careful here!
@@ -255,11 +250,17 @@ internal fun ComposePatternViewer(
                             )
                         ) {
                             /****** Notes *****/
-                            val notes = when (val note = patternInfo.rowNotes[j]) {
-                                in 1..MAX_NOTES -> allNotes[note - 1]
-                                else -> if (note < 0) "===" else "---"
+                            val rowNote = patternInfo.rowNotes[j]
+                            val note = when {
+                                rowNote > 80 -> "==="
+                                rowNote > 0 -> {
+                                    val n = rowNote - 1
+                                    "${Util.noteName[n % 12]}${n / 12}"
+                                }
+
+                                else -> "---"
                             }
-                            append(notes)
+                            append(note)
                         }
                         withStyle(
                             style = SpanStyle(
@@ -280,10 +281,14 @@ internal fun ComposePatternViewer(
                             )
                         ) {
                             /***** Effects *****/
-                            val effectType = effectsTable[patternInfo.rowFxType[j]]
-                            val effect: String = when {
-                                patternInfo.rowFxType[j] > -1 -> effectType ?: "?"
-                                else -> "-"
+                            val type = patternInfo.rowFxType[j]
+                            val effect = if (type < 0) {
+                                "-"
+                            } else {
+                                effectsTable[type] ?: run {
+                                    // Timber.w("Unknown Effect: $type in channel ${j + 1}, row $i")
+                                    "?"
+                                }
                             }
                             append(effect)
                         }
@@ -293,11 +298,11 @@ internal fun ComposePatternViewer(
                             )
                         ) {
                             /***** Effects Params *****/
-                            val effectParam: String = when {
-                                patternInfo.rowFxParm[j] > -1 ->
-                                    instHexByte[patternInfo.rowFxParm[j]]
-
-                                else -> "--"
+                            val parm = patternInfo.rowFxParm[j]
+                            val effectParam = if (parm > -1) {
+                                instHexByte[parm.toInt()]
+                            } else {
+                                "--"
                             }
                             append(effectParam)
                         }
@@ -310,14 +315,59 @@ internal fun ComposePatternViewer(
                         fontWeight = FontWeight.Bold
                     )
                 )
-                // TODO culling
                 val noteRowCenterX = xAxisMultiplier.times((j * 3 + 2))
                 val noteCenterX = noteRowCenterX.minus(info.size.width.div(3))
+                val noteCenterY = rowYOffset
+                    .plus(i.times(yAxisMultiplier))
+                    .plus(yAxisMultiplier.div(2).minus(info.size.height.div(2)))
+
+                // Top culling || Bottom Culling
+                if (noteCenterY < yAxisMultiplier ||
+                    (noteCenterY - yAxisMultiplier) + info.size.height > size.height
+                ) {
+                    continue
+                }
+
+                // Left Culling || Right Culling
+                val effectiveNoteCenterX = noteCenterX.plus(offsetX.value)
+                if (effectiveNoteCenterX + info.size.width < 0 ||
+                    effectiveNoteCenterX > canvasSize.width
+                ) {
+                    continue
+                }
+
                 drawText(
                     textLayoutResult = info,
-                    topLeft = Offset(noteCenterX.plus(offsetX.value), textCenterY)
+                    topLeft = Offset(noteCenterX.plus(offsetX.value), noteCenterY)
                 )
             }
+        }
+
+        /***** Row Numbers Background *****/
+        drawRect(
+            color = Color.DarkGray,
+            alpha = 1f,
+            topLeft = Offset(0f, yAxisMultiplier),
+            size = Size(xAxisMultiplier, canvasSize.height)
+        )
+
+        for (i in 0 until numRows) {
+            /***** Row numbers *****/
+            val textCenterX = xAxisMultiplier.div(2).minus(rowText[i].size.width.div(2))
+            val textCenterY = rowYOffset
+                .plus(i.times(yAxisMultiplier))
+                .plus(yAxisMultiplier.div(2).minus(rowText[i].size.height.div(2)))
+            if (textCenterY < yAxisMultiplier ||
+                (textCenterY - yAxisMultiplier) + rowText[i].size.height > size.height
+            ) {
+                // Top culling || Bottom Culling
+                continue
+            }
+            drawText(
+                textLayoutResult = rowText[i],
+                color = Color.White,
+                topLeft = Offset(textCenterX, textCenterY)
+            )
         }
 
         if (view.isInEditMode) {

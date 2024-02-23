@@ -32,7 +32,7 @@ class PatternViewer(context: Context, background: Int) : Viewer(context, backgro
     private var updateRow: Float = 0f
 
     private var currentType: String = ""
-    private lateinit var effectsTable: Map<Int, String>
+    private lateinit var effectsTable: Map<Byte, String>
 
     private val allNotes = (0 until MAX_NOTES).map { NOTES[it % 12] + it / 12 }.toMutableList()
     private var hexByte = mutableListOf<String>()
@@ -63,8 +63,8 @@ class PatternViewer(context: Context, background: Int) : Viewer(context, backgro
     private val fontWidth = notePaint.measureText("X").toInt()
 
     private val rect = Rect()
-    private val rowFxParm = IntArray(64)
-    private val rowFxType = IntArray(64)
+    private val rowFxParm = ByteArray(64)
+    private val rowFxType = ByteArray(64)
     private val rowInsts = ByteArray(64)
     private val rowNotes = ByteArray(64)
 
@@ -234,7 +234,7 @@ class PatternViewer(context: Context, background: Int) : Viewer(context, backgro
                 // Effects Params
                 patternX = (3 + j * 10 + 7) * fontWidth - posX
                 val effectParam: String = when {
-                    rowFxParm[j] > -1 -> instHexByte[rowFxParm[j]]
+                    rowFxParm[j] > -1 -> instHexByte[rowFxParm[j].toInt()]
                     else -> "--"
                 }
                 canvas.drawText(effectParam, patternX, patternY, paint3)

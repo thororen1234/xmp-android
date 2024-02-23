@@ -3,19 +3,21 @@ package org.helllabs.android.xmp.service.utils
 import android.net.Uri
 import java.util.Collections
 
+// TODO we're shuffling when its false
+
 class QueueManager(
-    fileList: MutableList<Uri>,
-    private var start: Int,
+    fileList: List<Uri>,
+    start: Int,
     shuffle: Boolean,
     loop: Boolean,
     keepFirst: Boolean
 ) {
-
     private val list: MutableList<Uri>
     private val loopListMode: Boolean
     private val ridx: RandomIndex
     private val shuffleMode: Boolean
     private var randomStart = 0
+
     var index: Int
 
     val filename: Uri
@@ -25,21 +27,25 @@ class QueueManager(
         }
 
     init {
-        if (start >= fileList.size) {
-            start = fileList.size - 1
+        var initStart = start
+
+        if (initStart >= fileList.size) {
+            initStart = fileList.size - 1
         }
 
         if (keepFirst) {
-            Collections.swap(fileList, 0, start)
-            start = 0
+            Collections.swap(fileList, 0, initStart)
+            initStart = 0
             randomStart = 1
         }
 
-        index = start
-        list = fileList
-        loopListMode = loop
+        index = initStart
+
+        list = fileList.toMutableList()
         ridx = RandomIndex(randomStart, fileList.size)
+
         shuffleMode = shuffle
+        loopListMode = loop
     }
 
     fun add(fileList: List<Uri>) {
