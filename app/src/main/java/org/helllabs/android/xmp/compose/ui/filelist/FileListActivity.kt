@@ -75,10 +75,6 @@ class FileListActivity : BasePlaylistActivity() {
 
     private val viewModel by viewModels<FileListViewModel>()
 
-    // TODO tombstones when loading lots of items -> use getAllFiles2()
-    override val allFiles: List<Uri>
-        get() = viewModel.onAllFiles()
-
     override val isShuffleMode: Boolean
         get() = viewModel.uiState.value.isShuffle
 
@@ -89,7 +85,7 @@ class FileListActivity : BasePlaylistActivity() {
         viewModel.onRefresh()
     }
 
-    override suspend fun getAllFiles(): List<Uri> = viewModel.onAllFiles2()
+    override suspend fun allFiles(): List<Uri> = viewModel.onAllFiles2()
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -212,7 +208,7 @@ class FileListActivity : BasePlaylistActivity() {
                     onRestore = viewModel::onRestore,
                     onShuffle = viewModel::onShuffle,
                     onLoop = viewModel::onLoop,
-                    onPlayAll = ::onPlayAll2,
+                    onPlayAll = ::onPlayAll,
                     onCrumbMenu = { selection ->
                         when (selection) {
                             DropDownSelection.DIR_ADD_TO_PLAYLIST -> {

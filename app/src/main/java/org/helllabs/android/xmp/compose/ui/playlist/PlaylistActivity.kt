@@ -66,12 +66,7 @@ class PlaylistActivity : BasePlaylistActivity() {
     override val isLoopMode: Boolean
         get() = viewModel.uiState.value.isLoop
 
-    override val allFiles: List<Uri>
-        get() = viewModel.getUriItems()
-
-    override suspend fun getAllFiles(): List<Uri> {
-        TODO("Not yet implemented")
-    }
+    override suspend fun allFiles(): List<Uri> = viewModel.getUriItems()
 
     override fun update() {
         val extras = intent.extras ?: return

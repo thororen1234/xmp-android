@@ -46,7 +46,6 @@ class PlaylistActivityViewModel : ViewModel() {
         save()
     }
 
-    @Deprecated("This is Blocking")
     fun getUriItems(): List<Uri> = _uiState.value.list.map { it.uri }
 
     fun onRefresh(name: String) {
