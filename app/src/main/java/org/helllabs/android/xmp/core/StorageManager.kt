@@ -82,7 +82,7 @@ object StorageManager {
     }
 
     /**
-     * Set the playlist directory to the specified URI
+     * Set the playlist directory to the specified [Uri]
      * Create `playlist` and `mod` folders respectively.
      */
     fun setPlaylistDirectory(
@@ -97,7 +97,6 @@ object StorageManager {
 
         val context = XmpApplication.instance!!.applicationContext
 
-        // Save our Uri
         PrefManager.safStoragePath = uri.toString()
 
         val flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or
@@ -105,17 +104,14 @@ object StorageManager {
 
         context.contentResolver.takePersistableUriPermission(uri, flags)
 
-        // Get parent directory
         val parentDocument = getParentDirectory(onError) ?: return
 
-        // Create sub directories
         listOf("mods", "playlists").forEach { directoryName ->
             val exists = parentDocument.findFile(directoryName) != null
             if (!exists) {
                 parentDocument.createDirectory(directoryName)
 
                 if (directoryName == "mods") {
-                    // Install examples if allowed and an empty mod folder
                     val modDir = parentDocument.findFile("mods")
                     installExampleMod(modDir)
                 }
@@ -231,6 +227,13 @@ object StorageManager {
         onSuccess(targetDir)
     }
 
+    /**
+     * Delete a File or Directory
+     *
+     * @param docFile the [DocumentFileCompat] to be deleted
+     *
+     * @return true if successful, otherwise false
+     */
     fun deleteFileOrDirectory(docFile: DocumentFileCompat?): Boolean {
         if (docFile == null) {
             return false
@@ -239,6 +242,13 @@ object StorageManager {
         return deleteFileOrDirectory(docFile.uri)
     }
 
+    /**
+     * Delete a File or Directory
+     *
+     * @param uri the [Uri] to be deleted
+     *
+     * @return true if successful, otherwise false
+     */
     fun deleteFileOrDirectory(uri: Uri?): Boolean {
         if (uri == null) {
             return false
@@ -250,6 +260,13 @@ object StorageManager {
         return docFile?.delete() ?: false
     }
 
+    /**
+     *  Check if a module exists in a location given the preferences
+     *
+     *  @param module the [Module] in question
+     *
+     *  @return true if it exists, otherwise false
+     */
     fun doesModuleExist(module: Module?): Boolean {
         if (module == null || module.url.isBlank()) {
             return false
@@ -270,6 +287,8 @@ object StorageManager {
      * Check if a module exists in a location given the preferences
      * @see [PrefManager.artistFolder]
      * @see [PrefManager.modArchiveFolder]
+     *
+     *  @param module the [Module] in question
      */
     fun doesModuleExist(
         module: Module?,
@@ -298,6 +317,13 @@ object StorageManager {
         )
     }
 
+    /**
+     * Delete a recently downloaded module
+     *
+     * @param module the [Module] to be deleted
+     *
+     * @return if successful or not
+     */
     fun deleteModule(module: Module?): Boolean {
         if (module == null || module.url.isBlank()) {
             Timber.w("Module was null")
@@ -321,8 +347,12 @@ object StorageManager {
     /**
      * A Top-Down File Walker
      *
+     * Will walk down a given uri and collect uris in alphabetical order, folders first
+     *
      * @param uri the URI to begin walking
      * @param includeDirectories whether to add directories in the list to return
+     *
+     * @return a list of [Uri]'s in order.
      */
     fun walkDownDirectory(uri: Uri?, includeDirectories: Boolean = true): List<Uri> {
         if (uri == null) {
@@ -377,6 +407,8 @@ object StorageManager {
 
     /**
      * Gets the filename from a [DocumentFileCompat].
+     *
+     * @return the name of the DocumentFile file
      */
     fun getFileName(docFile: DocumentFileCompat?): String? {
         if (docFile == null) {
@@ -388,7 +420,9 @@ object StorageManager {
     }
 
     /**
-     * Gets the filename from a .
+     * Gets the filename from a [Uri]
+     *
+     * @return the name of the uri file
      */
     fun getFileName(uri: Uri?): String? {
         if (uri == null) {
