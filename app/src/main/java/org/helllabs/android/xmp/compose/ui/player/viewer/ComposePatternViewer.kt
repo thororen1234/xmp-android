@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.accent
+import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.player.Util
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
@@ -187,6 +188,19 @@ internal fun ComposePatternViewer(
             topLeft = Offset(0f, 0f)
         )
 
+        /***** Row Numbers Background *****/
+        drawRect(
+            color = Color.DarkGray,
+            alpha = 1f,
+            topLeft = Offset(0f, yAxisMultiplier),
+            size = Size(xAxisMultiplier, canvasSize.height)
+        )
+
+        if (numRows == 0) {
+            // If row numbers is 0, let's stop drawing for now. (Song change)
+            return@Canvas
+        }
+
         /***** Header Text Numbers *****/
         for (i in 0 until chn) {
             val text = headerText[i]
@@ -218,11 +232,6 @@ internal fun ComposePatternViewer(
         val rowYOffset = barLineY - (currentRow * yAxisMultiplier)
         patternInfo.pat = viewInfo.values[1]
 
-        if (numRows == 0) {
-            // If row numbers is 0, let's stop drawing for now. (Song change)
-            return@Canvas
-        }
-
         for (i in 0 until numRows) {
             patternInfo.lineInPattern = i
 
@@ -231,7 +240,7 @@ internal fun ComposePatternViewer(
                 // Our variables are latency-compensated but pattern data is current
                 // so caution is needed to avoid retrieving data using old variables
                 // from a module with pattern data from a newly loaded one.
-                if (PlayerService.isAlive) {
+                if (PlayerService.isAlive && PlayerActivity.canChangeViewer) {
                     Xmp.getPatternRow(
                         patternInfo.pat,
                         patternInfo.lineInPattern,
@@ -286,7 +295,7 @@ internal fun ComposePatternViewer(
                                 "-"
                             } else {
                                 effectsTable[type] ?: run {
-                                    // Timber.w("Unknown Effect: $type in channel ${j + 1}, row $i")
+                                    Timber.w("Unknown FX: $type in chn ${j + 1}, row $i")
                                     "?"
                                 }
                             }
@@ -342,14 +351,6 @@ internal fun ComposePatternViewer(
                 )
             }
         }
-
-        /***** Row Numbers Background *****/
-        drawRect(
-            color = Color.DarkGray,
-            alpha = 1f,
-            topLeft = Offset(0f, yAxisMultiplier),
-            size = Size(xAxisMultiplier, canvasSize.height)
-        )
 
         for (i in 0 until numRows) {
             /***** Row numbers *****/

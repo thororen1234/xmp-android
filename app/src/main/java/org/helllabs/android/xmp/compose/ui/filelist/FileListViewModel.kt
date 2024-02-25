@@ -1,15 +1,15 @@
 package org.helllabs.android.xmp.compose.ui.filelist
 
 import android.net.Uri
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lazygeniouz.dfc.file.DocumentFileCompat
 import java.text.DateFormat
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -36,7 +36,6 @@ class FileListViewModel : ViewModel() {
     // State class for UI related stuff
     data class FileListState(
         val crumbs: List<BreadCrumb> = listOf(),
-        val error: String? = null,
         val isLoading: Boolean = false,
         val isLoop: Boolean = false,
         val isShuffle: Boolean = false,
@@ -47,6 +46,9 @@ class FileListViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(FileListState())
     val uiState = _uiState.asStateFlow()
 
+    private val _softError = MutableSharedFlow<String>()
+    val softError = _softError.asSharedFlow()
+
     val currentPath: DocumentFileCompat?
         get() {
             val crumbs = uiState.value.crumbs
@@ -55,6 +57,8 @@ class FileListViewModel : ViewModel() {
 
     var playlistList: List<Playlist> by mutableStateOf(listOf())
     var playlistChoice: DocumentFileCompat? by mutableStateOf(null)
+    var deleteDirChoice: DocumentFileCompat? by mutableStateOf(null)
+    var deleteFileChoice: DocumentFileCompat? by mutableStateOf(null)
 
     init {
         _uiState.update {
@@ -91,26 +95,13 @@ class FileListViewModel : ViewModel() {
     /**
      * Play all valid files
      */
-    @Deprecated("This is Blocking")
-    fun onAllFiles(): List<Uri> {
-        _uiState.update { it.copy(isLoading = true) }
-
-        val list = StorageManager
-            .walkDownDirectory(currentPath!!.uri, false)
-            .filter(Xmp::testFromFd)
-
-        _uiState.update { it.copy(isLoading = false) }
-
-        return list
-    }
-
-    suspend fun onAllFiles2(): List<Uri> {
+    suspend fun onAllFiles(): List<Uri> {
         return withContext(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true) }
 
             val list = StorageManager
                 .walkDownDirectory(currentPath!!.uri, false)
-                .filter(Xmp::testFromFd)
+            // .filter(Xmp::testFromFd)
 
             _uiState.update { it.copy(isLoading = false) }
 
@@ -141,7 +132,7 @@ class FileListViewModel : ViewModel() {
             return
         }
 
-        _uiState.update { it.copy(isLoading = true, error = null) }
+        _uiState.update { it.copy(isLoading = true) }
         viewModelScope.launch(Dispatchers.IO) {
             Timber.d("Path: ${modDir.uri}")
 
@@ -190,39 +181,44 @@ class FileListViewModel : ViewModel() {
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch(Dispatchers.IO) {
-            val path = currentPath
-            if (path == null) {
-                _uiState.update { it.copy(error = "Current path is null") }
+            if (playlistChoice == null) {
+                _softError.emit("Playlist choice is null")
+                _uiState.update { it.copy(isLoading = false) }
+                playlistChoice = null
                 return@launch
             }
 
             val manager = PlaylistManager()
             if (!manager.load(choice.uri)) {
-                _uiState.update { it.copy(error = "Playlist manager failed to load playlist") }
+                _softError.emit("Playlist manager failed to load playlist")
+                _uiState.update { it.copy(isLoading = false) }
+                playlistChoice = null
                 return@launch
             }
 
             val modInfo = ModInfo()
-            if (path.isFile()) {
-                if (!Xmp.testFromFd(path.uri, modInfo)) {
-                    _uiState.update { it.copy(error = "Failed to validate file") }
+            if (playlistChoice!!.isFile()) {
+                if (!Xmp.testFromFd(playlistChoice!!.uri, modInfo)) {
+                    _softError.emit("Failed to validate file")
+                    _uiState.update { it.copy(isLoading = false) }
+                    playlistChoice = null
                     return@launch
                 }
 
                 val playlist = PlaylistItem(
                     name = modInfo.name,
                     type = modInfo.type,
-                    uri = path.uri
+                    uri = playlistChoice!!.uri
                 )
                 val list = listOf(playlist)
                 val res = manager.add(list)
 
                 if (!res) {
-                    _uiState.update { it.copy(error = "Couldn't add module to playlist") }
+                    _softError.emit("Couldn't add module to playlist")
                 }
-            } else if (path.isDirectory()) {
+            } else if (playlistChoice!!.isDirectory()) {
                 val list = mutableListOf<PlaylistItem>()
-                StorageManager.walkDownDirectory(path.uri, false).forEach { uri ->
+                StorageManager.walkDownDirectory(playlistChoice!!.uri, false).forEach { uri ->
                     if (!Xmp.testFromFd(uri, modInfo)) {
                         Timber.w("Invalid playlist item $uri")
                         return@forEach
@@ -239,13 +235,21 @@ class FileListViewModel : ViewModel() {
                     list.add(playlist)
                 }
 
+                if (list.isEmpty()) {
+                    _softError.emit("Empty directory")
+                    _uiState.update { it.copy(isLoading = false) }
+                    playlistChoice = null
+                    return@launch
+                }
+
                 val res = manager.add(list)
                 if (!res) {
-                    _uiState.update { it.copy(error = "Couldn't add modules to playlist") }
+                    _softError.emit("Couldn't add modules to playlist")
                 }
             }
 
             _uiState.update { it.copy(isLoading = false) }
+            playlistChoice = null
         }
     }
 

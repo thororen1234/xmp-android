@@ -3,8 +3,8 @@ package org.helllabs.android.xmp.core
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
-import android.provider.OpenableColumns
 import com.lazygeniouz.dfc.file.DocumentFileCompat
+import java.util.Locale
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.core.Constants.DEFAULT_DOWNLOAD_DIR
 import org.helllabs.android.xmp.model.Module
@@ -231,6 +231,14 @@ object StorageManager {
         onSuccess(targetDir)
     }
 
+    fun deleteFileOrDirectory(docFile: DocumentFileCompat?): Boolean {
+        if (docFile == null) {
+            return false
+        }
+
+        return deleteFileOrDirectory(docFile.uri)
+    }
+
     fun deleteFileOrDirectory(uri: Uri?): Boolean {
         if (uri == null) {
             return false
@@ -316,10 +324,7 @@ object StorageManager {
      * @param uri the URI to begin walking
      * @param includeDirectories whether to add directories in the list to return
      */
-    fun walkDownDirectory(
-        uri: Uri?,
-        includeDirectories: Boolean = true
-    ): List<Uri> {
+    fun walkDownDirectory(uri: Uri?, includeDirectories: Boolean = true): List<Uri> {
         if (uri == null) {
             return emptyList()
         }
@@ -329,10 +334,12 @@ object StorageManager {
         val childDocUri = DocumentsContract.buildChildDocumentsUriUsingTree(uri, docId)
         val projection = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-            DocumentsContract.Document.COLUMN_MIME_TYPE
+            DocumentsContract.Document.COLUMN_MIME_TYPE,
         )
-        val uris = mutableListOf<Uri>()
 
+        val items = mutableListOf<Pair<String, Uri>>()
+
+        // Couldn't figure out sortOrder
         context.contentResolver.query(childDocUri, projection, null, null, null)?.use { cursor ->
             val idCol = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
             val mimeCol = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE)
@@ -341,22 +348,47 @@ object StorageManager {
                 val childDocumentId = cursor.getString(idCol)
                 val mimeType = cursor.getString(mimeCol)
                 val childUri = DocumentsContract.buildDocumentUriUsingTree(uri, childDocumentId)
-                if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                    if (includeDirectories) {
-                        uris.add(childUri)
-                    }
-                    uris.addAll(walkDownDirectory(childUri, includeDirectories))
-                } else {
-                    uris.add(childUri)
-                }
+
+                items.add(Pair(mimeType, childUri))
             }
         }
 
-        return uris
+        val sortedItems = items.sortedWith(
+            compareBy(
+                { it.first != DocumentsContract.Document.MIME_TYPE_DIR },
+                { it.second.toString().lowercase(Locale.getDefault()) }
+            )
+        )
+
+        val sortedUris = mutableListOf<Uri>()
+        sortedItems.forEach { (mimeType, uri) ->
+            if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                if (includeDirectories) {
+                    sortedUris.add(uri)
+                }
+                sortedUris.addAll(walkDownDirectory(uri, includeDirectories))
+            } else {
+                sortedUris.add(uri)
+            }
+        }
+
+        return sortedUris
     }
 
     /**
-     * Gets the filename from a URI path.
+     * Gets the filename from a [DocumentFileCompat].
+     */
+    fun getFileName(docFile: DocumentFileCompat?): String? {
+        if (docFile == null) {
+            return null
+        }
+
+        val context = XmpApplication.instance!!.applicationContext
+        return DocumentFileCompat.fromSingleUri(context, docFile.uri)?.name
+    }
+
+    /**
+     * Gets the filename from a .
      */
     fun getFileName(uri: Uri?): String? {
         if (uri == null) {
@@ -364,14 +396,6 @@ object StorageManager {
         }
 
         val context = XmpApplication.instance!!.applicationContext
-        context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst()) {
-                val displayNameColumnIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                if (displayNameColumnIndex != -1) {
-                    return cursor.getString(displayNameColumnIndex)
-                }
-            }
-        }
-        return null
+        return DocumentFileCompat.fromSingleUri(context, uri)?.name
     }
 }

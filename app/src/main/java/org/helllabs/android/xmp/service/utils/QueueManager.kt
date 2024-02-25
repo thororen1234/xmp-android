@@ -3,8 +3,6 @@ package org.helllabs.android.xmp.service.utils
 import android.net.Uri
 import java.util.Collections
 
-// TODO we're shuffling when its false
-
 class QueueManager(
     fileList: List<Uri>,
     start: Int,

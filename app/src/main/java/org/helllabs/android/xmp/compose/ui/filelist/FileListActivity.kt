@@ -1,6 +1,5 @@
 package org.helllabs.android.xmp.compose.ui.filelist
 
-import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.OnBackPressedCallback
@@ -35,9 +34,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,8 +68,6 @@ import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.FileItem
 import timber.log.Timber
 
-// TODO adding to playlist adds everything
-
 class FileListActivity : BasePlaylistActivity() {
 
     private val viewModel by viewModels<FileListViewModel>()
@@ -87,9 +82,8 @@ class FileListActivity : BasePlaylistActivity() {
         viewModel.onRefresh()
     }
 
-    override suspend fun allFiles(): List<Uri> = viewModel.onAllFiles2()
+    override suspend fun allFiles(): List<Uri> = viewModel.onAllFiles()
 
-    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -122,6 +116,12 @@ class FileListActivity : BasePlaylistActivity() {
         setContent {
             val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+            LaunchedEffect(Unit) {
+                viewModel.softError.collectLatest {
+                    showSnack(it)
+                }
+            }
+
             // Set up and override on back pressed.
             DisposableEffect(onBackPressedDispatcher) {
                 onBackPressedDispatcher.addCallback(callback)
@@ -138,10 +138,7 @@ class FileListActivity : BasePlaylistActivity() {
                 icon = Icons.AutoMirrored.Filled.PlaylistAdd,
                 title = stringResource(id = R.string.msg_select_playlist),
                 list = viewModel.playlistList,
-                onConfirm = { choice ->
-                    viewModel.addToPlaylist(choice)
-                    viewModel.playlistChoice = null
-                },
+                onConfirm = viewModel::addToPlaylist,
                 onDismiss = { viewModel.playlistChoice = null },
                 onEmpty = {
                     showSnack(message = getString(R.string.msg_no_playlists))
@@ -152,24 +149,23 @@ class FileListActivity : BasePlaylistActivity() {
             /**
              * Delete directory dialog
              */
-            var deleteDirectory: Uri? by remember { mutableStateOf(null) }
-            if (deleteDirectory != null) {
+            with(viewModel.deleteDirChoice) {
                 MessageDialog(
-                    isShowing = true,
+                    isShowing = this != null,
                     icon = Icons.Default.QuestionMark,
                     title = "Delete directory",
-                    text = "Are you sure you want to delete directory " +
-                        "${StorageManager.getFileName(deleteDirectory)} and all its contents?",
+                    text = "Are you sure you want to delete " +
+                        "${StorageManager.getFileName(this)} and all its contents?",
                     confirmText = stringResource(id = R.string.menu_delete),
                     onConfirm = {
-                        val res = StorageManager.deleteFileOrDirectory(deleteDirectory)
+                        val res = StorageManager.deleteFileOrDirectory(this)
                         if (!res) {
                             showSnack("Unable to delete directory")
                         }
-                        deleteDirectory = null
+                        viewModel.deleteDirChoice = null
                     },
                     onDismiss = {
-                        deleteDirectory = null
+                        viewModel.deleteDirChoice = null
                     }
                 )
             }
@@ -177,23 +173,23 @@ class FileListActivity : BasePlaylistActivity() {
             /**
              * Delete file dialog
              */
-            var deleteFile: Uri? by remember { mutableStateOf(null) }
             MessageDialog(
-                isShowing = deleteFile != null,
+                isShowing = viewModel.deleteFileChoice != null,
                 icon = Icons.Default.QuestionMark,
                 title = "Delete File",
-                text = "Are you sure you want to delete ${StorageManager.getFileName(deleteFile)}",
+                text = "Are you sure you want to delete " +
+                    "${StorageManager.getFileName(viewModel.deleteFileChoice)}?",
                 confirmText = stringResource(id = R.string.menu_delete),
                 onConfirm = {
-                    val res = StorageManager.deleteFileOrDirectory(deleteFile)
+                    val res = StorageManager.deleteFileOrDirectory(viewModel.deleteFileChoice)
                     if (!res) {
                         showSnack("Unable to delete item")
                     }
                     update()
-                    deleteFile = null
+                    viewModel.deleteFileChoice = null
                 },
                 onDismiss = {
-                    deleteFile = null
+                    viewModel.deleteFileChoice = null
                 }
             )
 
@@ -213,16 +209,16 @@ class FileListActivity : BasePlaylistActivity() {
                     onPlayAll = ::onPlayAll,
                     onCrumbMenu = { selection ->
                         when (selection) {
-                            DropDownSelection.DIR_ADD_TO_PLAYLIST -> {
+                            DropDownSelection.ADD_TO_PLAYLIST -> {
                                 viewModel.playlistList = PlaylistManager.listPlaylists()
                                 viewModel.playlistChoice = viewModel.currentPath
                             }
 
-                            DropDownSelection.DIR_ADD_TO_QUEUE ->
-                                addToQueue(viewModel.getItems())
+                            DropDownSelection.ADD_TO_QUEUE ->
+                                viewModel.getItems().also(::addToQueue)
 
                             DropDownSelection.DIR_PLAY_CONTENTS ->
-                                playModule(viewModel.getItems())
+                                viewModel.getItems().also(::playModule)
 
                             else -> Unit
                         }
@@ -242,33 +238,35 @@ class FileListActivity : BasePlaylistActivity() {
                     },
                     onItemLongClick = { item, index, sel ->
                         when (sel) {
-                            DropDownSelection.DELETE ->
-                                deleteFile = item.docFile?.uri
+                            DropDownSelection.DELETE -> {
+                                if (item.isFile) {
+                                    viewModel.deleteFileChoice = item.docFile
+                                } else {
+                                    viewModel.deleteDirChoice = item.docFile
+                                }
+                            }
 
-                            DropDownSelection.DIR_ADD_TO_PLAYLIST -> {
+                            DropDownSelection.ADD_TO_PLAYLIST -> {
                                 viewModel.playlistList = PlaylistManager.listPlaylists()
                                 viewModel.playlistChoice = item.docFile
                             }
 
-                            DropDownSelection.DIR_ADD_TO_QUEUE ->
-                                StorageManager.walkDownDirectory(
-                                    uri = item.docFile?.uri,
-                                    includeDirectories = false
-                                ).also(::playModule)
+                            DropDownSelection.ADD_TO_QUEUE -> {
+                                if (item.isFile) {
+                                    addToQueue(item.docFile?.uri)
+                                } else {
+                                    StorageManager.walkDownDirectory(
+                                        uri = item.docFile?.uri,
+                                        includeDirectories = false
+                                    ).also(::playModule)
+                                }
+                            }
 
                             DropDownSelection.DIR_PLAY_CONTENTS ->
                                 StorageManager.walkDownDirectory(
                                     uri = item.docFile?.uri,
                                     includeDirectories = false
                                 ).also(::playModule)
-
-                            DropDownSelection.FILE_ADD_TO_PLAYLIST -> {
-                                viewModel.playlistList = PlaylistManager.listPlaylists()
-                                viewModel.playlistChoice = item.docFile
-                            }
-
-                            DropDownSelection.FILE_ADD_TO_QUEUE ->
-                                addToQueue(item.docFile?.uri)
 
                             DropDownSelection.FILE_PLAY_HERE ->
                                 playModule(viewModel.getItems(), index, true)
@@ -414,7 +412,6 @@ private fun Preview_FileListScreen() {
         FileListScreen(
             state = FileListViewModel.FileListState(
                 isLoading = true,
-                error = "An error has occurred.",
                 list = List(10) {
                     FileItem(
                         name = "Name $it",

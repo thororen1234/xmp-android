@@ -42,7 +42,7 @@ import sh.calvin.reorderable.ReorderableItemScope
 import sh.calvin.reorderable.rememberReorderableLazyColumnState
 
 private val playlistItemDropDownItems: List<DropDownItem> = listOf(
-    DropDownItem("Add to play queue", DropDownSelection.FILE_ADD_TO_QUEUE),
+    DropDownItem("Add to play queue", DropDownSelection.ADD_TO_QUEUE),
     DropDownItem("Play all starting here", DropDownSelection.FILE_PLAY_HERE),
     DropDownItem("Play this module", DropDownSelection.FILE_PLAY_THIS_ONLY),
     DropDownItem("Remove from playlist", DropDownSelection.DELETE)

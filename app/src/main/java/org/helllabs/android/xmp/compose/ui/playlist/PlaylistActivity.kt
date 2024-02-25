@@ -107,7 +107,7 @@ class PlaylistActivity : BasePlaylistActivity() {
                                 update()
                             }
 
-                            DropDownSelection.FILE_ADD_TO_QUEUE ->
+                            DropDownSelection.ADD_TO_QUEUE ->
                                 addToQueue(item.uri)
 
                             DropDownSelection.FILE_PLAY_HERE ->

@@ -40,7 +40,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import me.saket.cascade.CascadeDropdownMenu
@@ -54,24 +53,24 @@ import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.FileItem
 
 private val crumbDropDownItems = listOf(
-    DropDownItem("Add to playlist", DropDownSelection.DIR_ADD_TO_PLAYLIST),
-    DropDownItem("Add to play queue", DropDownSelection.DIR_ADD_TO_QUEUE),
+    DropDownItem("Add to play queue", DropDownSelection.ADD_TO_QUEUE),
+    DropDownItem("Add to playlist", DropDownSelection.ADD_TO_PLAYLIST),
     DropDownItem("Play contents", DropDownSelection.DIR_PLAY_CONTENTS)
 )
 
 private val directoryDropDownItems = listOf(
-    DropDownItem("Add to playlist", DropDownSelection.DIR_ADD_TO_PLAYLIST),
-    DropDownItem("Add to play queue", DropDownSelection.DIR_ADD_TO_QUEUE),
+    DropDownItem("Add to play queue", DropDownSelection.ADD_TO_QUEUE),
+    DropDownItem("Add to playlist", DropDownSelection.ADD_TO_PLAYLIST),
     DropDownItem("Play contents", DropDownSelection.DIR_PLAY_CONTENTS),
     DropDownItem("Delete directory", DropDownSelection.DELETE)
 )
 
 private val fileDropDownItems: List<DropDownItem> = listOf(
-    DropDownItem("Add to playlist", DropDownSelection.FILE_ADD_TO_PLAYLIST),
-    DropDownItem("Delete file", DropDownSelection.DELETE),
-    DropDownItem("Add to play queue", DropDownSelection.FILE_ADD_TO_QUEUE),
+    DropDownItem("Add to play queue", DropDownSelection.ADD_TO_QUEUE),
+    DropDownItem("Add to playlist", DropDownSelection.ADD_TO_PLAYLIST),
+    DropDownItem("Play all starting here", DropDownSelection.FILE_PLAY_HERE),
     DropDownItem("Play this file", DropDownSelection.FILE_PLAY_THIS_ONLY),
-    DropDownItem("Play all starting here", DropDownSelection.FILE_PLAY_HERE)
+    DropDownItem("Delete file", DropDownSelection.DELETE),
 )
 
 @Composable
@@ -87,7 +86,6 @@ fun FileListCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         ),
-        enabled = item.isValid,
         onClick = onItemClick
     ) {
         ListItem(
@@ -105,14 +103,7 @@ fun FileListCard(
                 Icon(imageVector = icon, contentDescription = null)
             },
             headlineContent = {
-                Text(
-                    text = item.name,
-                    textDecoration = if (item.isValid) {
-                        TextDecoration.None
-                    } else {
-                        TextDecoration.LineThrough
-                    }
-                )
+                Text(text = item.name)
             },
             trailingContent = {
                 IconButton(
@@ -139,11 +130,6 @@ fun FileListCard(
                     list.forEach {
                         DropdownMenuItem(
                             text = { Text(text = it.text) },
-                            enabled = if (it.selection == DropDownSelection.DELETE) {
-                                true
-                            } else {
-                                item.isValid
-                            },
                             onClick = {
                                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onItemLongClick(it.selection)
