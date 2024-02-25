@@ -12,8 +12,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 
-private val pattern = Regex("http://|https://")
-
 /**
  * Creates a string where the whole text string is clickable
  */
@@ -59,7 +57,7 @@ fun annotatedLinkString(
     )
     addStringAnnotation(
         tag = "URL",
-        annotation = if (url.lowercase().contains(pattern)) {
+        annotation = if (url.contains("http://|https://".toRegex(RegexOption.IGNORE_CASE))) {
             url
         } else {
             "https://$url"

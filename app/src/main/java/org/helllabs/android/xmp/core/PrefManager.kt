@@ -8,9 +8,16 @@ import androidx.preference.PreferenceManager
 object PrefManager {
 
     private lateinit var prefs: SharedPreferences
+    private const val PREF_VERSION = 2
 
     fun init(context: Context) {
         prefs = PreferenceManager.getDefaultSharedPreferences(context)
+
+        // Clear preferences if the version has changed.
+        if (prefs.getInt("pref_version", 0) < PREF_VERSION) {
+            prefs.edit().clear().apply()
+            prefs.edit { putInt("pref_version", PREF_VERSION) }
+        }
     }
 
     /**

@@ -27,6 +27,7 @@ interface PlayerServiceCallback {
     fun onNewMod()
     fun onEndMod()
     fun onEndPlayCallback(result: Int)
+    fun onErrorMessage(msg: String)
 }
 
 class PlayerBinder(playerService: PlayerService) : Binder() {
@@ -259,6 +260,10 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 // If we're at the start of the list, go to the last recognized file
                 if (playerFileName == null || !Xmp.testFromFd(playerFileName!!)) {
                     Timber.w("$playerFileName: unrecognized format")
+                    playerServiceCallback?.onErrorMessage(
+                        "${playerFileName?.lastPathSegment?.ifEmpty { "module was" }} " +
+                            "unrecognized. Skipping to next module"
+                    )
                     if (cmd == CMD_PREV) {
                         if (queue!!.index <= 0) {
                             // -1 because we have queue.next() in the while condition

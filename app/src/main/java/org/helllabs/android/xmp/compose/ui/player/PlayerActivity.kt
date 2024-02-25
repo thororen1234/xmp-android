@@ -643,6 +643,10 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         }
     }
 
+    override fun onErrorMessage(msg: String) {
+        showSnack(msg)
+    }
+
     override fun onResume() {
         super.onResume()
         Timber.d("onResume")
