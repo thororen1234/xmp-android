@@ -51,7 +51,7 @@ internal fun ComposePatternViewer(
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
-    val textMeasurer = rememberTextMeasurer()
+    val textMeasurer = rememberTextMeasurer(0)
     val view = LocalView.current
 
     var canvasSize by remember {
@@ -136,6 +136,24 @@ internal fun ComposePatternViewer(
         mutableStateOf(text)
     }
 
+    var hdrDivision by remember { mutableFloatStateOf(0f) }
+    var hdrTxtCenterX by remember { mutableFloatStateOf(0f) }
+    var hdrTxtCenterY by remember { mutableFloatStateOf(0f) }
+
+    var barLineY by remember { mutableFloatStateOf(0f) }
+
+    var currentRow by remember { mutableFloatStateOf(0f) }
+    var rowYOffset by remember { mutableFloatStateOf(0f) }
+
+    var noteRowCenterX by remember { mutableFloatStateOf(0f) }
+    var noteCenterX by remember { mutableFloatStateOf(0f) }
+    var noteCenterY by remember { mutableFloatStateOf(0f) }
+
+    var effectiveNoteCenterX by remember { mutableFloatStateOf(0f) }
+
+    var textCenterX by remember { mutableFloatStateOf(0f) }
+    var textCenterY by remember { mutableFloatStateOf(0f) }
+
     val scrollState = rememberScrollableState { delta ->
         scope.launch {
             val totalContentWidth = (chn * 3 + 1) * xAxisMultiplier
@@ -173,11 +191,13 @@ internal fun ComposePatternViewer(
 
         /***** Column Shadows (Even) *****/
         for (i in 1 until chn) {
-            val xPosition = (i * 3 + 1) * xAxisMultiplier + offsetX.value
             drawRect(
-                color = if (i % 2 == 0) Color.Unspecified else Color.Gray.copy(.05f),
-                topLeft = Offset(xPosition, 0f),
-                size = Size(xAxisMultiplier.times(3), canvasSize.height)
+                color = if (i % 2 == 0) Color(0x00000000) else Color(0x0D888888),
+                topLeft = Offset(
+                    x = (i * 3 + 1) * xAxisMultiplier + offsetX.value,
+                    y = 0f
+                ),
+                size = Size(width = xAxisMultiplier * 3, height = canvasSize.height)
             )
         }
 
@@ -203,33 +223,31 @@ internal fun ComposePatternViewer(
 
         /***** Header Text Numbers *****/
         for (i in 0 until chn) {
-            val text = headerText[i]
-            val division = xAxisMultiplier + (i * 3 * xAxisMultiplier) + (xAxisMultiplier * 1.5f)
-            val textCenterX = offsetX.value + (division - (text.size.width / 2))
-            val textCenterY = (yAxisMultiplier / 2) - (text.size.height / 2)
+            hdrDivision = xAxisMultiplier + (i * 3 * xAxisMultiplier) + (xAxisMultiplier * 1.5f)
+            hdrTxtCenterX = offsetX.value + (hdrDivision - (headerText[i].size.width / 2))
+            hdrTxtCenterY = (yAxisMultiplier / 2) - (headerText[i].size.height / 2)
 
             // Left Culling || Right Culling
-            if (textCenterX + text.size.width < 0 || textCenterX > canvasSize.width) {
+            if (hdrTxtCenterX + headerText[i].size.width < 0 || hdrTxtCenterX > canvasSize.width) {
                 continue
             }
 
             drawText(
-                textLayoutResult = text,
-                topLeft = Offset(textCenterX, textCenterY)
+                textLayoutResult = headerText[i],
+                topLeft = Offset(hdrTxtCenterX, hdrTxtCenterY)
             )
         }
 
         /***** Line Bar *****/
-        val middle = canvasSize.height.div(2)
-        val barLineY = middle.div(yAxisMultiplier).toInt().times(yAxisMultiplier)
+        barLineY = canvasSize.height.div(2).div(yAxisMultiplier).toInt().times(yAxisMultiplier)
         drawRect(
             color = Color.DarkGray,
             topLeft = Offset(0f, barLineY),
             size = Size(canvasSize.width, yAxisMultiplier)
         )
 
-        val currentRow = viewInfo.values[2].toFloat()
-        val rowYOffset = barLineY - (currentRow * yAxisMultiplier)
+        currentRow = viewInfo.values[2].toFloat()
+        rowYOffset = barLineY - (currentRow * yAxisMultiplier)
         patternInfo.pat = viewInfo.values[1]
 
         for (i in 0 until numRows) {
@@ -259,17 +277,15 @@ internal fun ComposePatternViewer(
                             )
                         ) {
                             /****** Notes *****/
-                            val rowNote = patternInfo.rowNotes[j]
-                            val note = when {
-                                rowNote > 80 -> "==="
-                                rowNote > 0 -> {
-                                    val n = rowNote - 1
-                                    "${Util.noteName[n % 12]}${n / 12}"
+                            patternInfo.rowNotes[j].run {
+                                if (this > 80) {
+                                    "==="
+                                } else if (this > 0) {
+                                    "${Util.noteName[(this - 1) % 12]}${(this - 1) / 12}"
+                                } else {
+                                    "---"
                                 }
-
-                                else -> "---"
-                            }
-                            append(note)
+                            }.also(::append)
                         }
                         withStyle(
                             style = SpanStyle(
@@ -277,12 +293,13 @@ internal fun ComposePatternViewer(
                             )
                         ) {
                             /***** Instruments *****/
-                            val inst = if (patternInfo.rowInsts[j] > 0) {
-                                instHexByte[patternInfo.rowInsts[j].toInt()]
-                            } else {
-                                "--"
-                            }
-                            append(inst)
+                            patternInfo.rowInsts[j].run {
+                                if (this > 0) {
+                                    instHexByte[this.toInt()]
+                                } else {
+                                    "--"
+                                }
+                            }.also(::append)
                         }
                         withStyle(
                             style = SpanStyle(
@@ -290,16 +307,16 @@ internal fun ComposePatternViewer(
                             )
                         ) {
                             /***** Effects *****/
-                            val type = patternInfo.rowFxType[j]
-                            val effect = if (type < 0) {
-                                "-"
-                            } else {
-                                effectsTable[type] ?: run {
-                                    Timber.w("Unknown FX: $type in chn ${j + 1}, row $i")
-                                    "?"
+                            patternInfo.rowFxType[j].run {
+                                if (this < 0) {
+                                    "-"
+                                } else {
+                                    effectsTable[this] ?: run {
+                                        Timber.w("Unknown FX: $this in chn ${j + 1}, row $i")
+                                        "?"
+                                    }
                                 }
-                            }
-                            append(effect)
+                            }.also(::append)
                         }
                         withStyle(
                             style = SpanStyle(
@@ -307,13 +324,13 @@ internal fun ComposePatternViewer(
                             )
                         ) {
                             /***** Effects Params *****/
-                            val parm = patternInfo.rowFxParm[j]
-                            val effectParam = if (parm > -1) {
-                                instHexByte[parm.toInt()]
-                            } else {
-                                "--"
-                            }
-                            append(effectParam)
+                            patternInfo.rowFxParm[j].run {
+                                if (this > -1) {
+                                    instHexByte[this.toInt()]
+                                } else {
+                                    "--"
+                                }
+                            }.also(::append)
                         }
                     },
                     density = density,
@@ -324,9 +341,9 @@ internal fun ComposePatternViewer(
                         fontWeight = FontWeight.Bold
                     )
                 )
-                val noteRowCenterX = xAxisMultiplier.times((j * 3 + 2))
-                val noteCenterX = noteRowCenterX.minus(info.size.width.div(3))
-                val noteCenterY = rowYOffset
+                noteRowCenterX = xAxisMultiplier.times((j * 3 + 2))
+                noteCenterX = noteRowCenterX.minus(info.size.width.div(3))
+                noteCenterY = rowYOffset
                     .plus(i.times(yAxisMultiplier))
                     .plus(yAxisMultiplier.div(2).minus(info.size.height.div(2)))
 
@@ -338,7 +355,7 @@ internal fun ComposePatternViewer(
                 }
 
                 // Left Culling || Right Culling
-                val effectiveNoteCenterX = noteCenterX.plus(offsetX.value)
+                effectiveNoteCenterX = noteCenterX.plus(offsetX.value)
                 if (effectiveNoteCenterX + info.size.width < 0 ||
                     effectiveNoteCenterX > canvasSize.width
                 ) {
@@ -354,14 +371,15 @@ internal fun ComposePatternViewer(
 
         for (i in 0 until numRows) {
             /***** Row numbers *****/
-            val textCenterX = xAxisMultiplier.div(2).minus(rowText[i].size.width.div(2))
-            val textCenterY = rowYOffset
+            textCenterX = xAxisMultiplier.div(2).minus(rowText[i].size.width.div(2))
+            textCenterY = rowYOffset
                 .plus(i.times(yAxisMultiplier))
                 .plus(yAxisMultiplier.div(2).minus(rowText[i].size.height.div(2)))
+
+            // Top culling || Bottom Culling
             if (textCenterY < yAxisMultiplier ||
                 (textCenterY - yAxisMultiplier) + rowText[i].size.height > size.height
             ) {
-                // Top culling || Bottom Culling
                 continue
             }
             drawText(

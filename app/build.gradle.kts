@@ -21,7 +21,7 @@ android {
         minSdk = 23 // Android 6 - Marshmallow
         targetSdk = 34 // Android 14 - Upside Down Cake
 
-        versionCode = 100
+        versionCode = 101
         versionName = "5.0-SNAPSHOT"
 
         vectorDrawables.useSupportLibrary = true
