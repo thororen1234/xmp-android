@@ -56,7 +56,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     private var playThread: Thread? = null
     private var restart = false
     private var sampleRate = 0
-    private var volume = 0
     private var watchdog: Watchdog? = null
 
     private var discardBuffer = false // don't play current buffer if changing module while paused
@@ -96,13 +95,12 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
         sampleRate = PrefManager.samplingRate
 
-        if (Xmp.init(sampleRate, bufferMs)) {
+        if (Xmp.initPlayer(sampleRate)) {
             audioInitialized = true
         } else {
             Timber.e("error initializing audio")
         }
 
-        volume = Xmp.getVolume()
         isAlive = false
         isLoaded = false
         isPlayerPaused = false
@@ -169,14 +167,14 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     private fun updateNotification() {
         // It seems that queue can be null if we're called from PhoneStateListener
         if (queue != null) {
-            var name = Xmp.getModName()
+            var name = Xmp.getModuleName().orEmpty()
             if (name.isEmpty()) {
                 name = StorageManager.getFileName(queue?.filename) ?: "<Unknown Title>"
             }
 
             notifier?.notify(
                 name,
-                Xmp.getModType(),
+                Xmp.getModuleType().orEmpty(),
                 queue!!.index,
                 if (isPlayerPaused) ModernNotifier.TYPE_PAUSE else 0
             )
@@ -215,7 +213,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     }
 
     fun actionPrev() {
-        if (Xmp.time() > 2000) {
+        if (Xmp.getTime() > 2000) {
             Xmp.seek(0)
         } else {
             Xmp.stopModule()
@@ -282,7 +280,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
                 // Ditto if we can't load the module
                 Timber.i("Load $playerFileName")
-                if (Xmp.loadFromFd(playerFileName!!) < 0) {
+                if (!Xmp.loadFromFd(playerFileName!!)) {
                     Timber.e("Error loading $playerFileName")
                     if (cmd == CMD_PREV) {
                         if (queue!!.index <= 0) {
@@ -295,12 +293,17 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 }
                 lastRecognized = queue!!.index
                 cmd = CMD_NONE
-                var name = Xmp.getModName()
+                var name = Xmp.getModuleName().orEmpty()
                 if (name.isEmpty()) {
                     name = StorageManager.getFileName(playerFileName) ?: "<Unkown Title>"
                 }
 
-                notifier?.notify(name, Xmp.getModType(), queue!!.index, ModernNotifier.TYPE_TICKER)
+                notifier?.notify(
+                    name,
+                    Xmp.getModuleType().orEmpty(),
+                    queue!!.index,
+                    ModernNotifier.TYPE_TICKER
+                )
                 isLoaded = true
 
                 val volBoost = PrefManager.volumeBoost
@@ -353,8 +356,8 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                     Xmp.getModVars(vars)
 
                     remoteControl!!.setMetadata(
-                        Xmp.getModName(),
-                        Xmp.getModType(),
+                        Xmp.getModuleName().orEmpty(),
+                        Xmp.getModuleType().orEmpty(),
                         vars[0].toLong()
                     )
 
@@ -465,7 +468,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
             doPauseAndNotify()
         }
 
-        Xmp.deinit()
+        Xmp.deInitPlayer()
     }
 
     // region [Region] Was Stub
@@ -527,15 +530,15 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         Xmp.seek(seconds)
     }
 
-    fun time(): Int = Xmp.time()
+    fun time(): Int = Xmp.getTime()
 
     fun getModVars(vars: IntArray) {
         Xmp.getModVars(vars)
     }
 
-    fun getModName(): String = Xmp.getModName()
+    fun getModName(): String = Xmp.getModuleName().orEmpty()
 
-    fun getModType(): String = Xmp.getModType()
+    fun getModType(): String = Xmp.getModuleType().orEmpty()
 
     fun getSampleData(
         trigger: Boolean,
@@ -661,8 +664,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 Timber.d("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK")
                 // Lower volume
                 synchronized(audioManager!!) {
-                    volume = Xmp.getVolume()
-                    Xmp.setVolume(DUCK_VOLUME)
                     ducking = true
                 }
             }
@@ -672,7 +673,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 // Resume playback/raise volume
                 autoPause(false)
                 synchronized(audioManager!!) {
-                    Xmp.setVolume(volume)
                     ducking = false
                 }
             }

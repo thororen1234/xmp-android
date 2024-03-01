@@ -28,8 +28,8 @@ android {
 
         ndk.abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         externalNativeBuild.cmake.arguments += listOf(
-            "-DCMAKE_BUILD_TYPE=Release", // DEBUG
-            "-DBUILD_SHARED=OFF"
+            "-DCMAKE_BUILD_TYPE=DEBUG", // (libxmp) RELEASE or DEBUG
+            "-DANDROID_STL=c++_shared"
         )
 
         // ModArchive API Key
@@ -39,9 +39,10 @@ android {
     }
 
     buildFeatures {
-        aidl = true
+        // aidl = true
         compose = true
         buildConfig = true
+        prefab = true
     }
 
     buildTypes {
@@ -121,6 +122,7 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.media)
     implementation(libs.moshi.kotlin)
+    implementation(libs.oboe)
     implementation(libs.okhttp)
     implementation(libs.preference.ktx)
     implementation(libs.reorderable)
