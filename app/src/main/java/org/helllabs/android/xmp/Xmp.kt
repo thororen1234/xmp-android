@@ -44,31 +44,111 @@ object Xmp {
         System.loadLibrary("xmp-jni")
     }
 
-    external fun deInitPlayer()
-    external fun endPlayer()
-    external fun getMaxSequences(): Int
-    external fun getComment(): String?
-    external fun getInfo(values: IntArray?)
-    external fun getInstruments(): Array<String>?
-    external fun getModVars(vars: IntArray?)
-    external fun getModuleName(): String?
-    external fun getModuleType(): String?
-    external fun getSupportedFormats(): Array<String>?
-    external fun getTime(): Int
-    external fun getVersion(): String
-    external fun initPlayer(sampleRate: Int): Boolean
-    external fun pause(isPaused: Boolean): Boolean
-    external fun releaseModule()
-    external fun restartModule()
-    external fun setSequence(seq: Int): Boolean
-    external fun startModule(): Boolean
-    external fun stopModule()
-    external fun tick(shouldLoop: Boolean): Int
-    external fun mute(channel: Int, status: Int): Int
-    external fun seek(value: Int): Int
+    // external fun loadModule(name: String?): Int
 
-    private external fun loadModule(fd: Int): Boolean
-    private external fun testModule(fd: Int, modInfo: ModInfo): Boolean
+    // external fun testModule(name: String?, info: ModInfo?): Boolean
+
+    external fun loadModuleFd(fd: Int): Int
+
+    external fun deinit(): Int
+
+    external fun dropAudio()
+
+    external fun endPlayer(): Int
+
+    external fun fillBuffer(loop: Boolean): Int
+
+    external fun getInfo(values: IntArray?)
+
+    external fun getPlayer(parm: Int): Int
+
+    external fun hasFreeBuffer(): Boolean
+
+    external fun init(rate: Int, ms: Int): Boolean
+
+    external fun mute(chn: Int, status: Int): Int
+
+    external fun playAudio(): Int
+
+    external fun releaseModule(): Int
+
+    external fun restartAudio(): Boolean
+
+    external fun seek(time: Int): Int
+
+    external fun setPlayer(parm: Int, `val`: Int)
+
+    external fun startPlayer(rate: Int): Int
+
+    external fun stopAudio(): Boolean
+
+    external fun stopModule(): Int
+
+    private external fun testModuleFd(fd: Int, info: ModInfo?): Boolean
+
+    external fun time(): Int
+
+    external fun getChannelData(
+        volumes: IntArray?,
+        finalvols: IntArray?,
+        pans: IntArray?,
+        instruments: IntArray?,
+        keys: IntArray?,
+        periods: IntArray?
+    )
+
+    external fun getComment(): String?
+
+    external fun getFormats(): Array<String>?
+
+    external fun getInstruments(): Array<String>?
+
+    external fun getLoopCount(): Int
+
+    private external fun getMaxSequences(): Int
+
+    external fun getModName(): String
+
+    external fun getModType(): String
+
+    external fun getModVars(vars: IntArray?)
+
+    external fun getPatternRow(
+        pat: Int,
+        row: Int,
+        rowNotes: ByteArray,
+        rowInstruments: ByteArray,
+        rowFxType: ByteArray,
+        rowFxParm: ByteArray
+    )
+
+    external fun getSampleData(
+        trigger: Boolean,
+        ins: Int,
+        key: Int,
+        period: Int,
+        chn: Int,
+        width: Int,
+        buffer: ByteArray?
+    )
+
+    external fun getSeqVars(vars: IntArray?)
+
+    external fun getVersion(): String
+
+    external fun getVolume(): Int
+
+    external fun nextPosition(): Int
+
+    external fun prevPosition(): Int
+
+    external fun restartModule(): Int
+
+    external fun setPosition(num: Int): Int
+
+    external fun setSequence(seq: Int): Boolean
+
+    external fun setVolume(vol: Int): Int
 
     /**
      * Test module from File Descriptor
@@ -80,7 +160,7 @@ object Xmp {
             val fd = pfd.detachFd()
             pfd.close()
 
-            testModule(fd, modInfo)
+            testModuleFd(fd, modInfo)
         } else {
             false
         }
@@ -92,10 +172,10 @@ object Xmp {
     /**
      * Load module from File Descriptor
      */
-    fun loadFromFd(uri: Uri): Boolean {
+    fun loadFromFd(uri: Uri): Int {
         if (!testFromFd(uri)) {
             Timber.d("Load Module: $uri, Result failed")
-            return false
+            return -1
         }
 
         val context = XmpApplication.instance!!.applicationContext
@@ -104,9 +184,9 @@ object Xmp {
             val fd = pfd.detachFd()
             pfd.close()
 
-            loadModule(fd)
+            loadModuleFd(fd)
         } else {
-            false
+            -1
         }
 
         Timber.d("Load Module: Result $res")

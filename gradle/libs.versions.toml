@@ -24,7 +24,6 @@ retrofit2KotlinxSerializationConverter = "1.0.0" # https://mvnrepository.com/art
 settings = "1.0.3" # https://mvnrepository.com/artifact/com.github.alorma/compose-settings-storage-preferences
 timber = "5.0.1" # https://mvnrepository.com/artifact/com.jakewharton.timber/timber
 xmlUtil = "0.86.3" # https://mvnrepository.com/artifact/io.github.pdvrieze.xmlutil/core-android
-oboe = "1.8.1"
 
 [libraries]
 compose-activity = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -61,7 +60,6 @@ retrofit2-kotlinx-serialization-converter = { module = "com.jakewharton.retrofit
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 xmlutil-android-core = { module = "io.github.pdvrieze.xmlutil:core-android", version.ref = "xmlUtil" }
 xmlutil-android-serialization = { module = "io.github.pdvrieze.xmlutil:serialization-android", version.ref = "xmlUtil" }
-oboe = { module = "com.google.oboe:oboe", version.ref = "oboe" }
 
 [bundles]
 compose = [
