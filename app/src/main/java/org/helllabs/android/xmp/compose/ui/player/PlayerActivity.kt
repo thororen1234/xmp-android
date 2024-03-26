@@ -79,6 +79,7 @@ import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.service.PlayerServiceCallback
 import timber.log.Timber
+import java.util.Locale
 
 class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
 
@@ -236,7 +237,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         totalTime = time / 1000
         viewModel.setSeekBar(0F, time / 100F)
 
-        val timeString = String.format("%d:%02d", time / 60000, time / 1000 % 60)
+        val timeString = String.format(Locale.getDefault(),"%d:%02d", time / 60000, time / 1000 % 60)
         showSnack("New sequence duration: $timeString")
         viewModel.currentSequence(viewModel.modVars[7])
     }

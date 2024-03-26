@@ -17,7 +17,6 @@ class PlaylistManager {
     private lateinit var adapter: JsonAdapter<Playlist>
 
     lateinit var playlist: Playlist
-        internal set
 
     private var oldName: String? = null
 

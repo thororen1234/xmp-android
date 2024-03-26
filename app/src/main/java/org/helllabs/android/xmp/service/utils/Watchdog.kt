@@ -32,7 +32,7 @@ class Watchdog(private val timeout: Int) : Runnable {
         }
 
         running = true
-        executor?.scheduleAtFixedRate(this, 0, 1, TimeUnit.SECONDS)
+        executor?.scheduleWithFixedDelay(this, 0, 1, TimeUnit.SECONDS)
     }
 
     fun stop() {

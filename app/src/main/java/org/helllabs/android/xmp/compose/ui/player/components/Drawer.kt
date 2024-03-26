@@ -44,6 +44,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.gray
 import org.helllabs.android.xmp.compose.theme.lightGray
 import org.helllabs.android.xmp.compose.theme.sectionBackground
+import java.util.Locale
 
 @Composable
 fun PlayerDrawer(
@@ -119,7 +120,7 @@ fun PlayerDrawer(
                     val main = stringResource(R.string.sidebar_main_song)
                     val sub = stringResource(R.string.sheet_sub_song, index)
                     val text = if (index == 0) main else sub
-                    val label = String.format("%2d:%02d (%s)", item / 60000, item / 1000 % 60, text)
+                    val label = String.format(Locale.getDefault(), "%2d:%02d (%s)", item / 60000, item / 1000 % 60, text)
                     RadioButtonItem(
                         index = index,
                         selection = currentSequence,

@@ -1,6 +1,5 @@
 package org.helllabs.android.xmp.di
 
-import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import nl.adaptivity.xmlutil.serialization.XML
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -9,6 +8,7 @@ import org.helllabs.android.xmp.api.ApiHelperImpl
 import org.helllabs.android.xmp.api.ApiService
 import org.helllabs.android.xmp.core.Constants
 import retrofit2.Retrofit
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 
 interface ModArchiveModule {
     val okHttpClient: OkHttpClient
