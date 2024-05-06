@@ -53,7 +53,8 @@ import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.Playlist
 import org.helllabs.android.xmp.model.PlaylistItem
 import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.rememberReorderableLazyColumnState
+import sh.calvin.reorderable.rememberReorderableLazyListState
+import sh.calvin.reorderable.rememberScroller
 import timber.log.Timber
 
 class PlaylistActivity : BasePlaylistActivity() {
@@ -187,9 +188,17 @@ private fun PlaylistScreen(
             modifier = Modifier.padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
+            val pixelAmount by remember {
+                derivedStateOf { listState.layoutInfo.viewportSize.height * 0.05f }
+            }
             val haptic = LocalHapticFeedback.current
             val reorderState =
-                rememberReorderableLazyColumnState(lazyListState = listState) { from, to ->
+                rememberReorderableLazyListState(
+                    lazyListState = listState, scroller = rememberScroller(
+                        scrollableState = listState,
+                        pixelAmount = pixelAmount,
+                    )
+                ) { from, to ->
                     onMove(from.index - 1, to.index - 1)
                     haptic.performHapticFeedback(HapticFeedbackType(26))
                 }
@@ -204,7 +213,7 @@ private fun PlaylistScreen(
                 // https://github.com/Calvin-LL/Reorderable/issues/4
                 item {
                     ReorderableItem(
-                        reorderableLazyListState = reorderState,
+                        state = reorderState,
                         key = "dummy",
                         enabled = false,
                         modifier = Modifier
@@ -214,7 +223,7 @@ private fun PlaylistScreen(
                 }
                 itemsIndexed(state.list, key = { _, item -> item.id }) { index, item ->
                     ReorderableItem(
-                        reorderableLazyListState = reorderState,
+                        state = reorderState,
                         key = item.id
                     ) { isDragging ->
                         val elevation by animateDpAsState(
@@ -222,6 +231,7 @@ private fun PlaylistScreen(
                             label = ""
                         )
                         PlaylistCardItem(
+                            scope = this,
                             elevation = elevation,
                             item = item,
                             onItemClick = { onItemClick(index) },

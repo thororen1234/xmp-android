@@ -37,9 +37,9 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.model.DropDownItem
 import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.PlaylistItem
+import sh.calvin.reorderable.ReorderableCollectionItemScope
 import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.ReorderableItemScope
-import sh.calvin.reorderable.rememberReorderableLazyColumnState
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 private val playlistItemDropDownItems: List<DropDownItem> = listOf(
     DropDownItem("Add to play queue", DropDownSelection.ADD_TO_QUEUE),
@@ -49,7 +49,8 @@ private val playlistItemDropDownItems: List<DropDownItem> = listOf(
 )
 
 @Composable
-fun ReorderableItemScope.PlaylistCardItem(
+fun PlaylistCardItem(
+    scope: ReorderableCollectionItemScope,
     elevation: Dp,
     item: PlaylistItem,
     onItemClick: () -> Unit,
@@ -70,15 +71,17 @@ fun ReorderableItemScope.PlaylistCardItem(
                 ),
                 leadingContent = {
                     Icon(
-                        modifier = Modifier.draggableHandle(
-                            onDragStarted = {
-                                haptic.performHapticFeedback(HapticFeedbackType(25))
-                            },
-                            onDragStopped = {
-                                haptic.performHapticFeedback(HapticFeedbackType(13))
-                                onDragStopped()
-                            }
-                        ),
+                        modifier = with(scope) {
+                            Modifier.draggableHandle(
+                                onDragStarted = {
+                                    haptic.performHapticFeedback(HapticFeedbackType(25))
+                                },
+                                onDragStopped = {
+                                    haptic.performHapticFeedback(HapticFeedbackType(13))
+                                    onDragStopped()
+                                }
+                            )
+                        },
                         imageVector = Icons.Rounded.DragHandle,
                         contentDescription = null
                     )
@@ -143,7 +146,7 @@ private fun Preview_PlaylistCardItem() {
         )
 
         val lazyListState = rememberLazyListState()
-        val reorderableState = rememberReorderableLazyColumnState(lazyListState) { _, _ ->
+        val reorderableState = rememberReorderableLazyListState(lazyListState) { _, _ ->
         }
 
         Surface {
@@ -151,6 +154,7 @@ private fun Preview_PlaylistCardItem() {
                 item {
                     ReorderableItem(reorderableState, key = {}) {
                         PlaylistCardItem(
+                            scope = this,
                             elevation = elevation,
                             item = PlaylistItem(
                                 name = "Playlist title",

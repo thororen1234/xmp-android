@@ -41,6 +41,8 @@ import timber.log.Timber
 
 // Maybe keep the row numbers in view at all times, and move the channel columns instead?
 
+// TODO: Lag when there are many channels, is it culling right?
+
 @Composable
 internal fun ComposePatternViewer(
     onTap: () -> Unit,
