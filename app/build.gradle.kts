@@ -4,8 +4,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.android.kotlin)
     alias(libs.plugins.gradle.kotlinter)
+    alias(libs.plugins.kotlin.serialization)
     kotlin("kapt")
-    kotlin("plugin.serialization") version libs.versions.androidKotlin.get()
 }
 
 android {

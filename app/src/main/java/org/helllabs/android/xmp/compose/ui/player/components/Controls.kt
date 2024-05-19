@@ -23,7 +23,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.theme.accent
 
 @Composable
 fun PlayerControls(
@@ -57,7 +56,7 @@ fun PlayerControls(
         }
         FloatingActionButton(
             onClick = onPlay,
-            containerColor = accent,
+            // containerColor = accent,
             contentColor = Color.White
         ) {
             Icon(
@@ -78,7 +77,7 @@ fun PlayerControls(
         }
         IconToggleButton(
             colors = IconButtonDefaults.iconToggleButtonColors(
-                checkedContentColor = accent
+                // checkedContentColor = accent
             ),
             checked = isRepeating,
             onCheckedChange = onRepeat

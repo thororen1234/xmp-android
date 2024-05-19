@@ -151,6 +151,12 @@ object Xmp {
     external fun setVolume(vol: Int): Int
 
     /**
+     * Helper to get formats
+     */
+    val formats: List<String>
+        get() = getFormats().orEmpty().toList()
+
+    /**
      * Test module from File Descriptor
      */
     fun testFromFd(uri: Uri, modInfo: ModInfo = ModInfo()): Boolean {

@@ -1,289 +1,38 @@
 package org.helllabs.android.xmp.compose.ui.filelist
 
-import android.net.Uri
-import android.os.Bundle
-import androidx.activity.OnBackPressedCallback
-import androidx.activity.SystemBarStyle
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
-import androidx.compose.material.icons.filled.QuestionMark
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.material3.*
+import androidx.compose.material3.pulltorefresh.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.input.nestedscroll.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.tooling.preview.*
+import androidx.compose.ui.unit.*
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
+import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.BottomBarButtons
 import org.helllabs.android.xmp.compose.components.ErrorScreen
-import org.helllabs.android.xmp.compose.components.ListDialog
-import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.BasePlaylistActivity
 import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
 import org.helllabs.android.xmp.compose.ui.filelist.components.FileListCard
-import org.helllabs.android.xmp.core.PlaylistManager
-import org.helllabs.android.xmp.core.PrefManager
-import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.FileItem
-import timber.log.Timber
 
-class FileListActivity : BasePlaylistActivity() {
-
-    private val viewModel by viewModels<FileListViewModel>()
-
-    override val isShuffleMode: Boolean
-        get() = viewModel.uiState.value.isShuffle
-
-    override val isLoopMode: Boolean
-        get() = viewModel.uiState.value.isLoop
-
-    override fun update() {
-        viewModel.onRefresh()
-    }
-
-    override suspend fun allFiles(): List<Uri> = viewModel.onAllFiles()
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.auto(
-                Color.Transparent.toArgb(),
-                Color.Transparent.toArgb()
-            )
-        )
-
-        // On back pressed handler
-        val callback = object : OnBackPressedCallback(true) {
-            private fun goBack() {
-                this.remove()
-                onBackPressedDispatcher.onBackPressed()
-            }
-
-            override fun handleOnBackPressed() {
-                if (PrefManager.backButtonNavigation) {
-                    if (!viewModel.onBackPressed()) {
-                        goBack()
-                    }
-                } else {
-                    goBack()
-                }
-            }
-        }
-
-        Timber.d("onCreate")
-        setContent {
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-            LaunchedEffect(Unit) {
-                viewModel.softError.collectLatest {
-                    showSnack(it)
-                }
-            }
-
-            // Set up and override on back pressed.
-            DisposableEffect(onBackPressedDispatcher) {
-                onBackPressedDispatcher.addCallback(callback)
-                onDispose {
-                    callback.remove()
-                }
-            }
-
-            /**
-             * Playlist choice dialog
-             */
-            ListDialog(
-                isShowing = viewModel.playlistChoice != null,
-                icon = Icons.AutoMirrored.Filled.PlaylistAdd,
-                title = stringResource(id = R.string.msg_select_playlist),
-                list = viewModel.playlistList,
-                onConfirm = viewModel::addToPlaylist,
-                onDismiss = { viewModel.playlistChoice = null },
-                onEmpty = {
-                    showSnack(message = getString(R.string.msg_no_playlists))
-                    viewModel.playlistChoice = null
-                }
-            )
-
-            /**
-             * Delete directory dialog
-             */
-            with(viewModel.deleteDirChoice) {
-                MessageDialog(
-                    isShowing = this != null,
-                    icon = Icons.Default.QuestionMark,
-                    title = "Delete directory",
-                    text = "Are you sure you want to delete " +
-                        "${StorageManager.getFileName(this)} and all its contents?",
-                    confirmText = stringResource(id = R.string.menu_delete),
-                    onConfirm = {
-                        val res = StorageManager.deleteFileOrDirectory(this)
-                        if (!res) {
-                            showSnack("Unable to delete directory")
-                        }
-                        viewModel.deleteDirChoice = null
-                    },
-                    onDismiss = {
-                        viewModel.deleteDirChoice = null
-                    }
-                )
-            }
-
-            /**
-             * Delete file dialog
-             */
-            MessageDialog(
-                isShowing = viewModel.deleteFileChoice != null,
-                icon = Icons.Default.QuestionMark,
-                title = "Delete File",
-                text = "Are you sure you want to delete " +
-                    "${StorageManager.getFileName(viewModel.deleteFileChoice)}?",
-                confirmText = stringResource(id = R.string.menu_delete),
-                onConfirm = {
-                    val res = StorageManager.deleteFileOrDirectory(viewModel.deleteFileChoice)
-                    if (!res) {
-                        showSnack("Unable to delete item")
-                    }
-                    update()
-                    viewModel.deleteFileChoice = null
-                },
-                onDismiss = {
-                    viewModel.deleteFileChoice = null
-                }
-            )
-
-            XmpTheme {
-                FileListScreen(
-                    state = state,
-                    snackBarHostState = snackBarHostState,
-                    onBack = {
-                        callback.remove()
-                        onBackPressedDispatcher.onBackPressed()
-                    },
-                    onScrollPosition = viewModel::setScrollPosition,
-                    onRefresh = viewModel::onRefresh,
-                    onRestore = viewModel::onRestore,
-                    onShuffle = viewModel::onShuffle,
-                    onLoop = viewModel::onLoop,
-                    onPlayAll = ::onPlayAll,
-                    onCrumbMenu = { selection ->
-                        when (selection) {
-                            DropDownSelection.ADD_TO_PLAYLIST -> {
-                                viewModel.playlistList = PlaylistManager.listPlaylists()
-                                viewModel.playlistChoice = viewModel.currentPath
-                            }
-
-                            DropDownSelection.ADD_TO_QUEUE ->
-                                viewModel.getItems().also(::addToQueue)
-
-                            DropDownSelection.DIR_PLAY_CONTENTS ->
-                                viewModel.getItems().also(::playModule)
-
-                            else -> Unit
-                        }
-                    },
-                    onCrumbClick = { crumb, _ ->
-                        viewModel.onNavigate(crumb.path)
-                    },
-                    onItemClick = { item, index ->
-                        if (item.docFile!!.isFile()) {
-                            onItemClick(
-                                viewModel.getItems(),
-                                index
-                            )
-                        } else {
-                            viewModel.onNavigate(item.docFile)
-                        }
-                    },
-                    onItemLongClick = { item, index, sel ->
-                        when (sel) {
-                            DropDownSelection.DELETE -> {
-                                if (item.isFile) {
-                                    viewModel.deleteFileChoice = item.docFile
-                                } else {
-                                    viewModel.deleteDirChoice = item.docFile
-                                }
-                            }
-
-                            DropDownSelection.ADD_TO_PLAYLIST -> {
-                                viewModel.playlistList = PlaylistManager.listPlaylists()
-                                viewModel.playlistChoice = item.docFile
-                            }
-
-                            DropDownSelection.ADD_TO_QUEUE -> {
-                                if (item.isFile) {
-                                    addToQueue(item.docFile?.uri)
-                                } else {
-                                    StorageManager.walkDownDirectory(
-                                        uri = item.docFile?.uri,
-                                        includeDirectories = false
-                                    ).also(::playModule)
-                                }
-                            }
-
-                            DropDownSelection.DIR_PLAY_CONTENTS ->
-                                StorageManager.walkDownDirectory(
-                                    uri = item.docFile?.uri,
-                                    includeDirectories = false
-                                ).also(::playModule)
-
-                            DropDownSelection.FILE_PLAY_HERE ->
-                                playModule(viewModel.getItems(), index, true)
-
-                            DropDownSelection.FILE_PLAY_THIS_ONLY ->
-                                playModule(item.docFile?.uri?.let { listOf(it) }.orEmpty())
-                        }
-                    }
-                )
-            }
-        }
-    }
-}
+@Serializable
+object NavFileList
 
 @OptIn(FlowPreview::class, ExperimentalMaterial3Api::class)
 @Composable
-private fun FileListScreen(
+fun FileListScreen(
     state: FileListViewModel.FileListState,
     snackBarHostState: SnackbarHostState,
     onBack: () -> Unit,
@@ -405,9 +154,6 @@ private fun FileListScreen(
 @Preview
 @Composable
 private fun Preview_FileListScreen() {
-    val context = LocalContext.current
-    PrefManager.init(context)
-
     XmpTheme(useDarkTheme = true) {
         FileListScreen(
             state = FileListViewModel.FileListState(
@@ -439,7 +185,7 @@ private fun Preview_FileListScreen() {
             onCrumbClick = { _, _ -> },
             onCrumbMenu = {},
             onItemClick = { _, _ -> },
-            onItemLongClick = { _, _, _ -> }
+            onItemLongClick = { _, _, _ -> },
         )
     }
 }

@@ -1,18 +1,14 @@
 package org.helllabs.android.xmp.compose.ui.preferences
 
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.res.stringArrayResource
-import androidx.compose.ui.res.stringResource
-import com.alorma.compose.settings.storage.base.rememberBooleanSettingState
-import com.alorma.compose.settings.storage.base.rememberFloatSettingState
-import com.alorma.compose.settings.storage.base.rememberIntSettingState
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.res.*
 import com.alorma.compose.settings.ui.SettingsGroup
-import com.alorma.compose.settings.ui.SettingsList
+import com.alorma.compose.settings.ui.SettingsMenuLink
+import com.alorma.compose.settings.ui.SettingsSlider
+import com.alorma.compose.settings.ui.SettingsSwitch
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.compose.ui.preferences.components.FixedSettingsSwitch
-import org.helllabs.android.xmp.compose.ui.preferences.components.XmpSettingsSlider
+import org.helllabs.android.xmp.compose.components.SingleChoiceAlertDialog
 import org.helllabs.android.xmp.core.PrefManager
 import timber.log.Timber
 
@@ -21,69 +17,96 @@ fun SettingsGroupSound() {
     SettingsGroup(
         title = { Text(text = stringResource(id = R.string.pref_category_sound)) }
     ) {
-        val samplingRate = rememberIntSettingState()
+        val samplingRateDialog = remember { mutableStateOf(false) }
+        var samplingRate by remember { mutableIntStateOf(0) }
         val samplingRateValues = stringArrayResource(id = R.array.sampling_rate_values)
         LaunchedEffect(Unit) {
             samplingRateValues.forEachIndexed { index, s ->
                 if (PrefManager.samplingRate == s.toInt()) {
-                    samplingRate.value = index
+                    samplingRate = index
                 }
             }
         }
-        SettingsList(
+        SettingsMenuLink(
             title = { Text(text = stringResource(id = R.string.pref_sampling_rate_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_sampling_rate_summary)) },
-            useSelectedValueAsSubtitle = false,
-            state = samplingRate,
-            items = stringArrayResource(id = R.array.sampling_rate_array).toList(),
-            onItemSelected = { i, s ->
-                Timber.d("Setting value to: $s")
-                PrefManager.samplingRate = samplingRateValues[i].toInt()
+            onClick = {
+                samplingRateDialog.value = true
             }
         )
+        if (samplingRateDialog.value) {
+            val items = stringArrayResource(id = R.array.sampling_rate_array).toList()
+            SingleChoiceAlertDialog(
+                title = stringResource(id = R.string.pref_playlist_mode_title),
+                items = items,
+                selectedItemIndex = samplingRate,
+                onItemSelected = {
+                    PrefManager.samplingRate = it
+                    samplingRateDialog.value = false
+                },
+                onCancel = {
+                    samplingRateDialog.value = false
+                }
+            )
+        }
 
-        val bufferSize = rememberFloatSettingState(PrefManager.bufferMs.toFloat())
-        XmpSettingsSlider(
+        var bufferSize by remember { mutableFloatStateOf(PrefManager.bufferMs.toFloat()) }
+        SettingsSlider(
             title = { Text(text = stringResource(id = R.string.pref_buffer_ms_title)) },
             subtitle = {
                 Text(
                     text = stringResource(
                         id = R.string.pref_buffer_ms_dialog,
-                        "${bufferSize.value.toInt()}ms"
+                        "${bufferSize.toInt()}ms"
                     )
                 )
             },
             valueRange = 1f..1000f,
-            state = bufferSize,
+            value = bufferSize,
+            onValueChange = {
+                bufferSize = it
+            },
             onValueChangeFinished = {
-                Timber.d("Setting value to: ${bufferSize.value}")
-                PrefManager.bufferMs = bufferSize.value.toInt()
+                Timber.d("Setting value to: $bufferSize")
+                PrefManager.bufferMs = bufferSize.toInt()
             }
         )
 
-        val volBoost = rememberIntSettingState()
+        val volBoostDialog = remember { mutableStateOf(false) }
+        var volBoost by remember { mutableIntStateOf(0) }
         val volBoostValues = stringArrayResource(id = R.array.vol_boost_values)
         LaunchedEffect(Unit) {
             volBoostValues.forEachIndexed { index, s ->
                 if (PrefManager.volumeBoost == s.toInt()) {
-                    volBoost.value = index
+                    volBoost = index
                 }
             }
         }
-        SettingsList(
+        SettingsMenuLink(
             title = { Text(text = stringResource(id = R.string.pref_vol_boost_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_vol_boost_summary)) },
-            useSelectedValueAsSubtitle = false,
-            state = volBoost,
-            items = stringArrayResource(id = R.array.vol_boost_array).toList(),
-            onItemSelected = { i, s ->
-                Timber.d("Setting value to: $s")
-                PrefManager.volumeBoost = volBoostValues[i].toInt()
+            onClick = {
+                volBoostDialog.value = true
             }
         )
+        if (volBoostDialog.value) {
+            val items = stringArrayResource(id = R.array.vol_boost_array).toList()
+            SingleChoiceAlertDialog(
+                title = stringResource(id = R.string.pref_playlist_mode_title),
+                items = items,
+                selectedItemIndex = volBoost,
+                onItemSelected = {
+                    PrefManager.volumeBoost = it
+                    volBoostDialog.value = false
+                },
+                onCancel = {
+                    volBoostDialog.value = false
+                }
+            )
+        }
 
-        val amigaMixer = rememberBooleanSettingState(PrefManager.amigaMixer)
-        FixedSettingsSwitch(
+        val amigaMixer by remember { mutableStateOf(PrefManager.amigaMixer) }
+        SettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_amiga_mixer_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_amiga_mixer_summary)) },
             state = amigaMixer,
@@ -92,8 +115,8 @@ fun SettingsGroupSound() {
             }
         )
 
-        val interpolate = rememberBooleanSettingState(PrefManager.interpolate)
-        FixedSettingsSwitch(
+        val interpolate by remember { mutableStateOf(PrefManager.interpolate) }
+        SettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_interpolate_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_interpolate_summary)) },
             state = interpolate,
@@ -102,67 +125,85 @@ fun SettingsGroupSound() {
             }
         )
 
-        val interpType = rememberIntSettingState()
+        val interpTypeDialog = remember { mutableStateOf(false) }
+        var interpType by remember { mutableIntStateOf(0) }
         val interpTypeValues = stringArrayResource(id = R.array.interp_type_values)
         LaunchedEffect(Unit) {
             interpTypeValues.forEachIndexed { index, s ->
                 if (PrefManager.interpType == s.toInt()) {
-                    interpType.value = index
+                    interpType = index
                 }
             }
         }
-        SettingsList(
+        SettingsMenuLink(
             title = { Text(text = stringResource(id = R.string.pref_interp_type_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_interp_type_summary)) },
-            useSelectedValueAsSubtitle = false,
-            state = interpType,
-            items = stringArrayResource(id = R.array.interp_type_array).toList(),
-            onItemSelected = { i, s ->
-                Timber.d("Setting value to: $s")
-                PrefManager.interpType = interpTypeValues[i].toInt()
+            onClick = {
+                interpTypeDialog.value = true
             }
         )
+        if (interpTypeDialog.value) {
+            val items = stringArrayResource(id = R.array.interp_type_array).toList()
+            SingleChoiceAlertDialog(
+                title = stringResource(id = R.string.pref_playlist_mode_title),
+                items = items,
+                selectedItemIndex = samplingRate,
+                onItemSelected = {
+                    PrefManager.interpType = it
+                    interpTypeDialog.value = false
+                },
+                onCancel = {
+                    interpTypeDialog.value = false
+                }
+            )
+        }
 
-        val stereoMix = rememberFloatSettingState(PrefManager.stereoMix.toFloat())
-        XmpSettingsSlider(
+        var stereoMix by remember { mutableFloatStateOf(PrefManager.stereoMix.toFloat()) }
+        SettingsSlider(
             title = { Text(text = stringResource(id = R.string.pref_pan_separation_title)) },
             subtitle = {
                 Text(
                     text = stringResource(
                         id = R.string.preferences_pan_separation_dialog,
-                        "${stereoMix.value.toInt()}%"
+                        "${stereoMix.toInt()}%"
                     )
                 )
             },
             valueRange = 1f..100f,
-            state = stereoMix,
+            value = stereoMix,
+            onValueChange = {
+                stereoMix = it
+            },
             onValueChangeFinished = {
-                Timber.d("Setting value to: ${stereoMix.value}")
-                PrefManager.stereoMix = stereoMix.value.toInt()
+                Timber.d("Setting value to: $stereoMix")
+                PrefManager.stereoMix = stereoMix.toInt()
             }
         )
 
-        val defaultPan = rememberFloatSettingState(PrefManager.defaultPan.toFloat())
-        XmpSettingsSlider(
+        var defaultPan by remember { mutableFloatStateOf(PrefManager.defaultPan.toFloat()) }
+        SettingsSlider(
             title = { Text(text = stringResource(id = R.string.pref_default_pan_title)) },
             subtitle = {
                 Text(
                     text = stringResource(
                         id = R.string.preferences_default_pan_dialog,
-                        "${defaultPan.value.toInt()}%"
+                        "${defaultPan.toInt()}%"
                     )
                 )
             },
             valueRange = 1f..100f,
-            state = defaultPan,
+            value = defaultPan,
+            onValueChange = {
+                defaultPan = it
+            },
             onValueChangeFinished = {
-                Timber.d("Setting value to: ${defaultPan.value}")
-                PrefManager.defaultPan = defaultPan.value.toInt()
+                Timber.d("Setting value to: $defaultPan")
+                PrefManager.defaultPan = defaultPan.toInt()
             }
         )
 
-        val headset = rememberBooleanSettingState(PrefManager.headsetPause)
-        FixedSettingsSwitch(
+        val headset by remember { mutableStateOf(PrefManager.headsetPause) }
+        SettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_headset_pause_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_headset_pause_summary)) },
             state = headset,
@@ -171,8 +212,8 @@ fun SettingsGroupSound() {
             }
         )
 
-        val bluetooth = rememberBooleanSettingState(PrefManager.bluetoothPause)
-        FixedSettingsSwitch(
+        val bluetooth by remember { mutableStateOf(PrefManager.bluetoothPause) }
+        SettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_bluetooth_pause_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_bluetooth_pause_summary)) },
             state = bluetooth,
@@ -181,8 +222,8 @@ fun SettingsGroupSound() {
             }
         )
 
-        val allSequence = rememberBooleanSettingState(PrefManager.allSequences)
-        FixedSettingsSwitch(
+        val allSequence by remember { mutableStateOf(PrefManager.allSequences) }
+        SettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_all_sequences_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_all_sequences_summary)) },
             state = allSequence,

@@ -5,6 +5,7 @@ androidGradlePlugin = "8.4.0" # https://mvnrepository.com/artifact/com.android.a
 androidKotlin = "1.9.23" # https://mvnrepository.com/artifact/org.jetbrains.kotlin.android/org.jetbrains.kotlin.android.gradle.plugin
 cascadeCompose = "2.3.0" # https://mvnrepository.com/artifact/me.saket.cascade/cascade-compose
 composeBom = "2024.05.00" # https://mvnrepository.com/artifact/androidx.compose/compose-bom
+composeNavigation = "2.8.0-beta01" # https://mvnrepository.com/artifact/androidx.navigation/navigation-compose
 coreKtx = "1.13.1" # https://mvnrepository.com/artifact/androidx.core/core-ktx
 dfc = "1.0.8" # https://mvnrepository.com/artifact/com.lazygeniouz/dfc
 kotlinCompiler = "1.5.13" # https://developer.android.com/jetpack/androidx/releases/compose-compiler
@@ -14,13 +15,14 @@ leakcanaryAndroid = "2.14" # https://mvnrepository.com/artifact/com.squareup.lea
 lifecycleRuntimeCompose = "2.7.0" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-compose
 lifecycleRuntimeKtx = "2.7.0" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-runtime-ktx
 lifecycleViewModelCompose = "2.7.0" # https://mvnrepository.com/artifact/androidx.lifecycle/lifecycle-viewmodel-compose
+materialKolor = "1.5.1" # https://mvnrepository.com/artifact/com.materialkolor/material-kolor
 media = "1.7.0" # https://mvnrepository.com/artifact/androidx.media/media
 moshiKotlin = "1.15.1" # https://mvnrepository.com/artifact/com.squareup.moshi/moshi-kotlin
 okhttp = "5.0.0-alpha.14" # https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
 preferenceKtx = "1.2.1" # https://mvnrepository.com/artifact/androidx.preference/preference-ktx
 reorderable = "2.0.1" # https://mvnrepository.com/artifact/sh.calvin.reorderable/reorderable
 retrofit = "2.11.0" # https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
-settings = "1.0.3" # https://mvnrepository.com/artifact/com.github.alorma/compose-settings-storage-preferences
+settings = "2.2.0" # https://github.com/alorma/Compose-Settings/releases
 timber = "5.0.1" # https://mvnrepository.com/artifact/com.jakewharton.timber/timber
 xmlUtil = "0.86.3" # https://mvnrepository.com/artifact/io.github.pdvrieze.xmlutil/core-android
 
@@ -34,8 +36,8 @@ compose-material-icons-core = { module = "androidx.compose.material:material-ico
 compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
 compose-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata" }
-compose-settings-storage-preferences = { module = "com.github.alorma:compose-settings-storage-preferences", version.ref = "settings" }
-compose-settings-ui-m3 = { module = "com.github.alorma:compose-settings-ui-m3", version.ref = "settings" }
+compose-settings-ui = { module = "com.github.alorma.compose-settings:ui-tiles", version.ref = "settings" }
+compose-settings-ui-extended = { module = "com.github.alorma.compose-settings:ui-tiles-extended", version.ref = "settings" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-ui-ui = { module = "androidx.compose.ui:ui" }
@@ -49,6 +51,7 @@ leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", ve
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycleRuntimeCompose" }
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleViewModelCompose" }
+materialKolor = { module = "com.materialkolor:material-kolor", version.ref = "materialKolor" }
 media = { module = "androidx.media:media", version.ref = "media" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshiKotlin" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
@@ -59,6 +62,8 @@ retrofit-serialization = { module = "com.squareup.retrofit2:converter-kotlinx-se
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 xmlutil-android-core = { module = "io.github.pdvrieze.xmlutil:core-android", version.ref = "xmlUtil" }
 xmlutil-android-serialization = { module = "io.github.pdvrieze.xmlutil:serialization-android", version.ref = "xmlUtil" }
+compose-navigation = { module = "androidx.navigation:navigation-compose", version.ref = "composeNavigation" }
+
 
 [bundles]
 compose = [
@@ -70,15 +75,17 @@ compose = [
     "compose-material-icons-extended",
     "compose-material3",
     "compose-runtime-livedata",
-    "compose-settings-storage-preferences",
-    "compose-settings-ui-m3",
+    "compose-settings-ui",
+    "compose-settings-ui-extended",
     "compose-ui-tooling",
     "compose-ui-ui",
+    "compose-navigation"
 ]
 compose-utils = [
+    "accompanist-permissions",
     "cascade-compose",
     "lifecycle-runtime-compose",
-    "accompanist-permissions",
+    "materialKolor",
 ]
 xmlUtils = [
     "xmlutil-android-core",
@@ -93,3 +100,4 @@ retrofit = [
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
 android-kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "androidKotlin" }
 gradle-kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinterGradle" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "androidKotlin" }

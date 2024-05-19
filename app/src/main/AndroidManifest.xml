@@ -9,13 +9,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <uses-feature
-        android:name="android.hardware.bluetooth"
-        android:required="false" />
-    <uses-feature
-        android:name="android.hardware.touchscreen"
-        android:required="false" />
-
     <application
         android:name="XmpApplication"
         android:allowBackup="true"
@@ -29,7 +22,7 @@
 
         <!-- Playlist and File browser -->
         <activity
-            android:name=".compose.ui.menu.PlaylistMenu"
+            android:name=".compose.MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
             android:exported="true">
             <intent-filter>
@@ -38,12 +31,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".compose.ui.filelist.FileListActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
-        <activity
-            android:name=".compose.ui.playlist.PlaylistActivity"
-            android:configChanges="keyboardHidden|orientation|screenSize" />
 
         <!-- Player -->
         <activity
@@ -136,46 +123,6 @@
                 <data android:pathPattern=".*\\.S3M" />
                 <data android:pathPattern=".*\\.XM" />
             </intent-filter>
-        </activity>
-
-        <!-- Preferences -->
-        <activity android:name=".compose.ui.preferences.Preferences" />
-        <activity android:name=".compose.ui.preferences.PreferencesFormats" />
-        <activity android:name=".compose.ui.preferences.PreferencesAbout" />
-
-        <!-- ModArchive search & download -->
-        <activity
-            android:name=".compose.ui.search.Search"
-            android:configChanges="keyboardHidden|orientation|screenSize">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".compose.ui.menu.PlaylistMenu" />
-        </activity>
-        <activity
-            android:name=".compose.ui.search.SearchHistory"
-            android:parentActivityName=".compose.ui.search.Search">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".compose.ui.search.Search" />
-        </activity>
-        <activity
-            android:name=".compose.ui.search.SearchError"
-            android:parentActivityName=".compose.ui.search.Search">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".compose.ui.search.Search" />
-        </activity>
-        <activity android:name=".compose.ui.search.result.SearchResult">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".compose.ui.search.Search" />
-        </activity>
-        <activity
-            android:name=".compose.ui.search.result.Result"
-            android:parentActivityName=".compose.ui.search.Search">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".compose.ui.search.Search" />
         </activity>
 
         <!-- Service -->

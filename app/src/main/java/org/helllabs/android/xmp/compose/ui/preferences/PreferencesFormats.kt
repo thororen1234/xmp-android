@@ -1,83 +1,32 @@
 package org.helllabs.android.xmp.compose.ui.preferences
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.hapticfeedback.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.text.*
+import androidx.compose.ui.tooling.preview.*
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import timber.log.Timber
 
-class PreferencesFormats : ComponentActivity() {
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
-
-        enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.auto(
-                Color.Transparent.toArgb(),
-                Color.Transparent.toArgb()
-            )
-        )
-
-        setContent {
-            val formats by remember {
-                val formats = Xmp.getFormats().orEmpty().toList()
-                mutableStateOf(formats)
-            }
-
-            XmpTheme {
-                FormatsScreen(
-                    formatsList = formats,
-                    onBack = {
-                        onBackPressedDispatcher.onBackPressed()
-                    }
-                )
-            }
-        }
-    }
-}
+@Serializable
+object NavPreferenceFormats
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FormatsScreen(
+    snackbarHostState: SnackbarHostState,
     formatsList: List<String>,
     onBack: () -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberLazyListState()
     val isScrolled = remember {
         derivedStateOf {
@@ -134,6 +83,7 @@ fun FormatsScreen(
 private fun Preview_FormatsScreen() {
     XmpTheme(useDarkTheme = true) {
         FormatsScreen(
+            snackbarHostState = SnackbarHostState(),
             formatsList = List(14) { "Format $it" },
             onBack = { }
         )

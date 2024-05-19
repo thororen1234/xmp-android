@@ -1,127 +1,40 @@
 package org.helllabs.android.xmp.compose.ui.search
 
-import android.content.Intent
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.text.ClickableText
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.*
+import androidx.compose.ui.*
+import androidx.compose.ui.focus.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.text.*
+import androidx.compose.ui.text.input.*
+import androidx.compose.ui.tooling.preview.*
+import androidx.compose.ui.unit.*
+import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.components.annotatedLinkString
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.search.result.Result
-import org.helllabs.android.xmp.compose.ui.search.result.SearchResult
-import timber.log.Timber
 
-class Search : ComponentActivity() {
-
-    public override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.auto(
-                Color.Transparent.toArgb(),
-                Color.Transparent.toArgb()
-            )
-        )
-
-        Timber.d("onCreate")
-        setContent {
-            XmpTheme {
-                SearchScreen(
-                    onBack = {
-                        onBackPressedDispatcher.onBackPressed()
-                    },
-                    onSearch = { query, type ->
-                        Intent(this, SearchResult::class.java).apply {
-                            putExtra(SEARCH_TEXT, query.trim())
-                            putExtra("search_type", type)
-                        }.also(::startActivity)
-                    },
-                    onRandom = {
-                        Intent(this, Result::class.java).apply {
-                            putExtra(MODULE_ID, -1)
-                        }.also(::startActivity)
-                    },
-                    onHistory = {
-                        Intent(this, SearchHistory::class.java).also(::startActivity)
-                    }
-                )
-            }
-        }
-    }
-
-    companion object {
-        const val SEARCH_TEXT = "search_text"
-        const val MODULE_ID = "module_id"
-        const val ERROR = "error"
-    }
-}
+@Serializable
+object NavSearch
 
 @Composable
-private fun SearchScreen(
+fun SearchScreen(
     onBack: () -> Unit,
-    onSearch: (query: String, type: SearchType) -> Unit,
+    onSearch: (String, Int) -> Unit,
     onRandom: () -> Unit,
     onHistory: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     var searchText by rememberSaveable { mutableStateOf("") }
-    var searchType by rememberSaveable { mutableStateOf(SearchType.TYPE_TITLE_OR_FILENAME) }
+    var isArtistSearch by rememberSaveable { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -168,7 +81,7 @@ private fun SearchScreen(
                     keyboardActions = KeyboardActions(
                         onSearch = {
                             if (searchText.isNotEmpty()) {
-                                onSearch(searchText, searchType)
+                                onSearch(searchText, isArtistSearch)
                             }
 
                             focusManager.clearFocus()
@@ -184,15 +97,15 @@ private fun SearchScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 SegmentedButtons(
-                    searchType = searchType,
-                    onSearchType = { searchType = SearchType.entries.toTypedArray()[it] }
+                    isArtistSearch = isArtistSearch,
+                    onSearchType = { isArtistSearch = it }
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
                 SearchButtons(
                     searchText = searchText,
-                    onSearch = { onSearch(it, searchType) },
+                    onSearch = { onSearch(it, isArtistSearch) },
                     onRandom = onRandom
                 )
             }
@@ -208,7 +121,7 @@ private fun SearchScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SegmentedButtons(searchType: SearchType, onSearchType: (Int) -> Unit) {
+private fun SegmentedButtons(isArtistSearch: Int, onSearchType: (Int) -> Unit) {
     val searchOptions by remember {
         val list = listOf(R.string.search_artist, R.string.search_title_or_filename)
         mutableStateOf(list)
@@ -230,7 +143,7 @@ private fun SegmentedButtons(searchType: SearchType, onSearchType: (Int) -> Unit
                     count = searchOptions.size
                 ),
                 onClick = { onSearchType(index) },
-                selected = index == searchType.ordinal,
+                selected = index == isArtistSearch,
                 label = { Text(text = stringResource(id = label)) }
             )
         }

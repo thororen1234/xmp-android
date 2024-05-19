@@ -1,4 +1,4 @@
-package org.helllabs.android.xmp.compose.ui.menu
+package org.helllabs.android.xmp.compose.ui.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

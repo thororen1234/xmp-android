@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.theme.accent
+import org.helllabs.android.xmp.compose.theme.seed
 import org.helllabs.android.xmp.compose.ui.player.Util
 import org.helllabs.android.xmp.service.PlayerService
 
@@ -233,7 +233,7 @@ fun ComposeChannelViewer(
             val vol = if (isMuted[chn]) 0 else viewInfo.volumes[chn]
             val volSize = xAxisMultiplier.times(5) * (vol.toFloat() / 64)
             drawRect(
-                color = accent.copy(alpha = .35f),
+                color = seed.copy(alpha = .35f),
                 topLeft = Offset(
                     x = xAxisMultiplier.times(4),
                     y = volY
@@ -243,7 +243,7 @@ fun ComposeChannelViewer(
             val fvol = if (isMuted[chn]) 0 else viewInfo.finalVols[chn]
             val fVolSize = xAxisMultiplier.times(5) * (fvol.toFloat() / 64)
             drawRect(
-                color = accent,
+                color = seed,
                 topLeft = Offset(
                     x = xAxisMultiplier.times(4),
                     y = volY
@@ -268,7 +268,7 @@ fun ComposeChannelViewer(
             val panOffset = panMaxOffset * (pan.toFloat() / 255)
             val panX = xAxisMultiplier.times(10) + panOffset
             drawRect(
-                color = accent,
+                color = seed,
                 topLeft = Offset(
                     x = panX,
                     y = panY

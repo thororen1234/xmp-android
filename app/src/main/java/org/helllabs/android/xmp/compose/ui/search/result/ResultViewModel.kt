@@ -57,7 +57,7 @@ class ResultViewModel(
         val isRandom: Boolean = false,
         val isLoading: Boolean = false,
         val softError: String? = null,
-        val hardError: Throwable? = null,
+        val hardError: String? = null,
         val module: ModuleResult? = null,
         val moduleExists: Boolean = false,
         val moduleSupported: Boolean = true,
@@ -194,7 +194,7 @@ class ResultViewModel(
                 }
             } catch (e: Exception) {
                 Timber.e(e)
-                _uiState.update { it.copy(hardError = e) }
+                _uiState.update { it.copy(hardError = e.message) }
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }
@@ -221,7 +221,7 @@ class ResultViewModel(
                 }
             } catch (e: Exception) {
                 Timber.e(e)
-                _uiState.update { it.copy(hardError = e) }
+                _uiState.update { it.copy(hardError = e.message) }
             } finally {
                 _uiState.update { it.copy(isLoading = false) }
             }

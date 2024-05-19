@@ -1,43 +1,19 @@
 package org.helllabs.android.xmp.compose.ui.search.result
 
-import android.content.Intent
-import android.os.Build
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.SystemBarStyle
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.tooling.preview.*
+import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.search.Search
-import org.helllabs.android.xmp.compose.ui.search.SearchError
-import org.helllabs.android.xmp.compose.ui.search.SearchType
 import org.helllabs.android.xmp.compose.ui.search.components.ItemModule
 import org.helllabs.android.xmp.model.Artist
 import org.helllabs.android.xmp.model.ArtistInfo
@@ -46,78 +22,12 @@ import org.helllabs.android.xmp.model.Module
 import org.helllabs.android.xmp.model.SearchListResult
 import org.helllabs.android.xmp.model.Sponsor
 import org.helllabs.android.xmp.model.SponsorDetails
-import timber.log.Timber
 
-class SearchResult : ComponentActivity() {
-
-    private val viewModel by viewModels<SearchResultViewModel> { SearchResultViewModel.Factory }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        Timber.d("onCreate")
-
-        enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.auto(
-                Color.Transparent.toArgb(),
-                Color.Transparent.toArgb()
-            )
-        )
-
-        val searchType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getSerializableExtra("search_type", SearchType::class.java)
-                ?: throw IllegalArgumentException("Failed to get search type")
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getSerializableExtra("search_type") as SearchType
-        }
-
-        val query = intent.getStringExtra(Search.SEARCH_TEXT)
-            ?: throw IllegalArgumentException("Failed to get search query")
-
-        when (searchType) {
-            SearchType.TYPE_ARTIST -> {
-                val title = getString(R.string.search_artist_title)
-                viewModel.getArtists(title, query)
-            }
-
-            SearchType.TYPE_TITLE_OR_FILENAME -> {
-                val title = getString(R.string.search_title_title)
-                viewModel.getFileOrTitle(title, query)
-            }
-        }
-
-        setContent {
-            XmpTheme {
-                val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-                LaunchedEffect(state.hardError) {
-                    if (state.hardError != null) {
-                        Timber.w("Hard error has occurred")
-                        Intent(this@SearchResult, SearchError::class.java).apply {
-                            putExtra(Search.ERROR, state.hardError)
-                        }.also(::startActivity)
-                    }
-                }
-
-                TitleResultScreen(
-                    state = state,
-                    onBack = {
-                        onBackPressedDispatcher.onBackPressed()
-                    },
-                    onItemId = {
-                        Intent(this, Result::class.java).apply {
-                            putExtra(Search.MODULE_ID, it)
-                        }.also(::startActivity)
-                    },
-                    onArtistId = viewModel::getArtistById
-                )
-            }
-        }
-    }
-}
+@Serializable
+data class NavSearchTitleResult(val searchQuery: String, val isArtistSearch: Int)
 
 @Composable
-private fun TitleResultScreen(
+fun TitleResultScreen(
     state: SearchResultViewModel.SearchResultState,
     onBack: () -> Unit,
     onItemId: (id: Int) -> Unit,

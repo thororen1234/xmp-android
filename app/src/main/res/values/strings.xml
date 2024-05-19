@@ -208,7 +208,7 @@
     <string name="size_kb">%d KB</string>
     <string name="search_title_error">Search error</string>
     <string name="search_unknown_error">Software Failure. Press back to continue.\n\nGuru Meditation #35068035.48454C50</string>
-    <string name="search_known_error">%s.  Press back button to continue.</string>
+    <string name="search_known_error">%s.\nPress back button to continue.</string>
     <string name="button_loading">Loading</string>
     <string name="button_play">Play</string>
     <string name="button_download_unsupported">Unsupported</string>

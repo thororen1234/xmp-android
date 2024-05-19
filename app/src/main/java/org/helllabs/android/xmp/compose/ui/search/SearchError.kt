@@ -1,104 +1,37 @@
 package org.helllabs.android.xmp.compose.ui.search
 
-import android.content.Intent
-import android.os.Build
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
-import androidx.activity.SystemBarStyle
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.text.style.*
+import androidx.compose.ui.tooling.preview.*
+import androidx.compose.ui.unit.*
 import java.util.Locale
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.topazFontFamily
-import timber.log.Timber
 
-class SearchError : ComponentActivity() {
-
-    public override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.auto(
-                Color.Transparent.toArgb(),
-                Color.Transparent.toArgb()
-            )
-        )
-
-        val callback = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                Intent(this@SearchError, Search::class.java).apply {
-                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                }.also(::startActivity)
-            }
-        }
-
-        val error = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            intent.getSerializableExtra(Search.ERROR, Throwable::class.java)
-        } else {
-            @Suppress("DEPRECATION")
-            intent.getSerializableExtra(Search.ERROR) as Throwable?
-        }
-
-        // Print the error into Logcat.
-        error?.let { Timber.e(it) }
-
-        val cleanMessage = error?.message?.substringAfter("Exception: ")?.trim()
-        val message = when {
-            cleanMessage.isNullOrEmpty() -> getString(R.string.search_unknown_error)
-            else -> getString(
-                R.string.search_known_error,
-                cleanMessage.replaceFirstChar {
-                    if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-                }
-            )
-        }
-
-        Timber.d("onCreate")
-        setContent {
-            DisposableEffect(onBackPressedDispatcher) {
-                onBackPressedDispatcher.addCallback(callback)
-                onDispose {
-                    callback.remove()
-                }
-            }
-
-            XmpTheme {
-                ErrorScreen(
-                    onBack = { onBackPressedDispatcher.onBackPressed() },
-                    message = message
-                )
-            }
-        }
-    }
-}
+@Serializable
+data class NavSearchError(val error: String? = null)
 
 @Composable
-private fun ErrorScreen(
-    message: String,
+fun ErrorScreen(
+    message: String?,
     onBack: () -> Unit
 ) {
+    val errorMsg = remember {
+        message?.substringAfter("Exception: ")?.trim()
+    }
+
     Scaffold(
         topBar = {
             XmpTopBar(
@@ -109,7 +42,15 @@ private fun ErrorScreen(
     ) { paddingValues ->
         GuruFrame(
             modifier = Modifier.padding(paddingValues),
-            message = message
+            message = when {
+                errorMsg.isNullOrEmpty() -> stringResource(R.string.search_unknown_error)
+                else -> stringResource(
+                    R.string.search_known_error,
+                    errorMsg.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+                    }
+                )
+            }
         )
     }
 }
@@ -123,6 +64,7 @@ private fun GuruFrame(
     var frameState by remember { mutableStateOf(true) }
 
     LaunchedEffect(frameState) {
+        // Guru Meditation Frame
         scope.launch {
             delay(1337L)
             frameState = !frameState
@@ -153,7 +95,18 @@ private fun GuruFrame(
 private fun Preview_ErrorScreen() {
     XmpTheme(useDarkTheme = true) {
         ErrorScreen(
-            message = stringResource(id = R.string.search_unknown_error),
+            message = null,
+            onBack = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun Preview_ErrorScreen_WithMessage() {
+    XmpTheme(useDarkTheme = true) {
+        ErrorScreen(
+            message = "Exception: Some Error Message",
             onBack = {}
         )
     }

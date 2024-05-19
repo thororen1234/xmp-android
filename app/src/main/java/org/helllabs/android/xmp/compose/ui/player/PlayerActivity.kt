@@ -50,6 +50,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -62,7 +63,6 @@ import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.menu.PlaylistMenu
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerBottomAppBar
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerControls
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerDrawer
@@ -79,7 +79,6 @@ import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerService
 import org.helllabs.android.xmp.service.PlayerServiceCallback
 import timber.log.Timber
-import java.util.Locale
 
 class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
 
@@ -237,7 +236,8 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         totalTime = time / 1000
         viewModel.setSeekBar(0F, time / 100F)
 
-        val timeString = String.format(Locale.getDefault(),"%d:%02d", time / 60000, time / 1000 % 60)
+        val timeString =
+            String.format(Locale.getDefault(), "%d:%02d", time / 60000, time / 1000 % 60)
         showSnack("New sequence duration: $timeString")
         viewModel.currentSequence(viewModel.modVars[7])
     }
@@ -311,10 +311,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.auto(
-                Color.Transparent.toArgb(),
-                Color.Transparent.toArgb()
-            )
+            statusBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb())
         )
 
         if (PrefManager.keepScreenOn) {
@@ -685,9 +682,10 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
             // Oops. We don't want to start service if launched from history and service is not running
             // so run the browser instead.
             Timber.i("Start file browser")
-            Intent(this, PlaylistMenu::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
-            }.also(::startActivity)
+//            Intent(this, PlaylistMenu::class.java).apply {
+//                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+//            }.also(::startActivity)
+            TODO("Nav back to Home Screen")
 
             setResult(RESULT_OK)
             finish()

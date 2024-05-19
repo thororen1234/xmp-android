@@ -27,7 +27,7 @@ class SearchResultViewModel(
     }
 
     data class SearchResultState(
-        val hardError: Throwable? = null,
+        val hardError: String? = null,
         val isLoading: Boolean = false,
         val softError: String? = null,
         val title: String = "",
@@ -49,7 +49,7 @@ class SearchResultViewModel(
             }
         } catch (e: Exception) {
             Timber.e(e)
-            _uiState.update { it.copy(hardError = e) }
+            _uiState.update { it.copy(hardError = e.message) }
         } finally {
             _uiState.update { it.copy(isLoading = false) }
         }
@@ -67,7 +67,7 @@ class SearchResultViewModel(
             }
         } catch (e: Exception) {
             Timber.e(e)
-            _uiState.update { it.copy(hardError = e) }
+            _uiState.update { it.copy(hardError = e.message) }
         } finally {
             _uiState.update { it.copy(isLoading = false) }
         }
@@ -85,7 +85,7 @@ class SearchResultViewModel(
             }
         } catch (e: Exception) {
             Timber.e(e)
-            _uiState.update { it.copy(hardError = e) }
+            _uiState.update { it.copy(hardError = e.message) }
         } finally {
             _uiState.update { it.copy(isLoading = false) }
         }

@@ -6,11 +6,12 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Typeface
+import androidx.compose.material3.*
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.ColorUtils
 import org.helllabs.android.xmp.Xmp
-import org.helllabs.android.xmp.compose.theme.accent
 import org.helllabs.android.xmp.compose.theme.instrumentViewFontSize
+import org.helllabs.android.xmp.compose.theme.seed
 import org.helllabs.android.xmp.compose.theme.toPx
 import timber.log.Timber
 
@@ -18,7 +19,7 @@ import timber.log.Timber
 class InstrumentViewer(context: Context, val background: Int) : Viewer(context, background) {
 
     private val startBlue: Int
-        get() = accent.toArgb()
+        get() = seed.toArgb()
 
     private lateinit var insName: Array<String>
     private val barPaint = arrayListOf<Paint>()

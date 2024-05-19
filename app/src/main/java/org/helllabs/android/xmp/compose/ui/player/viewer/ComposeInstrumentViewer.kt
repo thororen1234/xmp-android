@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.theme.accent
+import org.helllabs.android.xmp.compose.theme.seed
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 
 private const val VOLUME_STEPS = 32
@@ -184,7 +184,7 @@ internal fun InstrumentViewer(
                     }
 
                     drawRoundRect(
-                        color = accent,
+                        color = seed,
                         cornerRadius = barShape,
                         alpha = vol / VOLUME_STEPS.toFloat(),
                         topLeft = Offset(start, yPos),

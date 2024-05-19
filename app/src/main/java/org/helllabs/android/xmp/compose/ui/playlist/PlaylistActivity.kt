@@ -2,144 +2,42 @@ package org.helllabs.android.xmp.compose.ui.playlist
 
 import android.content.res.Configuration
 import android.net.Uri
-import android.os.Bundle
-import androidx.activity.SystemBarStyle
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.viewModels
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.*
+import androidx.compose.ui.hapticfeedback.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.tooling.preview.*
+import androidx.compose.ui.unit.*
+import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.BottomBarButtons
 import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.BasePlaylistActivity
 import org.helllabs.android.xmp.compose.ui.playlist.components.PlaylistCardItem
 import org.helllabs.android.xmp.compose.ui.playlist.components.PlaylistInfo
-import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.Playlist
 import org.helllabs.android.xmp.model.PlaylistItem
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import sh.calvin.reorderable.rememberScroller
-import timber.log.Timber
 
-class PlaylistActivity : BasePlaylistActivity() {
-
-    private val viewModel by viewModels<PlaylistActivityViewModel>()
-
-    override val isShuffleMode: Boolean
-        get() = viewModel.uiState.value.isShuffle
-
-    override val isLoopMode: Boolean
-        get() = viewModel.uiState.value.isLoop
-
-    override suspend fun allFiles(): List<Uri> = viewModel.getUriItems()
-
-    override fun update() {
-        val extras = intent.extras ?: return
-        val name = extras.getString("name").orEmpty()
-
-        viewModel.onRefresh(name)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        enableEdgeToEdge(
-            navigationBarStyle = SystemBarStyle.auto(
-                Color.Transparent.toArgb(),
-                Color.Transparent.toArgb()
-            )
-        )
-
-        Timber.d("onCreate")
-        setContent {
-            val state by viewModel.uiState.collectAsStateWithLifecycle()
-
-            XmpTheme {
-                PlaylistScreen(
-                    state = state,
-                    snackBarHostState = snackBarHostState,
-                    onBack = onBackPressedDispatcher::onBackPressed,
-                    onItemClick = { index ->
-                        onItemClick(
-                            viewModel.getUriItems(),
-                            index
-                        )
-                    },
-                    onMenuClick = { item, index, sel ->
-                        when (sel) {
-                            DropDownSelection.DELETE -> {
-                                viewModel.removeItem(index)
-                                update()
-                            }
-
-                            DropDownSelection.ADD_TO_QUEUE ->
-                                addToQueue(item.uri)
-
-                            DropDownSelection.FILE_PLAY_HERE ->
-                                playModule(viewModel.getUriItems(), index)
-
-                            DropDownSelection.FILE_PLAY_THIS_ONLY ->
-                                playModule(item.uri)
-
-                            else -> Unit
-                        }
-                    },
-                    onPlayAll = ::onPlayAll,
-                    onShuffle = viewModel::setShuffle,
-                    onLoop = viewModel::setLoop,
-                    onMove = viewModel::onMove,
-                    onDragStopped = viewModel::onDragStopped
-                )
-            }
-        }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        Timber.d("onPause")
-        viewModel.save()
-    }
-}
+@Serializable
+data class NavPlaylist(val playlist: String)
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun PlaylistScreen(
+fun PlaylistScreen(
     state: Playlist,
     snackBarHostState: SnackbarHostState,
     onBack: () -> Unit,
@@ -194,7 +92,8 @@ private fun PlaylistScreen(
             val haptic = LocalHapticFeedback.current
             val reorderState =
                 rememberReorderableLazyListState(
-                    lazyListState = listState, scroller = rememberScroller(
+                    lazyListState = listState,
+                    scroller = rememberScroller(
                         scrollableState = listState,
                         pixelAmount = pixelAmount,
                     )
@@ -259,9 +158,6 @@ private fun PlaylistScreen(
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES or Configuration.UI_MODE_TYPE_NORMAL)
 @Composable
 private fun Preview_PlaylistScreen() {
-    val context = LocalContext.current
-    PrefManager.init(context)
-
     XmpTheme {
         PlaylistScreen(
             state = Playlist(
