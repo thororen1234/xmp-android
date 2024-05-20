@@ -6,8 +6,10 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.tooling.preview.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.ErrorScreen
@@ -22,12 +24,50 @@ import org.helllabs.android.xmp.model.Module
 import org.helllabs.android.xmp.model.SearchListResult
 import org.helllabs.android.xmp.model.Sponsor
 import org.helllabs.android.xmp.model.SponsorDetails
+import timber.log.Timber
 
 @Serializable
 data class NavSearchTitleResult(val searchQuery: String, val isArtistSearch: Int)
 
 @Composable
-fun TitleResultScreen(
+fun TitleResultScreenImpl(
+    viewModel: SearchResultViewModel,
+    isArtistSearch: Int,
+    searchQuery: String,
+    onBack: () -> Unit,
+    onClick: (Int) -> Unit,
+    onError: (String?) -> Unit
+) {
+    val context = LocalContext.current
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        if (isArtistSearch == 0) {
+            val title = context.getString(R.string.search_artist_title)
+            viewModel.getArtists(title, searchQuery)
+        } else {
+            val title = context.getString(R.string.search_title_title)
+            viewModel.getFileOrTitle(title, searchQuery)
+        }
+    }
+
+    LaunchedEffect(state.hardError) {
+        if (state.hardError != null) {
+            Timber.w("Hard error has occurred")
+            onError(state.hardError)
+        }
+    }
+
+    TitleResultScreen(
+        state = state,
+        onBack = onBack,
+        onItemId = onClick,
+        onArtistId = viewModel::getArtistById,
+    )
+}
+
+@Composable
+private fun TitleResultScreen(
     state: SearchResultViewModel.SearchResultState,
     onBack: () -> Unit,
     onItemId: (id: Int) -> Unit,

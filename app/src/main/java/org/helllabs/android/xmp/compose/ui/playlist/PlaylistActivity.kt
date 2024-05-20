@@ -7,16 +7,16 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.hapticfeedback.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.BottomBarButtons
@@ -31,13 +31,98 @@ import org.helllabs.android.xmp.model.PlaylistItem
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 import sh.calvin.reorderable.rememberScroller
+import timber.log.Timber
 
 @Serializable
 data class NavPlaylist(val playlist: String)
 
+@Composable
+fun PlaylistScreenImpl(
+    viewModel: PlaylistActivityViewModel,
+    snackBarHostState: SnackbarHostState,
+    playlist: String,
+    onBack: () -> Unit,
+    onPlayAll: (List<Uri>, Boolean, Boolean) -> Unit,
+    onAddQueue: (List<Uri>, Boolean, Boolean) -> Unit,
+    onPlayModule: (List<Uri>, Int, Boolean, Boolean, Boolean) -> Unit,
+    onItemClick: (List<Uri>, Int, Boolean, Boolean) -> Unit
+) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    LifecycleResumeEffect(Lifecycle.Event.ON_RESUME) {
+        Timber.d("Lifecycle onResume")
+        viewModel.onRefresh(playlist)
+
+        onPauseOrDispose {
+            Timber.d("Lifecycle onPause")
+            viewModel.save()
+        }
+    }
+
+    PlaylistScreen(
+        state = state,
+        snackBarHostState = snackBarHostState,
+        onBack = onBack,
+        onItemClick = { index ->
+            onItemClick(
+                viewModel.getUriItems(),
+                index,
+                viewModel.uiState.value.isShuffle,
+                viewModel.uiState.value.isLoop,
+            )
+        },
+        onMenuClick = { item, index, selection ->
+            when (selection) {
+                DropDownSelection.DELETE -> {
+                    viewModel.removeItem(index)
+                    viewModel.onRefresh(playlist)
+                }
+
+                DropDownSelection.ADD_TO_QUEUE ->
+                    onAddQueue(
+                        listOf(item.uri),
+                        viewModel.uiState.value.isShuffle,
+                        viewModel.uiState.value.isLoop,
+                    )
+
+                DropDownSelection.FILE_PLAY_HERE ->
+                    onPlayModule(
+                        viewModel.getUriItems(),
+                        index,
+                        false,
+                        viewModel.uiState.value.isShuffle,
+                        viewModel.uiState.value.isLoop,
+                    )
+
+                DropDownSelection.FILE_PLAY_THIS_ONLY ->
+                    onPlayModule(
+                        listOf(item.uri),
+                        0,
+                        false,
+                        viewModel.uiState.value.isShuffle,
+                        viewModel.uiState.value.isLoop,
+                    )
+
+                else -> Unit
+            }
+        },
+        onPlayAll = {
+            onPlayAll(
+                viewModel.getUriItems(),
+                viewModel.uiState.value.isShuffle,
+                viewModel.uiState.value.isLoop,
+            )
+        },
+        onShuffle = viewModel::setShuffle,
+        onLoop = viewModel::setLoop,
+        onMove = viewModel::onMove,
+        onDragStopped = viewModel::onDragStopped
+    )
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PlaylistScreen(
+private fun PlaylistScreen(
     state: Playlist,
     snackBarHostState: SnackbarHostState,
     onBack: () -> Unit,

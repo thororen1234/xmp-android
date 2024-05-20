@@ -11,27 +11,22 @@ import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.FileItem
-import timber.log.Timber
 
 class PlaylistMenuViewModel : ViewModel() {
     data class PlaylistMenuState(
-        val errorText: String = "",
-        val isFatalError: Boolean = false,
+        val errorText: String? = null,
         val isLoading: Boolean = true,
         val mediaPath: String = "",
-        val playlistItems: List<FileItem> = listOf()
+        val playlistItems: List<FileItem> = listOf(),
+        val editPlaylist: FileItem? = null,
+        val newPlaylist: Boolean = false
     )
 
     private val _uiState = MutableStateFlow(PlaylistMenuState())
     val uiState = _uiState.asStateFlow()
 
-    fun showError(message: String, isFatal: Boolean) {
-        if (isFatal) {
-            Timber.e(message)
-        } else {
-            Timber.w(message)
-        }
-        _uiState.update { it.copy(errorText = message, isFatalError = isFatal) }
+    fun showError(message: String) {
+        _uiState.update { it.copy(errorText = message) }
     }
 
     // Create application directory and populate with empty playlist
@@ -74,7 +69,7 @@ class PlaylistMenuViewModel : ViewModel() {
                 updateList()
             },
             onError = { error ->
-                showError(error, false)
+                showError(error)
                 _uiState.update { it.copy(mediaPath = "") }
             }
         )
@@ -109,5 +104,17 @@ class PlaylistMenuViewModel : ViewModel() {
 
             _uiState.update { it.copy(playlistItems = items.sorted(), isLoading = false) }
         }
+    }
+
+    fun editPlaylist(item: FileItem?) {
+        _uiState.update { it.copy(editPlaylist = item) }
+
+        if (item == null) {
+            updateList()
+        }
+    }
+
+    fun newPlaylist(show: Boolean) {
+        _uiState.update { it.copy(newPlaylist = show) }
     }
 }

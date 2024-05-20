@@ -1,5 +1,8 @@
 package org.helllabs.android.xmp.compose.ui.search.result
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.*
@@ -7,18 +10,24 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.*
 import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.R
+import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.compose.components.ErrorScreen
 import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.search.components.ModuleLayout
+import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.Artist
 import org.helllabs.android.xmp.model.ArtistInfo
 import org.helllabs.android.xmp.model.License
@@ -26,12 +35,95 @@ import org.helllabs.android.xmp.model.Module
 import org.helllabs.android.xmp.model.ModuleResult
 import org.helllabs.android.xmp.model.Sponsor
 import org.helllabs.android.xmp.model.SponsorDetails
+import timber.log.Timber
 
 @Serializable
 data class NavSearchResult(val moduleID: Int) // -1 will random result.
 
 @Composable
-fun ModuleResultScreen(
+fun ModuleResultScreenImpl(
+    viewModel: ResultViewModel,
+    snackBarHostState: SnackbarHostState,
+    moduleID: Int,
+    onShare: (String) -> Unit,
+    onError: (String?) -> Unit,
+    onBack: () -> Unit
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val playerResult = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == 1) {
+            result.data?.getStringExtra("error")?.let { str ->
+                Timber.w("Result with error: $str")
+                scope.launch {
+                    snackBarHostState.showSnackbar(message = str)
+                }
+            }
+        }
+        if (result.resultCode == 2) {
+            viewModel.update()
+        }
+    }
+
+    LaunchedEffect(state.hardError) {
+        if (state.hardError != null) {
+            Timber.w("Hard error has occurred")
+            onError(state.hardError)
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (moduleID < 0) {
+            viewModel.getRandomModule()
+        } else {
+            viewModel.getModuleById(moduleID)
+        }
+    }
+
+    ModuleResultScreen(
+        state = state,
+        snackBarHostState = snackBarHostState,
+        onBack = onBack,
+        onRandom = viewModel::getRandomModule,
+        onShare = { onShare(it) },
+        onDeleteModule = viewModel::deleteModule,
+        onDownloadModule = { module ->
+            StorageManager.getDownloadPath(
+                module = module,
+                onSuccess = { dfc ->
+                    viewModel.downloadModule(module, dfc)
+                },
+                onError = viewModel::showSoftError
+            )
+        },
+        onPlay = { module ->
+            StorageManager.doesModuleExist(
+                module = module,
+                onFound = { uri ->
+                    val modListUri = arrayListOf(uri)
+
+                    XmpApplication.instance?.fileListUri = modListUri
+
+                    Timber.i("Play ${uri.path}")
+                    Intent(context, PlayerActivity::class.java).apply {
+                        putExtra(PlayerActivity.PARM_START, 0)
+                    }.also(playerResult::launch)
+                },
+                onNotFound = { dfc ->
+                    viewModel.downloadModule(module, dfc)
+                },
+                onError = viewModel::showSoftError
+            )
+        }
+    )
+}
+
+@Composable
+private fun ModuleResultScreen(
     state: ResultViewModel.ModuleResultState,
     snackBarHostState: SnackbarHostState,
     onBack: () -> Unit,

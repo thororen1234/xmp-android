@@ -10,7 +10,7 @@ import com.materialkolor.rememberDynamicColorScheme
 @Composable
 fun themedText(text: String): AnnotatedString {
     return buildAnnotatedString {
-        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+        withStyle(style = SpanStyle(color = seed)) {
             append(text.substring(0, 3))
         }
 
