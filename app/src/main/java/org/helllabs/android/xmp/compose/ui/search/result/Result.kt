@@ -92,32 +92,32 @@ fun ModuleResultScreenImpl(
         onShare = { onShare(it) },
         onDeleteModule = viewModel::deleteModule,
         onDownloadModule = { module ->
-            StorageManager.getDownloadPath(
-                module = module,
-                onSuccess = { dfc ->
-                    viewModel.downloadModule(module, dfc)
-                },
-                onError = viewModel::showSoftError
-            )
+            StorageManager.getDownloadPath(module = module)
+                .onSuccess { viewModel.downloadModule(module, it) }
+                .onFailure {
+                    viewModel.showSoftError(
+                        it.message ?: context.getString(R.string.error)
+                    )
+                }
         },
         onPlay = { module ->
-            StorageManager.doesModuleExist(
-                module = module,
-                onFound = { uri ->
-                    val modListUri = arrayListOf(uri)
+            StorageManager.doesModuleExist(module = module)
+                .onSuccess { dfc ->
+                    if (dfc.isFile()) {
+                        val modListUri = arrayListOf(dfc.uri)
 
-                    XmpApplication.instance?.fileListUri = modListUri
+                        XmpApplication.instance?.fileListUri = modListUri
 
-                    Timber.i("Play ${uri.path}")
-                    Intent(context, PlayerActivity::class.java).apply {
-                        putExtra(PlayerActivity.PARM_START, 0)
-                    }.also(playerResult::launch)
-                },
-                onNotFound = { dfc ->
-                    viewModel.downloadModule(module, dfc)
-                },
-                onError = viewModel::showSoftError
-            )
+                        Timber.i("Play ${dfc.uri.path}")
+                        Intent(context, PlayerActivity::class.java).apply {
+                            putExtra(PlayerActivity.PARM_START, 0)
+                        }.also(playerResult::launch)
+                    } else {
+                        viewModel.downloadModule(module, dfc)
+                    }
+                }.onFailure {
+                    viewModel.showSoftError(it.message ?: context.getString(R.string.error))
+                }
         }
     )
 }

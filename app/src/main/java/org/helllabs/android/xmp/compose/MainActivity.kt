@@ -16,6 +16,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.lifecycle.lifecycleScope
@@ -106,7 +108,31 @@ class MainActivity : ComponentActivity() {
             XmpTheme {
                 NavHost(
                     navController = navController,
-                    startDestination = NavigationHome
+                    startDestination = NavigationHome,
+                    enterTransition = {
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                            animationSpec = tween(500)
+                        )
+                    },
+                    exitTransition = {
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                            animationSpec = tween(500)
+                        )
+                    },
+                    popEnterTransition = {
+                        slideIntoContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.End,
+                            animationSpec = tween(500)
+                        )
+                    },
+                    popExitTransition = {
+                        slideOutOfContainer(
+                            towards = AnimatedContentTransitionScope.SlideDirection.End,
+                            animationSpec = tween(500)
+                        )
+                    }
                 ) {
                     composable<NavigationHome> {
                         val viewModel by viewModels<PlaylistMenuViewModel>()
@@ -141,6 +167,9 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel,
                             snackBarHostState = snackBarHostState,
                             onBackPressedDispatcher = onBackPressedDispatcher,
+                            onBack = {
+                                navController.popBackStack()
+                            },
                             onPlayAll = { modList, isShuffleMode, isLoopMode ->
                                 onPlayAll(
                                     modList = modList,
@@ -277,9 +306,11 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<NavSearchError> {
                         val args = it.toRoute<NavSearchError>()
+
                         ErrorScreen(
                             message = args.error,
-                            onBack = { navController.popBackStack(NavSearch, true) }
+                            onBackPressedCallback = onBackPressedDispatcher,
+                            onBack = { navController.popBackStack(NavSearch, false) }
                         )
                     }
                     composable<NavSearchTitleResult> {

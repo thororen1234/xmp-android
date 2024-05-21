@@ -68,9 +68,12 @@ class FileListViewModel : ViewModel() {
             )
         }
 
-        val init = StorageManager.getModDirectory()
-        Timber.d("Initial Path: ${init!!.uri}")
-        onNavigate(init)
+        StorageManager.getModDirectory().onSuccess { dfc ->
+            Timber.d("Initial Path: ${dfc.uri}")
+            onNavigate(dfc)
+        }.onFailure {
+            Timber.e(it)
+        }
     }
 
     fun setScrollPosition(value: Int) {

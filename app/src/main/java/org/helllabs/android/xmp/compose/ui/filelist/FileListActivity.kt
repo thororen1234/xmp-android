@@ -52,6 +52,7 @@ fun FileListScreenImpl(
     viewModel: FileListViewModel,
     snackBarHostState: SnackbarHostState,
     onBackPressedDispatcher: OnBackPressedDispatcher,
+    onBack: () -> Unit,
     onPlayAll: (List<Uri>, Boolean, Boolean) -> Unit,
     onAddQueue: (List<Uri>, Boolean, Boolean) -> Unit,
     onPlayModule: (List<Uri>, Int, Boolean, Boolean, Boolean) -> Unit,
@@ -76,12 +77,13 @@ fun FileListScreenImpl(
         }
     }
 
+    // TODO top app bar back button isn't working.
     // On back pressed handler
     val callback = remember {
         object : OnBackPressedCallback(true) {
             private fun goBack() {
                 this.remove()
-                onBackPressedDispatcher.onBackPressed()
+                onBack()
             }
 
             override fun handleOnBackPressed() {

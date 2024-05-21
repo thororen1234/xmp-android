@@ -46,19 +46,13 @@ fun PreferencesScreen(
     val documentTreeResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
-        StorageManager.setPlaylistDirectory(
-            uri = uri,
-            onSuccess = {
-                scope.launch {
-                    snackBarHostState.showSnackbar("Default directory changed")
-                }
-            },
-            onError = {
-                scope.launch {
-                    snackBarHostState.showSnackbar("Failed to change default directory")
-                }
+        scope.launch {
+            StorageManager.setPlaylistDirectory(uri = uri).onSuccess {
+                snackBarHostState.showSnackbar("Default directory changed")
+            }.onFailure {
+                snackBarHostState.showSnackbar("Failed to change default directory")
             }
-        )
+        }
     }
 
     Scaffold(

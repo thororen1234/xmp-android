@@ -62,6 +62,8 @@ fun HomeScreenImpl(
     val scope = rememberCoroutineScope()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
+    var hasStorage by remember { mutableStateOf(false) }
+
     val appSettings = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
     ) {
@@ -71,13 +73,11 @@ fun HomeScreenImpl(
     val documentTreeResult = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
-        StorageManager.setPlaylistDirectory(
-            uri = uri,
-            onSuccess = viewModel::setDefaultPath,
-            onError = {
-                viewModel.showError(message = it)
-            }
-        )
+        StorageManager.setPlaylistDirectory(uri).onSuccess {
+            viewModel.setDefaultPath()
+        }.onFailure {
+            viewModel.showError(message = it.message ?: context.getString(R.string.error))
+        }
     }
 
     val playerResult = rememberLauncherForActivityResult(
@@ -115,6 +115,10 @@ fun HomeScreenImpl(
         } else {
             viewModel.setDefaultPath()
         }
+    }
+
+    LaunchedEffect(state.mediaPath) {
+        hasStorage = StorageManager.checkPermissions()
     }
 
     /**
@@ -169,9 +173,11 @@ fun HomeScreenImpl(
             viewModel.setupDataDir(
                 name = context.getString(R.string.empty_playlist),
                 comment = context.getString(R.string.empty_comment),
-                onSuccess = viewModel::updateList,
-                onError = viewModel::showError
-            )
+            ).onSuccess {
+                viewModel.updateList()
+            }.onFailure {
+                viewModel.showError(it.message ?: context.getString(R.string.error))
+            }
         }
     }
 
@@ -198,7 +204,7 @@ fun HomeScreenImpl(
     HomeScreen(
         state = state,
         snackBarHostState = snackBarHostState,
-        permissionState = StorageManager.checkPermissions(),
+        permissionState = hasStorage,
         onItemClick = { item ->
             if (item.isSpecial) {
                 onNavFileList()
@@ -414,7 +420,7 @@ private fun MenuEditDialog(
                 rename(newName, newComment)
             }
 
-            onConfirm(res)
+            onConfirm(res.isSuccess)
         },
         onDismiss = onDismiss,
         onDelete = onDelete
@@ -433,7 +439,7 @@ private fun MenuNewPlaylist(
             val res = PlaylistManager().run {
                 new(name, comment)
             }
-            onConfirm(res)
+            onConfirm(res.isSuccess)
         },
         onDismiss = onDismiss
     )

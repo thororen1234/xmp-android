@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.core.StorageManager
+import org.helllabs.android.xmp.core.XmpException
 import org.helllabs.android.xmp.model.FileItem
 
 class PlaylistMenuViewModel : ViewModel() {
@@ -30,49 +31,39 @@ class PlaylistMenuViewModel : ViewModel() {
     }
 
     // Create application directory and populate with empty playlist
-    fun setupDataDir(
-        name: String,
-        comment: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
-    ) {
-        val playlistsDir = StorageManager.getPlaylistDirectory()
-        if (playlistsDir == null || playlistsDir.isFile()) {
-            onError("setupDataDir: Playlist Directory returned null or is file!")
-            return
-        }
-
-        if (PrefManager.installedExamplePlaylist) {
-            onSuccess()
-            return
-        }
-
-        val isPlaylistEmpty = playlistsDir.listFiles().isEmpty()
-        if (isPlaylistEmpty) {
-            val res = PlaylistManager().run {
-                new(name, comment)
+    fun setupDataDir(name: String, comment: String): Result<Unit> {
+        return StorageManager.getPlaylistDirectory().mapCatching { dir ->
+            if (dir.isFile()) {
+                throw XmpException("Playlist Directory returned null or is file!")
             }
 
-            if (res) {
-                PrefManager.installedExamplePlaylist = true
-                onSuccess()
-            } else {
-                onError("Unable to create Example playlist")
+            if (PrefManager.installedExamplePlaylist) {
+                return@mapCatching
+            }
+
+            val isPlaylistEmpty = dir.listFiles().isEmpty()
+            if (isPlaylistEmpty) {
+                val res = PlaylistManager().run {
+                    new(name, comment)
+                }
+
+                if (res.isSuccess) {
+                    PrefManager.installedExamplePlaylist = true
+                } else {
+                    throw XmpException("Unable to create Example playlist")
+                }
             }
         }
     }
 
     fun setDefaultPath() {
-        StorageManager.getDefaultPathName(
-            onSuccess = { name ->
-                _uiState.update { it.copy(mediaPath = name) }
-                updateList()
-            },
-            onError = { error ->
-                showError(error)
-                _uiState.update { it.copy(mediaPath = "") }
-            }
-        )
+        StorageManager.getDefaultPathName().onSuccess { name ->
+            _uiState.update { it.copy(mediaPath = name) }
+            updateList()
+        }.onFailure { err ->
+            showError(err.message ?: "Error setting default path")
+            _uiState.update { it.copy(mediaPath = "") }
+        }
     }
 
     fun updateList() {

@@ -1,5 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.search
 
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.OnBackPressedDispatcher
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
@@ -19,6 +21,7 @@ import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.topazFontFamily
+import timber.log.Timber
 
 @Serializable
 data class NavSearchError(val error: String? = null)
@@ -26,10 +29,28 @@ data class NavSearchError(val error: String? = null)
 @Composable
 fun ErrorScreen(
     message: String?,
+    onBackPressedCallback: OnBackPressedDispatcher,
     onBack: () -> Unit
 ) {
     val errorMsg = remember {
         message?.substringAfter("Exception: ")?.trim()
+    }
+
+    val callback = remember {
+        object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                onBack()
+            }
+        }
+    }
+
+    // Set up and override on back pressed.
+    DisposableEffect(onBackPressedCallback) {
+        onBackPressedCallback.addCallback(callback)
+        onDispose {
+            Timber.d("Removing callback")
+            callback.remove()
+        }
     }
 
     Scaffold(
@@ -96,6 +117,7 @@ private fun Preview_ErrorScreen() {
     XmpTheme(useDarkTheme = true) {
         ErrorScreen(
             message = null,
+            onBackPressedCallback = OnBackPressedDispatcher(),
             onBack = {}
         )
     }
@@ -107,6 +129,7 @@ private fun Preview_ErrorScreen_WithMessage() {
     XmpTheme(useDarkTheme = true) {
         ErrorScreen(
             message = "Exception: Some Error Message",
+            onBackPressedCallback = OnBackPressedDispatcher(),
             onBack = {}
         )
     }

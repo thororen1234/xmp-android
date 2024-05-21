@@ -29,7 +29,7 @@ class PlaylistManager {
         adapter = moshi.adapter(Playlist::class.java)
     }
 
-    fun new(name: String, comment: String): Boolean {
+    fun new(name: String, comment: String): Result<Boolean> {
         init()
 
         playlist = Playlist(
@@ -57,41 +57,36 @@ class PlaylistManager {
         return true
     }
 
-    fun save(): Boolean {
-        val playlistDir = StorageManager.getPlaylistDirectory()
-
-        if (playlistDir == null) {
-            Timber.e("Saving playlist failed, unable to get playlist directory")
-            return false
-        }
-
-        if (!oldName.isNullOrEmpty()) {
-            playlistDir.findFile(oldName + Playlist.SUFFIX)
-
-            if (!playlistDir.delete()) {
-                Timber.e("Failed to delete old file")
+    fun save(): Result<Boolean> {
+        return StorageManager.getPlaylistDirectory().mapCatching { dir ->
+            if (!oldName.isNullOrEmpty()) {
+                val oldFile = dir.findFile(oldName + Playlist.SUFFIX)
+                if (oldFile != null && !oldFile.delete()) {
+                    throw XmpException("Failed to delte old file.")
+                }
+            } else {
+                dir.findFile(playlist.name + Playlist.SUFFIX)?.delete()
             }
-        } else {
-            playlistDir
-                .findFile(playlist.name + Playlist.SUFFIX)
-                ?.delete()
+
+            val mimeType = "application/octet-stream"
+            val newFile = dir.createFile(mimeType, playlist.name + Playlist.SUFFIX)
+                ?: throw IllegalStateException("Failed to create new file")
+
+            playlist.uri = newFile.uri
+
+            val jsonString = adapter.toJson(playlist)
+            val context = XmpApplication.instance?.applicationContext
+                ?: throw IllegalStateException("Application context is null")
+
+            context.contentResolver.openOutputStream(playlist.uri)?.use { outputStream ->
+                outputStream.writer().use { it.write(jsonString) }
+            } ?: throw IllegalStateException("Failed to open output stream")
+
+            true
         }
-
-        val mimeType = "application/octet-stream"
-        val newFile = playlistDir.createFile(mimeType, playlist.name + Playlist.SUFFIX)
-
-        playlist.uri = newFile!!.uri
-
-        val jsonString = adapter.toJson(playlist)
-        val context = XmpApplication.instance!!.applicationContext
-        context.contentResolver.openOutputStream(playlist.uri)?.use { outputStream ->
-            outputStream.writer().use { it.write(jsonString) }
-        }
-
-        return true
     }
 
-    fun rename(newName: String, newComment: String): Boolean {
+    fun rename(newName: String, newComment: String): Result<Boolean> {
         if (newName != playlist.name) {
             oldName = playlist.name
         }
@@ -109,7 +104,7 @@ class PlaylistManager {
         playlist.list = newList
 
         if (res) {
-            res = save()
+            res = save().isSuccess
         }
 
         return res
@@ -129,49 +124,50 @@ class PlaylistManager {
 
     companion object {
         fun listPlaylistsDF(): List<DocumentFileCompat> {
-            val playlistsDir = StorageManager.getPlaylistDirectory()
-            if (playlistsDir == null || playlistsDir.isFile()) {
+            return StorageManager.getPlaylistDirectory().mapCatching { dir ->
+                if (dir.isFile()) {
+                    throw XmpException("Playlist dir is a file.")
+                }
+                dir.listFiles()
+            }.getOrElse {
                 Timber.e("Unable to query playlist dir")
-                return emptyList()
+                emptyList()
             }
-
-            return playlistsDir.listFiles()
         }
 
         fun listPlaylists(): List<Playlist> {
-            val playlistsDir = StorageManager.getPlaylistDirectory()
-            if (playlistsDir == null || playlistsDir.isFile()) {
+            return StorageManager.getPlaylistDirectory().mapCatching { dir ->
+                if (dir.isFile()) {
+                    throw XmpException("Playlist dir is a file")
+                }
+
+                val list = mutableListOf<Playlist>()
+                for (dfc in dir.listFiles()) {
+                    if (dfc.extension != "json") continue
+
+                    PlaylistManager().run {
+                        load(dfc.uri)
+                        playlist
+                    }.also(list::add)
+                }
+
+                list
+            }.getOrElse {
                 Timber.e("Unable to query playlist dir")
-                return emptyList()
+                emptyList()
             }
-
-            val list = mutableListOf<Playlist>()
-            for (dfc in playlistsDir.listFiles()) {
-                if (dfc.extension != "json") continue
-
-                PlaylistManager().run {
-                    load(dfc.uri)
-                    playlist
-                }.also(list::add)
-            }
-
-            return list
         }
 
         fun delete(name: String): Boolean {
-            val file = StorageManager.getPlaylistDirectory()
-            if (file == null) {
-                Timber.e("Deleting playlist failed, unable to get playlist directory")
-                return false
-            }
+            return StorageManager.getPlaylistDirectory().mapCatching { dir ->
+                val playlist = dir.findFile(name + Playlist.SUFFIX)
+                    ?: throw XmpException("Unable to find playlist: $name")
 
-            val playlist = file.findFile(name + Playlist.SUFFIX)
-            if (playlist == null) {
-                Timber.e("Deleting playlist failed, unable to find $name")
-                return false
+                playlist.delete()
+            }.getOrElse {
+                Timber.e("Deleting playlist failed: ${it.message}")
+                false
             }
-
-            return playlist.delete()
         }
     }
 }
