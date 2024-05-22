@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.android.kotlin)
     alias(libs.plugins.gradle.kotlinter)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.compiler)
     kotlin("kapt")
 }
 
@@ -78,10 +79,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.kotlinCompiler.get()
     }
 
     kotlinOptions {

@@ -2,13 +2,12 @@
 accompanistPermissions = "0.35.1-alpha" # https://mvnrepository.com/artifact/com.google.accompanist/accompanist-permissions
 activityCompose = "1.9.0" # https://mvnrepository.com/artifact/androidx.activity/activity-compose
 androidGradlePlugin = "8.4.1" # https://mvnrepository.com/artifact/com.android.application/com.android.application.gradle.plugin
-androidKotlin = "1.9.24" # https://mvnrepository.com/artifact/org.jetbrains.kotlin.android/org.jetbrains.kotlin.android.gradle.plugin
 cascadeCompose = "2.3.0" # https://mvnrepository.com/artifact/me.saket.cascade/cascade-compose
 composeBom = "2024.05.00" # https://mvnrepository.com/artifact/androidx.compose/compose-bom
 composeNavigation = "2.8.0-beta01" # https://mvnrepository.com/artifact/androidx.navigation/navigation-compose
 coreKtx = "1.13.1" # https://mvnrepository.com/artifact/androidx.core/core-ktx
 dfc = "1.0.8" # https://mvnrepository.com/artifact/com.lazygeniouz/dfc
-kotlinCompiler = "1.5.14" # https://developer.android.com/jetpack/androidx/releases/compose-compiler
+kotlin = "2.0.0" # https://mvnrepository.com/artifact/org.jetbrains.kotlin.android/org.jetbrains.kotlin.android.gradle.plugin
 kotlinterGradle = "4.3.0" # // https://github.com/jeremymailen/kotlinter-gradle
 kotlinxSerializationJson = "1.6.3" # https://mvnrepository.com/artifact/org.jetbrains.kotlinx/kotlinx-serialization-json
 leakcanaryAndroid = "2.14" # https://mvnrepository.com/artifact/com.squareup.leakcanary/leakcanary-android
@@ -44,6 +43,7 @@ compose-ui-ui = { module = "androidx.compose.ui:ui" }
 
 accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
 cascade-compose = { module = "me.saket.cascade:cascade-compose", version.ref = "cascadeCompose" }
+compose-navigation = { module = "androidx.navigation:navigation-compose", version.ref = "composeNavigation" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 dfc = { module = "com.lazygeniouz:dfc", version.ref = "dfc" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
@@ -62,8 +62,6 @@ retrofit-serialization = { module = "com.squareup.retrofit2:converter-kotlinx-se
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 xmlutil-android-core = { module = "io.github.pdvrieze.xmlutil:core-android", version.ref = "xmlUtil" }
 xmlutil-android-serialization = { module = "io.github.pdvrieze.xmlutil:serialization-android", version.ref = "xmlUtil" }
-compose-navigation = { module = "androidx.navigation:navigation-compose", version.ref = "composeNavigation" }
-
 
 [bundles]
 compose = [
@@ -98,6 +96,7 @@ retrofit = [
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidGradlePlugin" }
-android-kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "androidKotlin" }
+android-kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 gradle-kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinterGradle" }
-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "androidKotlin" }
+kotlin-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
