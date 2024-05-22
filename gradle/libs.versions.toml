@@ -1,5 +1,4 @@
 [versions]
-accompanistPermissions = "0.35.1-alpha" # https://mvnrepository.com/artifact/com.google.accompanist/accompanist-permissions
 activityCompose = "1.9.0" # https://mvnrepository.com/artifact/androidx.activity/activity-compose
 androidGradlePlugin = "8.4.1" # https://mvnrepository.com/artifact/com.android.application/com.android.application.gradle.plugin
 cascadeCompose = "2.3.0" # https://mvnrepository.com/artifact/me.saket.cascade/cascade-compose
@@ -41,7 +40,6 @@ compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-ui-ui = { module = "androidx.compose.ui:ui" }
 
-accompanist-permissions = { module = "com.google.accompanist:accompanist-permissions", version.ref = "accompanistPermissions" }
 cascade-compose = { module = "me.saket.cascade:cascade-compose", version.ref = "cascadeCompose" }
 compose-navigation = { module = "androidx.navigation:navigation-compose", version.ref = "composeNavigation" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -80,7 +78,6 @@ compose = [
     "compose-navigation"
 ]
 compose-utils = [
-    "accompanist-permissions",
     "cascade-compose",
     "lifecycle-runtime-compose",
     "materialKolor",

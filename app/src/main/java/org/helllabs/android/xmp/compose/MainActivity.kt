@@ -31,6 +31,8 @@ import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.XmpApplication
+import org.helllabs.android.xmp.compose.components.PermissionHandler
+import org.helllabs.android.xmp.compose.components.PermissionModel
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.filelist.FileListScreenImpl
 import org.helllabs.android.xmp.compose.ui.filelist.FileListViewModel
@@ -65,8 +67,6 @@ import org.helllabs.android.xmp.model.Module
 import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
-
-// TODO perms for notifications
 
 class MainActivity : ComponentActivity() {
 
@@ -106,6 +106,18 @@ class MainActivity : ComponentActivity() {
         setContent {
             val scope = rememberCoroutineScope()
             val navController = rememberNavController()
+
+            // TODO show this composable if we don't have perms
+            @Suppress("InlinedApi")
+            PermissionHandler(
+                permissions = listOf(
+                    PermissionModel(
+                        permission = android.Manifest.permission.POST_NOTIFICATIONS,
+                        rational = "Show notification for media playback"
+                    )
+                ),
+                askPermission = true
+            )
 
             XmpTheme {
                 NavHost(
