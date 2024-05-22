@@ -106,20 +106,21 @@ fun FileListScreenImpl(
         }
     }
 
-    // todo: Ugly
     /**
      * Playlist choice dialog
      */
     ListDialog(
         isShowing = viewModel.playlistChoice != null,
         icon = Icons.AutoMirrored.Filled.PlaylistAdd,
-        title = stringResource(id = R.string.msg_select_playlist),
+        title = stringResource(id = R.string.dialog_title_select_playlist),
         list = viewModel.playlistList,
         onConfirm = viewModel::addToPlaylist,
         onDismiss = { viewModel.playlistChoice = null },
         onEmpty = {
             scope.launch {
-                context.getString(R.string.msg_no_playlists)
+                snackBarHostState.showSnackbar(
+                    message = context.getString(R.string.error_snack_no_playlists)
+                )
                 viewModel.playlistChoice = null
             }
         }
@@ -138,7 +139,7 @@ fun FileListScreenImpl(
                     viewModel.deleteDirChoice
                 )
             } and all its contents?",
-        confirmText = stringResource(id = R.string.menu_delete),
+        confirmText = stringResource(id = R.string.delete),
         onConfirm = {
             val res = StorageManager.deleteFileOrDirectory(viewModel.deleteDirChoice)
             if (!res) {
@@ -162,7 +163,7 @@ fun FileListScreenImpl(
         title = "Delete File",
         text = "Are you sure you want to delete " +
             "${StorageManager.getFileName(viewModel.deleteFileChoice)}?",
-        confirmText = stringResource(id = R.string.menu_delete),
+        confirmText = stringResource(id = R.string.delete),
         onConfirm = {
             val res =
                 StorageManager.deleteFileOrDirectory(viewModel.deleteFileChoice)
@@ -352,7 +353,7 @@ private fun FileListScreen(
         topBar = {
             Column {
                 XmpTopBar(
-                    title = stringResource(id = R.string.browser_filelist_title),
+                    title = stringResource(id = R.string.screen_title_filelist),
                     isScrolled = isScrolled,
                     onBack = onBack
                 )
@@ -407,10 +408,10 @@ private fun FileListScreen(
 
                 if (state.list.isEmpty() && !state.isLoading) {
                     ErrorScreen(
-                        text = stringResource(id = R.string.empty_directory),
+                        text = stringResource(id = R.string.error_empty_directory),
                         content = {
                             OutlinedButton(onClick = onRestore) {
-                                Text(text = stringResource(id = R.string.go_back))
+                                Text(text = stringResource(id = R.string.back))
                             }
                         }
                     )

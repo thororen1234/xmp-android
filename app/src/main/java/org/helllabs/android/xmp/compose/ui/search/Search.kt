@@ -45,7 +45,7 @@ fun SearchScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             XmpTopBar(
-                title = stringResource(id = R.string.search_title),
+                title = stringResource(id = R.string.screen_title_search_module),
                 onBack = onBack,
                 actions = {
                     IconButton(onClick = onHistory) {
@@ -92,7 +92,7 @@ fun SearchScreen(
                         keyboardType = KeyboardType.Text
                     ),
                     maxLines = 1,
-                    label = { Text(text = stringResource(id = R.string.search_search)) }
+                    label = { Text(text = stringResource(id = R.string.search)) }
                 )
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -123,7 +123,7 @@ fun SearchScreen(
 @Composable
 private fun SegmentedButtons(isArtistSearch: Int, onSearchType: (Int) -> Unit) {
     val searchOptions by remember {
-        val list = listOf(R.string.search_artist, R.string.search_title_or_filename)
+        val list = listOf(R.string.artist, R.string.title_or_filename)
         mutableStateOf(list)
     }
 
@@ -168,7 +168,7 @@ private fun SearchButtons(
             enabled = searchText.isNotEmpty(),
             onClick = { onSearch(searchText) }
         ) {
-            Text(text = stringResource(id = R.string.search_search))
+            Text(text = stringResource(id = R.string.search))
         }
         Spacer(modifier = Modifier.width(16.dp))
         OutlinedButton(
@@ -176,7 +176,7 @@ private fun SearchButtons(
                 .weight(.75f),
             onClick = onRandom
         ) {
-            Text(text = stringResource(id = R.string.search_random_pick))
+            Text(text = stringResource(id = R.string.random))
         }
     }
 }
@@ -190,6 +190,7 @@ private fun DownloadsText(
         text = stringResource(id = R.string.search_provided_by),
         url = "modarchive.org"
     )
+    // TODO
     ClickableText(
         modifier = modifier,
         text = linkString,

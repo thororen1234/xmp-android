@@ -23,7 +23,7 @@ object NavPreferenceFormats
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FormatsScreen(
-    snackbarHostState: SnackbarHostState,
+    snackBarHostState: SnackbarHostState,
     formatsList: List<String>,
     onBack: () -> Unit
 ) {
@@ -35,10 +35,10 @@ fun FormatsScreen(
     }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+        snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         topBar = {
             XmpTopBar(
-                title = stringResource(id = R.string.pref_about_formats),
+                title = stringResource(id = R.string.screen_title_formats),
                 isScrolled = isScrolled.value,
                 onBack = onBack
             )
@@ -62,8 +62,8 @@ fun FormatsScreen(
                         onLongClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             scope.launch {
-                                snackbarHostState.showSnackbar(
-                                    message = context.getString(R.string.clipboard_copied)
+                                snackBarHostState.showSnackbar(
+                                    message = context.getString(R.string.copied)
                                 )
                             }
                             clip.setText(buildAnnotatedString { append(item) })
@@ -83,7 +83,7 @@ fun FormatsScreen(
 private fun Preview_FormatsScreen() {
     XmpTheme(useDarkTheme = true) {
         FormatsScreen(
-            snackbarHostState = SnackbarHostState(),
+            snackBarHostState = SnackbarHostState(),
             formatsList = List(14) { "Format $it" },
             onBack = { }
         )

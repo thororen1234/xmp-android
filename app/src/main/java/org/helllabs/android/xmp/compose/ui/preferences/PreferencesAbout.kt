@@ -37,7 +37,7 @@ fun AboutScreen(
     Scaffold(
         topBar = {
             XmpTopBar(
-                title = stringResource(id = R.string.pref_about_title),
+                title = stringResource(id = R.string.screen_title_about),
                 isScrolled = isScrolled,
                 onBack = onBack
             )

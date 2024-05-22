@@ -66,6 +66,8 @@ import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 
+// TODO perms for notifications
+
 class MainActivity : ComponentActivity() {
 
     private val snackBarHostState = SnackbarHostState()
@@ -81,7 +83,7 @@ class MainActivity : ComponentActivity() {
                 mModPlayer!!.add(mAddList)
                 mAddList = listOf()
             } catch (e: RemoteException) {
-                showSnack(getString(R.string.error_adding_mod))
+                showSnack(getString(R.string.error_snack_adding_mod))
             }
             unbindService(this)
         }
@@ -360,7 +362,7 @@ class MainActivity : ComponentActivity() {
                     composable<NavPreferenceFormats> {
                         val formats = remember { Xmp.formats }
                         FormatsScreen(
-                            snackbarHostState = snackBarHostState,
+                            snackBarHostState = snackBarHostState,
                             formatsList = formats,
                             onBack = navController::popBackStack
                         )
@@ -387,7 +389,7 @@ class MainActivity : ComponentActivity() {
     ) {
         lifecycleScope.launch {
             if (modList.isEmpty()) {
-                showSnack(getString(R.string.error_no_files_to_play))
+                showSnack(getString(R.string.error_snack_no_files_to_play))
                 return@launch
             }
 

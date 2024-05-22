@@ -1,3 +1,5 @@
+@file:Suppress("PropertyName")
+
 package org.helllabs.android.xmp.model
 
 import android.text.Spanned

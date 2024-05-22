@@ -57,7 +57,7 @@ fun ErrorScreen(
         topBar = {
             XmpTopBar(
                 onBack = onBack,
-                title = stringResource(id = R.string.search_title_error)
+                title = stringResource(id = R.string.screen_title_error)
             )
         }
     ) { paddingValues ->

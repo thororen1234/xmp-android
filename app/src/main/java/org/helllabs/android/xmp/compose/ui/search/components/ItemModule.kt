@@ -69,7 +69,7 @@ fun ItemModule(
         },
         trailingContent = {
             Text(
-                text = stringResource(id = R.string.size_kb, item.byteSize),
+                text = stringResource(id = R.string.kb, item.byteSize),
                 maxLines = 1,
                 fontSize = 14.sp,
                 overflow = TextOverflow.Ellipsis

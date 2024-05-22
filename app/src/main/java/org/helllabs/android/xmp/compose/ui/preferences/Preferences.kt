@@ -59,7 +59,7 @@ fun PreferencesScreen(
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         topBar = {
             XmpTopBar(
-                title = stringResource(id = R.string.settings),
+                title = stringResource(id = R.string.screen_title_preferences),
                 isScrolled = isScrolled.value,
                 onBack = onBack
             )

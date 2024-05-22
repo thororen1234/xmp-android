@@ -164,7 +164,7 @@ fun SettingsGroupSound() {
             subtitle = {
                 Text(
                     text = stringResource(
-                        id = R.string.preferences_pan_separation_dialog,
+                        id = R.string.pref_pan_separation_dialog,
                         "${stereoMix.toInt()}%"
                     )
                 )
@@ -186,7 +186,7 @@ fun SettingsGroupSound() {
             subtitle = {
                 Text(
                     text = stringResource(
-                        id = R.string.preferences_default_pan_dialog,
+                        id = R.string.pref_default_pan_dialog,
                         "${defaultPan.toInt()}%"
                     )
                 )

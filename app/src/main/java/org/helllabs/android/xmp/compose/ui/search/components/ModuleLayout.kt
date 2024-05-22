@@ -111,7 +111,7 @@ fun ModuleLayout(
         val uriHandler = LocalUriHandler.current
         val size = (module.bytes.div(1024))
         val info = stringResource(
-            R.string.search_result_by,
+            R.string.result_by,
             module.format,
             module.getArtist(),
             size
@@ -142,7 +142,7 @@ fun ModuleLayout(
         )
         Spacer(modifier = Modifier.height(10.dp))
         // License
-        HeaderText(stringResource(id = R.string.text_license))
+        HeaderText(stringResource(id = R.string.license))
         Spacer(modifier = Modifier.height(5.dp))
         // Licence Link
         val licenseLink = annotatedLinkStringCombined(module.license.title, module.license.legalurl)
@@ -178,14 +178,14 @@ fun ModuleLayout(
         Spacer(modifier = Modifier.height(10.dp))
         if (module.comment.isNotEmpty()) {
             // Song Message
-            HeaderText(stringResource(id = R.string.text_song_message))
+            HeaderText(stringResource(id = R.string.song_message))
             Spacer(modifier = Modifier.height(10.dp))
             // Song Message Content
             MonoSpaceText(text = module.parseComment())
             Spacer(modifier = Modifier.height(10.dp))
         }
         // Instruments
-        HeaderText(stringResource(id = R.string.text_instruments))
+        HeaderText(stringResource(id = R.string.instruments))
         Spacer(modifier = Modifier.height(10.dp))
         // Instruments Content
         MonoSpaceText(text = module.parseInstruments())
@@ -194,9 +194,10 @@ fun ModuleLayout(
         if (moduleResult.hasSponsor()) {
             val sponsor = moduleResult.sponsor.details
             val sponsorLink = annotatedLinkStringCombined(sponsor.text, sponsor.link)
-            HeaderText(stringResource(id = R.string.text_sponsor))
+            HeaderText(stringResource(id = R.string.sponsor))
             Spacer(modifier = Modifier.height(10.dp))
             // Sponsor Content
+            // TODO
             ClickableText(
                 text = sponsorLink,
                 style = TextStyle(

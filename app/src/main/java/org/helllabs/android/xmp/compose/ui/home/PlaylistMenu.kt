@@ -160,7 +160,7 @@ fun HomeScreenImpl(
             if (res) {
                 viewModel.updateList()
             } else {
-                viewModel.showError(message = context.getString(R.string.error_create_playlist))
+                viewModel.showError(message = context.getString(R.string.dialog_message_error_create_playlist))
             }
 
             viewModel.newPlaylist(false)
@@ -171,8 +171,8 @@ fun HomeScreenImpl(
     LaunchedEffect(state.mediaPath) {
         if (state.mediaPath.isNotEmpty()) {
             viewModel.setupDataDir(
-                name = context.getString(R.string.empty_playlist),
-                comment = context.getString(R.string.empty_comment),
+                name = context.getString(R.string.error_empty_playlist),
+                comment = context.getString(R.string.error_empty_comment),
             ).onSuccess {
                 viewModel.updateList()
             }.onFailure {
@@ -399,7 +399,7 @@ private fun MenuErrorDialog(
         isShowing = state.errorText != null,
         title = stringResource(id = R.string.error),
         text = state.errorText.orEmpty(),
-        confirmText = stringResource(id = R.string.ok),
+        confirmText = stringResource(id = android.R.string.ok),
         onConfirm = onConfirm
     )
 }
@@ -478,7 +478,7 @@ fun MenuCardItem(
             supportingContent = {
                 Text(
                     text = item.comment.ifEmpty {
-                        stringResource(id = R.string.no_comment)
+                        stringResource(id = R.string.error_no_comment)
                     }
                 )
             }

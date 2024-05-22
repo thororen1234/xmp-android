@@ -56,7 +56,7 @@ fun SearchHistoryScreen(
             XmpTopBar(
                 isScrolled = isScrolled.value,
                 onBack = onBack,
-                title = stringResource(id = R.string.search_history),
+                title = stringResource(id = R.string.screen_title_history),
                 actions = {
                     if (historyList.isNotEmpty()) {
                         IconButton(onClick = onClear) {

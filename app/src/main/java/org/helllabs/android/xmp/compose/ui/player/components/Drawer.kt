@@ -115,7 +115,7 @@ fun PlayerDrawer(
             LazyColumn(state = state) {
                 itemsIndexed(sequences) { index, item ->
                     val main = stringResource(R.string.sidebar_main_song)
-                    val sub = stringResource(R.string.sheet_sub_song, index)
+                    val sub = stringResource(R.string.sidebar_sub_song, index)
                     val text = if (index == 0) main else sub
                     val label = String.format(
                         Locale.getDefault(),

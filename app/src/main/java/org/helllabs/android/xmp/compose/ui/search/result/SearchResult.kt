@@ -43,10 +43,10 @@ fun TitleResultScreenImpl(
 
     LaunchedEffect(Unit) {
         if (isArtistSearch == 0) {
-            val title = context.getString(R.string.search_artist_title)
+            val title = context.getString(R.string.screen_title_artist)
             viewModel.getArtists(title, searchQuery)
         } else {
-            val title = context.getString(R.string.search_title_title)
+            val title = context.getString(R.string.screen_title_search)
             viewModel.getFileOrTitle(title, searchQuery)
         }
     }
@@ -141,7 +141,7 @@ private fun Preview_TitleResult() {
         TitleResultScreen(
             state = SearchResultViewModel.SearchResultState(
                 isLoading = true,
-                title = stringResource(id = R.string.search_artist_title),
+                title = stringResource(id = R.string.screen_title_artist),
                 result = null,
                 softError = "Soft Error"
             ),
@@ -159,7 +159,7 @@ private fun Preview_TitleResult2() {
         TitleResultScreen(
             state = SearchResultViewModel.SearchResultState(
                 isLoading = false,
-                title = stringResource(id = R.string.search_artist_title),
+                title = stringResource(id = R.string.screen_title_artist),
                 result = SearchListResult(
                     sponsor = Sponsor(
                         details = SponsorDetails(

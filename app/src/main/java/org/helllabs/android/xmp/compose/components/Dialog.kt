@@ -80,8 +80,8 @@ fun ListDialog(
     icon: ImageVector,
     title: String,
     list: List<Playlist>,
-    confirmText: String = stringResource(id = R.string.ok),
-    dismissText: String = stringResource(id = R.string.cancel),
+    confirmText: String = stringResource(id = android.R.string.ok),
+    dismissText: String = stringResource(id = android.R.string.cancel),
     onConfirm: (Playlist) -> Unit,
     onDismiss: () -> Unit,
     onEmpty: () -> Unit
@@ -136,7 +136,7 @@ fun MessageDialog(
     title: String,
     text: String,
     confirmText: String,
-    dismissText: String = stringResource(id = R.string.cancel),
+    dismissText: String = stringResource(id = android.R.string.cancel),
     onConfirm: () -> Unit,
     onDismiss: (() -> Unit)? = null
 ) {
@@ -191,11 +191,11 @@ fun NewPlaylistDialog(
             Icon(imageVector = Icons.Default.Edit, contentDescription = null)
         },
         title = {
-            Text(text = stringResource(id = R.string.menu_new_playlist))
+            Text(text = stringResource(id = R.string.dialog_title_new_playlist))
         },
         text = {
             Column {
-                Text(text = stringResource(id = R.string.dialog_new_playlist))
+                Text(text = stringResource(id = R.string.dialog_message_new_playlist))
                 Spacer(modifier = Modifier.height(10.dp))
                 OutlinedTextField(
                     label = {
@@ -219,12 +219,12 @@ fun NewPlaylistDialog(
                 enabled = newName.isNotEmpty(),
                 onClick = { onConfirm(newName, newComment) }
             ) {
-                Text(text = stringResource(id = R.string.ok))
+                Text(text = stringResource(id = android.R.string.ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(id = R.string.cancel))
+                Text(text = stringResource(id = android.R.string.cancel))
             }
         }
     )
@@ -291,7 +291,7 @@ fun EditPlaylistDialog(
                     )
                 }
             ) {
-                Text(text = stringResource(id = R.string.ok))
+                Text(text = stringResource(id = android.R.string.ok))
             }
         },
         dismissButton = {
@@ -305,10 +305,10 @@ fun EditPlaylistDialog(
                     onDelete(fileItem)
                 }
             ) {
-                Text(text = stringResource(id = R.string.menu_delete))
+                Text(text = stringResource(id = R.string.delete))
             }
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(id = R.string.cancel))
+                Text(text = stringResource(id = android.R.string.cancel))
             }
         }
     )
@@ -355,12 +355,12 @@ fun TextInputDialog(
                 enabled = value.isNotEmpty(),
                 onClick = { onConfirm(value) }
             ) {
-                Text(text = stringResource(id = R.string.ok))
+                Text(text = stringResource(id = android.R.string.ok))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = stringResource(id = R.string.cancel))
+                Text(text = stringResource(id = android.R.string.cancel))
             }
         }
     )
@@ -408,7 +408,7 @@ fun Preview_ListDialog() {
             ListDialog(
                 isShowing = true,
                 icon = Icons.AutoMirrored.Filled.PlaylistAdd,
-                title = stringResource(id = R.string.msg_select_playlist),
+                title = stringResource(id = R.string.dialog_title_select_playlist),
                 list = List(20) {
                     Playlist(
                         name = "Playlist $it",
@@ -445,8 +445,8 @@ fun Preview_MessageDialog() {
             MessageDialog(
                 isShowing = true,
                 title = stringResource(id = R.string.error),
-                text = stringResource(id = R.string.error_create_playlist),
-                confirmText = stringResource(id = R.string.ok),
+                text = stringResource(id = R.string.dialog_message_error_create_playlist),
+                confirmText = stringResource(id = android.R.string.ok),
                 onConfirm = { },
                 onDismiss = { }
             )

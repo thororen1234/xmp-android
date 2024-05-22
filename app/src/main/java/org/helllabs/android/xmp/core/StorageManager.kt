@@ -38,7 +38,7 @@ object StorageManager {
     /**
      * Get our parent/root directory
      */
-    fun getParentDirectory(): Result<DocumentFileCompat> {
+    private fun getParentDirectory(): Result<DocumentFileCompat> {
         val context = XmpApplication.instance?.applicationContext
             ?: return Result.failure(XmpException("App context is null"))
 
@@ -119,7 +119,7 @@ object StorageManager {
     /**
      * Attempt to install sample modules in our assets folder. Skip if it exists
      */
-    fun installExampleMod(modPath: DocumentFileCompat?): Boolean {
+    private fun installExampleMod(modPath: DocumentFileCompat?): Boolean {
         if (!PrefManager.examples) {
             return true
         }

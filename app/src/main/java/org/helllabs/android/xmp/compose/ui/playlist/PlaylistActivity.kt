@@ -145,7 +145,7 @@ private fun PlaylistScreen(
         topBar = {
             Column {
                 XmpTopBar(
-                    title = stringResource(id = R.string.browser_playlist_title),
+                    title = stringResource(id = R.string.screen_title_playlist),
                     isScrolled = isScrolled.value,
                     onBack = onBack
                 )
@@ -228,10 +228,10 @@ private fun PlaylistScreen(
 
             if (state.list.isEmpty()) {
                 ErrorScreen(
-                    text = stringResource(id = R.string.empty_playlist),
+                    text = stringResource(id = R.string.error_empty_playlist),
                     content = {
                         OutlinedButton(onClick = onBack) {
-                            Text(text = stringResource(id = R.string.go_back))
+                            Text(text = stringResource(id = R.string.back))
                         }
                     }
                 )
@@ -246,10 +246,10 @@ private fun Preview_PlaylistScreen() {
     XmpTheme {
         PlaylistScreen(
             state = Playlist(
-                comment = stringResource(id = R.string.empty_comment),
+                comment = stringResource(id = R.string.error_empty_comment),
                 isLoop = true,
                 isShuffle = false,
-                name = stringResource(id = R.string.empty_playlist),
+                name = stringResource(id = R.string.error_empty_playlist),
                 list = List(15) {
                     PlaylistItem(
                         name = "Name $it",

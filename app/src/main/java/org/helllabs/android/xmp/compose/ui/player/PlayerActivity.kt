@@ -42,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -358,7 +357,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                 icon = Icons.Default.Info,
                 title = "Comments",
                 text = Xmp.getComment().orEmpty(),
-                confirmText = stringResource(id = R.string.ok),
+                confirmText = stringResource(id = android.R.string.ok),
                 onConfirm = { showComments = false }
             )
 
@@ -368,7 +367,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                 icon = Icons.Default.DeleteForever,
                 title = "Delete",
                 text = "Are you sure to delete this file?",
-                confirmText = stringResource(id = R.string.menu_delete),
+                confirmText = stringResource(id = R.string.delete),
                 onConfirm = {
                     try {
                         if (modPlayer!!.deleteFile()) {

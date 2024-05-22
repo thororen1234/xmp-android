@@ -47,7 +47,7 @@ fun PlaylistInfo(
                     lineHeight = 16.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    text = playlistComment.ifEmpty { stringResource(id = R.string.no_comment) }
+                    text = playlistComment.ifEmpty { stringResource(id = R.string.error_no_comment) }
                 )
             }
         },

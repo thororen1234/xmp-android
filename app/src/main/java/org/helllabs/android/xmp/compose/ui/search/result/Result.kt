@@ -144,12 +144,12 @@ private fun ModuleResultScreen(
     MessageDialog(
         isShowing = deleteModule,
         icon = Icons.Default.Delete,
-        title = stringResource(id = R.string.delete_file),
+        title = stringResource(id = R.string.delete_file_title),
         text = stringResource(
             id = R.string.delete_file_message,
             state.module?.module?.filename ?: ""
         ),
-        confirmText = stringResource(id = R.string.menu_delete),
+        confirmText = stringResource(id = R.string.delete),
         onConfirm = {
             onDeleteModule()
             deleteModule = false
@@ -162,9 +162,9 @@ private fun ModuleResultScreen(
     MessageDialog(
         isShowing = moduleExists != null,
         icon = Icons.Default.Delete,
-        title = stringResource(id = R.string.msg_file_exists),
+        title = stringResource(id = R.string.msg_file_exists_title),
         text = stringResource(id = R.string.msg_file_exists_message),
-        confirmText = stringResource(id = R.string.ok),
+        confirmText = stringResource(id = android.R.string.ok),
         onConfirm = {
             onDownloadModule(moduleExists!!)
             moduleExists = null
@@ -178,9 +178,9 @@ private fun ModuleResultScreen(
             XmpTopBar(
                 isScrolled = isScrolled.value,
                 title = if (state.isRandom) {
-                    stringResource(id = R.string.search_random_title)
+                    stringResource(id = R.string.screen_title_random)
                 } else {
-                    stringResource(id = R.string.search_result_title)
+                    stringResource(id = R.string.screen_title_result)
                 },
                 onBack = onBack,
                 actions = {
@@ -200,10 +200,10 @@ private fun ModuleResultScreen(
         },
         bottomBar = {
             val buttonText = when {
-                state.isLoading -> stringResource(id = R.string.button_loading)
-                state.moduleExists -> stringResource(id = R.string.button_play)
+                state.isLoading -> stringResource(id = R.string.loading)
+                state.moduleExists -> stringResource(id = R.string.play)
                 !state.moduleSupported ->
-                    stringResource(id = R.string.button_download_unsupported)
+                    stringResource(id = R.string.unsupported)
 
                 else -> stringResource(id = R.string.download)
             }
@@ -226,7 +226,7 @@ private fun ModuleResultScreen(
                         enabled = !state.isLoading,
                         onClick = onRandom
                     ) {
-                        Text(text = stringResource(id = R.string.search_random_pick))
+                        Text(text = stringResource(id = R.string.random))
                     }
                 }
             }
