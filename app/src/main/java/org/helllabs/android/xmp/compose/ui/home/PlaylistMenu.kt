@@ -160,7 +160,9 @@ fun HomeScreenImpl(
             if (res) {
                 viewModel.updateList()
             } else {
-                viewModel.showError(message = context.getString(R.string.dialog_message_error_create_playlist))
+                viewModel.showError(
+                    message = context.getString(R.string.dialog_message_error_create_playlist)
+                )
             }
 
             viewModel.newPlaylist(false)

@@ -66,21 +66,26 @@ class PermissionViewModel(
         endPermissionRequest = System.currentTimeMillis()
         val notGrantedPermissions =
             permissions.filter { it.permission in result.filter { permission -> permission.value.not() } }
-        if (notGrantedPermissions.isEmpty())
+        if (notGrantedPermissions.isEmpty()) {
             onConsumeRational()
-        else {
-            _state.update { state -> state.copy(permissions = notGrantedPermissions.map { it.permission }) }
+        } else {
+            _state.update { state ->
+                state.copy(
+                    permissions = notGrantedPermissions.map { it.permission }
+                )
+            }
             if (endPermissionRequest - startPermissionRequest < 200) {
                 _state.update {
                     it.copy(navigateToSetting = true)
                 }
-            } else
+            } else {
                 _state.update { state ->
                     state.copy(
                         showRational = notGrantedPermissions.isNotEmpty(),
                         rationals = notGrantedPermissions.map { it.rational }
                     )
                 }
+            }
         }
     }
 
@@ -174,10 +179,8 @@ fun PermissionHandler(
             ) {
                 Text(text = "Grant Permission", modifier = Modifier.padding(vertical = 4.dp))
             }
-
         }
     }
-
 }
 
 private fun Activity.openAppSetting() {

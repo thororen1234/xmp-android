@@ -157,8 +157,6 @@
     <string name="pref_sampling_rate_title">Sampling rate</string>
     <string name="pref_show_info_line_summary">Show replay information and time</string>
     <string name="pref_show_info_line_title">Replay status</string>
-    <string name="pref_show_toast_summary">Enable interface help messages</string>
-    <string name="pref_show_toast_title">Display toasts</string>
     <string name="pref_start_on_player_summary">If a module is playing, launch in the player screen</string>
     <string name="pref_start_on_player_title">Launch in player screen</string>
     <string name="pref_use_filename_summary">Display file names instead of titles in playlists</string>

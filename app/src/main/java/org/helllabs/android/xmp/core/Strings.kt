@@ -9,17 +9,14 @@ import kotlin.String
 /**
  * General helper functions related to Strings
  */
-
-object Strings {
-    fun String?.asHtml(): Spanned {
-        if (this.isNullOrEmpty()) {
-            return "".toSpanned()
-        }
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Html.fromHtml(this, Html.FROM_HTML_MODE_LEGACY)
-        } else {
-            @Suppress("DEPRECATION")
-            Html.fromHtml(this)
-        }
+fun String?.asHtml(): Spanned {
+    if (this.isNullOrEmpty()) {
+        return "".toSpanned()
+    }
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        Html.fromHtml(this, Html.FROM_HTML_MODE_LEGACY)
+    } else {
+        @Suppress("DEPRECATION")
+        Html.fromHtml(this)
     }
 }

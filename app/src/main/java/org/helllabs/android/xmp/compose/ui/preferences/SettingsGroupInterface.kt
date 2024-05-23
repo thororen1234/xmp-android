@@ -23,16 +23,6 @@ fun SettingsGroupInterface() {
                 PrefManager.showInfoLine = it
             }
         )
-        var showToast by remember { mutableStateOf(PrefManager.showToast) }
-        SettingsSwitch(
-            title = { Text(text = stringResource(id = R.string.pref_show_toast_title)) },
-            subtitle = { Text(text = stringResource(id = R.string.pref_show_toast_summary)) },
-            state = showToast,
-            onCheckedChange = {
-                showToast = it
-                PrefManager.showToast = it
-            }
-        )
         var keepScreenOn by remember { mutableStateOf(PrefManager.keepScreenOn) }
         SettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_keep_screen_on_title)) },
