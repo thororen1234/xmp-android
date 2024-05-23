@@ -185,22 +185,13 @@ private fun SearchButtons(
 private fun DownloadsText(
     modifier: Modifier = Modifier
 ) {
-    val uriHandler = LocalUriHandler.current
-    val linkString = annotatedLinkString(
-        text = stringResource(id = R.string.search_provided_by),
-        url = "modarchive.org"
-    )
-    // TODO
-    ClickableText(
+    Text(
         modifier = modifier,
-        text = linkString,
-        style = TextStyle(color = MaterialTheme.colorScheme.onBackground),
-        onClick = {
-            linkString
-                .getStringAnnotations("URL", it, it)
-                .firstOrNull()
-                ?.let { stringAnnotation -> uriHandler.openUri(stringAnnotation.item) }
-        }
+        text = annotatedLinkString(
+            text = stringResource(id = R.string.search_provided_by),
+            url = "modarchive.org"
+        ),
+        style = TextStyle(color = MaterialTheme.colorScheme.onBackground)
     )
 }
 

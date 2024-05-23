@@ -27,7 +27,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 fun ErrorScreen(
     modifier: Modifier = Modifier,
     text: String?,
-    content: (@Composable () -> Unit)? = null
+    action: (@Composable () -> Unit)? = null
 ) {
     Surface(
         shape = RoundedCornerShape(16.dp),
@@ -51,7 +51,7 @@ fun ErrorScreen(
                 textAlign = TextAlign.Center,
                 text = text ?: stringResource(id = R.string.search_error)
             )
-            content?.let {
+            action?.let {
                 Spacer(modifier = Modifier.height(16.dp))
                 it()
             }
@@ -65,9 +65,10 @@ private fun Preview_ErrorScreen() {
     XmpTheme(useDarkTheme = true) {
         Box(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            ErrorScreen(text = "Some very long error message that should wrap around")
-        }
+            contentAlignment = Alignment.Center,
+            content = {
+                ErrorScreen(text = "Some very long error message that should wrap around")
+            }
+        )
     }
 }

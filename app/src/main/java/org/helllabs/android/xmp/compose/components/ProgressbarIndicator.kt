@@ -40,9 +40,10 @@ private fun ProgressbarIndicatorPreview() {
         Column(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            ProgressbarIndicator(isLoading = true)
-        }
+            horizontalAlignment = Alignment.CenterHorizontally,
+            content = {
+                ProgressbarIndicator(isLoading = true)
+            }
+        )
     }
 }

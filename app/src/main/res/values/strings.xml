@@ -55,7 +55,7 @@
     <string name="title_or_filename">Title or File name</string>
     <string name="search_error">Something wrong happened.</string>
     <string name="search_known_error">%s.\nPress back button to continue.</string>
-    <string name="search_provided_by">Downloads provided by</string>
+    <string name="search_provided_by">"Downloads provided by "</string>
     <string name="search_unknown_error">Software Failure. Press back to continue.\n\nGuru Meditation #35068035.48454C50</string>
     <string name="song_message">Song Message</string>
 

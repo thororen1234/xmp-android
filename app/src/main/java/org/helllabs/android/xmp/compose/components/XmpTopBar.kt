@@ -30,9 +30,6 @@ fun XmpTopBar(
             } else {
                 MaterialTheme.colorScheme.surface
             },
-            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-            actionIconContentColor = MaterialTheme.colorScheme.onSurface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface
         ),
         title = {
             Text(text = title)

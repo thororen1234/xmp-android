@@ -35,54 +35,15 @@ import org.helllabs.android.xmp.model.Playlist
 private val maxDialogHeight = 256.dp
 
 @Composable
-fun SingleChoiceAlertDialog(
-    title: String,
-    items: List<String>,
-    selectedItemIndex: Int,
-    onItemSelected: (Int) -> Unit,
-    onCancel: () -> Unit
-) {
-    val selectedItem = remember { mutableIntStateOf(selectedItemIndex) }
-
-    AlertDialog(
-        onDismissRequest = onCancel,
-        icon = { Icon(imageVector = Icons.Filled.CheckCircle, contentDescription = null) },
-        title = { Text(text = title) },
-        text = {
-            Column {
-                items.forEachIndexed { index, string ->
-                    val isSelected = index == selectedItem.intValue
-                    LabelRadioButton(
-                        item = string,
-                        isSelected = isSelected,
-                        onClick = { selectedItem.intValue = index },
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onItemSelected(selectedItem.intValue) }) {
-                Text(text = "Select")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onCancel) {
-                Text(text = "Clear")
-            }
-        }
-    )
-}
-
-// TODO should generic this with the composable above
-@Composable
-fun ListDialog(
+fun SingleChoiceListDialog(
     isShowing: Boolean,
     icon: ImageVector,
     title: String,
-    list: List<Playlist>,
+    selectedIndex: Int,
+    list: List<String>,
     confirmText: String = stringResource(id = android.R.string.ok),
     dismissText: String = stringResource(id = android.R.string.cancel),
-    onConfirm: (Playlist) -> Unit,
+    onConfirm: (Int) -> Unit,
     onDismiss: () -> Unit,
     onEmpty: () -> Unit
 ) {
@@ -95,7 +56,7 @@ fun ListDialog(
         return
     }
 
-    var selection by remember { mutableIntStateOf(0) }
+    var selection by remember { mutableIntStateOf(selectedIndex) }
     val scrollState = rememberScrollState()
 
     AlertDialog(
@@ -110,14 +71,17 @@ fun ListDialog(
                     .verticalScroll(scrollState)
             ) {
                 list.forEachIndexed { index, item ->
-                    RadioButtonItem(index = index, selection = selection, text = item.name) {
-                        selection = index
-                    }
+                    RadioButtonItem(
+                        index = index,
+                        selection = selection,
+                        text = item,
+                        onClick = { selection = index }
+                    )
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onConfirm(list[selection]) }) {
+            TextButton(onClick = { onConfirm(selection) }) {
                 Text(text = confirmText)
             }
         },
@@ -217,10 +181,11 @@ fun NewPlaylistDialog(
         confirmButton = {
             TextButton(
                 enabled = newName.isNotEmpty(),
-                onClick = { onConfirm(newName, newComment) }
-            ) {
-                Text(text = stringResource(id = android.R.string.ok))
-            }
+                onClick = { onConfirm(newName, newComment) },
+                content = {
+                    Text(text = stringResource(id = android.R.string.ok))
+                }
+            )
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
@@ -284,15 +249,12 @@ fun EditPlaylistDialog(
             TextButton(
                 enabled = newName.isNotEmpty(),
                 onClick = {
-                    onConfirm(
-                        fileItem,
-                        newName,
-                        newComment
-                    )
+                    onConfirm(fileItem, newName, newComment)
+                },
+                content = {
+                    Text(text = stringResource(id = android.R.string.ok))
                 }
-            ) {
-                Text(text = stringResource(id = android.R.string.ok))
-            }
+            )
         },
         dismissButton = {
             TextButton(
@@ -303,10 +265,11 @@ fun EditPlaylistDialog(
                     }
 
                     onDelete(fileItem)
+                },
+                content = {
+                    Text(text = stringResource(id = R.string.delete))
                 }
-            ) {
-                Text(text = stringResource(id = R.string.delete))
-            }
+            )
             TextButton(onClick = onDismiss) {
                 Text(text = stringResource(id = android.R.string.cancel))
             }
@@ -353,10 +316,11 @@ fun TextInputDialog(
         confirmButton = {
             TextButton(
                 enabled = value.isNotEmpty(),
-                onClick = { onConfirm(value) }
-            ) {
-                Text(text = stringResource(id = android.R.string.ok))
-            }
+                onClick = { onConfirm(value) },
+                content = {
+                    Text(text = stringResource(id = android.R.string.ok))
+                }
+            )
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
@@ -366,55 +330,23 @@ fun TextInputDialog(
     )
 }
 
-@Composable
-internal fun LabelRadioButton(
-    item: String,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    ListItem(
-        modifier = Modifier.clickable(
-            role = Role.RadioButton,
-            onClick = onClick,
-            onClickLabel = item,
-        ),
-        headlineContent = { Text(text = item) },
-        trailingContent = { RadioButton(selected = isSelected, onClick = null) },
-    )
-}
+/**
+ * Previews
+ */
 
 @Preview
 @Composable
-fun Preview_SingleChoiceAlertDialog() {
-    val list = List(5) { "Item $it" }
+fun Preview_SingleChoiceListDialog() {
     XmpTheme(useDarkTheme = true) {
         Box(modifier = Modifier.fillMaxWidth()) {
-            SingleChoiceAlertDialog(
-                title = "Preview Choice",
-                items = list,
-                selectedItemIndex = 2,
-                onItemSelected = { },
-                onCancel = { }
-            )
-        }
-    }
-}
-
-@Preview
-@Composable
-fun Preview_ListDialog() {
-    XmpTheme(useDarkTheme = true) {
-        Box(modifier = Modifier.fillMaxWidth()) {
-            ListDialog(
+            SingleChoiceListDialog(
                 isShowing = true,
                 icon = Icons.AutoMirrored.Filled.PlaylistAdd,
                 title = stringResource(id = R.string.dialog_title_select_playlist),
-                list = List(20) {
-                    Playlist(
-                        name = "Playlist $it",
-                        comment = ""
-                    )
-                },
+                selectedIndex = 2,
+                list = List(6) {
+                    Playlist(name = "Playlist $it")
+                }.map { it.name },
                 onConfirm = { },
                 onDismiss = { },
                 onEmpty = { }

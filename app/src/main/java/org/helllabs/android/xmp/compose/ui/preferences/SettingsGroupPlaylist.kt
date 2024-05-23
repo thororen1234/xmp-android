@@ -1,5 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.preferences
 
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.stringArrayResource
@@ -8,8 +10,9 @@ import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSwitch
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.compose.components.SingleChoiceAlertDialog
+import org.helllabs.android.xmp.compose.components.SingleChoiceListDialog
 import org.helllabs.android.xmp.core.PrefManager
+import timber.log.Timber
 
 @Composable
 fun SettingsGroupPlaylist(
@@ -55,21 +58,24 @@ fun SettingsGroupPlaylist(
                 playlistModeDialog.value = true
             }
         )
-        if (playlistModeDialog.value) {
-            val items = stringArrayResource(id = R.array.playlist_mode_array).toList()
-            SingleChoiceAlertDialog(
-                title = stringResource(id = R.string.pref_playlist_mode_title),
-                items = items,
-                selectedItemIndex = playlistMode,
-                onItemSelected = {
-                    PrefManager.playlistMode = it
-                    playlistModeDialog.value = false
-                },
-                onCancel = {
-                    playlistModeDialog.value = false
-                }
-            )
-        }
+        SingleChoiceListDialog(
+            isShowing = playlistModeDialog.value,
+            icon = Icons.Filled.CheckCircle,
+            title = stringResource(id = R.string.pref_playlist_mode_title),
+            selectedIndex = playlistMode,
+            list = stringArrayResource(id = R.array.playlist_mode_array).toList(),
+            onConfirm = {
+                PrefManager.playlistMode = it
+                playlistModeDialog.value = false
+            },
+            onDismiss = {
+                playlistModeDialog.value = false
+            },
+            onEmpty = {
+                Timber.e("Playlist modes was empty")
+                playlistModeDialog.value = false
+            }
+        )
 
         var useFileName by remember { mutableStateOf(PrefManager.useFileName) }
         SettingsSwitch(

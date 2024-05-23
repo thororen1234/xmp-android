@@ -20,8 +20,8 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 fun BottomBarButtons(
     isShuffle: Boolean,
     isLoop: Boolean,
-    onShuffle: (value: Boolean) -> Unit,
-    onLoop: (value: Boolean) -> Unit,
+    onShuffle: (Boolean) -> Unit,
+    onLoop: (Boolean) -> Unit,
     onPlayAll: () -> Unit
 ) {
     BottomAppBar(

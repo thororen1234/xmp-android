@@ -62,8 +62,14 @@ private fun Preview_RadioButtonItem() {
     XmpTheme(useDarkTheme = true) {
         Surface {
             Column {
-                RadioButtonItem(index = 0, selection = 1, text = "Radio Button 1", onClick = { })
-                RadioButtonItem(index = 1, selection = 1, text = "Radio Button 2", onClick = { })
+                Array(3) {
+                    RadioButtonItem(
+                        index = 0,
+                        selection = 1,
+                        text = "Radio Button $it",
+                        onClick = { }
+                    )
+                }
             }
         }
     }

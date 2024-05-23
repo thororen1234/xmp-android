@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose
 
+import android.Manifest
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
@@ -7,6 +8,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
 import android.os.RemoteException
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -15,12 +17,13 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -31,14 +34,15 @@ import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.XmpApplication
-import org.helllabs.android.xmp.compose.components.PermissionHandler
-import org.helllabs.android.xmp.compose.components.PermissionModel
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.filelist.FileListScreenImpl
 import org.helllabs.android.xmp.compose.ui.filelist.FileListViewModel
 import org.helllabs.android.xmp.compose.ui.filelist.NavFileList
 import org.helllabs.android.xmp.compose.ui.home.HomeScreenImpl
 import org.helllabs.android.xmp.compose.ui.home.NavigationHome
+import org.helllabs.android.xmp.compose.ui.home.PermissionModel
+import org.helllabs.android.xmp.compose.ui.home.PermissionViewModel
+import org.helllabs.android.xmp.compose.ui.home.PermissionViewModelFactory
 import org.helllabs.android.xmp.compose.ui.home.PlaylistMenuViewModel
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.playlist.NavPlaylist
@@ -107,17 +111,41 @@ class MainActivity : ComponentActivity() {
             val scope = rememberCoroutineScope()
             val navController = rememberNavController()
 
-            // TODO show this composable if we don't have perms
             @Suppress("InlinedApi")
-            PermissionHandler(
-                permissions = listOf(
-                    PermissionModel(
-                        permission = android.Manifest.permission.POST_NOTIFICATIONS,
-                        rational = "Show notification for media playback"
+            val permsViewModel = viewModel<PermissionViewModel>(
+                factory = PermissionViewModelFactory(
+                    listOf(
+                        PermissionModel(
+                            permission = Manifest.permission.POST_NOTIFICATIONS,
+                            rational = "Show notification for media playback"
+                        )
                     )
-                ),
-                askPermission = true
+                )
             )
+            val permsState by permsViewModel.state.collectAsStateWithLifecycle()
+            val permissionLauncher = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.RequestMultiplePermissions(),
+                onResult = permsViewModel::onResult
+            )
+            LaunchedEffect(permsState.askPermission) {
+                if (permsState.askPermission) {
+                    permissionLauncher.launch(permsState.permissions.toTypedArray())
+                }
+            }
+            LaunchedEffect(permsState.navigateToSetting) {
+                if (permsState.navigateToSetting) {
+                    val result = snackBarHostState.showSnackbar(
+                        message = "${permsState.permissions.size} permission(s) were not granted",
+                        duration = SnackbarDuration.Long,
+                        actionLabel = "Show"
+                    )
+                    when (result) {
+                        SnackbarResult.Dismissed -> Unit
+                        SnackbarResult.ActionPerformed -> openAppSetting()
+                    }
+                    permsViewModel.onPermissionRequested()
+                }
+            }
 
             XmpTheme {
                 NavHost(
@@ -149,7 +177,7 @@ class MainActivity : ComponentActivity() {
                     }
                 ) {
                     composable<NavigationHome> {
-                        val viewModel by viewModels<PlaylistMenuViewModel>()
+                        val viewModel = viewModel<PlaylistMenuViewModel>()
                         HomeScreenImpl(
                             viewModel = viewModel,
                             snackBarHostState = snackBarHostState,
@@ -160,7 +188,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable<NavFileList> {
-                        val viewModel by viewModels<FileListViewModel>()
+                        val viewModel = viewModel<FileListViewModel>()
                         val playerResult = rememberLauncherForActivityResult(
                             contract = ActivityResultContracts.StartActivityForResult()
                         ) { result ->
@@ -223,7 +251,7 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<NavPlaylist> {
                         val args = it.toRoute<NavPlaylist>()
-                        val viewModel by viewModels<PlaylistActivityViewModel>()
+                        val viewModel = viewModel<PlaylistActivityViewModel>()
                         val playerResult = rememberLauncherForActivityResult(
                             contract = ActivityResultContracts.StartActivityForResult()
                         ) { result ->
@@ -329,9 +357,9 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<NavSearchTitleResult> {
                         val args = it.toRoute<NavSearchTitleResult>()
-                        val viewModel by viewModels<SearchResultViewModel> {
-                            SearchResultViewModel.Factory
-                        }
+                        val viewModel = viewModel<SearchResultViewModel>(
+                            factory = SearchResultViewModel.Factory
+                        )
                         TitleResultScreenImpl(
                             viewModel = viewModel,
                             isArtistSearch = args.isArtistSearch,
@@ -343,7 +371,9 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<NavSearchResult> {
                         val args = it.toRoute<NavSearchResult>()
-                        val viewModel by viewModels<ResultViewModel> { ResultViewModel.Factory }
+                        val viewModel = viewModel<ResultViewModel>(
+                            factory = ResultViewModel.Factory
+                        )
                         ModuleResultScreenImpl(
                             viewModel = viewModel,
                             snackBarHostState = snackBarHostState,
@@ -541,6 +571,13 @@ class MainActivity : ComponentActivity() {
                 result = result
             )
         }
+    }
+
+    private fun openAppSetting() {
+        Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.fromParts("package", packageName, null)
+        ).also(::startActivity)
     }
 
     private fun shareLink(url: String) {

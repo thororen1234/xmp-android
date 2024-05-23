@@ -4,7 +4,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -69,6 +68,7 @@ fun ModuleLayout(
                     }
                 }
             }
+
             !isExpanded && textLayoutResultState!!.hasVisualOverflow -> {
                 val lastCharIndex = textLayoutResultState!!.getLineEnd(1, true)
                 val showMoreString = "Show More"
@@ -125,41 +125,25 @@ fun ModuleLayout(
         Text(text = module.filename, textAlign = TextAlign.Center)
         Spacer(modifier = Modifier.height(10.dp))
         // Info
-        val infoLink = annotatedLinkStringCombined(info, module.infopage)
-        ClickableText(
+        Text(
+            text = annotatedLinkStringCombined(info, module.infopage),
             style = TextStyle(
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center
-            ),
-            text = infoLink,
-            onClick = {
-                infoLink
-                    .getStringAnnotations("URL", it, it)
-                    .firstOrNull()?.let { stringAnnotation ->
-                        uriHandler.openUri(stringAnnotation.item)
-                    }
-            }
+            )
         )
         Spacer(modifier = Modifier.height(10.dp))
         // License
         HeaderText(stringResource(id = R.string.license))
         Spacer(modifier = Modifier.height(5.dp))
         // Licence Link
-        val licenseLink = annotatedLinkStringCombined(module.license.title, module.license.legalurl)
-        ClickableText(
-            text = licenseLink,
+        Text(
+            text = annotatedLinkStringCombined(module.license.title, module.license.legalurl),
             style = TextStyle(
                 color = MaterialTheme.colorScheme.onSurface,
                 fontSize = 16.sp,
                 textAlign = TextAlign.Center
-            ),
-            onClick = {
-                licenseLink
-                    .getStringAnnotations("URL", it, it)
-                    .firstOrNull()?.let { stringAnnotation ->
-                        uriHandler.openUri(stringAnnotation.item)
-                    }
-            }
+            )
         )
         Spacer(modifier = Modifier.height(5.dp))
         // Licence Statement
@@ -193,25 +177,16 @@ fun ModuleLayout(
         // Sponsor
         if (moduleResult.hasSponsor()) {
             val sponsor = moduleResult.sponsor.details
-            val sponsorLink = annotatedLinkStringCombined(sponsor.text, sponsor.link)
             HeaderText(stringResource(id = R.string.sponsor))
             Spacer(modifier = Modifier.height(10.dp))
             // Sponsor Content
-            // TODO
-            ClickableText(
-                text = sponsorLink,
+            Text(
+                text = annotatedLinkStringCombined(sponsor.text, sponsor.link),
                 style = TextStyle(
                     color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp,
                     textAlign = TextAlign.Center
-                ),
-                onClick = {
-                    sponsorLink
-                        .getStringAnnotations("URL", it, it)
-                        .firstOrNull()?.let { stringAnnotation ->
-                            uriHandler.openUri(stringAnnotation.item)
-                        }
-                }
+                )
             )
             Spacer(modifier = Modifier.height(10.dp))
         }
@@ -260,7 +235,7 @@ private fun Preview_ModuleLayout() {
             ),
             comment = "Some Comment",
             instruments = buildAnnotatedString {
-                repeat(20) {
+                repeat(12) {
                     append("Some Instrument $it\n")
                 }
             }.toString()

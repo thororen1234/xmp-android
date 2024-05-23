@@ -1,5 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.preferences
 
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.*
@@ -8,7 +10,7 @@ import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSlider
 import com.alorma.compose.settings.ui.SettingsSwitch
 import org.helllabs.android.xmp.R
-import org.helllabs.android.xmp.compose.components.SingleChoiceAlertDialog
+import org.helllabs.android.xmp.compose.components.SingleChoiceListDialog
 import org.helllabs.android.xmp.core.PrefManager
 import timber.log.Timber
 
@@ -34,21 +36,23 @@ fun SettingsGroupSound() {
                 samplingRateDialog.value = true
             }
         )
-        if (samplingRateDialog.value) {
-            val items = stringArrayResource(id = R.array.sampling_rate_array).toList()
-            SingleChoiceAlertDialog(
-                title = stringResource(id = R.string.pref_playlist_mode_title),
-                items = items,
-                selectedItemIndex = samplingRate,
-                onItemSelected = {
-                    PrefManager.samplingRate = it
-                    samplingRateDialog.value = false
-                },
-                onCancel = {
-                    samplingRateDialog.value = false
-                }
-            )
-        }
+        SingleChoiceListDialog(
+            isShowing = samplingRateDialog.value,
+            title = stringResource(id = R.string.pref_playlist_mode_title),
+            icon = Icons.Filled.CheckCircle,
+            list = stringArrayResource(id = R.array.sampling_rate_array).toList(),
+            selectedIndex = samplingRate,
+            onConfirm = {
+                PrefManager.samplingRate = it
+                samplingRateDialog.value = false
+            },
+            onDismiss = {
+                samplingRateDialog.value = false
+            },
+            onEmpty = {
+                samplingRateDialog.value = false
+            }
+        )
 
         var bufferSize by remember { mutableFloatStateOf(PrefManager.bufferMs.toFloat()) }
         SettingsSlider(
@@ -89,21 +93,23 @@ fun SettingsGroupSound() {
                 volBoostDialog.value = true
             }
         )
-        if (volBoostDialog.value) {
-            val items = stringArrayResource(id = R.array.vol_boost_array).toList()
-            SingleChoiceAlertDialog(
-                title = stringResource(id = R.string.pref_playlist_mode_title),
-                items = items,
-                selectedItemIndex = volBoost,
-                onItemSelected = {
-                    PrefManager.volumeBoost = it
-                    volBoostDialog.value = false
-                },
-                onCancel = {
-                    volBoostDialog.value = false
-                }
-            )
-        }
+        SingleChoiceListDialog(
+            isShowing = volBoostDialog.value,
+            title = stringResource(id = R.string.pref_playlist_mode_title),
+            icon = Icons.Filled.CheckCircle,
+            list = stringArrayResource(id = R.array.vol_boost_array).toList(),
+            selectedIndex = volBoost,
+            onConfirm = {
+                PrefManager.volumeBoost = it
+                volBoostDialog.value = false
+            },
+            onDismiss = {
+                volBoostDialog.value = false
+            },
+            onEmpty = {
+                volBoostDialog.value = false
+            }
+        )
 
         val amigaMixer by remember { mutableStateOf(PrefManager.amigaMixer) }
         SettingsSwitch(
@@ -142,21 +148,23 @@ fun SettingsGroupSound() {
                 interpTypeDialog.value = true
             }
         )
-        if (interpTypeDialog.value) {
-            val items = stringArrayResource(id = R.array.interp_type_array).toList()
-            SingleChoiceAlertDialog(
-                title = stringResource(id = R.string.pref_playlist_mode_title),
-                items = items,
-                selectedItemIndex = samplingRate,
-                onItemSelected = {
-                    PrefManager.interpType = it
-                    interpTypeDialog.value = false
-                },
-                onCancel = {
-                    interpTypeDialog.value = false
-                }
-            )
-        }
+        SingleChoiceListDialog(
+            isShowing = interpTypeDialog.value,
+            icon = Icons.Filled.CheckCircle,
+            title = stringResource(id = R.string.pref_playlist_mode_title),
+            list = stringArrayResource(id = R.array.interp_type_array).toList(),
+            selectedIndex = samplingRate,
+            onConfirm = {
+                PrefManager.interpType = it
+                interpTypeDialog.value = false
+            },
+            onDismiss = {
+                interpTypeDialog.value = false
+            },
+            onEmpty = {
+                interpTypeDialog.value = false
+            }
+        )
 
         var stereoMix by remember { mutableFloatStateOf(PrefManager.stereoMix.toFloat()) }
         SettingsSlider(

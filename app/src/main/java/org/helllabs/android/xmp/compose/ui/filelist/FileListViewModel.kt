@@ -180,7 +180,8 @@ class FileListViewModel : ViewModel() {
         }
     }
 
-    fun addToPlaylist(choice: Playlist) {
+    fun addToPlaylist(index: Int) {
+        val choice = playlistList[index]
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch(Dispatchers.IO) {

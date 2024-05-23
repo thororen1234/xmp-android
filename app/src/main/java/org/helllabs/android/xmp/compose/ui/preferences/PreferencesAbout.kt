@@ -14,9 +14,9 @@ import androidx.compose.ui.unit.*
 import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpTopBar
+import org.helllabs.android.xmp.compose.components.themedText
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
-import org.helllabs.android.xmp.compose.theme.themedText
 
 @Serializable
 object NavPreferenceAbout

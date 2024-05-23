@@ -30,9 +30,9 @@ import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.BottomBarButtons
 import org.helllabs.android.xmp.compose.components.ErrorScreen
-import org.helllabs.android.xmp.compose.components.ListDialog
 import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.components.ProgressbarIndicator
+import org.helllabs.android.xmp.compose.components.SingleChoiceListDialog
 import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
@@ -77,7 +77,6 @@ fun FileListScreenImpl(
         }
     }
 
-    // TODO top app bar back button isn't working.
     // On back pressed handler
     val callback = remember {
         object : OnBackPressedCallback(true) {
@@ -109,11 +108,12 @@ fun FileListScreenImpl(
     /**
      * Playlist choice dialog
      */
-    ListDialog(
+    SingleChoiceListDialog(
         isShowing = viewModel.playlistChoice != null,
         icon = Icons.AutoMirrored.Filled.PlaylistAdd,
         title = stringResource(id = R.string.dialog_title_select_playlist),
-        list = viewModel.playlistList,
+        selectedIndex = -1,
+        list = viewModel.playlistList.map { it.name },
         onConfirm = viewModel::addToPlaylist,
         onDismiss = { viewModel.playlistChoice = null },
         onEmpty = {
@@ -409,7 +409,7 @@ private fun FileListScreen(
                 if (state.list.isEmpty() && !state.isLoading) {
                     ErrorScreen(
                         text = stringResource(id = R.string.error_empty_directory),
-                        content = {
+                        action = {
                             OutlinedButton(onClick = onRestore) {
                                 Text(text = stringResource(id = R.string.back))
                             }

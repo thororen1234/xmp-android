@@ -229,7 +229,7 @@ private fun PlaylistScreen(
             if (state.list.isEmpty()) {
                 ErrorScreen(
                     text = stringResource(id = R.string.error_empty_playlist),
-                    content = {
+                    action = {
                         OutlinedButton(onClick = onBack) {
                             Text(text = stringResource(id = R.string.back))
                         }

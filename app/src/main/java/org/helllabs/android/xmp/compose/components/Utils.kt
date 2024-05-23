@@ -5,36 +5,53 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.res.*
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
+import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.compose.theme.seed
 
 /**
- * Creates a string where the whole text string is clickable
+ * Accent the "Xmp" part of the text.
+ */
+@Composable
+fun themedText(text: String): AnnotatedString {
+    return buildAnnotatedString {
+        withStyle(style = SpanStyle(color = seed)) {
+            append(text.substring(0, 3))
+        }
+
+        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground)) {
+            append(text.substring(3, text.length))
+        }
+    }
+}
+
+/**
+ * Creates a string where the whole text string is clickable.
  */
 @Composable
 fun annotatedLinkStringCombined(
     text: String,
     url: String
-): AnnotatedString = buildAnnotatedString {
-    addStyle(
-        style = SpanStyle(
-            color = MaterialTheme.colorScheme.primary,
-            textDecoration = TextDecoration.Underline
-        ),
-        start = 0,
-        end = text.length
-    )
-    append(text)
-    addStringAnnotation(
-        tag = "URL",
-        annotation = url,
-        start = 0,
-        end = text.length
-    )
+): AnnotatedString {
+    val uriHandler = LocalUriHandler.current
+    return buildAnnotatedString {
+        withLink(
+            link = LinkAnnotation.Clickable(
+                tag = url,
+                linkInteractionListener = { uriHandler.openUri(url) },
+                style = SpanStyle(
+                    color = MaterialTheme.colorScheme.primary,
+                    textDecoration = TextDecoration.Underline
+                )
+            ),
+            block = { append(text) }
+        )
+    }
 }
 
 /**
@@ -44,45 +61,42 @@ fun annotatedLinkStringCombined(
 fun annotatedLinkString(
     text: String,
     url: String
-): AnnotatedString = buildAnnotatedString {
-    val string = "$text $url"
-    append(string)
-    addStyle(
-        style = SpanStyle(
-            color = MaterialTheme.colorScheme.primary,
-            textDecoration = TextDecoration.Underline
-        ),
-        start = string.length - url.length,
-        end = string.length
-    )
-    addStringAnnotation(
-        tag = "URL",
-        annotation = if (url.contains("http://|https://".toRegex(RegexOption.IGNORE_CASE))) {
-            url
-        } else {
-            "https://$url"
-        },
-        start = string.length - url.length,
-        end = string.length
-    )
+): AnnotatedString {
+    val uriHandler = LocalUriHandler.current
+    return buildAnnotatedString {
+        append(text)
+        withLink(
+            link = LinkAnnotation.Clickable(
+                tag = url,
+                linkInteractionListener = { uriHandler.openUri("https://$url") },
+                style = SpanStyle(
+                    color = MaterialTheme.colorScheme.primary,
+                    textDecoration = TextDecoration.Underline
+                )
+            ),
+            block = { append(url) }
+        )
+    }
 }
 
 @Preview
 @Composable
 private fun Preview_Utils() {
-    val linkStringCombined = annotatedLinkStringCombined(
-        text = "Link String",
-        url = "https://developer.android.com/"
-    )
-    val linkString = annotatedLinkString(
-        text = "Link String",
-        url = "modarchive.org"
-    )
     XmpTheme(useDarkTheme = true) {
         Surface {
             Column {
-                Text(text = linkStringCombined)
-                Text(text = linkString)
+                Text(
+                    text = annotatedLinkStringCombined(
+                        text = "Link String",
+                        url = "https://developer.android.com/"
+                    )
+                )
+                Text(
+                    text = annotatedLinkString(
+                        text = stringResource(id = R.string.search_provided_by),
+                        url = "modarchive.org"
+                    )
+                )
             }
         }
     }

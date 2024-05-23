@@ -2,12 +2,13 @@
 
 package org.helllabs.android.xmp.model
 
+import android.os.Build
+import android.text.Html
 import android.text.Spanned
 import androidx.core.text.toSpanned
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import nl.adaptivity.xmlutil.serialization.*
-import org.helllabs.android.xmp.core.asHtml
 
 @Serializable
 @SerialName("modarchive")
@@ -18,9 +19,7 @@ data class ModuleResult(
     @XmlElement val totalpages: Int = 0,
     @XmlElement val module: Module = Module()
 ) {
-    fun hasSponsor(): Boolean {
-        return sponsor.details.text.isNotEmpty()
-    }
+    fun hasSponsor(): Boolean = sponsor.details.text.isNotEmpty()
 }
 
 @Serializable
@@ -229,3 +228,18 @@ data class Item(
     @XmlElement val imageurl_icon: String = "",
     @XmlElement val profile: String = ""
 )
+
+/**
+ * General helper functions related to Strings
+ */
+private fun String?.asHtml(): Spanned {
+    if (this.isNullOrEmpty()) {
+        return "".toSpanned()
+    }
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        Html.fromHtml(this, Html.FROM_HTML_MODE_LEGACY)
+    } else {
+        @Suppress("DEPRECATION")
+        Html.fromHtml(this)
+    }
+}
