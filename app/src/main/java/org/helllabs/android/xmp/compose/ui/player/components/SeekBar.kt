@@ -32,15 +32,6 @@ fun PlayerSeekBar(
 ) {
     var newPosition by remember { mutableFloatStateOf(0F) }
 
-    // https://issuetracker.google.com/issues/32226995
-    // TODO: https://issuetracker.google.com/issues/322269951#comment8
-    val onValueChangeFinished: () -> Unit = remember {
-        {
-            onSeek(newPosition)
-            onIsSeeking(false)
-        }
-    }
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
@@ -62,7 +53,10 @@ fun PlayerSeekBar(
                 onIsSeeking(true)
                 newPosition = it
             },
-            onValueChangeFinished = onValueChangeFinished
+            onValueChangeFinished = {
+                onSeek(newPosition)
+                onIsSeeking(false)
+            }
         )
 
         Text(
