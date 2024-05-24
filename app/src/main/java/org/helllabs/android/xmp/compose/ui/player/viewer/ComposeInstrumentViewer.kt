@@ -16,7 +16,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -35,6 +34,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
@@ -43,6 +43,8 @@ import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 
 private const val VOLUME_STEPS = 32
 private val barShape = CornerRadius(8f, 8f)
+
+private const val UPDATE_INTERVAL = 1000L.div(48)
 
 @Composable
 internal fun InstrumentViewer(
@@ -60,20 +62,19 @@ internal fun InstrumentViewer(
 
     LaunchedEffect(serviceConnected) {
         while (true) {
-            withFrameMillis {
-                // Make sure everything is a-okay to prevent a NPE in jni
-                // We're immediately starting to draw before everything is loaded.
-                if (PlayerActivity.canChangeViewer) {
-                    Xmp.getChannelData(
-                        viewInfo.volumes,
-                        viewInfo.finalVols,
-                        viewInfo.pans,
-                        viewInfo.instruments,
-                        viewInfo.keys,
-                        viewInfo.periods
-                    )
-                }
+            // Make sure everything is a-okay to prevent a NPE in jni
+            // We're immediately starting to draw before everything is loaded.
+            if (PlayerActivity.canChangeViewer) {
+                Xmp.getChannelData(
+                    viewInfo.volumes,
+                    viewInfo.finalVols,
+                    viewInfo.pans,
+                    viewInfo.instruments,
+                    viewInfo.keys,
+                    viewInfo.periods
+                )
             }
+            delay(UPDATE_INTERVAL)
         }
     }
 

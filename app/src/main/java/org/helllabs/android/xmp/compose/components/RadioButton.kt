@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 /**
@@ -31,6 +32,16 @@ fun RadioButtonItem(
     radioButtonColors: RadioButtonColors = RadioButtonDefaults.colors(),
     onClick: () -> Unit
 ) {
+    Rebugger(
+        composableName = "RadioButtonItem",
+        trackMap = mapOf(
+            "index" to index,
+            "selection" to selection,
+            "text" to text,
+            "radioButtonColors" to radioButtonColors,
+            "onClick" to onClick,
+        )
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()

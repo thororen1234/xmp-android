@@ -3,9 +3,7 @@ package org.helllabs.android.xmp.compose.ui.player
 import android.os.RemoteException
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import java.util.Collections
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,6 +17,7 @@ import timber.log.Timber
 class PlayerViewModel : ViewModel() {
 
     /** Player States **/
+    @Stable
     data class PlayerState(
         val serviceConnected: Boolean = false,
         val currentViewer: Int = 0,
@@ -28,6 +27,7 @@ class PlayerViewModel : ViewModel() {
         val skipToPrevious: Boolean = false
     )
 
+    @Stable
     data class PlayerInfoState(
         val infoSpeed: String = "00",
         val infoBpm: String = "00",
@@ -36,11 +36,13 @@ class PlayerViewModel : ViewModel() {
         val isVisible: Boolean = true
     )
 
+    @Stable
     data class PlayerButtonsState(
         val isPlaying: Boolean = false,
         val isRepeating: Boolean = false
     )
 
+    @Stable
     data class PlayerTimeState(
         val timeNow: String = "-:--",
         val timeTotal: String = "-:--",
@@ -50,6 +52,7 @@ class PlayerViewModel : ViewModel() {
         val isSeeking: Boolean = false
     )
 
+    @Stable
     data class PlayerDrawerState(
         val drawerState: DrawerState = DrawerState(DrawerValue.Closed),
         val moduleInfo: List<Int> = listOf(0, 0, 0, 0, 0),

@@ -89,6 +89,14 @@ android {
         correctErrorTypes = true
     }
 
+    // https://developer.android.com/develop/ui/compose/performance/stability/strongskipping
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        compilerOptions.freeCompilerArgs.addAll(
+            "-P",
+            "plugin:androidx.compose.compiler.plugins.kotlin:experimentalStrongSkipping=true",
+        )
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -103,6 +111,8 @@ dependencies {
     implementation(platform(libs.compose.bom))
     implementation(libs.bundles.compose)
     implementation(libs.bundles.compose.utils)
+
+    implementation("io.github.theapache64:rebugger:1.0.0-rc03")
 
     implementation(libs.bundles.retrofit)
     implementation(libs.bundles.xmlUtils)

@@ -343,13 +343,6 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
             val drawerState by viewModel.drawerState.collectAsStateWithLifecycle()
 
             val scope = rememberCoroutineScope()
-            fun onCloseDrawer() = scope.launch {
-                drawerState.drawerState.close()
-            }
-
-            fun onOpenDrawer() = scope.launch {
-                drawerState.drawerState.open()
-            }
 
             var showComments by remember { mutableStateOf(false) }
             MessageDialog(
@@ -384,16 +377,71 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                 }
             )
 
+            val onCloseDrawer = remember {
+                {
+                    scope.launch {
+                        drawerState.drawerState.close()
+                    }
+                }
+            }
+            val onOpenDrawer = remember {
+                {
+                    scope.launch {
+                        drawerState.drawerState.open()
+                    }
+                }
+            }
+            val onShowMessage = remember {
+                {
+                    if (Xmp.getComment().isNullOrEmpty()) {
+                        showSnack("No comment to display")
+                    } else {
+                        showComments = true
+                    }
+                    onCloseDrawer()
+                }
+            }
+            val onAllSeq: (Boolean) -> Unit = remember {
+                {
+                    synchronized(playerLock) {
+                        if (modPlayer == null) {
+                            return@synchronized
+                        }
+                        try {
+                            modPlayer!!.toggleAllSequences()
+                        } catch (e: RemoteException) {
+                            Timber.e("Can't toggle all sequences status")
+                        }
+                    }
+                    viewModel.onAllSequence(modPlayer!!.getAllSequences())
+                }
+            }
+            val onSequence: (Int) -> Unit = remember {
+                {
+                    synchronized(playerLock) {
+                        if (modPlayer == null) {
+                            return@synchronized
+                        }
+                        try {
+                            Timber.i("Set sequence $it")
+                            modPlayer!!.setSequence(it)
+                        } catch (e: RemoteException) {
+                            Timber.e("Can't set sequence $it")
+                        }
+                    }
+                }
+            }
+
             XmpTheme {
                 PlayerScreen(
-                    snackbarHostState = snackbarHostState,
+                    snackBarHostState = snackbarHostState,
                     uiState = uiState,
                     infoState = infoState,
                     buttonState = buttonState,
                     timeState = timeState,
                     drawerState = drawerState,
-                    onMenu = ::onOpenDrawer,
-                    onMenuClose = ::onCloseDrawer,
+                    onMenu = { onOpenDrawer() },
+                    onMenuClose = { onCloseDrawer() },
                     currentViewer = viewModel.currentViewer,
                     viewInfo = viewModel.viewInfo,
                     patternInfo = viewModel.patternInfo,
@@ -403,40 +451,9 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                     onDelete = {
                         deleteFile = true
                     },
-                    onMessage = {
-                        if (Xmp.getComment().isNullOrEmpty()) {
-                            showSnack("No comment to display")
-                        } else {
-                            showComments = true
-                        }
-                        onCloseDrawer()
-                    },
-                    onAllSeq = {
-                        synchronized(playerLock) {
-                            if (modPlayer == null) {
-                                return@synchronized
-                            }
-                            try {
-                                modPlayer!!.toggleAllSequences()
-                            } catch (e: RemoteException) {
-                                Timber.e("Can't toggle all sequences status")
-                            }
-                        }
-                        viewModel.onAllSequence(modPlayer!!.getAllSequences())
-                    },
-                    onSequence = {
-                        synchronized(playerLock) {
-                            if (modPlayer == null) {
-                                return@synchronized
-                            }
-                            try {
-                                Timber.i("Set sequence $it")
-                                modPlayer!!.setSequence(it)
-                            } catch (e: RemoteException) {
-                                Timber.e("Can't set sequence $it")
-                            }
-                        }
-                    },
+                    onMessage = { onShowMessage() },
+                    onAllSeq = { onAllSeq(it) },
+                    onSequence = { onSequence(it) },
                     onSeek = { s ->
                         synchronized(playerLock) {
                             if (modPlayer == null) {
@@ -848,7 +865,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         // Phone CPU's are more than capable enough to do more work with drawing.
         // With android O+, we can use hardware rendering on the canvas, if supported.
         private val newWaveform: Boolean by lazy { PrefManager.useBetterWaveform }
-        private val FRAME_RATE: Int = 1000 / if (newWaveform) 50 else 30
+        private val FRAME_RATE: Long = 1000L.div(if (newWaveform) 50 else 30)
     }
 }
 
@@ -862,7 +879,7 @@ private fun PlayerScreen(
     isMuted: BooleanArray,
     modVars: IntArray,
     patternInfo: PatternInfo = PatternInfo(),
-    snackbarHostState: SnackbarHostState,
+    snackBarHostState: SnackbarHostState,
     timeState: PlayerViewModel.PlayerTimeState,
     uiState: PlayerViewModel.PlayerState,
     viewInfo: ViewerInfo,
@@ -903,7 +920,7 @@ private fun PlayerScreen(
         }
         Scaffold(
             modifier = Modifier.fillMaxSize(),
-            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+            snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
             topBar = {
                 ViewFlipper(
                     actions = if (PrefManager.enableDelete) {
@@ -991,7 +1008,7 @@ private fun Preview_PlayerScreen() {
 
     XmpTheme {
         PlayerScreen(
-            snackbarHostState = SnackbarHostState(),
+            snackBarHostState = SnackbarHostState(),
             uiState = PlayerViewModel.PlayerState(
                 infoTitle = "Title 1",
                 infoType = "Fast Tracker"
@@ -1056,7 +1073,7 @@ private fun Preview_PlayerScreenDrawerOpen() {
 
     XmpTheme {
         PlayerScreen(
-            snackbarHostState = SnackbarHostState(),
+            snackBarHostState = SnackbarHostState(),
             uiState = PlayerViewModel.PlayerState(
                 infoTitle = "Title 1",
                 infoType = "Fast Tracker"
