@@ -107,6 +107,7 @@ dependencies {
     implementation(libs.bundles.retrofit)
     implementation(libs.bundles.xmlUtils)
     implementation(libs.core.ktx)
+    implementation(libs.datastore.preferences)
     implementation(libs.dfc)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.lifecycle.runtime.ktx)
@@ -114,7 +115,6 @@ dependencies {
     implementation(libs.media)
     implementation(libs.moshi.kotlin)
     implementation(libs.okhttp)
-    implementation(libs.preference.ktx)
     implementation(libs.reorderable)
     implementation(libs.timber)
 }

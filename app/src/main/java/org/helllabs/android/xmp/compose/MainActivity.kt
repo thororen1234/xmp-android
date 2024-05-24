@@ -29,7 +29,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
@@ -67,7 +66,6 @@ import org.helllabs.android.xmp.compose.ui.search.result.ResultViewModel
 import org.helllabs.android.xmp.compose.ui.search.result.SearchResultViewModel
 import org.helllabs.android.xmp.compose.ui.search.result.TitleResultScreenImpl
 import org.helllabs.android.xmp.core.PrefManager
-import org.helllabs.android.xmp.model.Module
 import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
@@ -321,24 +319,12 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable<NavSearchHistory> {
-                        var historyList = remember {
-                            var list: MutableList<Module> = mutableListOf()
-
-                            try {
-                                list = Json.decodeFromString(PrefManager.searchHistory)
-                            } catch (e: Exception) {
-                                // Something happened or empty, make it an empty list
-                                Timber.w("Failed to deserialize history!")
-                                PrefManager.searchHistory = "[]"
-                            }
-
-                            list.toList()
-                        }
+                        var historyList = remember { PrefManager.searchHistory }
                         SearchHistoryScreen(
                             historyList = historyList,
                             onBack = navController::popBackStack,
                             onClear = {
-                                PrefManager.searchHistory = "[]"
+                                PrefManager.searchHistory = listOf()
                                 historyList = listOf()
                             },
                             onClicked = {

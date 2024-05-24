@@ -13,8 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.Buffer
@@ -259,21 +257,15 @@ class ResultViewModel(
         val history = mutableListOf<Module>()
 
         // We only care about a few things to store.
-        try {
-            Json.decodeFromString<MutableList<Module>>(PrefManager.searchHistory).map {
-                Module(
-                    id = it.id,
-                    format = it.format,
-                    songtitle = it.songtitle,
-                    artistInfo = it.artistInfo,
-                    bytes = it.bytes
-                )
-            }.also { history.addAll(it) }
-        } catch (e: Exception) {
-            // Something happened or empty, make it an empty list
-            Timber.w("Failed to deserialize history!")
-            PrefManager.searchHistory = "[]"
-        }
+        PrefManager.searchHistory.map {
+            Module(
+                id = it.id,
+                format = it.format,
+                songtitle = it.songtitle,
+                artistInfo = it.artistInfo,
+                bytes = it.bytes
+            )
+        }.also { history.addAll(it) }
 
         if (history.any { it.id == module.id }) {
             Timber.i("Module ${module.id} already exists in history. Skipping")
@@ -293,6 +285,6 @@ class ResultViewModel(
             history.removeFirst()
         }
 
-        PrefManager.searchHistory = Json.encodeToString(history)
+        PrefManager.searchHistory = history
     }
 }

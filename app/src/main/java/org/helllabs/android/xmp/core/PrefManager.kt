@@ -1,44 +1,69 @@
 package org.helllabs.android.xmp.core
 
 import android.content.Context
-import android.content.SharedPreferences
-import androidx.core.content.edit
-import androidx.preference.PreferenceManager
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import org.helllabs.android.xmp.model.Module
+import timber.log.Timber
 
 object PrefManager {
 
-    private lateinit var prefs: SharedPreferences
-    private const val PREF_VERSION = 2
+    private val Context.dataStore by preferencesDataStore(
+        name = "preferences",
+        corruptionHandler = ReplaceFileCorruptionHandler {
+            Timber.e("Preferences corrupted, resetting.")
+            emptyPreferences()
+        }
+    )
+
+    private lateinit var dataStore: DataStore<Preferences>
 
     fun init(context: Context) {
-        prefs = PreferenceManager.getDefaultSharedPreferences(context)
+        dataStore = context.dataStore
+    }
 
-        // Clear preferences if the version has changed.
-        if (prefs.getInt("pref_version", 0) < PREF_VERSION) {
-            prefs.edit().clear().apply()
-            prefs.edit { putInt("pref_version", PREF_VERSION) }
+    private fun <T> getPref(key: Preferences.Key<T>, defaultValue: T): T {
+        return runBlocking {
+            dataStore.data.first()[key] ?: defaultValue
         }
     }
 
-    /**
-     * The URI where the app can store mods and playlists.
-     */
-    var safStoragePath: String?
-        get() = prefs.getString("saf_storage_path", null)
+    private fun <T> setPref(key: Preferences.Key<T>, value: T) {
+        runBlocking {
+            dataStore.edit { pref -> pref[key] = value }
+        }
+    }
+
+    private fun <T> removePref(key: Preferences.Key<T>) {
+        runBlocking {
+            dataStore.edit { pref -> pref.remove(key) }
+        }
+    }
+
+    private val SAF_PATH = stringPreferencesKey("saf_storage_path")
+    var safStoragePath: String
+        get() = getPref(SAF_PATH, "")
         set(value) {
-            prefs.edit { putString("saf_storage_path", value) }
+            setPref(SAF_PATH, value)
         }
 
+    private val START_ON_PLAYER = booleanPreferencesKey("start_on_player")
     var startOnPlayer: Boolean
-        get() = prefs.getBoolean("start_on_player", true)
+        get() = getPref(START_ON_PLAYER, true)
         set(value) {
-            prefs.edit { putBoolean("start_on_player", value) }
-        }
-
-    var showToast: Boolean
-        get() = prefs.getBoolean("show_toast", true)
-        set(value) {
-            prefs.edit { putBoolean("show_toast", value) }
+            setPref(START_ON_PLAYER, value)
         }
 
     /**
@@ -46,165 +71,212 @@ object PrefManager {
      * 2. Play selected file
      * 3. Enqueue selected file
      */
+
+    private val PLAYLIST_MODE = intPreferencesKey("playlist_mode")
     var playlistMode: Int
-        get() = prefs.getInt("playlist_mode", 1)
+        get() = getPref(PLAYLIST_MODE, 1)
         set(value) {
-            prefs.edit { putInt("playlist_mode", value) }
+            setPref(PLAYLIST_MODE, value)
         }
 
+    private val ENABLE_DELETE = booleanPreferencesKey("enable_delete")
     var enableDelete: Boolean
-        get() = prefs.getBoolean("enable_delete", false)
+        get() = getPref(ENABLE_DELETE, false)
         set(value) {
-            prefs.edit { putBoolean("enable_delete", value) }
+            setPref(ENABLE_DELETE, value)
         }
 
+    private val ALL_SEQUENCES = booleanPreferencesKey("all_sequences")
     var allSequences: Boolean
-        get() = prefs.getBoolean("all_sequences", false)
+        get() = getPref(ALL_SEQUENCES, false)
         set(value) {
-            prefs.edit { putBoolean("all_sequences", value) }
+            setPref(ALL_SEQUENCES, value)
         }
 
+    private val SCREEN_ON = booleanPreferencesKey("keep_screen_on")
     var keepScreenOn: Boolean
-        get() = prefs.getBoolean("keep_screen_on", false)
+        get() = getPref(SCREEN_ON, false)
         set(value) {
-            prefs.edit { putBoolean("keep_screen_on", value) }
+            setPref(SCREEN_ON, value)
         }
 
+    private val SHOW_INFO_LINE = booleanPreferencesKey("show_info_line")
     var showInfoLine: Boolean
-        get() = prefs.getBoolean("show_info_line", true)
+        get() = getPref(SHOW_INFO_LINE, true)
         set(value) {
-            prefs.edit { putBoolean("show_info_line", value) }
+            setPref(SHOW_INFO_LINE, value)
         }
 
+    private val USE_FILENAME = booleanPreferencesKey("use_filename")
     var useFileName: Boolean
-        get() = prefs.getBoolean("use_filename", false)
+        get() = getPref(USE_FILENAME, false)
         set(value) {
-            prefs.edit { putBoolean("use_filename", value) }
+            setPref(USE_FILENAME, value)
         }
 
+    private val INSTALL_EXAMPLE_PLAYLIST = booleanPreferencesKey("example_playlist_created")
     var installedExamplePlaylist: Boolean
-        get() = prefs.getBoolean("example_playlist_created", false)
+        get() = getPref(INSTALL_EXAMPLE_PLAYLIST, false)
         set(value) {
-            prefs.edit { putBoolean("example_playlist_created", value) }
+            setPref(INSTALL_EXAMPLE_PLAYLIST, value)
         }
 
+    private val INSTALL_EXAMPLES = booleanPreferencesKey("examples")
     var examples: Boolean
-        get() = prefs.getBoolean("examples", true)
+        get() = getPref(INSTALL_EXAMPLES, true)
         set(value) {
-            prefs.edit { putBoolean("examples", value) }
+            setPref(INSTALL_EXAMPLES, value)
         }
 
+    private val BACK_BUTTON = booleanPreferencesKey("back_button_navigation")
     var backButtonNavigation: Boolean
-        get() = prefs.getBoolean("back_button_navigation", true)
+        get() = getPref(BACK_BUTTON, true)
         set(value) {
-            prefs.edit { putBoolean("back_button_navigation", value) }
+            setPref(BACK_BUTTON, value)
         }
 
+    private val SHUFFLE_MODE = booleanPreferencesKey("options_shuffleMode")
     var shuffleMode: Boolean
-        get() = prefs.getBoolean("options_shuffleMode", true)
+        get() = getPref(SHUFFLE_MODE, true)
         set(value) {
-            prefs.edit { putBoolean("options_shuffleMode", value) }
+            setPref(SHUFFLE_MODE, value)
         }
 
+    private val LOOP_MODE = booleanPreferencesKey("options_loopMode")
     var loopMode: Boolean
-        get() = prefs.getBoolean("options_loopMode", false)
+        get() = getPref(LOOP_MODE, false)
         set(value) {
-            prefs.edit { putBoolean("options_loopMode", value) }
+            setPref(LOOP_MODE, value)
         }
 
+    private val MODARCHIVE_FOLDER = booleanPreferencesKey("modarchive_folder")
     var modArchiveFolder: Boolean
-        get() = prefs.getBoolean("modarchive_folder", true)
+        get() = getPref(MODARCHIVE_FOLDER, true)
         set(value) {
-            prefs.edit { putBoolean("modarchive_folder", value) }
+            setPref(MODARCHIVE_FOLDER, value)
         }
 
+    private val ARTIST_FOLDER = booleanPreferencesKey("artist_folder")
     var artistFolder: Boolean
-        get() = prefs.getBoolean("artist_folder", true)
+        get() = getPref(ARTIST_FOLDER, true)
         set(value) {
-            prefs.edit { putBoolean("artist_folder", value) }
+            setPref(ARTIST_FOLDER, value)
         }
 
+    private val BUFFER_MS = intPreferencesKey("buffer_ms_opensl")
     var bufferMs: Int
-        get() = prefs.getInt("buffer_ms_opensl", 400)
+        get() = getPref(BUFFER_MS, 400)
         set(value) {
-            prefs.edit { putInt("buffer_ms_opensl", value) }
+            setPref(BUFFER_MS, value)
         }
 
+    private val SAMPLE_RATE = intPreferencesKey("sampling_rate")
     var samplingRate: Int
-        get() = prefs.getInt("sampling_rate", 44100)
+        get() = getPref(SAMPLE_RATE, 44100)
         set(value) {
-            prefs.edit { putInt("sampling_rate", value) }
+            setPref(SAMPLE_RATE, value)
         }
 
+    private val DEFAULT_PAN = intPreferencesKey("default_pan")
     var defaultPan: Int
-        get() = prefs.getInt("default_pan", 50)
+        get() = getPref(DEFAULT_PAN, 50)
         set(value) {
-            prefs.edit { putInt("default_pan", value) }
+            setPref(DEFAULT_PAN, value)
         }
 
+    private val VOLUME_BOOST = intPreferencesKey("vol_boost")
     var volumeBoost: Int
-        get() = prefs.getInt("vol_boost", 1)
+        get() = getPref(VOLUME_BOOST, 1)
         set(value) {
-            prefs.edit { putInt("vol_boost", value) }
+            setPref(VOLUME_BOOST, value)
         }
 
+    private val INTERP_TYPE = intPreferencesKey("interp_type")
     var interpType: Int
-        get() = prefs.getInt("interp_type", 1)
+        get() = getPref(INTERP_TYPE, 1)
         set(value) {
-            prefs.edit { putInt("interp_type", value) }
+            setPref(INTERP_TYPE, value)
         }
 
+    private val INTERPOLATE = booleanPreferencesKey("interpolate")
     var interpolate: Boolean
-        get() = prefs.getBoolean("interpolate", true)
+        get() = getPref(INTERPOLATE, true)
         set(value) {
-            prefs.edit { putBoolean("interpolate", value) }
+            setPref(INTERPOLATE, value)
         }
 
+    private val STEREO_MIX = intPreferencesKey("stereo_mix")
     var stereoMix: Int
-        get() = prefs.getInt("stereo_mix", 100)
+        get() = getPref(STEREO_MIX, 100)
         set(value) {
-            prefs.edit { putInt("stereo_mix", value) }
+            setPref(STEREO_MIX, value)
         }
 
+    private val AMIGA_MIXER = booleanPreferencesKey("amiga_mixer")
     var amigaMixer: Boolean
-        get() = prefs.getBoolean("amiga_mixer", false)
+        get() = getPref(AMIGA_MIXER, false)
         set(value) {
-            prefs.edit { putBoolean("amiga_mixer", value) }
+            setPref(AMIGA_MIXER, value)
         }
 
+    private val HEADSET_PAUSE = booleanPreferencesKey("headset_pause")
     var headsetPause: Boolean
-        get() = prefs.getBoolean("headset_pause", true)
+        get() = getPref(HEADSET_PAUSE, true)
         set(value) {
-            prefs.edit { putBoolean("headset_pause", value) }
+            setPref(HEADSET_PAUSE, value)
         }
 
+    private val BLUETOOTH_PAUSE = booleanPreferencesKey("bluetooth_pause")
     var bluetoothPause: Boolean
-        get() = prefs.getBoolean("bluetooth_pause", true)
+        get() = getPref(BLUETOOTH_PAUSE, true)
         set(value) {
-            prefs.edit { putBoolean("bluetooth_pause", value) }
+            setPref(BLUETOOTH_PAUSE, value)
         }
 
+    private val BETTER_WAVEFORM = booleanPreferencesKey("new_waveform")
     var useBetterWaveform: Boolean
-        get() = prefs.getBoolean("new_waveform", true)
+        get() = getPref(BETTER_WAVEFORM, true)
         set(value) {
-            prefs.edit { putBoolean("new_waveform", value) }
+            setPref(BETTER_WAVEFORM, value)
         }
 
+    private val MEDIA_STYLE = booleanPreferencesKey("use_media_style")
     var useMediaStyle: Boolean
-        get() = prefs.getBoolean("use_media_style", true)
+        get() = getPref(MEDIA_STYLE, true)
         set(value) {
-            prefs.edit { putBoolean("use_media_style", value) }
+            setPref(MEDIA_STYLE, value)
         }
 
-    var searchHistory: String
-        get() = prefs.getString("search_history", "[]")!!
+    private val SEARCH_HISTORY = stringPreferencesKey("search_history")
+    var searchHistory: List<Module>
+        get() {
+            val string = getPref(SEARCH_HISTORY, "[]")
+            var list: List<Module>
+            try {
+                list = Json.decodeFromString(string)
+            } catch (e: Exception) {
+                Timber.e("Error getting search history")
+                removePref(SEARCH_HISTORY)
+                list = listOf()
+            }
+            return list
+        }
         set(value) {
-            prefs.edit { putString("search_history", value) }
+            var json: String
+            try {
+                json = Json.encodeToString(value)
+            } catch (e: Exception) {
+                Timber.e("Error setting search history")
+                removePref(SEARCH_HISTORY)
+                json = ""
+            }
+            setPref(SEARCH_HISTORY, json)
         }
 
+    private val SHOW_HEX = booleanPreferencesKey("player_show_hex")
     var showHex: Boolean
-        get() = prefs.getBoolean("player_show_hex", false)
+        get() = getPref(SHOW_HEX, false)
         set(value) {
-            prefs.edit { putBoolean("player_show_hex", value) }
+            setPref(SHOW_HEX, value)
         }
 }

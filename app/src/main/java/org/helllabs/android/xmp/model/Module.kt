@@ -158,7 +158,8 @@ data class ArtistInfo(
         get() = guessed_artist.alias
 }
 
-// https://modarchive.org/forums/index.php?topic=4713.0
+// (Link Dead) https://modarchive.org/forums/index.php?topic=4713.0
+// Not even TMA knows much about this.
 // NOTE: I'm not sure of this is correct, rare to see multiple guest artists.
 @Serializable
 @SerialName("guessed_artist")
