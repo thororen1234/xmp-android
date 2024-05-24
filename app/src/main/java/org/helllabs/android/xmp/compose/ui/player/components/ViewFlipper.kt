@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 
@@ -84,6 +85,22 @@ fun ViewFlipper(
                 )
             }
         }
+    )
+
+    Rebugger(
+        composableName = "ViewFlipper",
+        trackMap = mapOf(
+            "actions" to actions,
+            "navigation" to navigation,
+            "skipToPrevious" to skipToPrevious,
+            "info" to info,
+            "TopAppBarDefaults.centerAlignedTopAppBarColors" to
+                TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
+                    titleContentColor = MaterialTheme.colorScheme.onSurface,
+                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
+                ),
+        ),
     )
 }
 

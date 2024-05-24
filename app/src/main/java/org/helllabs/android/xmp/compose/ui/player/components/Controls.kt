@@ -1,53 +1,46 @@
 package org.helllabs.android.xmp.compose.ui.player.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Repeat
-import androidx.compose.material.icons.filled.RepeatOneOn
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.IconToggleButton
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.tooling.preview.*
+import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.compose.ui.player.PlayerViewModel
+
+@Stable
+sealed class PlayerControlsEvent {
+    data object OnStop : PlayerControlsEvent()
+    data object OnPrev : PlayerControlsEvent()
+    data object OnPlay : PlayerControlsEvent()
+    data object OnNext : PlayerControlsEvent()
+    data object OnRepeat : PlayerControlsEvent()
+}
 
 @Composable
 fun PlayerControls(
     modifier: Modifier = Modifier,
-    onStop: () -> Unit,
-    onPrev: () -> Unit,
-    onPlay: () -> Unit,
-    onNext: () -> Unit,
-    onRepeat: (Boolean) -> Unit,
-    isPlaying: Boolean,
-    isRepeating: Boolean
+    onEvent: (PlayerControlsEvent) -> Unit,
+    state: PlayerViewModel.PlayerButtonsState
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onStop) {
+        IconButton(onClick = { onEvent(PlayerControlsEvent.OnStop) }) {
             Icon(
                 modifier = Modifier.scale(1.2f),
                 imageVector = Icons.Default.Stop,
                 contentDescription = null
             )
         }
-        IconButton(onClick = onPrev) {
+        IconButton(onClick = { onEvent(PlayerControlsEvent.OnPrev) }) {
             Icon(
                 modifier = Modifier.scale(1.2f),
                 imageVector = Icons.Default.SkipPrevious,
@@ -55,12 +48,12 @@ fun PlayerControls(
             )
         }
         FloatingActionButton(
-            onClick = onPlay,
+            onClick = { onEvent(PlayerControlsEvent.OnPlay) },
             // containerColor = accent,
             contentColor = Color.White
         ) {
             Icon(
-                imageVector = if (isPlaying) {
+                imageVector = if (state.isPlaying) {
                     Icons.Default.Pause
                 } else {
                     Icons.Default.PlayArrow
@@ -68,7 +61,7 @@ fun PlayerControls(
                 contentDescription = null
             )
         }
-        IconButton(onClick = onNext) {
+        IconButton(onClick = { onEvent(PlayerControlsEvent.OnNext) }) {
             Icon(
                 modifier = Modifier.scale(1.2f),
                 imageVector = Icons.Default.SkipNext,
@@ -76,20 +69,31 @@ fun PlayerControls(
             )
         }
         IconToggleButton(
-            colors = IconButtonDefaults.iconToggleButtonColors(
-                // checkedContentColor = accent
-            ),
-            checked = isRepeating,
-            onCheckedChange = onRepeat
+            checked = state.isRepeating,
+            onCheckedChange = { onEvent(PlayerControlsEvent.OnRepeat) }
         ) {
-            val repeat = if (isRepeating) Icons.Default.RepeatOneOn else Icons.Default.Repeat
+            val repeatMode = remember(state.isRepeating) {
+                if (state.isRepeating) Icons.Default.RepeatOneOn else Icons.Default.Repeat
+            }
             Icon(
                 modifier = Modifier.scale(1.2f),
-                imageVector = repeat,
+                imageVector = repeatMode,
                 contentDescription = null
             )
         }
     }
+
+    Rebugger(
+        composableName = "PlayerControls",
+        trackMap = mapOf(
+            "modifier" to modifier,
+            "onEvent" to onEvent,
+            "state" to state,
+            "modifier.fillMaxWidth()" to modifier.fillMaxWidth(),
+            "Arrangement.SpaceEvenly" to Arrangement.SpaceEvenly,
+            "Alignment.CenterVertically" to Alignment.CenterVertically,
+        ),
+    )
 }
 
 @Preview
@@ -98,13 +102,8 @@ private fun Preview_PlayerButtons() {
     XmpTheme(useDarkTheme = true) {
         PlayerBottomAppBar {
             PlayerControls(
-                onStop = {},
-                onPrev = {},
-                onPlay = {},
-                onNext = {},
-                onRepeat = {},
-                isPlaying = false,
-                isRepeating = true
+                onEvent = { },
+                state = PlayerViewModel.PlayerButtonsState(isPlaying = true, isRepeating = true)
             )
         }
     }
