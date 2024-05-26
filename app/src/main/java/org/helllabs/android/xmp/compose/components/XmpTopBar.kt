@@ -13,6 +13,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
+import com.materialkolor.ktx.darken
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,7 +27,7 @@ fun XmpTopBar(
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = if (isScrolled) {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .5f)
+                MaterialTheme.colorScheme.surfaceVariant.darken(1.45f)
             } else {
                 MaterialTheme.colorScheme.surface
             },

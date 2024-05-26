@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.materialkolor.ktx.darken
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 
@@ -30,7 +31,7 @@ fun PlaylistInfo(
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = if (isScrolled) {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .5f)
+                MaterialTheme.colorScheme.surfaceVariant.darken(1.45f)
             } else {
                 MaterialTheme.colorScheme.surface
             },

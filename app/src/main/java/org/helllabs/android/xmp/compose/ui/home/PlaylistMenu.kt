@@ -26,6 +26,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.materialkolor.ktx.darken
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.helllabs.android.xmp.BuildConfig
@@ -195,7 +196,7 @@ fun HomeScreenImpl(
 
     LifecycleResumeEffect(Lifecycle.Event.ON_RESUME) {
         Timber.d("Lifecycle onResume")
-        if (!PrefManager.safStoragePath.isNullOrEmpty()) {
+        if (PrefManager.safStoragePath.isNotEmpty()) {
             viewModel.updateList()
         }
         onPauseOrDispose {
@@ -275,7 +276,7 @@ private fun HomeScreen(
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         topBar = {
             val topBarContainerColor = if (isScrolled.value) {
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .5f)
+                MaterialTheme.colorScheme.surfaceVariant.darken(1.45f)
             } else {
                 MaterialTheme.colorScheme.surface
             }
@@ -283,9 +284,6 @@ private fun HomeScreen(
             CenterAlignedTopAppBar(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = topBarContainerColor,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
                 ),
                 actions = {
                     IconButton(

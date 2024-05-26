@@ -111,7 +111,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             Timber.i("Service connected")
             modPlayer = (service as PlayerBinder).getService()
-            modPlayer!!.setCallback(this@PlayerActivity)
+            modPlayer?.setCallback(this@PlayerActivity)
 
             if (fileList != null && fileList!!.isNotEmpty()) {
                 // Start new queue
@@ -154,7 +154,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                 }
 
                 // get current frame info
-                modPlayer!!.getInfo(viewModel.viewInfo.values)
+                modPlayer?.getInfo(viewModel.viewInfo.values)
                 viewModel.viewInfo.time = modPlayer!!.time() / 1000
 
                 // Frame Info - Speed
@@ -232,8 +232,8 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
             return@Runnable
         }
 
-        modPlayer!!.getModVars(viewModel.modVars)
-        modPlayer!!.getSeqVars(viewModel.seqVars)
+        modPlayer?.getModVars(viewModel.modVars)
+        modPlayer?.getSeqVars(viewModel.seqVars)
         playTime = modPlayer?.time()?.div(100F) ?: 0F
 
         var name: String = modPlayer?.getModName() ?: ""
@@ -334,7 +334,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                     if (modPlayer!!.deleteFile()) {
                         showSnack("File deleted")
                         setResult(2) // Why this?
-                        modPlayer!!.nextSong()
+                        modPlayer?.nextSong()
                     } else {
                         showSnack("Can\'t delete file")
                     }
@@ -368,14 +368,14 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
             }
             val onAllSeq = remember {
                 {
-                    modPlayer!!.toggleAllSequences()
+                    modPlayer?.toggleAllSequences()
                     viewModel.onAllSequence(modPlayer!!.getAllSequences())
                 }
             }
             val onSequence: (Int) -> Unit = remember {
                 {
                     Timber.i("Set sequence $it")
-                    modPlayer!!.setSequence(it)
+                    modPlayer?.setSequence(it)
                 }
             }
 
@@ -412,7 +412,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                     },
                     onSeek = remember {
                         {
-                            modPlayer!!.seek(it.toInt() * 100)
+                            modPlayer?.seek(it.toInt() * 100)
                             playTime = modPlayer!!.time() / 100F
                         }
                     },
@@ -423,18 +423,18 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                     },
                     onStop = remember {
                         {
-                            modPlayer!!.stop()
+                            modPlayer?.stop()
                         }
                     },
                     onPrev = remember {
                         {
                             if (modPlayer!!.time() > 3000) {
-                                modPlayer!!.seek(0)
+                                modPlayer?.seek(0)
                                 if (!viewModel.isPlaying) {
-                                    modPlayer!!.pause()
+                                    modPlayer?.pause()
                                 }
                             } else {
-                                modPlayer!!.prevSong()
+                                modPlayer?.prevSong()
                                 skipToPrevious = true
                             }
                             viewModel.isPlaying(true)
@@ -442,13 +442,13 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                     },
                     onPlay = remember {
                         {
-                            modPlayer!!.pause()
+                            modPlayer?.pause()
                             viewModel.isPlaying(!modPlayer!!.isPaused())
                         }
                     },
                     onNext = remember {
                         {
-                            modPlayer!!.nextSong()
+                            modPlayer?.nextSong()
                             viewModel.isPlaying(true)
                         }
                     },
@@ -484,7 +484,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
 
         unregisterReceiver(screenReceiver)
 
-        modPlayer!!.setCallback(null)
+        modPlayer?.setCallback(null)
         modPlayer = null
         unbindService(connection)
         Timber.i("Unbind service")
@@ -517,7 +517,7 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
         if (modPlayer == null) {
             return
         }
-        modPlayer!!.getModVars(viewModel.modVars)
+        modPlayer?.getModVars(viewModel.modVars)
         handler.post(showNewSequenceRunnable)
     }
 
@@ -664,16 +664,18 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                 }
             }
 
-            modPlayer!!.allowRelease() // finished playing, we can release the module
+            modPlayer?.allowRelease() // finished playing, we can release the module
         }
     }
 
     private fun saveAllSeqPreference() {
         // Write our all sequences button status to shared prefs
-        val allSeq = modPlayer!!.getAllSequences()
-        if (allSeq != PrefManager.allSequences) {
-            Timber.d("Write all sequences preference")
-            PrefManager.allSequences = allSeq
+        modPlayer?.let {
+            val allSeq = it.getAllSequences()
+            if (allSeq != PrefManager.allSequences) {
+                Timber.d("Write all sequences preference")
+                PrefManager.allSequences = allSeq
+            }
         }
     }
 

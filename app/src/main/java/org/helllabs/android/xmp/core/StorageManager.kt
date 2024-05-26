@@ -23,7 +23,7 @@ object StorageManager {
     fun checkPermissions(): Boolean {
         val context = XmpApplication.instance!!.applicationContext
 
-        val isPreferenceEmpty = PrefManager.safStoragePath.isNullOrBlank()
+        val isPreferenceEmpty = PrefManager.safStoragePath.isBlank()
         if (isPreferenceEmpty) {
             return false
         }
@@ -348,8 +348,7 @@ object StorageManager {
             return null
         }
 
-        val context = XmpApplication.instance!!.applicationContext
-        return DocumentFileCompat.fromSingleUri(context, docFile.uri)?.name
+        return getFileName(docFile.uri)
     }
 
     /**
