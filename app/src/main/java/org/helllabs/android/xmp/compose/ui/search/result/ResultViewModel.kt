@@ -242,9 +242,10 @@ class ResultViewModel(
     }
 
     private fun doesModuleExist(result: ModuleResult?): Boolean {
-        val exists = StorageManager.doesModuleExist(result?.module).isSuccess
-        Timber.d("Does module exist? -> $exists")
-        return exists
+        val moduleExist = StorageManager.doesModuleExist(result?.module).getOrNull() ?: return false
+
+        Timber.d("Does module exist? -> ${moduleExist.isFile()}")
+        return moduleExist.isFile()
     }
 
     private fun isModuleSupported(result: ModuleResult?): Boolean {
