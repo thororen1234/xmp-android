@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.home
 
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -13,15 +14,18 @@ import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.core.XmpException
 import org.helllabs.android.xmp.model.FileItem
 
+@Stable
+data class PlaylistMenuState(
+    val errorText: String? = null,
+    val isLoading: Boolean = true,
+    val mediaPath: String = "",
+    val playlistItems: List<FileItem> = listOf(),
+    val editPlaylist: FileItem? = null,
+    val newPlaylist: Boolean = false
+)
+
+@Stable
 class PlaylistMenuViewModel : ViewModel() {
-    data class PlaylistMenuState(
-        val errorText: String? = null,
-        val isLoading: Boolean = true,
-        val mediaPath: String = "",
-        val playlistItems: List<FileItem> = listOf(),
-        val editPlaylist: FileItem? = null,
-        val newPlaylist: Boolean = false
-    )
 
     private val _uiState = MutableStateFlow(PlaylistMenuState())
     val uiState = _uiState.asStateFlow()

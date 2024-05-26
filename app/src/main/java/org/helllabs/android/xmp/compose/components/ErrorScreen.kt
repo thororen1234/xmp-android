@@ -29,6 +29,10 @@ fun ErrorScreen(
     text: String?,
     action: (@Composable () -> Unit)? = null
 ) {
+    if (text.isNullOrEmpty()) {
+        return
+    }
+
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surfaceVariant,
@@ -49,7 +53,7 @@ fun ErrorScreen(
                 modifier = Modifier.fillMaxWidth(.5f),
                 fontSize = 18.sp,
                 textAlign = TextAlign.Center,
-                text = text ?: stringResource(id = R.string.search_error)
+                text = text
             )
             action?.let {
                 Spacer(modifier = Modifier.height(16.dp))

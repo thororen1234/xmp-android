@@ -1,6 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.playlist
 
 import android.net.Uri
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,15 +10,16 @@ import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.model.Playlist
 import timber.log.Timber
 
+@Stable
 class PlaylistActivityViewModel : ViewModel() {
 
-    private var manager: PlaylistManager = PlaylistManager()
+    private val manager: MutableStateFlow<PlaylistManager> = MutableStateFlow(PlaylistManager())
 
     private val _uiState = MutableStateFlow(Playlist())
     val uiState = _uiState.asStateFlow()
 
     fun save() {
-        with(manager) {
+        with(manager.value) {
             setLoop(_uiState.value.isLoop)
             setShuffle(_uiState.value.isShuffle)
             setList(_uiState.value.list)
@@ -49,22 +51,24 @@ class PlaylistActivityViewModel : ViewModel() {
     fun getUriItems(): List<Uri> = _uiState.value.list.map { it.uri }
 
     fun onRefresh(name: String) {
-        manager = PlaylistManager()
-        manager.load(Uri.parse(name))
+        manager.value = PlaylistManager()
+        with(manager.value) {
+            load(Uri.parse(name))
 
-        manager.playlist.list.forEachIndexed { index, playlistItem ->
-            playlistItem.id = index
-        }
+            playlist.list.forEachIndexed { index, playlistItem ->
+                playlistItem.id = index
+            }
 
-        _uiState.update {
-            it.copy(
-                comment = manager.playlist.comment,
-                isLoop = manager.playlist.isLoop,
-                isShuffle = manager.playlist.isShuffle,
-                list = manager.playlist.list,
-                name = manager.playlist.name,
-                uri = manager.playlist.uri
-            )
+            _uiState.update {
+                it.copy(
+                    comment = playlist.comment,
+                    isLoop = playlist.isLoop,
+                    isShuffle = playlist.isShuffle,
+                    list = playlist.list,
+                    name = playlist.name,
+                    uri = playlist.uri
+                )
+            }
         }
     }
 

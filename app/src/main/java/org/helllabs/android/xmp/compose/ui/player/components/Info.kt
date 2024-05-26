@@ -17,12 +17,10 @@ import androidx.compose.ui.unit.sp
 import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.player.PlayerViewModel
+import org.helllabs.android.xmp.compose.ui.player.PlayerInfoState
 
 @Composable
-fun PlayerInfo(
-    state: PlayerViewModel.PlayerInfoState
-) {
+fun PlayerInfo(state: PlayerInfoState) {
     val speed = remember(state.infoSpeed) { state.infoSpeed }
     val bpm = remember(state.infoBpm) { state.infoBpm }
     val pos = remember(state.infoPos) { state.infoPos }
@@ -78,7 +76,7 @@ private fun PlayerInfoPreview() {
     XmpTheme(useDarkTheme = true) {
         Surface {
             PlayerInfo(
-                state = PlayerViewModel.PlayerInfoState(
+                state = PlayerInfoState(
                     infoSpeed = "000",
                     infoBpm = "000",
                     infoPos = "000",

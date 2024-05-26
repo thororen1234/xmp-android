@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.home
 
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,8 +12,10 @@ import timber.log.Timber
  * @author https://github.com/m-derakhshan/PermissionHandler
  */
 
+@Stable
 data class PermissionModel(val permission: String, val rational: String)
 
+@Stable
 data class PermissionState(
     val askPermission: Boolean = true,
     val showRational: Boolean = false,
@@ -21,6 +24,7 @@ data class PermissionState(
     val navigateToSetting: Boolean = false
 )
 
+@Stable
 class PermissionViewModelFactory(
     private val permissions: List<PermissionModel>
 ) : ViewModelProvider.Factory {
@@ -30,6 +34,7 @@ class PermissionViewModelFactory(
     }
 }
 
+@Stable
 class PermissionViewModel(
     private val permissions: List<PermissionModel>
 ) : ViewModel() {

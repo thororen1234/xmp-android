@@ -63,12 +63,16 @@ import org.helllabs.android.xmp.compose.ui.search.result.ModuleResultScreenImpl
 import org.helllabs.android.xmp.compose.ui.search.result.NavSearchResult
 import org.helllabs.android.xmp.compose.ui.search.result.NavSearchTitleResult
 import org.helllabs.android.xmp.compose.ui.search.result.ResultViewModel
+import org.helllabs.android.xmp.compose.ui.search.result.ResultViewModelFactory
 import org.helllabs.android.xmp.compose.ui.search.result.SearchResultViewModel
+import org.helllabs.android.xmp.compose.ui.search.result.SearchResultViewModelFactory
 import org.helllabs.android.xmp.compose.ui.search.result.TitleResultScreenImpl
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
+
+// Compose Stability: https://multithreaded.stitchfix.com/blog/2022/08/05/jetpack-compose-recomposition/
 
 class MainActivity : ComponentActivity() {
 
@@ -344,7 +348,7 @@ class MainActivity : ComponentActivity() {
                     composable<NavSearchTitleResult> {
                         val args = it.toRoute<NavSearchTitleResult>()
                         val viewModel = viewModel<SearchResultViewModel>(
-                            factory = SearchResultViewModel.Factory
+                            factory = SearchResultViewModelFactory()
                         )
                         TitleResultScreenImpl(
                             viewModel = viewModel,
@@ -358,7 +362,7 @@ class MainActivity : ComponentActivity() {
                     composable<NavSearchResult> {
                         val args = it.toRoute<NavSearchResult>()
                         val viewModel = viewModel<ResultViewModel>(
-                            factory = ResultViewModel.Factory
+                            factory = ResultViewModelFactory()
                         )
                         ModuleResultScreenImpl(
                             viewModel = viewModel,

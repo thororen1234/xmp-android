@@ -45,7 +45,7 @@ import me.saket.cascade.CascadeDropdownMenu
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.XmpDropdownMenuHeader
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.filelist.FileListViewModel
+import org.helllabs.android.xmp.compose.ui.filelist.BreadCrumb
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.DropDownItem
 import org.helllabs.android.xmp.model.DropDownSelection
@@ -157,9 +157,9 @@ fun FileListCard(
 fun BreadCrumbs(
     modifier: Modifier = Modifier,
     crumbScrollState: LazyListState,
-    crumbs: List<FileListViewModel.BreadCrumb>,
+    crumbs: List<BreadCrumb>,
     onCrumbMenu: (DropDownSelection) -> Unit,
-    onCrumbClick: (FileListViewModel.BreadCrumb, Int) -> Unit
+    onCrumbClick: (BreadCrumb, Int) -> Unit
 ) {
     Row(modifier = modifier.fillMaxWidth()) {
         LazyRow(
@@ -264,9 +264,9 @@ private fun Preview_BreadCrumbs() {
         BreadCrumbs(
             crumbScrollState = state,
             crumbs = listOf(
-                FileListViewModel.BreadCrumb("Bread Crumb 1", null),
-                FileListViewModel.BreadCrumb("Bread Crumb 2", null),
-                FileListViewModel.BreadCrumb("Bread Crumb 3", null)
+                BreadCrumb("Bread Crumb 1", null),
+                BreadCrumb("Bread Crumb 2", null),
+                BreadCrumb("Bread Crumb 3", null)
             ),
             onCrumbMenu = { },
             onCrumbClick = { _, _ -> }

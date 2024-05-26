@@ -9,11 +9,11 @@ import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
 import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.player.PlayerViewModel
+import org.helllabs.android.xmp.compose.ui.player.PlayerTimeState
 
 @Composable
 fun PlayerSeekBar(
-    state: PlayerViewModel.PlayerTimeState,
+    state: PlayerTimeState,
     onIsSeeking: (Boolean) -> Unit,
     onSeek: (Float) -> Unit
 ) {
@@ -73,7 +73,7 @@ private fun Preview_PlayerSeekBar() {
     XmpTheme(useDarkTheme = true) {
         Surface {
             PlayerSeekBar(
-                state = PlayerViewModel.PlayerTimeState(
+                state = PlayerTimeState(
                     timeNow = "00:40",
                     timeTotal = "66:90",
                     seekPos = 6f,

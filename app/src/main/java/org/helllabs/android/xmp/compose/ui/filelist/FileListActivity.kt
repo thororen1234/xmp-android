@@ -37,7 +37,6 @@ import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.filelist.components.BreadCrumbs
 import org.helllabs.android.xmp.compose.ui.filelist.components.FileListCard
-import org.helllabs.android.xmp.core.PlaylistManager
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.DropDownSelection
@@ -108,20 +107,24 @@ fun FileListScreenImpl(
     /**
      * Playlist choice dialog
      */
+    val choice by viewModel.playlistChoice.collectAsStateWithLifecycle()
+    val playlists by viewModel.playlistList.collectAsStateWithLifecycle()
     SingleChoiceListDialog(
-        isShowing = viewModel.playlistChoice != null,
+        isShowing = choice != null,
         icon = Icons.AutoMirrored.Filled.PlaylistAdd,
         title = stringResource(id = R.string.dialog_title_select_playlist),
         selectedIndex = -1,
-        list = viewModel.playlistList.map { it.name },
+        list = playlists.map { it.name },
         onConfirm = viewModel::addToPlaylist,
-        onDismiss = { viewModel.playlistChoice = null },
+        onDismiss = {
+            viewModel.clearPlaylist()
+        },
         onEmpty = {
             scope.launch {
                 snackBarHostState.showSnackbar(
                     message = context.getString(R.string.error_snack_no_playlists)
                 )
-                viewModel.playlistChoice = null
+                viewModel.clearPlaylist()
             }
         }
     )
@@ -129,54 +132,49 @@ fun FileListScreenImpl(
     /**
      * Delete directory dialog
      */
+    val deleteDir by viewModel.deleteDirChoice.collectAsStateWithLifecycle()
     MessageDialog(
-        isShowing = viewModel.deleteDirChoice != null,
+        isShowing = deleteDir != null,
         icon = Icons.Default.QuestionMark,
         title = "Delete directory",
-        text = "Are you sure you want to delete " +
-            "${
-                StorageManager.getFileName(
-                    viewModel.deleteDirChoice
-                )
-            } and all its contents?",
+        text = "Are you sure you want to delete ${viewModel.getDirName()} and all its contents?",
         confirmText = stringResource(id = R.string.delete),
         onConfirm = {
-            val res = StorageManager.deleteFileOrDirectory(viewModel.deleteDirChoice)
+            val res = viewModel.deleteDir()
             if (!res) {
                 scope.launch {
                     snackBarHostState.showSnackbar("Unable to delete directory")
                 }
             }
-            viewModel.deleteDirChoice = null
+            viewModel.clearDeleteDir()
         },
         onDismiss = {
-            viewModel.deleteDirChoice = null
+            viewModel.clearDeleteDir()
         }
     )
 
     /**
      * Delete file dialog
      */
+    val deleteFile by viewModel.deleteFileChoice.collectAsStateWithLifecycle()
     MessageDialog(
-        isShowing = viewModel.deleteFileChoice != null,
+        isShowing = deleteFile != null,
         icon = Icons.Default.QuestionMark,
         title = "Delete File",
-        text = "Are you sure you want to delete " +
-            "${StorageManager.getFileName(viewModel.deleteFileChoice)}?",
+        text = "Are you sure you want to delete ${viewModel.getFileName()}?",
         confirmText = stringResource(id = R.string.delete),
         onConfirm = {
-            val res =
-                StorageManager.deleteFileOrDirectory(viewModel.deleteFileChoice)
+            val res = viewModel.deleteFile()
             if (!res) {
                 scope.launch {
                     snackBarHostState.showSnackbar("Unable to delete item")
                 }
             }
             viewModel.onRefresh()
-            viewModel.deleteFileChoice = null
+            viewModel.clearFileDir()
         },
         onDismiss = {
-            viewModel.deleteFileChoice = null
+            viewModel.clearFileDir()
         }
     )
 
@@ -204,8 +202,7 @@ fun FileListScreenImpl(
         onCrumbMenu = { selection ->
             when (selection) {
                 DropDownSelection.ADD_TO_PLAYLIST -> {
-                    viewModel.playlistList = PlaylistManager.listPlaylists()
-                    viewModel.playlistChoice = viewModel.currentPath
+                    viewModel.dropDownAddToPlaylist()
                 }
 
                 DropDownSelection.ADD_TO_QUEUE -> onAddQueue(
@@ -243,16 +240,11 @@ fun FileListScreenImpl(
         onItemLongClick = { item, index, sel ->
             when (sel) {
                 DropDownSelection.DELETE -> {
-                    if (item.isFile) {
-                        viewModel.deleteFileChoice = item.docFile
-                    } else {
-                        viewModel.deleteDirChoice = item.docFile
-                    }
+                    viewModel.dropDownDelete(item)
                 }
 
                 DropDownSelection.ADD_TO_PLAYLIST -> {
-                    viewModel.playlistList = PlaylistManager.listPlaylists()
-                    viewModel.playlistChoice = item.docFile
+                    viewModel.dropDownAddToPlaylist(item.docFile)
                 }
 
                 DropDownSelection.ADD_TO_QUEUE -> {
@@ -310,7 +302,7 @@ fun FileListScreenImpl(
 @OptIn(FlowPreview::class, ExperimentalMaterial3Api::class)
 @Composable
 private fun FileListScreen(
-    state: FileListViewModel.FileListState,
+    state: FileListState,
     snackBarHostState: SnackbarHostState,
     onBack: () -> Unit,
     onScrollPosition: (Int) -> Unit,
@@ -320,7 +312,7 @@ private fun FileListScreen(
     onLoop: (value: Boolean) -> Unit,
     onPlayAll: () -> Unit,
     onCrumbMenu: (DropDownSelection) -> Unit,
-    onCrumbClick: (crumb: FileListViewModel.BreadCrumb, index: Int) -> Unit,
+    onCrumbClick: (crumb: BreadCrumb, index: Int) -> Unit,
     onItemClick: (item: FileItem, index: Int) -> Unit,
     onItemLongClick: (item: FileItem, index: Int, sel: DropDownSelection) -> Unit
 ) {
@@ -433,7 +425,7 @@ private fun FileListScreen(
 private fun Preview_FileListScreen() {
     XmpTheme(useDarkTheme = true) {
         FileListScreen(
-            state = FileListViewModel.FileListState(
+            state = FileListState(
                 isLoading = true,
                 list = List(10) {
                     FileItem(
@@ -443,7 +435,7 @@ private fun Preview_FileListScreen() {
                     )
                 },
                 crumbs = List(4) {
-                    FileListViewModel.BreadCrumb(
+                    BreadCrumb(
                         name = "Crumb $it",
                         path = null
                     )

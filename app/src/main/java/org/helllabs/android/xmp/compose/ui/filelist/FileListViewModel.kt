@@ -24,24 +24,27 @@ import org.helllabs.android.xmp.model.Playlist
 import org.helllabs.android.xmp.model.PlaylistItem
 import timber.log.Timber
 
+// Bread crumbs are the back bone of the file explorer. :)
+@Stable
+data class BreadCrumb(
+    val name: String,
+    val path: DocumentFileCompat?,
+    val enabled: Boolean = false
+)
+
+// State class for UI related stuff
+@Stable
+data class FileListState(
+    val crumbs: List<BreadCrumb> = listOf(),
+    val isLoading: Boolean = false,
+    val isLoop: Boolean = false,
+    val isShuffle: Boolean = false,
+    val lastScrollPosition: Int = 0,
+    val list: List<FileItem> = listOf()
+)
+
+@Stable
 class FileListViewModel : ViewModel() {
-
-    // Bread crumbs are the back bone of the file explorer. :)
-    data class BreadCrumb(
-        val name: String,
-        val path: DocumentFileCompat?,
-        val enabled: Boolean = false
-    )
-
-    // State class for UI related stuff
-    data class FileListState(
-        val crumbs: List<BreadCrumb> = listOf(),
-        val isLoading: Boolean = false,
-        val isLoop: Boolean = false,
-        val isShuffle: Boolean = false,
-        val lastScrollPosition: Int = 0,
-        val list: List<FileItem> = listOf()
-    )
 
     private val _uiState = MutableStateFlow(FileListState())
     val uiState = _uiState.asStateFlow()
@@ -49,16 +52,16 @@ class FileListViewModel : ViewModel() {
     private val _softError = MutableSharedFlow<String>()
     val softError = _softError.asSharedFlow()
 
-    val currentPath: DocumentFileCompat?
+    private val currentPath: DocumentFileCompat?
         get() {
             val crumbs = uiState.value.crumbs
             return if (crumbs.isEmpty()) null else crumbs.last().path
         }
 
-    var playlistList: List<Playlist> by mutableStateOf(listOf())
-    var playlistChoice: DocumentFileCompat? by mutableStateOf(null)
-    var deleteDirChoice: DocumentFileCompat? by mutableStateOf(null)
-    var deleteFileChoice: DocumentFileCompat? by mutableStateOf(null)
+    val playlistList: MutableStateFlow<List<Playlist>> = MutableStateFlow(listOf())
+    val playlistChoice: MutableStateFlow<DocumentFileCompat?> = MutableStateFlow(null)
+    val deleteDirChoice: MutableStateFlow<DocumentFileCompat?> = MutableStateFlow(null)
+    val deleteFileChoice: MutableStateFlow<DocumentFileCompat?> = MutableStateFlow(null)
 
     init {
         _uiState.update {
@@ -181,14 +184,14 @@ class FileListViewModel : ViewModel() {
     }
 
     fun addToPlaylist(index: Int) {
-        val choice = playlistList[index]
+        val choice = playlistList.value[index]
         _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch(Dispatchers.IO) {
-            if (playlistChoice == null) {
+            if (playlistChoice.value == null) {
                 _softError.emit("Playlist choice is null")
                 _uiState.update { it.copy(isLoading = false) }
-                playlistChoice = null
+                playlistChoice.value = null
                 return@launch
             }
 
@@ -196,23 +199,23 @@ class FileListViewModel : ViewModel() {
             if (!manager.load(choice.uri)) {
                 _softError.emit("Playlist manager failed to load playlist")
                 _uiState.update { it.copy(isLoading = false) }
-                playlistChoice = null
+                playlistChoice.value = null
                 return@launch
             }
 
             val modInfo = ModInfo()
-            if (playlistChoice!!.isFile()) {
-                if (!Xmp.testFromFd(playlistChoice!!.uri, modInfo)) {
+            if (playlistChoice.value!!.isFile()) {
+                if (!Xmp.testFromFd(playlistChoice.value!!.uri, modInfo)) {
                     _softError.emit("Failed to validate file")
                     _uiState.update { it.copy(isLoading = false) }
-                    playlistChoice = null
+                    playlistChoice.value = null
                     return@launch
                 }
 
                 val playlist = PlaylistItem(
                     name = modInfo.name,
                     type = modInfo.type,
-                    uri = playlistChoice!!.uri
+                    uri = playlistChoice.value!!.uri
                 )
                 val list = listOf(playlist)
                 val res = manager.add(list)
@@ -220,9 +223,9 @@ class FileListViewModel : ViewModel() {
                 if (!res) {
                     _softError.emit("Couldn't add module to playlist")
                 }
-            } else if (playlistChoice!!.isDirectory()) {
+            } else if (playlistChoice.value!!.isDirectory()) {
                 val list = mutableListOf<PlaylistItem>()
-                StorageManager.walkDownDirectory(playlistChoice!!.uri, false).forEach { uri ->
+                StorageManager.walkDownDirectory(playlistChoice.value!!.uri, false).forEach { uri ->
                     if (!Xmp.testFromFd(uri, modInfo)) {
                         Timber.w("Invalid playlist item $uri")
                         return@forEach
@@ -242,7 +245,7 @@ class FileListViewModel : ViewModel() {
                 if (list.isEmpty()) {
                     _softError.emit("Empty directory")
                     _uiState.update { it.copy(isLoading = false) }
-                    playlistChoice = null
+                    playlistChoice.value = null
                     return@launch
                 }
 
@@ -253,9 +256,50 @@ class FileListViewModel : ViewModel() {
             }
 
             _uiState.update { it.copy(isLoading = false) }
-            playlistChoice = null
+            playlistChoice.value = null
         }
     }
 
     fun getItems(): List<Uri> = _uiState.value.list.map { it.docFile!!.uri }
+
+    fun dropDownAddToPlaylist(docFile: DocumentFileCompat? = null) {
+        playlistList.value = PlaylistManager.listPlaylists()
+        playlistChoice.value = docFile ?: currentPath
+    }
+
+    fun dropDownDelete(item: FileItem) {
+        if (item.isFile) {
+            deleteFileChoice.value = item.docFile
+        } else {
+            deleteDirChoice.value = item.docFile
+        }
+    }
+
+    fun clearDeleteDir() {
+        deleteDirChoice.value = null
+    }
+
+    fun clearFileDir() {
+        deleteFileChoice.value = null
+    }
+
+    fun deleteFile(): Boolean {
+        return StorageManager.deleteFileOrDirectory(deleteFileChoice.value)
+    }
+
+    fun deleteDir(): Boolean {
+        return StorageManager.deleteFileOrDirectory(deleteDirChoice.value)
+    }
+
+    fun getFileName(): String {
+        return StorageManager.getFileName(deleteFileChoice.value).orEmpty()
+    }
+
+    fun getDirName(): String {
+        return StorageManager.getFileName(deleteDirChoice.value).orEmpty()
+    }
+
+    fun clearPlaylist() {
+        playlistChoice.value = null
+    }
 }

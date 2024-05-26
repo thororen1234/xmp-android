@@ -32,16 +32,6 @@ fun RadioButtonItem(
     radioButtonColors: RadioButtonColors = RadioButtonDefaults.colors(),
     onClick: () -> Unit
 ) {
-    Rebugger(
-        composableName = "RadioButtonItem",
-        trackMap = mapOf(
-            "index" to index,
-            "selection" to selection,
-            "text" to text,
-            "radioButtonColors" to radioButtonColors,
-            "onClick" to onClick,
-        )
-    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -65,6 +55,26 @@ fun RadioButtonItem(
             style = MaterialTheme.typography.bodyLarge
         )
     }
+
+    Rebugger(
+        composableName = "RadioButtonItem",
+        trackMap = mapOf(
+            "index" to index,
+            "selection" to selection,
+            "text" to text,
+            "radioButtonColors" to radioButtonColors,
+            "onClick" to onClick,
+            "Modifier" to Modifier.fillMaxWidth()
+                .height(56.dp)
+                .selectable(
+                    selected = (index == selection),
+                    onClick = onClick,
+                    role = Role.RadioButton
+                )
+                .padding(horizontal = 16.dp),
+            "Alignment.CenterVertically" to Alignment.CenterVertically,
+        ),
+    )
 }
 
 @Preview

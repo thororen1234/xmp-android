@@ -77,11 +77,7 @@ fun ModuleResultScreenImpl(
     }
 
     LaunchedEffect(Unit) {
-        if (moduleID < 0) {
-            viewModel.getRandomModule()
-        } else {
-            viewModel.getModuleById(moduleID)
-        }
+        viewModel.getModuleById(moduleID)
     }
 
     ModuleResultScreen(
@@ -91,15 +87,6 @@ fun ModuleResultScreenImpl(
         onRandom = viewModel::getRandomModule,
         onShare = { onShare(it) },
         onDeleteModule = viewModel::deleteModule,
-        onDownloadModule = { module ->
-            StorageManager.getDownloadPath(module = module)
-                .onSuccess { viewModel.downloadModule(module, it) }
-                .onFailure {
-                    viewModel.showSoftError(
-                        it.message ?: context.getString(R.string.error)
-                    )
-                }
-        },
         onPlay = { module ->
             StorageManager.doesModuleExist(module = module)
                 .onSuccess { dfc ->
@@ -124,14 +111,13 @@ fun ModuleResultScreenImpl(
 
 @Composable
 private fun ModuleResultScreen(
-    state: ResultViewModel.ModuleResultState,
+    state: ModuleResultState,
     snackBarHostState: SnackbarHostState,
     onBack: () -> Unit,
     onRandom: () -> Unit,
     onShare: (String) -> Unit,
     onPlay: (module: Module) -> Unit,
-    onDeleteModule: () -> Unit,
-    onDownloadModule: (Module) -> Unit
+    onDeleteModule: () -> Unit
 ) {
     val scrollState = rememberScrollState()
     val isScrolled = remember {
@@ -157,21 +143,6 @@ private fun ModuleResultScreen(
         onDismiss = { deleteModule = false }
     )
 
-    // Hopefully this shouldn't happen, but let's be sure to handle it.
-    var moduleExists: Module? by remember { mutableStateOf(null) }
-    MessageDialog(
-        isShowing = moduleExists != null,
-        icon = Icons.Default.Delete,
-        title = stringResource(id = R.string.msg_file_exists_title),
-        text = stringResource(id = R.string.msg_file_exists_message),
-        confirmText = stringResource(id = android.R.string.ok),
-        onConfirm = {
-            onDownloadModule(moduleExists!!)
-            moduleExists = null
-        },
-        onDismiss = { moduleExists = null }
-    )
-
     Scaffold(
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         topBar = {
@@ -193,7 +164,10 @@ private fun ModuleResultScreen(
                         }
                     }
                     IconButton(onClick = { onShare(state.module!!.module.infopage) }) {
-                        Icon(imageVector = Icons.Default.Share, contentDescription = "Share Module")
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Share Module"
+                        )
                     }
                 }
             )
@@ -202,9 +176,7 @@ private fun ModuleResultScreen(
             val buttonText = when {
                 state.isLoading -> stringResource(id = R.string.loading)
                 state.moduleExists -> stringResource(id = R.string.play)
-                !state.moduleSupported ->
-                    stringResource(id = R.string.unsupported)
-
+                !state.moduleSupported -> stringResource(id = R.string.unsupported)
                 else -> stringResource(id = R.string.download)
             }
 
@@ -252,9 +224,7 @@ private fun ModuleResultScreen(
                     moduleResult = state.module
                 )
 
-                state.softError?.let {
-                    ErrorScreen(text = it)
-                }
+                ErrorScreen(text = state.softError)
 
                 ProgressbarIndicator(isLoading = state.isLoading)
             }
@@ -267,7 +237,7 @@ private fun ModuleResultScreen(
 private fun Preview_ModuleResult() {
     XmpTheme(useDarkTheme = true) {
         ModuleResultScreen(
-            state = ResultViewModel.ModuleResultState(
+            state = ModuleResultState(
                 module = ModuleResult(
                     sponsor = Sponsor(
                         details = SponsorDetails(
@@ -300,7 +270,6 @@ private fun Preview_ModuleResult() {
             onPlay = {},
             onRandom = {},
             onShare = {},
-            onDownloadModule = {},
             onDeleteModule = {},
         )
     }

@@ -1,10 +1,9 @@
 package org.helllabs.android.xmp.compose.ui.search.result
 
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -13,26 +12,29 @@ import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.api.Repository
 import timber.log.Timber
 
+@Stable
+data class SearchResultState(
+    val hardError: String? = null,
+    val isLoading: Boolean = false,
+    val softError: String? = null,
+    val title: String = "",
+    val result: Any? = null
+)
+
+@Stable
+class SearchResultViewModelFactory : ViewModelProvider.Factory {
+    private val repository = Repository(XmpApplication.modArchiveModule.apiHelper)
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return SearchResultViewModel(repository) as T
+    }
+}
+
+@Stable
 class SearchResultViewModel(
     private val repository: Repository
 ) : ViewModel() {
-
-    companion object {
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val repository = Repository(XmpApplication.modArchiveModule.apiHelper)
-                SearchResultViewModel(repository)
-            }
-        }
-    }
-
-    data class SearchResultState(
-        val hardError: String? = null,
-        val isLoading: Boolean = false,
-        val softError: String? = null,
-        val title: String = "",
-        var result: Any? = null
-    )
 
     private val _uiState = MutableStateFlow(SearchResultState())
     val uiState = _uiState.asStateFlow()

@@ -27,14 +27,14 @@ object NavSearch
 @Composable
 fun SearchScreen(
     onBack: () -> Unit,
-    onSearch: (String, Int) -> Unit,
+    onSearch: (String, Boolean) -> Unit,
     onRandom: () -> Unit,
     onHistory: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     var searchText by rememberSaveable { mutableStateOf("") }
-    var isArtistSearch by rememberSaveable { mutableIntStateOf(0) }
+    var isArtistSearch by rememberSaveable { mutableStateOf(true) }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -121,10 +121,9 @@ fun SearchScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SegmentedButtons(isArtistSearch: Int, onSearchType: (Int) -> Unit) {
-    val searchOptions by remember {
-        val list = listOf(R.string.artist, R.string.title_or_filename)
-        mutableStateOf(list)
+private fun SegmentedButtons(isArtistSearch: Boolean, onSearchType: (Boolean) -> Unit) {
+    val searchOptions = remember {
+        listOf(R.string.artist, R.string.title_or_filename)
     }
 
     SingleChoiceSegmentedButtonRow(
@@ -142,8 +141,8 @@ private fun SegmentedButtons(isArtistSearch: Int, onSearchType: (Int) -> Unit) {
                     index = index,
                     count = searchOptions.size
                 ),
-                onClick = { onSearchType(index) },
-                selected = index == isArtistSearch,
+                onClick = { onSearchType(index == 0) },
+                selected = index == 0 && isArtistSearch,
                 label = { Text(text = stringResource(id = label)) }
             )
         }

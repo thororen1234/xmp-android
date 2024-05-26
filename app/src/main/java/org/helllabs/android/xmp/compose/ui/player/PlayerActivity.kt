@@ -380,8 +380,10 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
             }
 
             XmpTheme {
+                val instrumentNames by viewModel.insName.collectAsStateWithLifecycle()
+                val isMuted by viewModel.isMuted.collectAsStateWithLifecycle()
                 PlayerScreen(
-                    modifier = remember(Modifier.systemBarsPadding()) {
+                    modifier = remember {
                         Modifier.systemBarsPadding()
                     },
                     snackBarHostState = snackbarHostState,
@@ -395,9 +397,9 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
                     currentViewer = viewModel.currentViewer,
                     viewInfo = viewModel.viewInfo,
                     patternInfo = viewModel.patternInfo,
-                    isMuted = viewModel.isMuted,
+                    isMuted = isMuted,
                     modVars = viewModel.modVars,
-                    insName = viewModel.insName,
+                    insName = instrumentNames,
                     onDelete = {
                         deleteFile = true
                     },
@@ -734,17 +736,17 @@ class PlayerActivity : ComponentActivity(), PlayerServiceCallback {
 @Composable
 private fun PlayerScreen(
     modifier: Modifier = Modifier,
-    buttonState: PlayerViewModel.PlayerButtonsState,
+    buttonState: PlayerButtonsState,
     currentViewer: Int,
-    drawerState: PlayerViewModel.PlayerDrawerState,
-    infoState: PlayerViewModel.PlayerInfoState,
+    drawerState: PlayerDrawerState,
+    infoState: PlayerInfoState,
     insName: Array<String>,
     isMuted: BooleanArray,
     modVars: IntArray,
     patternInfo: PatternInfo = PatternInfo(),
     snackBarHostState: SnackbarHostState,
-    timeState: PlayerViewModel.PlayerTimeState,
-    uiState: PlayerViewModel.PlayerState,
+    timeState: PlayerTimeState,
+    uiState: PlayerState,
     viewInfo: ViewerInfo,
     onAllSeq: () -> Unit,
     onChangeViewer: () -> Unit,
@@ -920,27 +922,27 @@ private fun Preview_PlayerScreen(
     XmpTheme {
         PlayerScreen(
             snackBarHostState = SnackbarHostState(),
-            uiState = PlayerViewModel.PlayerState(
+            uiState = PlayerState(
                 infoTitle = "Title 1",
                 infoType = "Fast Tracker"
             ),
-            infoState = PlayerViewModel.PlayerInfoState(
+            infoState = PlayerInfoState(
                 infoSpeed = "11",
                 infoBpm = "22",
                 infoPos = "33",
                 infoPat = "44"
             ),
-            buttonState = PlayerViewModel.PlayerButtonsState(
+            buttonState = PlayerButtonsState(
                 isPlaying = true,
                 isRepeating = false
             ),
-            timeState = PlayerViewModel.PlayerTimeState(
+            timeState = PlayerTimeState(
                 timeNow = "00:00",
                 timeTotal = "00:00",
                 seekPos = 25f,
                 seekMax = 100f
             ),
-            drawerState = PlayerViewModel.PlayerDrawerState(
+            drawerState = PlayerDrawerState(
                 drawerState = DrawerState(drawerValue),
                 moduleInfo = listOf(111, 222, 333, 444, 555),
                 isPlayAllSequences = true,

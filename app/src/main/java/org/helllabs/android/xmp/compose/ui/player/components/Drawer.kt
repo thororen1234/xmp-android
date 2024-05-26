@@ -20,7 +20,7 @@ import kotlin.random.Random
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.RadioButtonItem
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.player.PlayerViewModel
+import org.helllabs.android.xmp.compose.ui.player.PlayerDrawerState
 
 @Stable
 sealed class PlayerDrawerEvent {
@@ -30,10 +30,16 @@ sealed class PlayerDrawerEvent {
     data class OnSequence(val seq: Int) : PlayerDrawerEvent()
 }
 
+@Stable
+data class SubSongItem(
+    val index: Int,
+    val string: String
+)
+
 @Composable
 fun PlayerDrawer(
     modifier: Modifier = Modifier,
-    state: PlayerViewModel.PlayerDrawerState,
+    state: PlayerDrawerState,
     onEvent: (PlayerDrawerEvent) -> Unit
 ) {
     val context = LocalContext.current
@@ -44,19 +50,19 @@ fun PlayerDrawer(
         state.numOfSequences.mapIndexed { index, item ->
             val sub = context.getString(R.string.sidebar_sub_song, index)
             val text = if (index == 0) main else sub
-            String.format(
+            val string = String.format(
                 Locale.getDefault(),
                 "%2d:%02d (%s)",
                 item / 60000,
                 item / 1000 % 60,
                 text
             )
+            SubSongItem(index, string)
         }
     }
 
     ModalDrawerSheet(
         modifier = modifier,
-        drawerContentColor = Color.White
     ) {
         Column(
             modifier = Modifier
@@ -89,7 +95,6 @@ fun PlayerDrawer(
                     Icon(
                         imageVector = Icons.Default.Info,
                         contentDescription = null,
-                        tint = Color.White
                     )
                 }
             }
@@ -120,15 +125,30 @@ fun PlayerDrawer(
             Spacer(Modifier.height(12.dp))
 
             LazyColumn(state = lazyState) {
-                itemsIndexed(drawerSequences) { index, label ->
+                items(drawerSequences) { item ->
+                    val onClick = remember(item) {
+                        {
+                            onEvent(PlayerDrawerEvent.OnSequence(item.index))
+                        }
+                    }
+
                     RadioButtonItem(
-                        index = index,
+                        index = item.index,
                         selection = state.currentSequence,
-                        text = label,
-                        radioButtonColors = RadioButtonDefaults.colors(
-                            unselectedColor = Color.White
+                        text = item.string,
+                        onClick = onClick
+                    )
+
+                    Rebugger(
+                        composableName = "LazyColumn",
+                        trackMap = mapOf(
+                            "modifier" to modifier,
+                            "state" to state,
+                            "onEvent" to onEvent,
+                            "context" to context,
+                            "lazyState" to lazyState,
+                            "drawerSequences" to drawerSequences,
                         ),
-                        onClick = { onEvent(PlayerDrawerEvent.OnSequence(index)) }
                     )
                 }
             }
@@ -136,7 +156,6 @@ fun PlayerDrawer(
     }
 
     Rebugger(
-        composableName = "PlayerDrawer",
         trackMap = mapOf(
             "modifier" to modifier,
             "state" to state,
@@ -144,7 +163,6 @@ fun PlayerDrawer(
             "context" to context,
             "lazyState" to lazyState,
             "drawerSequences" to drawerSequences,
-            "Color.White" to Color.White,
         ),
     )
 }
@@ -170,12 +188,22 @@ private fun ModuleSection(
                     .weight(1f)
                     .wrapContentWidth(Alignment.Start),
                 text = text,
-                color = Color.White
             )
 
             content()
         }
     }
+
+    Rebugger(
+        composableName = "ModuleSection",
+        trackMap = mapOf(
+            "text" to text,
+            "content" to content,
+            "Modifier" to Modifier.height(48.dp),
+            "shapes" to shapes.small,
+            "MaterialTheme" to MaterialTheme.colorScheme.surfaceContainerHighest,
+        ),
+    )
 }
 
 @Composable
@@ -183,14 +211,6 @@ private fun ModuleInsDetails(
     string: String,
     number: Int
 ) {
-    Rebugger(
-        composableName = "InsDetails",
-        trackMap = mapOf(
-            "string" to string,
-            "number" to number
-        )
-    )
-
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -211,6 +231,17 @@ private fun ModuleInsDetails(
             fontSize = 14.sp,
         )
     }
+
+    Rebugger(
+        composableName = "ModuleInsDetails",
+        trackMap = mapOf(
+            "string" to string,
+            "number" to number,
+            "Modifier" to Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, end = 20.dp),
+        ),
+    )
 }
 
 @Preview
@@ -224,7 +255,7 @@ private fun Preview_PlayerDrawer() {
                 drawerState = drawerState,
                 drawerContent = {
                     PlayerDrawer(
-                        state = PlayerViewModel.PlayerDrawerState(
+                        state = PlayerDrawerState(
                             moduleInfo = listOf(111, 222, 333, 444, 555),
                             isPlayAllSequences = true,
                             currentSequence = 1,

@@ -27,12 +27,12 @@ import org.helllabs.android.xmp.model.SponsorDetails
 import timber.log.Timber
 
 @Serializable
-data class NavSearchTitleResult(val searchQuery: String, val isArtistSearch: Int)
+data class NavSearchTitleResult(val searchQuery: String, val isArtistSearch: Boolean)
 
 @Composable
 fun TitleResultScreenImpl(
     viewModel: SearchResultViewModel,
-    isArtistSearch: Int,
+    isArtistSearch: Boolean,
     searchQuery: String,
     onBack: () -> Unit,
     onClick: (Int) -> Unit,
@@ -42,7 +42,7 @@ fun TitleResultScreenImpl(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        if (isArtistSearch == 0) {
+        if (isArtistSearch) {
             val title = context.getString(R.string.screen_title_artist)
             viewModel.getArtists(title, searchQuery)
         } else {
@@ -68,7 +68,7 @@ fun TitleResultScreenImpl(
 
 @Composable
 private fun TitleResultScreen(
-    state: SearchResultViewModel.SearchResultState,
+    state: SearchResultState,
     onBack: () -> Unit,
     onItemId: (id: Int) -> Unit,
     onArtistId: (id: Int) -> Unit
@@ -139,7 +139,7 @@ private fun TitleResultScreen(
 private fun Preview_TitleResult() {
     XmpTheme(useDarkTheme = true) {
         TitleResultScreen(
-            state = SearchResultViewModel.SearchResultState(
+            state = SearchResultState(
                 isLoading = true,
                 title = stringResource(id = R.string.screen_title_artist),
                 result = null,
@@ -157,7 +157,7 @@ private fun Preview_TitleResult() {
 private fun Preview_TitleResult2() {
     XmpTheme(useDarkTheme = true) {
         TitleResultScreen(
-            state = SearchResultViewModel.SearchResultState(
+            state = SearchResultState(
                 isLoading = false,
                 title = stringResource(id = R.string.screen_title_artist),
                 result = SearchListResult(

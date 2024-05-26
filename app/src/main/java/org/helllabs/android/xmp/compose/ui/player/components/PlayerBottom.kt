@@ -9,7 +9,9 @@ import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
 import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.player.PlayerViewModel
+import org.helllabs.android.xmp.compose.ui.player.PlayerButtonsState
+import org.helllabs.android.xmp.compose.ui.player.PlayerInfoState
+import org.helllabs.android.xmp.compose.ui.player.PlayerTimeState
 
 /**
  * Height-less [androidx.compose.material3.BottomAppBar]
@@ -62,7 +64,7 @@ private fun Preview_PlayerBottomAppBar() {
     XmpTheme(useDarkTheme = true) {
         PlayerBottomAppBar {
             PlayerInfo(
-                state = PlayerViewModel.PlayerInfoState(
+                state = PlayerInfoState(
                     infoSpeed = "11",
                     infoBpm = "22",
                     infoPos = "33",
@@ -71,7 +73,7 @@ private fun Preview_PlayerBottomAppBar() {
             )
             Spacer(modifier = Modifier.height(12.dp))
             PlayerSeekBar(
-                state = PlayerViewModel.PlayerTimeState(
+                state = PlayerTimeState(
                     timeNow = "00:00",
                     timeTotal = "00:00",
                     seekPos = 25f,
@@ -82,7 +84,7 @@ private fun Preview_PlayerBottomAppBar() {
             )
             Spacer(modifier = Modifier.height(12.dp))
             PlayerControls(
-                state = PlayerViewModel.PlayerButtonsState(
+                state = PlayerButtonsState(
                     isPlaying = false,
                     isRepeating = false
                 ),

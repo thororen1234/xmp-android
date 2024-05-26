@@ -252,7 +252,7 @@ fun HomeScreenImpl(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun HomeScreen(
-    state: PlaylistMenuViewModel.PlaylistMenuState,
+    state: PlaylistMenuState,
     snackBarHostState: SnackbarHostState,
     permissionState: Boolean,
     onDownload: () -> Unit,
@@ -392,7 +392,7 @@ private fun HomeScreen(
 
 @Composable
 private fun MenuErrorDialog(
-    state: PlaylistMenuViewModel.PlaylistMenuState,
+    state: PlaylistMenuState,
     onConfirm: () -> Unit
 ) {
     MessageDialog(
@@ -406,7 +406,7 @@ private fun MenuErrorDialog(
 
 @Composable
 private fun MenuEditDialog(
-    state: PlaylistMenuViewModel.PlaylistMenuState,
+    state: PlaylistMenuState,
     onConfirm: (Boolean) -> Unit,
     onDismiss: () -> Unit,
     onDelete: (FileItem) -> Unit
@@ -429,7 +429,7 @@ private fun MenuEditDialog(
 
 @Composable
 private fun MenuNewPlaylist(
-    state: PlaylistMenuViewModel.PlaylistMenuState,
+    state: PlaylistMenuState,
     onConfirm: (Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -507,7 +507,7 @@ private fun Preview_MenuCardItem() {
 private fun Preview_PlaylistMenuScreen() {
     XmpTheme(useDarkTheme = true) {
         HomeScreen(
-            state = PlaylistMenuViewModel.PlaylistMenuState(
+            state = PlaylistMenuState(
                 mediaPath = "sdcard\\some\\path",
                 isLoading = true,
                 playlistItems = List(15) {

@@ -1,10 +1,9 @@
 package org.helllabs.android.xmp.compose.ui.search.result
 
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.lazygeniouz.dfc.file.DocumentFileCompat
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
@@ -28,43 +27,48 @@ import org.helllabs.android.xmp.model.Module
 import org.helllabs.android.xmp.model.ModuleResult
 import timber.log.Timber
 
+@Stable
+sealed class DownloadStatus {
+    data class Error(val error: Exception) : DownloadStatus()
+    data class ErrorMsg(val error: String) : DownloadStatus()
+    data class Progress(val percent: Float) : DownloadStatus()
+    data object Loading : DownloadStatus()
+    data object None : DownloadStatus()
+    data object Success : DownloadStatus()
+}
+
+@Stable
+data class ModuleResultState(
+    val isRandom: Boolean = false,
+    val isLoading: Boolean = false,
+    val softError: String? = null,
+    val hardError: String? = null,
+    val module: ModuleResult? = null,
+    val moduleExists: Boolean = false,
+    val moduleSupported: Boolean = true,
+    val downloadStatus: DownloadStatus = DownloadStatus.None
+)
+
+@Stable
+class ResultViewModelFactory : ViewModelProvider.Factory {
+    private val repository = Repository(XmpApplication.modArchiveModule.apiHelper)
+
+    @Suppress("UNCHECKED_CAST")
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return ResultViewModel(XmpApplication.modArchiveModule.okHttpClient, repository) as T
+    }
+}
+
+// @Stable
 class ResultViewModel(
     private val okHttpClient: OkHttpClient,
     private val repository: Repository
 ) : ViewModel() {
 
-    companion object {
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val repository = Repository(XmpApplication.modArchiveModule.apiHelper)
-                ResultViewModel(XmpApplication.modArchiveModule.okHttpClient, repository)
-            }
-        }
-    }
-
-    sealed class DownloadStatus {
-        data class Error(val error: Exception) : DownloadStatus()
-        data class ErrorMsg(val error: String) : DownloadStatus()
-        data class Progress(val percent: Float) : DownloadStatus()
-        data object Loading : DownloadStatus()
-        data object None : DownloadStatus()
-        data object Success : DownloadStatus()
-    }
-
-    data class ModuleResultState(
-        val isRandom: Boolean = false,
-        val isLoading: Boolean = false,
-        val softError: String? = null,
-        val hardError: String? = null,
-        val module: ModuleResult? = null,
-        val moduleExists: Boolean = false,
-        val moduleSupported: Boolean = true,
-        val downloadStatus: DownloadStatus = DownloadStatus.None
-    )
-
     private val _uiState = MutableStateFlow(ModuleResultState())
     val uiState = _uiState.asStateFlow()
 
+    // TODO does this mess with compose stability?
     private var currentDownloadJob: Job? = null
 
     override fun onCleared() {
@@ -173,6 +177,11 @@ class ResultViewModel(
     }
 
     fun getModuleById(id: Int) {
+        if (id < 0) {
+            getRandomModule()
+            return
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isRandom = false, isLoading = true) }
 

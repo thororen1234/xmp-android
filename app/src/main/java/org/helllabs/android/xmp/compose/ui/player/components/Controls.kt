@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.tooling.preview.*
 import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.player.PlayerViewModel
+import org.helllabs.android.xmp.compose.ui.player.PlayerButtonsState
 
 @Stable
 sealed class PlayerControlsEvent {
@@ -26,7 +26,7 @@ sealed class PlayerControlsEvent {
 fun PlayerControls(
     modifier: Modifier = Modifier,
     onEvent: (PlayerControlsEvent) -> Unit,
-    state: PlayerViewModel.PlayerButtonsState
+    state: PlayerButtonsState
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -49,7 +49,6 @@ fun PlayerControls(
         }
         FloatingActionButton(
             onClick = { onEvent(PlayerControlsEvent.OnPlay) },
-            // containerColor = accent,
             contentColor = Color.White
         ) {
             Icon(
@@ -103,7 +102,7 @@ private fun Preview_PlayerButtons() {
         PlayerBottomAppBar {
             PlayerControls(
                 onEvent = { },
-                state = PlayerViewModel.PlayerButtonsState(isPlaying = true, isRepeating = true)
+                state = PlayerButtonsState(isPlaying = true, isRepeating = true)
             )
         }
     }

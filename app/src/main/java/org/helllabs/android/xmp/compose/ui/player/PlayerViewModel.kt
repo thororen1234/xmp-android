@@ -14,52 +14,52 @@ import org.helllabs.android.xmp.compose.ui.player.viewer.PatternInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
 import timber.log.Timber
 
+@Stable
+data class PlayerState(
+    val serviceConnected: Boolean = false,
+    val currentViewer: Int = 0,
+    val infoTitle: String = "",
+    val infoType: String = "",
+    val screenOn: Boolean = false,
+    val skipToPrevious: Boolean = false
+)
+
+@Stable
+data class PlayerInfoState(
+    val infoSpeed: String = "00",
+    val infoBpm: String = "00",
+    val infoPos: String = "00",
+    val infoPat: String = "00",
+    val isVisible: Boolean = true
+)
+
+@Stable
+data class PlayerButtonsState(
+    val isPlaying: Boolean = false,
+    val isRepeating: Boolean = false
+)
+
+@Stable
+data class PlayerTimeState(
+    val timeNow: String = "-:--",
+    val timeTotal: String = "-:--",
+    val seekPos: Float = 0f,
+    val seekMax: Float = 1f,
+    val isVisible: Boolean = true,
+    val isSeeking: Boolean = false
+)
+
+@Stable
+data class PlayerDrawerState(
+    val drawerState: DrawerState = DrawerState(DrawerValue.Closed),
+    val moduleInfo: List<Int> = listOf(0, 0, 0, 0, 0),
+    val isPlayAllSequences: Boolean = false,
+    val numOfSequences: List<Int> = listOf(),
+    val currentSequence: Int = 0
+)
+
+@Stable
 class PlayerViewModel : ViewModel() {
-
-    /** Player States **/
-    @Stable
-    data class PlayerState(
-        val serviceConnected: Boolean = false,
-        val currentViewer: Int = 0,
-        val infoTitle: String = "",
-        val infoType: String = "",
-        val screenOn: Boolean = false,
-        val skipToPrevious: Boolean = false
-    )
-
-    @Stable
-    data class PlayerInfoState(
-        val infoSpeed: String = "00",
-        val infoBpm: String = "00",
-        val infoPos: String = "00",
-        val infoPat: String = "00",
-        val isVisible: Boolean = true
-    )
-
-    @Stable
-    data class PlayerButtonsState(
-        val isPlaying: Boolean = false,
-        val isRepeating: Boolean = false
-    )
-
-    @Stable
-    data class PlayerTimeState(
-        val timeNow: String = "-:--",
-        val timeTotal: String = "-:--",
-        val seekPos: Float = 0f,
-        val seekMax: Float = 1f,
-        val isVisible: Boolean = true,
-        val isSeeking: Boolean = false
-    )
-
-    @Stable
-    data class PlayerDrawerState(
-        val drawerState: DrawerState = DrawerState(DrawerValue.Closed),
-        val moduleInfo: List<Int> = listOf(0, 0, 0, 0, 0),
-        val isPlayAllSequences: Boolean = false,
-        val numOfSequences: List<Int> = listOf(),
-        val currentSequence: Int = 0
-    )
 
     /** Player Variables **/
     private val _uiState = MutableStateFlow(PlayerState())
@@ -98,9 +98,9 @@ class PlayerViewModel : ViewModel() {
 
     val viewInfo by mutableStateOf(ViewerInfo())
 
-    var insName by mutableStateOf(arrayOf<String>())
+    val insName = MutableStateFlow(arrayOf<String>())
 
-    var isMuted by mutableStateOf(BooleanArray(0))
+    val isMuted = MutableStateFlow(BooleanArray(0))
 
     /** Player Functions **/
 
@@ -219,13 +219,16 @@ class PlayerViewModel : ViewModel() {
         if (_uiState.value.serviceConnected) {
             Xmp.getModVars(modVars)
             Xmp.getSeqVars(seqVars)
-            insName = Xmp.getInstruments() ?: Collections.nCopies(modVars[4], "").toTypedArray()
+            insName.value = Xmp.getInstruments() ?: Collections.nCopies(
+                modVars[4],
+                ""
+            ).toTypedArray()
 
             val chn = modVars[3]
-            isMuted = BooleanArray(chn)
+            isMuted.value = BooleanArray(chn)
             for (i in 0 until chn) {
                 try {
-                    isMuted[i] = Xmp.mute(i, -1) == 1
+                    isMuted.value[i] = Xmp.mute(i, -1) == 1
                 } catch (e: RemoteException) {
                     Timber.w("Can't read channel mute status: ${e.message}")
                 }
