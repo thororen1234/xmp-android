@@ -9,7 +9,6 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.tooling.preview.*
-import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.player.PlayerButtonsState
 
@@ -81,18 +80,6 @@ fun PlayerControls(
             )
         }
     }
-
-    Rebugger(
-        composableName = "PlayerControls",
-        trackMap = mapOf(
-            "modifier" to modifier,
-            "onEvent" to onEvent,
-            "state" to state,
-            "modifier.fillMaxWidth()" to modifier.fillMaxWidth(),
-            "Arrangement.SpaceEvenly" to Arrangement.SpaceEvenly,
-            "Alignment.CenterVertically" to Alignment.CenterVertically,
-        ),
-    )
 }
 
 @Preview

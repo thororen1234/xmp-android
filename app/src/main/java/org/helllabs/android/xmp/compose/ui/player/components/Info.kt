@@ -14,7 +14,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.player.PlayerInfoState
@@ -40,23 +39,6 @@ fun PlayerInfo(state: PlayerInfoState) {
         // Pat
         SingleLineText(text = stringResource(id = R.string.info_pattern, pat))
     }
-
-    Rebugger(
-        composableName = "PlayerInfo",
-        trackMap = mapOf(
-            "state" to state,
-            "speed" to speed,
-            "bpm" to bpm,
-            "pos" to pos,
-            "pat" to pat,
-            "Modifier.fillMaxWidth()" to Modifier.fillMaxWidth(),
-            "Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)" to Arrangement.spacedBy(
-                12.dp,
-                Alignment.CenterHorizontally
-            ),
-            "Alignment.CenterVertically" to Alignment.CenterVertically,
-        ),
-    )
 }
 
 @Composable

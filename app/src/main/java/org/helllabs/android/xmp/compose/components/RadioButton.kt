@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 
 /**
@@ -55,26 +54,6 @@ fun RadioButtonItem(
             style = MaterialTheme.typography.bodyLarge
         )
     }
-
-    Rebugger(
-        composableName = "RadioButtonItem",
-        trackMap = mapOf(
-            "index" to index,
-            "selection" to selection,
-            "text" to text,
-            "radioButtonColors" to radioButtonColors,
-            "onClick" to onClick,
-            "Modifier" to Modifier.fillMaxWidth()
-                .height(56.dp)
-                .selectable(
-                    selected = (index == selection),
-                    onClick = onClick,
-                    role = Role.RadioButton
-                )
-                .padding(horizontal = 16.dp),
-            "Alignment.CenterVertically" to Alignment.CenterVertically,
-        ),
-    )
 }
 
 @Preview

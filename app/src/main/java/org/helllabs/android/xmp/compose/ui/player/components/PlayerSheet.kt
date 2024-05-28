@@ -3,49 +3,42 @@ package org.helllabs.android.xmp.compose.ui.player.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.*
-import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
-import androidx.compose.ui.graphics.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
-import com.theapache64.rebugger.Rebugger
 import java.util.Locale
 import kotlin.random.Random
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.RadioButtonItem
 import org.helllabs.android.xmp.compose.theme.XmpTheme
-import org.helllabs.android.xmp.compose.ui.player.PlayerDrawerState
+import org.helllabs.android.xmp.compose.ui.player.PlayerSheetState
 
 @Stable
-sealed class PlayerDrawerEvent {
-    data object OnAllSeq : PlayerDrawerEvent()
-    data object OnMenuClose : PlayerDrawerEvent()
-    data object OnMessage : PlayerDrawerEvent()
-    data class OnSequence(val seq: Int) : PlayerDrawerEvent()
+sealed class PlayerSheetEvent {
+    data class OnSequence(val seq: Int) : PlayerSheetEvent()
+    data object OnAllSeq : PlayerSheetEvent()
+    data object OnMessage : PlayerSheetEvent()
 }
 
 @Stable
-data class SubSongItem(
-    val index: Int,
-    val string: String
-)
+data class SubSongItem(val index: Int, val string: String)
 
 @Composable
-fun PlayerDrawer(
+fun PlayerSheet(
     modifier: Modifier = Modifier,
-    state: PlayerDrawerState,
-    onEvent: (PlayerDrawerEvent) -> Unit
+    state: PlayerSheetState,
+    onEvent: (PlayerSheetEvent) -> Unit
 ) {
     val context = LocalContext.current
     val lazyState = rememberLazyListState()
 
-    val drawerSequences = remember(state.numOfSequences) {
+    val subSongSequences = remember(state.numOfSequences) {
         val main = context.getString(R.string.sidebar_main_song)
         state.numOfSequences.mapIndexed { index, item ->
             val sub = context.getString(R.string.sidebar_sub_song, index)
@@ -61,28 +54,12 @@ fun PlayerDrawer(
         }
     }
 
-    ModalDrawerSheet(
-        modifier = modifier,
-    ) {
+    Surface {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .padding(16.dp)
                 .fillMaxWidth()
         ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.Start
-            ) {
-                IconButton(onClick = { onEvent(PlayerDrawerEvent.OnMenuClose) }) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.MenuOpen,
-                        contentDescription = null
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(12.dp))
 
             ModuleSection(text = stringResource(id = R.string.sidebar_details)) {
@@ -90,7 +67,7 @@ fun PlayerDrawer(
                     modifier = Modifier
                         .weight(1f)
                         .wrapContentWidth(Alignment.End),
-                    onClick = { onEvent(PlayerDrawerEvent.OnMessage) }
+                    onClick = { onEvent(PlayerSheetEvent.OnMessage) }
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
@@ -118,17 +95,17 @@ fun PlayerDrawer(
                         .weight(1f)
                         .wrapContentWidth(Alignment.End),
                     checked = state.isPlayAllSequences,
-                    onCheckedChange = { onEvent(PlayerDrawerEvent.OnAllSeq) }
+                    onCheckedChange = { onEvent(PlayerSheetEvent.OnAllSeq) }
                 )
             }
 
             Spacer(Modifier.height(12.dp))
 
             LazyColumn(state = lazyState) {
-                items(drawerSequences) { item ->
+                items(subSongSequences) { item ->
                     val onClick = remember(item) {
                         {
-                            onEvent(PlayerDrawerEvent.OnSequence(item.index))
+                            onEvent(PlayerSheetEvent.OnSequence(item.index))
                         }
                     }
 
@@ -138,33 +115,10 @@ fun PlayerDrawer(
                         text = item.string,
                         onClick = onClick
                     )
-
-                    Rebugger(
-                        composableName = "LazyColumn",
-                        trackMap = mapOf(
-                            "modifier" to modifier,
-                            "state" to state,
-                            "onEvent" to onEvent,
-                            "context" to context,
-                            "lazyState" to lazyState,
-                            "drawerSequences" to drawerSequences,
-                        ),
-                    )
                 }
             }
         }
     }
-
-    Rebugger(
-        trackMap = mapOf(
-            "modifier" to modifier,
-            "state" to state,
-            "onEvent" to onEvent,
-            "context" to context,
-            "lazyState" to lazyState,
-            "drawerSequences" to drawerSequences,
-        ),
-    )
 }
 
 @Composable
@@ -193,17 +147,6 @@ private fun ModuleSection(
             content()
         }
     }
-
-    Rebugger(
-        composableName = "ModuleSection",
-        trackMap = mapOf(
-            "text" to text,
-            "content" to content,
-            "Modifier" to Modifier.height(48.dp),
-            "shapes" to shapes.small,
-            "MaterialTheme" to MaterialTheme.colorScheme.surfaceContainerHighest,
-        ),
-    )
 }
 
 @Composable
@@ -214,7 +157,7 @@ private fun ModuleInsDetails(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 20.dp)
+            .padding(start = 16.dp, end = 28.dp)
     ) {
         Text(
             modifier = Modifier
@@ -231,45 +174,22 @@ private fun ModuleInsDetails(
             fontSize = 14.sp,
         )
     }
-
-    Rebugger(
-        composableName = "ModuleInsDetails",
-        trackMap = mapOf(
-            "string" to string,
-            "number" to number,
-            "Modifier" to Modifier
-                .fillMaxWidth()
-                .padding(start = 16.dp, end = 20.dp),
-        ),
-    )
 }
 
 @Preview
 @Composable
-private fun Preview_PlayerDrawer() {
+private fun Preview_PlayerSheet() {
     XmpTheme(useDarkTheme = true) {
-        val drawerState = rememberDrawerState(DrawerValue.Open)
-        Scaffold { paddingValues ->
-            ModalNavigationDrawer(
-                modifier = Modifier.padding(paddingValues),
-                drawerState = drawerState,
-                drawerContent = {
-                    PlayerDrawer(
-                        state = PlayerDrawerState(
-                            moduleInfo = listOf(111, 222, 333, 444, 555),
-                            isPlayAllSequences = true,
-                            currentSequence = 1,
-                            numOfSequences = List(12) {
-                                Random.nextInt(100, 10_000)
-                            }
-                        ),
-                        onEvent = { },
-                    )
-                },
-                content = {
-                    Box(modifier = Modifier.fillMaxSize())
+        PlayerSheet(
+            state = PlayerSheetState(
+                moduleInfo = listOf(111, 222, 333, 444, 555),
+                isPlayAllSequences = true,
+                currentSequence = 1,
+                numOfSequences = List(12) {
+                    Random.nextInt(100, 10_000)
                 }
-            )
-        }
+            ),
+            onEvent = { },
+        )
     }
 }

@@ -89,12 +89,8 @@ android {
         correctErrorTypes = true
     }
 
-    // https://developer.android.com/develop/ui/compose/performance/stability/strongskipping
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-        compilerOptions.freeCompilerArgs.addAll(
-            "-P",
-            "plugin:androidx.compose.compiler.plugins.kotlin:experimentalStrongSkipping=true",
-        )
+    composeCompiler {
+        enableStrongSkippingMode = true
     }
 
     packaging {

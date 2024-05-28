@@ -8,10 +8,17 @@ import android.net.Uri
 import android.os.Binder
 import android.os.IBinder
 import android.support.v4.media.session.MediaSessionCompat
+import androidx.compose.runtime.*
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import java.lang.ref.WeakReference
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.core.StorageManager
@@ -21,13 +28,14 @@ import org.helllabs.android.xmp.service.utils.RemoteControl
 import org.helllabs.android.xmp.service.utils.Watchdog
 import timber.log.Timber
 
-interface PlayerServiceCallback {
-    fun onPlayerPause()
-    fun onNewSequence()
-    fun onNewMod()
-    fun onEndMod()
-    fun onEndPlayCallback(result: Int)
-    fun onErrorMessage(msg: String)
+@Stable
+sealed class PlayerEvent {
+    data object Paused : PlayerEvent()
+    data object NewSequence : PlayerEvent()
+    data object NewMod : PlayerEvent()
+    data object EndMod : PlayerEvent()
+    data class EndPlayCallback(val result: Int) : PlayerEvent()
+    data class ErrorMessage(val msg: String) : PlayerEvent()
 }
 
 class PlayerBinder(playerService: PlayerService) : Binder() {
@@ -38,7 +46,12 @@ class PlayerBinder(playerService: PlayerService) : Binder() {
 
 class PlayerService : Service(), OnAudioFocusChangeListener {
 
-    private var playerServiceCallback: PlayerServiceCallback? = null
+    private val job = Job()
+    private val serviceScope = CoroutineScope(Dispatchers.Main + job)
+
+    private val _playerEvent = MutableSharedFlow<PlayerEvent>()
+    val playerEvent = _playerEvent.asSharedFlow()
+
     private val binder = PlayerBinder(this)
 
     internal lateinit var mediaSession: MediaSessionCompat
@@ -144,10 +157,6 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
 
     override fun onBind(intent: Intent): IBinder = binder
 
-    fun setCallback(callback: PlayerServiceCallback?) {
-        playerServiceCallback = callback
-    }
-
     private fun requestAudioFocus(): Boolean {
         val playbackAttributes = AudioAttributesCompat.Builder()
             .setUsage(AudioAttributesCompat.USAGE_MEDIA)
@@ -211,7 +220,9 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         doPauseAndNotify()
 
         // Notify clients that we paused
-        playerServiceCallback?.onPlayerPause()
+        serviceScope.launch {
+            _playerEvent.emit(PlayerEvent.Paused)
+        }
     }
 
     fun actionPrev() {
@@ -240,7 +251,9 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     }
 
     private fun notifyNewSequence() {
-        playerServiceCallback?.onNewSequence()
+        serviceScope.launch {
+            _playerEvent.emit(PlayerEvent.NewSequence)
+        }
     }
 
     private inner class PlayRunnable : Runnable {
@@ -260,10 +273,14 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 // If we're at the start of the list, go to the last recognized file
                 if (playerFileName == null || !Xmp.testFromFd(playerFileName!!)) {
                     Timber.w("$playerFileName: unrecognized format")
-                    playerServiceCallback?.onErrorMessage(
-                        "${playerFileName?.lastPathSegment?.ifEmpty { "module was" }} " +
-                            "unrecognized. Skipping to next module"
-                    )
+                    serviceScope.launch {
+                        _playerEvent.emit(
+                            PlayerEvent.ErrorMessage(
+                                "${playerFileName?.lastPathSegment?.ifEmpty { "module was" }} " +
+                                    "unrecognized. Skipping to next module"
+                            )
+                        )
+                    }
                     if (cmd == CMD_PREV) {
                         if (queue!!.index <= 0) {
                             // -1 because we have queue.next() in the while condition
@@ -328,7 +345,9 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                     Xmp.mute(i, 0)
                 }
 
-                playerServiceCallback?.onNewMod()
+                serviceScope.launch {
+                    _playerEvent.emit(PlayerEvent.NewMod)
+                }
 
                 Xmp.setPlayer(Xmp.PLAYER_AMP, volBoost)
                 Xmp.setPlayer(Xmp.PLAYER_MIX, PrefManager.stereoMix)
@@ -413,7 +432,9 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 isLoaded = false
 
                 // notify end of module to our clients
-                playerServiceCallback?.onEndMod()
+                serviceScope.launch {
+                    _playerEvent.emit(PlayerEvent.EndMod)
+                }
 
                 var timeout = 0
                 try {
@@ -456,7 +477,9 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
     private fun end(result: Int) {
         Timber.i("End service")
 
-        playerServiceCallback?.onEndPlayCallback(result)
+        serviceScope.launch {
+            _playerEvent.emit(PlayerEvent.EndPlayCallback(result))
+        }
         isAlive = false
 
         Xmp.stopModule()

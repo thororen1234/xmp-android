@@ -49,7 +49,6 @@ private const val UPDATE_INTERVAL = 1000L.div(48)
 @Composable
 internal fun InstrumentViewer(
     onTap: () -> Unit,
-    serviceConnected: Boolean,
     viewInfo: ViewerInfo,
     isMuted: BooleanArray,
     modVars: IntArray,
@@ -60,7 +59,7 @@ internal fun InstrumentViewer(
     val textMeasurer = rememberTextMeasurer()
     val view = LocalView.current
 
-    LaunchedEffect(serviceConnected) {
+    LaunchedEffect(Unit) {
         while (true) {
             // Make sure everything is a-okay to prevent a NPE in jni
             // We're immediately starting to draw before everything is loaded.
@@ -222,10 +221,8 @@ private fun Preview_InstrumentViewer() {
     }
 
     XmpTheme(useDarkTheme = true) {
-        XmpCanvas(
-            onChangeViewer = {},
-            serviceConnected = false,
-            currentViewer = 0,
+        InstrumentViewer(
+            onTap = {},
             viewInfo = viewInfo,
             isMuted = BooleanArray(modVars[3]) { false },
             modVars = modVars,

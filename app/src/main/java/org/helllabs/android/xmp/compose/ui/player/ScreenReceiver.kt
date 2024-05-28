@@ -3,21 +3,29 @@ package org.helllabs.android.xmp.compose.ui.player
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
+import timber.log.Timber
 
-/*
- * From "Handling Screen OFF and Screen ON Intents" by jwei512
- * http://thinkandroid.wordpress.com/2010/01/24/handling-screen-off-and-screen-on-intents/
- */
-class ScreenReceiver : BroadcastReceiver() {
+class ScreenReceiver(
+    private val onScreenEvent: (Boolean) -> Unit
+) : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        wasScreenOn = when (intent.action) {
-            Intent.ACTION_SCREEN_OFF -> false
-            Intent.ACTION_SCREEN_ON -> true
-            else -> return // Do nothing
+        Timber.d("Screen event was: ${intent.action}")
+        when (intent.action) {
+            Intent.ACTION_SCREEN_ON -> onScreenEvent(true)
+            Intent.ACTION_SCREEN_OFF -> onScreenEvent(false)
         }
     }
 
-    companion object {
-        var wasScreenOn = true
+    fun register(context: Context) {
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_SCREEN_ON)
+            addAction(Intent.ACTION_SCREEN_OFF)
+        }
+        context.registerReceiver(this, filter)
+    }
+
+    fun unregister(context: Context) {
+        context.unregisterReceiver(this)
     }
 }

@@ -1,14 +1,17 @@
 package org.helllabs.android.xmp.compose.ui.player.viewer
 
+import androidx.compose.runtime.*
+
 @Suppress("ArrayInDataClass")
+@Stable
 data class ViewerInfo(
     val finalVols: IntArray = IntArray(64),
     val instruments: IntArray = IntArray(64),
     val keys: IntArray = IntArray(64),
     val pans: IntArray = IntArray(64),
     val periods: IntArray = IntArray(64),
-    var time: Int = 0,
-    var type: String = "",
+    val time: Int = 0,
+    val type: String = "",
     val values: IntArray = IntArray(7), // order pattern row num_rows frame speed bpm
     val volumes: IntArray = IntArray(64)
 ) {
@@ -27,7 +30,9 @@ data class ViewerInfo(
     }
 }
 
+// TODO not stable because of "var"!!
 @Suppress("ArrayInDataClass")
+// @Stable
 data class PatternInfo(
     var lineInPattern: Int = 0,
     var pat: Int = 0,

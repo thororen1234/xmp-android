@@ -1,34 +1,17 @@
 package org.helllabs.android.xmp.compose.ui.player.components
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material3.Button
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProvideTextStyle
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.minimumInteractiveComponentSize
-import androidx.compose.material3.surfaceColorAtElevation
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.theapache64.rebugger.Rebugger
+import androidx.compose.ui.*
+import androidx.compose.ui.text.*
+import androidx.compose.ui.text.style.*
+import androidx.compose.ui.tooling.preview.*
+import androidx.compose.ui.unit.*
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 
@@ -38,8 +21,8 @@ private const val ANIMATION_DURATION = 500
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ViewFlipper(
+    navigationIcon: (@Composable () -> Unit) = { },
     actions: (@Composable RowScope.() -> Unit)? = null,
-    navigation: (@Composable RowScope.() -> Unit)? = null,
     skipToPrevious: Boolean,
     info: Pair<String, String>
 ) {
@@ -49,6 +32,18 @@ fun ViewFlipper(
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             actionIconContentColor = MaterialTheme.colorScheme.onSurface
         ),
+        navigationIcon = navigationIcon,
+        actions = {
+            if (actions != null) {
+                actions()
+            } else {
+                Spacer(
+                    modifier = Modifier
+                        .minimumInteractiveComponentSize()
+                        .size(40.dp)
+                )
+            }
+        },
         title = {
             AnimatedContent(
                 targetState = info,
@@ -78,44 +73,20 @@ fun ViewFlipper(
                 label = "XMP ViewFlipper"
             ) {
                 ViewFlipperItem(
-                    actions = actions,
-                    navigation = navigation,
                     infoTitle = it.first,
                     infoType = it.second
                 )
             }
         }
     )
-
-    Rebugger(
-        composableName = "ViewFlipper",
-        trackMap = mapOf(
-            "actions" to actions,
-            "navigation" to navigation,
-            "skipToPrevious" to skipToPrevious,
-            "info" to info,
-            "TopAppBarDefaults.centerAlignedTopAppBarColors" to
-                TopAppBarDefaults.centerAlignedTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp),
-                    titleContentColor = MaterialTheme.colorScheme.onSurface,
-                    actionIconContentColor = MaterialTheme.colorScheme.onSurface
-                ),
-        ),
-    )
 }
 
 @Composable
 private fun ViewFlipperItem(
-    actions: (@Composable RowScope.() -> Unit)? = null,
-    navigation: (@Composable RowScope.() -> Unit)? = null,
     infoTitle: String,
     infoType: String
 ) {
     Row {
-        if (navigation != null) {
-            navigation()
-        }
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -144,17 +115,6 @@ private fun ViewFlipperItem(
                 )
             }
         }
-
-        if (actions != null) {
-            actions()
-        } else {
-            // Fake "touch" size to retain padding
-            Spacer(
-                modifier = Modifier
-                    .minimumInteractiveComponentSize()
-                    .size(40.dp)
-            )
-        }
     }
 }
 
@@ -165,7 +125,7 @@ private fun Preview_ViewFlipperItem() {
         Surface {
             ViewFlipper(
                 actions = {},
-                navigation = {},
+                navigationIcon = {},
                 skipToPrevious = false,
                 info = Pair(
                     "Some Super Very Long Name",
@@ -182,7 +142,7 @@ private fun Preview_ViewFlipperItem_2() {
     XmpTheme(useDarkTheme = true) {
         Surface {
             ViewFlipper(
-                navigation = {
+                navigationIcon = {
                     IconButton(onClick = { }) {
                         Icon(imageVector = Icons.Default.Menu, contentDescription = null)
                     }
@@ -211,7 +171,7 @@ private fun Preview_Demo_ViewFlipper() {
                         Icon(imageVector = Icons.Default.DeleteOutline, contentDescription = null)
                     }
                 },
-                navigation = {
+                navigationIcon = {
                     IconButton(onClick = { }) {
                         Icon(imageVector = Icons.Default.Menu, contentDescription = null)
                     }

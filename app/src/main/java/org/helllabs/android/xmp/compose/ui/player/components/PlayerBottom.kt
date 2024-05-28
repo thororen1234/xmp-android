@@ -7,7 +7,6 @@ import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
-import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.player.PlayerButtonsState
 import org.helllabs.android.xmp.compose.ui.player.PlayerInfoState
@@ -43,19 +42,6 @@ fun PlayerBottomAppBar(
             content = content
         )
     }
-
-    Rebugger(
-        composableName = "PlayerBottom",
-        trackMap = mapOf(
-            "modifier" to modifier,
-            "containerColor" to containerColor,
-            "contentColor" to contentColor,
-            "tonalElevation" to tonalElevation,
-            "contentPadding" to contentPadding,
-            "windowInsets" to windowInsets,
-            "content" to content,
-        ),
-    )
 }
 
 @Preview
@@ -79,7 +65,6 @@ private fun Preview_PlayerBottomAppBar() {
                     seekPos = 25f,
                     seekMax = 100f
                 ),
-                onIsSeeking = { },
                 onSeek = { }
             )
             Spacer(modifier = Modifier.height(12.dp))

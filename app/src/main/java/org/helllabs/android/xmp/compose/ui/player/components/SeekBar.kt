@@ -7,15 +7,18 @@ import androidx.compose.ui.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
-import com.theapache64.rebugger.Rebugger
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.player.PlayerTimeState
+
+@Stable
+sealed class SeekEvent {
+    data class OnSeek(val isSeeking: Boolean, val value: Float) : SeekEvent()
+}
 
 @Composable
 fun PlayerSeekBar(
     state: PlayerTimeState,
-    onIsSeeking: (Boolean) -> Unit,
-    onSeek: (Float) -> Unit
+    onSeek: (SeekEvent) -> Unit
 ) {
     val newPosition = remember { mutableFloatStateOf(0F) }
 
@@ -37,12 +40,11 @@ fun PlayerSeekBar(
             value = if (state.isSeeking) newPosition.floatValue else state.seekPos,
             valueRange = 0f..state.seekMax,
             onValueChange = {
-                onIsSeeking(true)
                 newPosition.floatValue = it
+                onSeek(SeekEvent.OnSeek(true, newPosition.floatValue))
             },
             onValueChangeFinished = {
-                onSeek(newPosition.floatValue)
-                onIsSeeking(false)
+                onSeek(SeekEvent.OnSeek(false, newPosition.floatValue))
             }
         )
 
@@ -52,19 +54,6 @@ fun PlayerSeekBar(
             fontWeight = FontWeight.Bold
         )
     }
-
-    Rebugger(
-        composableName = "PlayerSeek",
-        trackMap = mapOf(
-            "state" to state,
-            "onIsSeeking" to onIsSeeking,
-            "onSeek" to onSeek,
-            "newPosition" to newPosition,
-            "Modifier.fillMaxWidth()" to Modifier.fillMaxWidth(),
-            "Arrangement.SpaceEvenly" to Arrangement.SpaceEvenly,
-            "Alignment.CenterVertically" to Alignment.CenterVertically,
-        ),
-    )
 }
 
 @Preview
@@ -80,7 +69,6 @@ private fun Preview_PlayerSeekBar() {
                     seekMax = 100f,
                     isSeeking = false,
                 ),
-                onIsSeeking = {},
                 onSeek = {}
             )
         }

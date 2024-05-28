@@ -365,10 +365,8 @@ private fun Preview_ChannelViewer() {
     }
 
     XmpTheme(useDarkTheme = true) {
-        XmpCanvas(
-            onChangeViewer = {},
-            serviceConnected = false,
-            currentViewer = 2,
+        ComposeChannelViewer(
+            onTap = {},
             viewInfo = viewInfo,
             isMuted = BooleanArray(modVars[3]) { false },
             modVars = modVars,
