@@ -24,6 +24,8 @@ import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
@@ -63,6 +65,11 @@ class PlayerActivity : ComponentActivity() {
         const val PARM_START = "start"
 
         var canChangeViewer: Boolean = false // TODO
+
+        // Phone CPU's are more than capable enough to do more work with drawing.
+        // With android O+, we can use hardware rendering on the canvas, if supported.
+        private val newWaveform: Boolean by lazy { PrefManager.useBetterWaveform }
+        private val frameRate: Long = 1000L.div(if (newWaveform) 50 else 30)
     }
 
     private val viewModel by viewModels<PlayerViewModel>()
@@ -240,6 +247,7 @@ class PlayerActivity : ComponentActivity() {
                                 modPlayer?.prevSong()
                                 viewModel.skipToPrevious(true)
                             }
+
                             viewModel.isPlaying(true)
                         }
 
@@ -267,6 +275,58 @@ class PlayerActivity : ComponentActivity() {
                         }
                     }
                 }
+            }
+
+            // Restart the loop on info change
+            LaunchedEffect(uiState.infoTitle, uiState.infoType) {
+                Timber.d("Start LaunchedEffect Loop")
+
+                viewModel.resetPlayTime()
+
+                while (true) {
+                    if (viewModel.activityState.value.stopUpdate &&
+                        viewModel.activityState.value.playTime < 0
+                    ) {
+                        Timber.i("Stop update")
+                        break
+                    }
+
+                    if ((!viewModel.uiState.value.screenOn || !viewModel.isPlaying) ||
+                        modPlayer == null
+                    ) {
+                        Timber.d(
+                            "Waiting - " +
+                                "Screen On: ${viewModel.uiState.value.screenOn}, " +
+                                "isPlaying: ${viewModel.isPlaying}, " +
+                                "modPlayer null: ${(modPlayer == null)}"
+                        )
+                        delay(1.seconds)
+                        continue
+                    }
+
+                    // get current frame info
+                    val viewInfoValues = IntArray(7)
+                    modPlayer!!.getInfo(viewInfoValues)
+
+                    // Update ViewerInfo()
+                    viewModel.updateViewInfo(viewInfoValues, (modPlayer!!.time() / 1000))
+
+                    // Get the current playback time
+                    viewModel.setPlayTime(modPlayer!!.time().div(100F))
+
+                    // Update the seekbar for the current time
+                    viewModel.updateSeekBar()
+
+                    // Update playback and total-playback time
+                    viewModel.updateInfoTime()
+
+                    // Update Speed, Bpm, Pos, Pat
+                    viewModel.updateFrameInfo()
+
+                    delay(frameRate) // ~48fps
+                }
+
+                modPlayer?.allowRelease()
             }
 
             XmpTheme {
@@ -321,7 +381,7 @@ class PlayerActivity : ComponentActivity() {
 
         saveAllSeqPreference()
 
-        viewModel.stopProgress()
+        // viewModel.stopProgress()
 
         modPlayer = null
         unbindService(connection)
@@ -440,7 +500,9 @@ class PlayerActivity : ComponentActivity() {
                 } else {
                     setResult(RESULT_OK)
                 }
-                viewModel.stopProgress()
+
+                // viewModel.stopProgress()
+
                 finish()
             }
 
@@ -464,15 +526,13 @@ class PlayerActivity : ComponentActivity() {
     }
 
     private fun playNewMod(fileList: List<Uri>, start: Int) {
-        with(viewModel.activityState.value) {
-            modPlayer?.play(
-                fileList = fileList,
-                start = start,
-                shuffle = shuffleMode,
-                loopList = loopListMode,
-                keepFirst = keepFirst
-            )
-        }
+        modPlayer?.play(
+            fileList = fileList,
+            start = start,
+            shuffle = viewModel.activityState.value.shuffleMode,
+            loopList = viewModel.activityState.value.loopListMode,
+            keepFirst = viewModel.activityState.value.keepFirst
+        )
     }
 }
 
@@ -576,9 +636,7 @@ private fun PlayerScreen(
         }
     ) { paddingValues ->
         Box(
-            modifier = Modifier
-                .padding(paddingValues)
-                .fillMaxSize()
+            modifier = Modifier.padding(paddingValues)
         ) {
             when (uiState.currentViewer) {
                 0 -> InstrumentViewer(

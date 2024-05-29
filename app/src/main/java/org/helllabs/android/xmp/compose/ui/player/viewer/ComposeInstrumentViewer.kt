@@ -1,50 +1,25 @@
 package org.helllabs.android.xmp.compose.ui.player.viewer
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.rememberScrollableState
-import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.PlatformTextStyle
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.delay
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.geometry.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.input.pointer.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.*
+import androidx.compose.ui.text.font.*
+import androidx.compose.ui.tooling.preview.*
+import androidx.compose.ui.unit.*
 import kotlinx.coroutines.launch
-import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.seed
-import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 
 private const val VOLUME_STEPS = 32
 private val barShape = CornerRadius(8f, 8f)
-
-private const val UPDATE_INTERVAL = 1000L.div(48)
 
 @Composable
 internal fun InstrumentViewer(
@@ -58,24 +33,6 @@ internal fun InstrumentViewer(
     val scope = rememberCoroutineScope()
     val textMeasurer = rememberTextMeasurer()
     val view = LocalView.current
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            // Make sure everything is a-okay to prevent a NPE in jni
-            // We're immediately starting to draw before everything is loaded.
-            if (PlayerActivity.canChangeViewer) {
-                Xmp.getChannelData(
-                    viewInfo.volumes,
-                    viewInfo.finalVols,
-                    viewInfo.pans,
-                    viewInfo.instruments,
-                    viewInfo.keys,
-                    viewInfo.periods
-                )
-            }
-            delay(UPDATE_INTERVAL)
-        }
-    }
 
     val textColor by remember {
         val list = (0..VOLUME_STEPS).map {

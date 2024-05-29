@@ -1,6 +1,6 @@
 [versions]
 activityCompose = "1.9.0" # https://mvnrepository.com/artifact/androidx.activity/activity-compose
-androidGradlePlugin = "8.4.1" # https://mvnrepository.com/artifact/com.android.application/com.android.application.gradle.plugin
+androidGradlePlugin = "8.5.0-beta02" # https://mvnrepository.com/artifact/com.android.application/com.android.application.gradle.plugin
 cascadeCompose = "2.3.0" # https://mvnrepository.com/artifact/me.saket.cascade/cascade-compose
 composeBom = "2024.05.00" # https://mvnrepository.com/artifact/androidx.compose/compose-bom
 composeNavigation = "2.8.0-beta01" # https://mvnrepository.com/artifact/androidx.navigation/navigation-compose
@@ -26,8 +26,8 @@ xmlUtil = "0.86.3" # https://mvnrepository.com/artifact/io.github.pdvrieze.xmlut
 
 [libraries]
 compose-activity = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
-compose-animation-animation = { module = "androidx.compose.animation:animation", version = "1.7.0-beta01" }
-compose-animation-graphics = { module = "androidx.compose.animation:animation-graphics", version = "1.7.0-beta01" }
+compose-animation-animation = { module = "androidx.compose.animation:animation" }
+compose-animation-graphics = { module = "androidx.compose.animation:animation-graphics" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
 compose-foundation = { module = "androidx.compose.foundation:foundation" }
 compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }

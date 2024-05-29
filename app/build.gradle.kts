@@ -6,7 +6,6 @@ plugins {
     alias(libs.plugins.gradle.kotlinter)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.compiler)
-    kotlin("kapt")
 }
 
 android {
@@ -83,10 +82,6 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-
-    kapt {
-        correctErrorTypes = true
     }
 
     composeCompiler {

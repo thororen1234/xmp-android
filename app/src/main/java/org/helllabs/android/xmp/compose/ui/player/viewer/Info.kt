@@ -2,8 +2,7 @@ package org.helllabs.android.xmp.compose.ui.player.viewer
 
 import androidx.compose.runtime.*
 
-@Suppress("ArrayInDataClass")
-@Stable
+@Immutable // I think
 data class ViewerInfo(
     val finalVols: IntArray = IntArray(64),
     val instruments: IntArray = IntArray(64),
@@ -30,9 +29,7 @@ data class ViewerInfo(
     }
 }
 
-// TODO not stable because of "var"!!
-@Suppress("ArrayInDataClass")
-// @Stable
+@Stable
 data class PatternInfo(
     var lineInPattern: Int = 0,
     var pat: Int = 0,

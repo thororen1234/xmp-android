@@ -73,6 +73,7 @@ import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 
 // Compose Stability: https://multithreaded.stitchfix.com/blog/2022/08/05/jetpack-compose-recomposition/
+// https://medium.com/androiddevelopers/pew-pew-making-a-game-with-compose-canvas-on-wear-os-9a37fa498d3
 
 class MainActivity : ComponentActivity() {
 

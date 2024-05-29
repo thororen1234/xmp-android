@@ -4,20 +4,12 @@ import android.net.Uri
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import java.util.Collections
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.ui.player.viewer.PatternInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
-import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 
@@ -30,7 +22,7 @@ data class PlayerState(
     val currentViewer: Int = 0,
     val infoTitle: String = "",
     val infoType: String = "",
-    val screenOn: Boolean = false,
+    val screenOn: Boolean = true,
     val skipToPrevious: Boolean = false
 )
 
@@ -82,17 +74,6 @@ data class PlayerActivitySate(
 
 @Stable
 class PlayerViewModel : ViewModel() {
-
-    // Phone CPU's are more than capable enough to do more work with drawing.
-    // With android O+, we can use hardware rendering on the canvas, if supported.
-    private val newWaveform: Boolean by lazy { PrefManager.useBetterWaveform }
-    private val frameRate: Long = 1000L.div(if (newWaveform) 50 else 30)
-
-    private val viewModelJob = Job()
-    private val uiScope = CoroutineScope(Dispatchers.IO + viewModelJob)
-
-    private val s = StringBuilder()
-    private val c = CharArray(2)
 
     private val _activityState = MutableStateFlow(PlayerActivitySate())
     val activityState = _activityState.asStateFlow()
@@ -172,93 +153,26 @@ class PlayerViewModel : ViewModel() {
             Xmp.getModVars(modVars.value)
             Xmp.getSeqVars(seqVars.value)
 
-            insName.value = Xmp.getInstruments()
-                ?: Collections.nCopies(modVars.value[4], "").toTypedArray()
+            insName.update {
+                Xmp.getInstruments()
+                    ?: Collections.nCopies(modVars.value[4], "").toTypedArray()
+            }
 
             val chn = modVars.value[3]
-            isMuted.value = BooleanArray(chn)
+            val muteArray = BooleanArray(chn)
             for (i in 0 until chn) {
-                isMuted.value[i] = Xmp.mute(i, -1) == 1
+                muteArray[i] = Xmp.mute(i, -1) == 1
+            }
+            isMuted.update {
+                muteArray
             }
         }
     }
 
-    private fun updateInfo(modPlayer: PlayerService) {
-        if (isPlaying) {
-            // update seekbar
-            if (!_timeState.value.isSeeking && _activityState.value.playTime >= 0) {
-                _timeState.update {
-                    it.copy(seekPos = _activityState.value.playTime)
-                }
-            }
-
-            // get current frame info
-            modPlayer.getInfo(viewInfo.value.values)
-            viewInfo.update {
-                it.copy(time = modPlayer.time() / 1000)
-            }
-
-            // Frame Info - Speed
-            updateFrameInfo(
-                value = viewInfo.value.values[5],
-                update = { value ->
-                    _infoState.update {
-                        it.copy(infoSpeed = value)
-                    }
-                }
-            )
-            // Frame Info - BPM
-            updateFrameInfo(
-                value = viewInfo.value.values[6],
-                update = { value ->
-                    _infoState.update {
-                        it.copy(infoBpm = value)
-                    }
-                }
-            )
-            // Frame Info - Position
-            updateFrameInfo(
-                value = viewInfo.value.values[0],
-                update = { value ->
-                    _infoState.update {
-                        it.copy(infoPos = value)
-                    }
-                }
-            )
-            // Frame Info - Pattern
-            updateFrameInfo(
-                value = viewInfo.value.values[1],
-                update = { value ->
-                    _infoState.update {
-                        it.copy(infoPat = value)
-                    }
-                }
-            )
-
-            // display playback time
-            var t = viewInfo.value.time
-            if (t < 0) {
-                t = 0
-            }
-            s.delete(0, s.length)
-            Util.to2d(c, t / 60)
-            s.append(c)
-            s.append(":")
-            Util.to02d(c, t % 60)
-            s.append(c)
+    fun updateSeekBar() {
+        if (!timeState.value.isSeeking && activityState.value.playTime >= 0) {
             _timeState.update {
-                it.copy(timeNow = s.toString())
-            }
-
-            // display total playback time
-            s.delete(0, s.length)
-            Util.to2d(c, _activityState.value.totalTime / 60)
-            s.append(c)
-            s.append(":")
-            Util.to02d(c, _activityState.value.totalTime % 60)
-            s.append(c)
-            _timeState.update {
-                it.copy(timeTotal = s.toString())
+                it.copy(seekPos = activityState.value.playTime)
             }
         }
     }
@@ -337,85 +251,19 @@ class PlayerViewModel : ViewModel() {
         }
         skipToPrevious(false)
 
-        viewInfo.update {
-            it.copy(type = Xmp.getModType())
+        _uiState.update {
+            it.copy(infoType = Xmp.getModType())
         }
 
         setup()
 
+        // startProgress(modPlayer)
+    }
+
+    fun resetPlayTime() {
         _activityState.update {
-            it.copy(stopUpdate = false)
+            it.copy(playTime = 0F)
         }
-
-        startProgress(modPlayer)
-    }
-
-    private fun startProgress(modPlayer: PlayerService) {
-        if (uiScope.isActive) {
-            return
-        }
-
-        uiScope.launch {
-            Timber.i("Start progress coroutine")
-
-            val frameStartTime = System.nanoTime()
-            var frameTime: Long
-
-            _activityState.update {
-                it.copy(playTime = 0F)
-            }
-
-            while (isActive) {
-                if (_activityState.value.stopUpdate) {
-                    Timber.i("Stop update")
-                    break
-                }
-
-                _activityState.update {
-                    it.copy(playTime = modPlayer.time() / 100F)
-                }
-
-                if (_uiState.value.screenOn) {
-                    // Need to be in Main Thread to update info
-                    updateInfo(modPlayer)
-                }
-
-                frameTime = (System.nanoTime() - frameStartTime) / 1000000
-                if (frameTime < frameRate && !_activityState.value.stopUpdate) {
-                    delay(frameRate - frameTime)
-                }
-
-                if (_activityState.value.playTime < 0) {
-                    break
-                }
-            }
-
-            modPlayer.allowRelease() // finished playing, we can release the module
-        }
-    }
-
-    fun stopProgress() {
-        uiScope.cancel()
-    }
-
-    /**
-     * Updates the Player Info text either by Hex or Numerical Value
-     */
-    private fun updateFrameInfo(
-        value: Int,
-        update: (String) -> Unit
-    ) {
-        s.delete(0, s.length)
-        if (PrefManager.showHex) {
-            Util.to02X(c, value)
-            s.append(c)
-        } else {
-            value.let {
-                if (it < 10) s.append(0)
-                s.append(it)
-            }
-        }
-        update(s.toString())
     }
 
     fun setActivityState(
@@ -437,7 +285,7 @@ class PlayerViewModel : ViewModel() {
     }
 
     fun skipToPrevious(value: Boolean) {
-        _activityState.update {
+        _uiState.update {
             it.copy(skipToPrevious = value)
         }
     }
@@ -469,6 +317,59 @@ class PlayerViewModel : ViewModel() {
     fun showDeleteDialog(value: Boolean) {
         _uiState.update {
             it.copy(showDeleteDialog = value)
+        }
+    }
+
+    fun updateInfoTime() {
+        _timeState.update {
+            it.copy(
+                timeNow = Util.updateTime(viewInfo.value.time),
+                timeTotal = Util.updateTime(activityState.value.totalTime)
+            )
+        }
+    }
+
+    fun updateFrameInfo() {
+        // Frame Info - Speed
+        val infoSpeed = Util.updateFrameInfo(value = viewInfo.value.values[5])
+        // Frame Info - BPM
+        val infoBpm = Util.updateFrameInfo(value = viewInfo.value.values[6])
+        // Frame Info - Position
+        val infoPos = Util.updateFrameInfo(value = viewInfo.value.values[0])
+        // Frame Info - Pattern
+        val infoPat = Util.updateFrameInfo(value = viewInfo.value.values[1])
+
+        _infoState.update {
+            it.copy(
+                infoPat = infoPat,
+                infoPos = infoPos,
+                infoBpm = infoBpm,
+                infoSpeed = infoSpeed,
+            )
+        }
+    }
+
+    fun updateViewInfo(viewInfoValues: IntArray, time: Int) {
+        val info = viewInfo.value
+        Xmp.getChannelData(
+            info.volumes,
+            info.finalVols,
+            info.pans,
+            info.instruments,
+            info.keys,
+            info.periods
+        )
+
+        viewInfo.update {
+            it.copy(
+                values = viewInfoValues,
+                finalVols = info.finalVols,
+                pans = info.pans,
+                instruments = info.instruments,
+                keys = info.keys,
+                periods = info.periods,
+                time = time,
+            )
         }
     }
 }

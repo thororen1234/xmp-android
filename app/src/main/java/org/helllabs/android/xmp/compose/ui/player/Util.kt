@@ -1,6 +1,12 @@
 package org.helllabs.android.xmp.compose.ui.player
 
+import org.helllabs.android.xmp.core.PrefManager
+
 object Util {
+
+    private val s = StringBuilder()
+    private val c = CharArray(2)
+
     private val digits = charArrayOf(
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     )
@@ -29,5 +35,35 @@ object Util {
         res[0] = hexDigits[value shr 8]
         res[1] = hexDigits[value shr 4 and 0x0f]
         res[2] = hexDigits[value and 0x0f]
+    }
+
+    /**
+     * Updates the Player Info text either by Hex or Numerical Value
+     */
+    fun updateFrameInfo(value: Int): String {
+        s.delete(0, s.length)
+        if (PrefManager.showHex) {
+            to02X(c, value)
+            s.append(c)
+        } else {
+            value.let {
+                if (it < 10) s.append(0)
+                s.append(it)
+            }
+        }
+
+        return s.toString()
+    }
+
+    fun updateTime(value: Int): String {
+        val t = if (value < 0) 0 else value
+        s.delete(0, s.length)
+        to2d(c, t / 60)
+        s.append(c)
+        s.append(":")
+        to02d(c, t % 60)
+        s.append(c)
+
+        return s.toString()
     }
 }
