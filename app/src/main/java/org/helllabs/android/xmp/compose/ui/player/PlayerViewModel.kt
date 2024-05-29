@@ -198,8 +198,13 @@ class PlayerViewModel : ViewModel() {
     fun showNewMod(modPlayer: PlayerService) {
         Timber.i("Show new module")
 
-        modPlayer.getModVars(modVars.value)
-        modPlayer.getSeqVars(seqVars.value)
+        val mVars = IntArray(10)
+        modPlayer.getModVars(mVars)
+        modVars.update { mVars }
+
+        val sVars = IntArray(Xmp.maxSeqFromHeader)
+        modPlayer.getSeqVars(sVars)
+        seqVars.update { sVars }
 
         _activityState.update {
             it.copy(playTime = modPlayer.time().div(100F))
@@ -240,6 +245,10 @@ class PlayerViewModel : ViewModel() {
             it.copy(seekPos = _activityState.value.playTime, seekMax = time.div(100F))
         }
 
+        viewInfo.update {
+            it.copy(type = type)
+        }
+
         toggleLoop(loop)
 
         _uiState.update {
@@ -249,11 +258,8 @@ class PlayerViewModel : ViewModel() {
                 skipToPrevious = _activityState.value.skipToPrevious
             )
         }
-        skipToPrevious(false)
 
-        _uiState.update {
-            it.copy(infoType = Xmp.getModType())
-        }
+        skipToPrevious(false)
 
         setup()
 

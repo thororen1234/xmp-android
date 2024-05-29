@@ -12,7 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -60,45 +59,39 @@ internal fun ComposePatternViewer(
         mutableStateOf(Size.Zero)
     }
 
-    val xAxisMultiplier by remember {
-        mutableFloatStateOf(with(density) { 24.dp.toPx() })
+    val xAxisMultiplier = remember {
+        with(density) { 24.dp.toPx() }
     }
 
-    val yAxisMultiplier by remember {
-        mutableFloatStateOf(with(density) { 24.dp.toPx() })
+    val yAxisMultiplier = remember {
+        with(density) { 24.dp.toPx() }
     }
 
-    val rowTextSize by remember {
-        mutableStateOf(14.sp)
-    }
+    val rowTextSize = remember { 14.sp }
 
-    val instHexByte by remember {
+    val instHexByte = remember {
         val c = CharArray(3)
         val inst = (0..255).map { i ->
             Util.to02X(c, i)
             String(c)
         }
-        mutableStateOf(inst)
+        inst
     }
 
-    var currentType by remember {
-        mutableStateOf("")
-    }
-    val effectsTable by remember(viewInfo.type) {
-        with(viewInfo.type) {
-            Timber.d("New FX table: $this")
-            currentType = this
-            val list = Effects.getEffectList(this)
-            mutableStateOf(list)
-        }
+    var currentType by remember { mutableStateOf("") }
+    val effectsTable = remember(viewInfo.type) {
+        val infoType = viewInfo.type
+        val type = Effects.getEffectList(infoType)
+        currentType = type.name
+        type.table
     }
 
-    val numRows by remember(viewInfo.values[3]) {
-        mutableIntStateOf(viewInfo.values[3])
+    val numRows = remember(viewInfo.values[3]) {
+        viewInfo.values[3]
     }
 
-    val rowText by remember(numRows) {
-        val list = (0..numRows).map {
+    val rowText = remember(numRows) {
+        (0..numRows).map {
             textMeasurer.measure(
                 text = AnnotatedString(it.toString()),
                 density = density,
@@ -111,19 +104,16 @@ internal fun ComposePatternViewer(
                 )
             )
         }
-        mutableStateOf(list)
     }
 
-    val chn by remember(modVars[3]) {
-        mutableIntStateOf(modVars[3])
-    }
+    val chn = remember(modVars[3]) { modVars[3] }
 
     val offsetX = remember {
         Animatable(0f)
     }
 
-    val headerText by remember(chn) {
-        val text = (0 until chn).map {
+    val headerText = remember(chn) {
+        (0 until chn).map {
             textMeasurer.measure(
                 text = AnnotatedString((it + 1).toString()),
                 density = density,
@@ -135,7 +125,6 @@ internal fun ComposePatternViewer(
                 )
             )
         }
-        mutableStateOf(text)
     }
 
     var hdrDivision by remember { mutableFloatStateOf(0f) }
@@ -169,10 +158,7 @@ internal fun ComposePatternViewer(
     LaunchedEffect(chn) {
         // Scroll to the beginning if the channel number changes
         scope.launch {
-            offsetX.animateTo(
-                targetValue = 0f,
-                animationSpec = tween(durationMillis = 300)
-            )
+            offsetX.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 300))
         }
     }
 
@@ -314,7 +300,9 @@ internal fun ComposePatternViewer(
                                     "-"
                                 } else {
                                     effectsTable[this] ?: run {
-                                        Timber.w("Unknown FX: $this in chn ${j + 1}, row $i")
+                                        Timber.w(
+                                            "Unknown FX: $this in chn ${j + 1}, row $i, using $currentType. Type:${viewInfo.type}"
+                                        )
                                         "?"
                                     }
                                 }

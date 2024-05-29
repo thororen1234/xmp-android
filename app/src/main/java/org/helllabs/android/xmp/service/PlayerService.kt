@@ -628,6 +628,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
         return ret
     }
 
+    // TODO is this even needed now that we don't use AIDL?
     fun allowRelease() {
         canRelease = true
     }

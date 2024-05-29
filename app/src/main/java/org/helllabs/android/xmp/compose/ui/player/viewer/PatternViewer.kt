@@ -119,9 +119,8 @@ class PatternViewer(context: Context, background: Int) : Viewer(context, backgro
 
         // Get a table of valid effects
         if (currentType != info.type) {
-            Timber.d("Refreshing effects list")
             currentType = info.type
-            effectsTable = Effects.getEffectList(info.type)
+            effectsTable = Effects.getEffectList(info.type).table
         }
 
         requestCanvasLock { canvas ->

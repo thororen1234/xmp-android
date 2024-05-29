@@ -10,7 +10,6 @@ package org.helllabs.android.xmp.compose.ui.player.viewer
 
 // MMD Common?
 
-// TODO: FX
 object Effects {
     // https://github.com/libxmp/libxmp/blob/master/docs/formats/669.txt
     private val effects669 = mapOf(
@@ -143,19 +142,27 @@ object Effects {
         0xbf.toByte() to "/", // FX_MACROSMOOTH,
     )
 
-    fun getEffectList(type: String): Map<Byte, String> {
-        with(type) {
-            val xm = "xm|fast|protracker|m\\.k\\.".toRegex(RegexOption.IGNORE_CASE)
-            val scream = "s3m|masi".toRegex(RegexOption.IGNORE_CASE)
+    // TODO
+    // Using 4.00 https://github.com/libxmp/libxmp/blob/master/docs/formats/octamed4.00-effects.txt
+    private val effectsOctaMed = mapOf(
+        0x0c.toByte() to "C" // SET VOLUME 0C
+    )
 
-            return when {
-                contains("Farandole", true) -> effectsFarandole
-                contains("669") -> effects669
-                contains(scream) -> effectsScream3
-                contains(xm) -> effectsXM
-                contains("IT", true) -> effectsIT
-                else -> mapOf()
-            }
+    data class EffectsTable(val name: String, val table: Map<Byte, String>)
+
+    fun getEffectList(type: String): EffectsTable {
+        val xm = "(xm|fast|protracker|m\\.k\\.)".toRegex(RegexOption.IGNORE_CASE)
+        val scream = "(scream|s3m|masi)".toRegex(RegexOption.IGNORE_CASE)
+        val impulse = "(IT|Impulse)".toRegex(RegexOption.IGNORE_CASE)
+
+        return when {
+            type.contains("Farandole", true) -> EffectsTable("Farandole", effectsFarandole)
+            type.contains("669") -> EffectsTable("669", effects669)
+            type.contains(scream) -> EffectsTable("Scream", effectsScream3)
+            type.contains(xm) -> EffectsTable("XM", effectsXM)
+            type.contains(impulse) -> EffectsTable("IT", effectsIT)
+            type.contains("octa", true) -> EffectsTable("OctaMED", effectsOctaMed)
+            else -> EffectsTable("Unknown", mapOf())
         }
     }
 }

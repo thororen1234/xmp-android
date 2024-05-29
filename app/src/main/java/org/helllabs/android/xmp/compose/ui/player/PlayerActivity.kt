@@ -25,7 +25,9 @@ import androidx.compose.ui.window.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
@@ -279,54 +281,56 @@ class PlayerActivity : ComponentActivity() {
 
             // Restart the loop on info change
             LaunchedEffect(uiState.infoTitle, uiState.infoType) {
-                Timber.d("Start LaunchedEffect Loop")
+                launch(Dispatchers.Default) {
+                    Timber.d("Start LaunchedEffect Loop")
 
-                viewModel.resetPlayTime()
+                    viewModel.resetPlayTime()
 
-                while (true) {
-                    if (viewModel.activityState.value.stopUpdate &&
-                        viewModel.activityState.value.playTime < 0
-                    ) {
-                        Timber.i("Stop update")
-                        break
+                    while (true) {
+                        if (viewModel.activityState.value.stopUpdate &&
+                            viewModel.activityState.value.playTime < 0
+                        ) {
+                            Timber.i("Stop update")
+                            break
+                        }
+
+                        if ((!viewModel.uiState.value.screenOn || !viewModel.isPlaying) ||
+                            modPlayer == null
+                        ) {
+                            Timber.d(
+                                "Waiting - " +
+                                    "Screen On: ${viewModel.uiState.value.screenOn}, " +
+                                    "isPlaying: ${viewModel.isPlaying}, " +
+                                    "modPlayer null: ${(modPlayer == null)}"
+                            )
+                            delay(1.seconds)
+                            continue
+                        }
+
+                        // get current frame info
+                        val viewInfoValues = IntArray(7)
+                        modPlayer!!.getInfo(viewInfoValues)
+
+                        // Update ViewerInfo()
+                        viewModel.updateViewInfo(viewInfoValues, (modPlayer!!.time() / 1000))
+
+                        // Get the current playback time
+                        viewModel.setPlayTime(modPlayer!!.time().div(100F))
+
+                        // Update the seekbar for the current time
+                        viewModel.updateSeekBar()
+
+                        // Update playback and total-playback time
+                        viewModel.updateInfoTime()
+
+                        // Update Speed, Bpm, Pos, Pat
+                        viewModel.updateFrameInfo()
+
+                        delay(frameRate)
                     }
 
-                    if ((!viewModel.uiState.value.screenOn || !viewModel.isPlaying) ||
-                        modPlayer == null
-                    ) {
-                        Timber.d(
-                            "Waiting - " +
-                                "Screen On: ${viewModel.uiState.value.screenOn}, " +
-                                "isPlaying: ${viewModel.isPlaying}, " +
-                                "modPlayer null: ${(modPlayer == null)}"
-                        )
-                        delay(1.seconds)
-                        continue
-                    }
-
-                    // get current frame info
-                    val viewInfoValues = IntArray(7)
-                    modPlayer!!.getInfo(viewInfoValues)
-
-                    // Update ViewerInfo()
-                    viewModel.updateViewInfo(viewInfoValues, (modPlayer!!.time() / 1000))
-
-                    // Get the current playback time
-                    viewModel.setPlayTime(modPlayer!!.time().div(100F))
-
-                    // Update the seekbar for the current time
-                    viewModel.updateSeekBar()
-
-                    // Update playback and total-playback time
-                    viewModel.updateInfoTime()
-
-                    // Update Speed, Bpm, Pos, Pat
-                    viewModel.updateFrameInfo()
-
-                    delay(frameRate) // ~48fps
+                    modPlayer?.allowRelease()
                 }
-
-                modPlayer?.allowRelease()
             }
 
             XmpTheme {
@@ -470,7 +474,11 @@ class PlayerActivity : ComponentActivity() {
                 if (modPlayer == null) {
                     return
                 }
-                modPlayer?.getModVars(viewModel.modVars.value)
+
+                val modVars = IntArray(10)
+                modPlayer?.getModVars(modVars)
+                viewModel.modVars.update { modVars }
+
                 viewModel.showNewSequence { time ->
                     val minutes = time / 60000
                     val seconds = time / 1000 % 60

@@ -66,13 +66,13 @@ internal fun InstrumentViewer(
     val yOffset = remember {
         Animatable(0f)
     }
-    var canvasSize by remember {
+    val canvasSize = remember {
         mutableStateOf(Size.Zero)
     }
     val scrollState = rememberScrollableState { delta ->
         scope.launch {
             val totalContentHeight = with(density) { 24.dp.toPx() * ins }
-            val maxOffset = (totalContentHeight - canvasSize.height).coerceAtLeast(0f)
+            val maxOffset = (totalContentHeight - canvasSize.value.height).coerceAtLeast(0f)
             val newOffset = (yOffset.value + delta).coerceIn(-maxOffset, 0f)
             yOffset.snapTo(newOffset)
         }
@@ -100,8 +100,8 @@ internal fun InstrumentViewer(
                 detectTapGestures(onTap = { onTap() })
             }
     ) {
-        if (canvasSize != size) {
-            canvasSize = size
+        if (canvasSize.value != size) {
+            canvasSize.value = size
         }
 
         var maxVol: Int
