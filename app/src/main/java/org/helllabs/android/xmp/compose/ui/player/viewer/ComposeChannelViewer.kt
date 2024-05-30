@@ -295,21 +295,46 @@ fun ComposeChannelViewer(
 //                    "Channel $chn, Final Vol: ${viewInfo.finalVols[chn]}"
 //                )
 
-                // TODO volumeScale amplification doesn't seem to work?? And the line tends to get off y axis sometimes.
                 // Sine wave to draw over the above rectangle.
+//                val centerY = scopeYOffset + (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
+//                val halfHeight = (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
+//                val maxVal = buffer.maxOrNull() ?: 127
+//                val minVal = buffer.minOrNull() ?: -128
+//                val volumeScale = viewInfo.finalVols[chn].coerceIn(0, 64) / 64f
+//                val yScale = halfHeight / (maxVal - minVal)
+//                buffer.forEachIndexed { index, byteValue ->
+//                    val x = scopeXOffset + (scopeWidth / buffer.size) * index
+//                    val y = if (byteValue == 0.toByte()) {
+//                        centerY
+//                    } else {
+//                        val scaledByteValue = byteValue * (halfHeight / 256f) * volumeScale
+//                        (centerY - scaledByteValue) - (byteValue * yScale * volumeScale)
+//                    }
+//
+//                    if (index == 0) {
+//                        waveformPath.moveTo(x, y)
+//                    } else {
+//                        waveformPath.lineTo(x, y)
+//                    }
+//                }
+
+                // TODO some wave forms are out of grid on some modules
+                // TODO some wave forms peek outside the scope background
                 val centerY = scopeYOffset + (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
                 val halfHeight = (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
                 val maxVal = buffer.maxOrNull() ?: 127
                 val minVal = buffer.minOrNull() ?: -128
-                val volumeScale = viewInfo.finalVols[chn] / 64f
+                val volumeScale = viewInfo.finalVols[chn].coerceIn(0, 64) / 64f
                 val yScale = halfHeight / (maxVal - minVal)
+                val widthScale = scopeWidth / buffer.size
+                val xValues = FloatArray(buffer.size) { index -> scopeXOffset + widthScale * index }
                 buffer.forEachIndexed { index, byteValue ->
-                    val x = scopeXOffset + (scopeWidth / buffer.size) * index
+                    val x = xValues[index]
                     val y = if (byteValue == 0.toByte()) {
                         centerY
                     } else {
                         val scaledByteValue = byteValue * (halfHeight / 256f) * volumeScale
-                        (centerY - (scaledByteValue) - (byteValue * yScale))
+                        (centerY - scaledByteValue) - (byteValue * yScale * volumeScale)
                     }
 
                     if (index == 0) {
@@ -323,9 +348,9 @@ fun ComposeChannelViewer(
                     path = waveformPath,
                     color = Color.Green,
                     style = Stroke(
-                        width = 1f,
-                        cap = StrokeCap.Round,
-                        join = StrokeJoin.Round
+                        width = 0.75f,
+                        cap = StrokeCap.Butt,
+                        join = StrokeJoin.Bevel,
                     )
                 )
                 waveformPath.reset()
