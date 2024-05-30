@@ -36,6 +36,8 @@ object Xmp {
     // Limits
     const val MAX_CHANNELS = 64 // Max number of channels in module
 
+    const val MAX_BUFFERS = 256
+
     // MAX_SEQUENCES from common.h
     val maxSeqFromHeader: Int
         get() = getMaxSequences()

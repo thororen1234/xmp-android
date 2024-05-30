@@ -8,7 +8,6 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -16,12 +15,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.graphics.drawscope.*
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -86,11 +84,8 @@ fun ComposeChannelViewer(
     val numChannels by remember(modVars[3]) {
         mutableIntStateOf(modVars[3])
     }
-    val buffer by remember {
-        val array = Array(Xmp.MAX_CHANNELS) {
-            ByteArray(scopeWidth.toInt())
-        }
-        mutableStateOf(array)
+    val buffer = remember {
+        ByteArray(Xmp.MAX_BUFFERS)
     }
     val holdKey by remember(modVars[3]) {
         mutableStateOf(IntArray(modVars[3]))
@@ -118,23 +113,6 @@ fun ComposeChannelViewer(
         delta
     }
     val waveformPath = remember { Path() }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            withFrameMillis {
-                if (PlayerService.isAlive && PlayerService.isLoaded) {
-                    Xmp.getChannelData(
-                        viewInfo.volumes,
-                        viewInfo.finalVols,
-                        viewInfo.pans,
-                        viewInfo.instruments,
-                        viewInfo.keys,
-                        viewInfo.periods
-                    )
-                }
-            }
-        }
-    }
 
     Canvas(
         modifier = Modifier
@@ -240,8 +218,8 @@ fun ComposeChannelViewer(
                 ),
                 size = Size(volSize, 16f)
             )
-            val fvol = if (isMuted[chn]) 0 else viewInfo.finalVols[chn]
-            val fVolSize = xAxisMultiplier.times(5) * (fvol.toFloat() / 64)
+            val fVol = if (isMuted[chn]) 0 else viewInfo.finalVols[chn]
+            val fVolSize = xAxisMultiplier.times(5) * (fVol.toFloat() / 64)
             drawRect(
                 color = seed,
                 topLeft = Offset(
@@ -291,8 +269,8 @@ fun ComposeChannelViewer(
                         holdKey[chn],
                         period,
                         chn,
-                        scopeWidth.toInt(),
-                        buffer[chn]
+                        Xmp.MAX_BUFFERS,
+                        buffer
                     )
                 }
 
@@ -312,14 +290,27 @@ fun ComposeChannelViewer(
                     )
                 )
 
-                // Sinewave to draw over the above rectangle.
-                // TODO kinda terrible
+//                Timber.d(
+//                    "Channel: $chn, Buffer: \n ${buffer.joinToString(" ") { it.toString() }}"
+//                    "Channel $chn, Final Vol: ${viewInfo.finalVols[chn]}"
+//                )
+
+                // TODO volumeScale amplification doesn't seem to work?? And the line tends to get off y axis sometimes.
+                // Sine wave to draw over the above rectangle.
                 val centerY = scopeYOffset + (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
-                buffer[chn].forEachIndexed { index, byteValue ->
-                    val x = scopeXOffset + (scopeWidth / buffer[chn].size) * index
-                    val halfHeight = (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
-                    val scaledByteValue = byteValue * (halfHeight / 256f)
-                    val y = centerY - scaledByteValue
+                val halfHeight = (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
+                val maxVal = buffer.maxOrNull() ?: 127
+                val minVal = buffer.minOrNull() ?: -128
+                val volumeScale = viewInfo.finalVols[chn] / 64f
+                val yScale = halfHeight / (maxVal - minVal)
+                buffer.forEachIndexed { index, byteValue ->
+                    val x = scopeXOffset + (scopeWidth / buffer.size) * index
+                    val y = if (byteValue == 0.toByte()) {
+                        centerY
+                    } else {
+                        val scaledByteValue = byteValue * (halfHeight / 256f) * volumeScale
+                        (centerY - (scaledByteValue) - (byteValue * yScale))
+                    }
 
                     if (index == 0) {
                         waveformPath.moveTo(x, y)
@@ -330,13 +321,18 @@ fun ComposeChannelViewer(
 
                 drawPath(
                     path = waveformPath,
-                    color = Color.Green
+                    color = Color.Green,
+                    style = Stroke(
+                        width = 1f,
+                        cap = StrokeCap.Round,
+                        join = StrokeJoin.Round
+                    )
                 )
                 waveformPath.reset()
             }
 
             if (view.isInEditMode) {
-                // DEBUG: Make sure the bars are equal
+                // DEBUG: Make sure the bars are equal in size
                 if (volY != panY) {
                     throw Exception("Bar backgrounds not equal")
                 }
