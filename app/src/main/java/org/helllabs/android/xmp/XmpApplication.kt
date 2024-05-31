@@ -22,17 +22,7 @@ class XmpApplication : Application() {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         } else {
-            Timber.plant(
-                object : Timber.Tree() {
-                    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-                        when (priority) {
-                            Log.ERROR -> System.err.println("[ERROR]: $message")
-                            Log.WARN -> System.err.println("[WARN]: $message")
-                            else -> Unit // Ignore other log types.
-                        }
-                    }
-                }
-            )
+            Timber.plant(ReleaseTree())
         }
 
         PrefManager.init(applicationContext)
@@ -51,6 +41,16 @@ class XmpApplication : Application() {
 
         private fun setInstance(app: XmpApplication) {
             instance = app
+        }
+    }
+
+    private class ReleaseTree : Timber.Tree() {
+        override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+            if (priority == Log.DEBUG) {
+                return
+            }
+
+            Log.println(priority, "Xmp Mod Player", message)
         }
     }
 }
