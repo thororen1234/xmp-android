@@ -11,7 +11,7 @@ import org.helllabs.android.xmp.model.Playlist
 import timber.log.Timber
 
 @Stable
-class PlaylistActivityViewModel : ViewModel() {
+class PlaylistViewModel : ViewModel() {
 
     private val manager: MutableStateFlow<PlaylistManager> = MutableStateFlow(PlaylistManager())
 

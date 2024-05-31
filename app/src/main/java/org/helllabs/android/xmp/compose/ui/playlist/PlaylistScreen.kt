@@ -38,7 +38,7 @@ data class NavPlaylist(val playlist: String)
 
 @Composable
 fun PlaylistScreenImpl(
-    viewModel: PlaylistActivityViewModel,
+    viewModel: PlaylistViewModel,
     snackBarHostState: SnackbarHostState,
     playlist: String,
     onBack: () -> Unit,

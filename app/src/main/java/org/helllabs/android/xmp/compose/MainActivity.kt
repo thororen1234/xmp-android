@@ -45,8 +45,8 @@ import org.helllabs.android.xmp.compose.ui.home.PermissionViewModelFactory
 import org.helllabs.android.xmp.compose.ui.home.PlaylistMenuViewModel
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.playlist.NavPlaylist
-import org.helllabs.android.xmp.compose.ui.playlist.PlaylistActivityViewModel
 import org.helllabs.android.xmp.compose.ui.playlist.PlaylistScreenImpl
+import org.helllabs.android.xmp.compose.ui.playlist.PlaylistViewModel
 import org.helllabs.android.xmp.compose.ui.preferences.AboutScreen
 import org.helllabs.android.xmp.compose.ui.preferences.FormatsScreen
 import org.helllabs.android.xmp.compose.ui.preferences.NavPreferenceAbout
@@ -254,7 +254,7 @@ class MainActivity : ComponentActivity() {
                     }
                     composable<NavPlaylist> {
                         val args = it.toRoute<NavPlaylist>()
-                        val viewModel = viewModel<PlaylistActivityViewModel>()
+                        val viewModel = viewModel<PlaylistViewModel>()
                         val playerResult = rememberLauncherForActivityResult(
                             contract = ActivityResultContracts.StartActivityForResult()
                         ) { result ->
