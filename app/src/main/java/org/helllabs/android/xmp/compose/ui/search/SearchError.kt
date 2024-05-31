@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.search
 
+import android.content.res.Configuration
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.OnBackPressedDispatcher
 import androidx.compose.foundation.*
@@ -9,6 +10,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.tooling.preview.*
@@ -61,8 +63,17 @@ fun ErrorScreen(
             )
         }
     ) { paddingValues ->
+        val configuration = LocalConfiguration.current
+        val modifier = remember(configuration.orientation) {
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Modifier
+            } else {
+                Modifier.displayCutoutPadding()
+            }
+        }
+
         GuruFrame(
-            modifier = Modifier.padding(paddingValues),
+            modifier = modifier.padding(paddingValues),
             message = when {
                 errorMsg.isNullOrEmpty() -> stringResource(R.string.search_unknown_error)
                 else -> stringResource(

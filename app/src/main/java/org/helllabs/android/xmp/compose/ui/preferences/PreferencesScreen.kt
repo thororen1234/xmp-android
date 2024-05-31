@@ -1,6 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.preferences
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -65,8 +66,17 @@ fun PreferencesScreen(
             )
         }
     ) { paddingValues ->
+        val configuration = LocalConfiguration.current
+        val modifier = remember(configuration.orientation) {
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Modifier
+            } else {
+                Modifier.displayCutoutPadding()
+            }
+        }
+
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .verticalScroll(scrollState)

@@ -167,8 +167,17 @@ private fun PlaylistScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
     ) { paddingValues ->
+        val configuration = LocalConfiguration.current
+        val modifier = remember(configuration.orientation) {
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Modifier
+            } else {
+                Modifier.displayCutoutPadding()
+            }
+        }
+
         Box(
-            modifier = Modifier.padding(paddingValues),
+            modifier = modifier.padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
             val pixelAmount by remember {

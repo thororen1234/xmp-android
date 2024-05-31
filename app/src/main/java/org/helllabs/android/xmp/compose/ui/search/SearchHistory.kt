@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.search
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material.icons.*
@@ -7,6 +8,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.tooling.preview.*
 import kotlinx.serialization.Serializable
@@ -70,8 +72,17 @@ fun SearchHistoryScreen(
             )
         }
     ) { paddingValues ->
+        val configuration = LocalConfiguration.current
+        val modifier = remember(configuration.orientation) {
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Modifier
+            } else {
+                Modifier.displayCutoutPadding()
+            }
+        }
+
         Box(
-            modifier = Modifier.padding(paddingValues),
+            modifier = modifier.padding(paddingValues),
             contentAlignment = Alignment.Center
         ) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {

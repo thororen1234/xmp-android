@@ -1,5 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.search
 
+import android.content.res.Configuration
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.*
 import androidx.compose.material.icons.*
@@ -55,14 +57,24 @@ fun SearchScreen(
             )
         }
     ) { paddingValues ->
-        // Weird bottom padding workaround:
+        val configuration = LocalConfiguration.current
+        val modifier = remember(configuration.orientation) {
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Modifier
+            } else {
+                Modifier.displayCutoutPadding()
+            }
+        }
+
+        // (Not present anymore, but bug still opened) Weird bottom padding workaround:
         // https://issuetracker.google.com/issues/249727298
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .consumeWindowInsets(paddingValues)
+            modifier = modifier
                 .systemBarsPadding()
+                .imePadding()
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(paddingValues)
         ) {
             Column(
                 modifier = Modifier.align(Alignment.TopCenter),
@@ -70,6 +82,7 @@ fun SearchScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
+
                 OutlinedTextField(
                     modifier = Modifier
                         .focusRequester(focusRequester)
@@ -94,6 +107,7 @@ fun SearchScreen(
                     maxLines = 1,
                     label = { Text(text = stringResource(id = R.string.search)) }
                 )
+
                 Spacer(modifier = Modifier.height(32.dp))
 
                 SegmentedButtons(
@@ -108,6 +122,8 @@ fun SearchScreen(
                     onSearch = { onSearch(it, isArtistSearch) },
                     onRandom = onRandom
                 )
+
+                Spacer(modifier = Modifier.height(64.dp))
             }
 
             DownloadsText(

@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.preferences
 
+import android.content.res.Configuration
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
@@ -48,9 +49,17 @@ fun FormatsScreen(
         val context = LocalContext.current
         val haptic = LocalHapticFeedback.current
         val scope = rememberCoroutineScope()
+        val configuration = LocalConfiguration.current
+        val modifier = remember(configuration.orientation) {
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Modifier
+            } else {
+                Modifier.displayCutoutPadding()
+            }
+        }
 
         LazyColumn(
-            modifier = Modifier
+            modifier = modifier
                 .padding(paddingValues)
                 .fillMaxSize(),
             state = scrollState

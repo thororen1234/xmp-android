@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.filelist
 
+import android.content.res.Configuration
 import android.net.Uri
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.OnBackPressedDispatcher
@@ -369,8 +370,17 @@ private fun FileListScreen(
         },
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) }
     ) { paddingValues ->
+        val configuration = LocalConfiguration.current
+        val modifier = remember(configuration.orientation) {
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Modifier
+            } else {
+                Modifier.displayCutoutPadding()
+            }
+        }
+
         // Outer Box() to properly hide Pull-Refresh
-        Box(modifier = Modifier.padding(paddingValues)) {
+        Box(modifier = modifier.padding(paddingValues)) {
             val pullRefreshState = rememberPullToRefreshState()
             if (pullRefreshState.isRefreshing) {
                 LaunchedEffect(true) {

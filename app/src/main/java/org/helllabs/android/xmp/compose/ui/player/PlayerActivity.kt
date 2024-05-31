@@ -3,6 +3,7 @@ package org.helllabs.android.xmp.compose.ui.player
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
@@ -18,6 +19,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
@@ -643,8 +645,17 @@ private fun PlayerScreen(
             }
         }
     ) { paddingValues ->
+        val configuration = LocalConfiguration.current
+        val modifier = remember(configuration.orientation) {
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Modifier
+            } else {
+                Modifier.displayCutoutPadding()
+            }
+        }
+
         Box(
-            modifier = Modifier.padding(paddingValues)
+            modifier = modifier.padding(paddingValues)
         ) {
             when (uiState.currentViewer) {
                 0 -> InstrumentViewer(

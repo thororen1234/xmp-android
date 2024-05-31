@@ -1,10 +1,12 @@
 package org.helllabs.android.xmp.compose.ui.preferences
 
+import android.content.res.Configuration
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.*
@@ -43,8 +45,17 @@ fun AboutScreen(
             )
         }
     ) { paddingValues ->
+        val configuration = LocalConfiguration.current
+        val modifier = remember(configuration.orientation) {
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Modifier
+            } else {
+                Modifier.displayCutoutPadding()
+            }
+        }
+
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .padding(
                     PaddingValues(
                         top = paddingValues.calculateTopPadding(),

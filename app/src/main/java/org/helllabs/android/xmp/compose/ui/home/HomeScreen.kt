@@ -1,6 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.home
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -266,16 +267,17 @@ private fun HomeScreen(
     onTitleClicked: () -> Unit
 ) {
     val scrollState = rememberLazyListState()
-    val isScrolled = remember {
+    val isScrolled by remember {
         derivedStateOf {
             scrollState.firstVisibleItemIndex > 0
         }
     }
 
     Scaffold(
+        modifier = Modifier,
         snackbarHost = { SnackbarHost(hostState = snackBarHostState) },
         topBar = {
-            val topBarContainerColor = if (isScrolled.value) {
+            val topBarContainerColor = if (isScrolled) {
                 MaterialTheme.colorScheme.surfaceVariant.darken(1.45f)
             } else {
                 MaterialTheme.colorScheme.surface
@@ -329,12 +331,21 @@ private fun HomeScreen(
                 ExtendedFloatingActionButton(
                     text = { Text(text = stringResource(id = R.string.menu_new_playlist)) },
                     icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
-                    expanded = !isScrolled.value,
+                    expanded = !isScrolled,
                     onClick = onNewPlaylist
                 )
             }
         }
     ) { paddingValues ->
+        val configuration = LocalConfiguration.current
+        val modifier = remember(configuration.orientation) {
+            if (configuration.orientation == Configuration.ORIENTATION_PORTRAIT) {
+                Modifier
+            } else {
+                Modifier.displayCutoutPadding()
+            }
+        }
+
         val pullRefreshState = rememberPullToRefreshState()
         if (pullRefreshState.isRefreshing) {
             LaunchedEffect(true) {
@@ -344,7 +355,7 @@ private fun HomeScreen(
         }
 
         Box(
-            modifier = Modifier
+            modifier = modifier
                 .padding(paddingValues)
                 .fillMaxSize()
                 .nestedScroll(pullRefreshState.nestedScrollConnection),
@@ -353,7 +364,12 @@ private fun HomeScreen(
             if (state.playlistItems.isNotEmpty()) {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        bottom = 96.dp,
+                        start = 16.dp,
+                        end = 16.dp
+                    ),
                     state = scrollState,
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
