@@ -69,15 +69,6 @@ internal fun ComposePatternViewer(
 
     val rowTextSize = remember { 14.sp }
 
-    val instHexByte = remember {
-        val c = CharArray(3)
-        val inst = (0..255).map { i ->
-            Util.to02X(c, i)
-            String(c)
-        }
-        inst
-    }
-
     var currentType by remember { mutableStateOf("") }
     val effectsTable = remember(viewInfo.type) {
         val infoType = viewInfo.type
@@ -259,69 +250,53 @@ internal fun ComposePatternViewer(
 
                 val info = textMeasurer.measure(
                     text = buildAnnotatedString {
+                        /****** Notes *****/
                         withStyle(
                             style = SpanStyle(
                                 color = if (isMuted[j]) Color.LightGray else Color(140, 140, 160)
-                            )
-                        ) {
-                            /****** Notes *****/
-                            patternInfo.rowNotes[j].run {
-                                if (this > 80) {
-                                    "==="
-                                } else if (this > 0) {
-                                    "${Util.noteName[(this - 1) % 12]}${(this - 1) / 12}"
-                                } else {
-                                    "---"
-                                }
-                            }.also(::append)
-                        }
+                            ),
+                            block = {
+                                append(Util.note(patternInfo.rowNotes[j].toInt()))
+                            }
+                        )
+                        /***** Instruments *****/
                         withStyle(
                             style = SpanStyle(
                                 color = if (isMuted[j]) Color(80, 40, 40) else Color(160, 80, 80)
-                            )
-                        ) {
-                            /***** Instruments *****/
-                            patternInfo.rowInsts[j].run {
-                                if (this > 0) {
-                                    instHexByte[this.toInt()]
-                                } else {
-                                    "--"
-                                }
-                            }.also(::append)
-                        }
+                            ),
+                            block = {
+                                append(Util.num(patternInfo.rowInsts[j].toInt()))
+                            }
+                        )
+                        /***** Effects *****/
                         withStyle(
                             style = SpanStyle(
                                 color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60)
                             )
                         ) {
-                            /***** Effects *****/
-                            patternInfo.rowFxType[j].run {
-                                if (this < 0) {
-                                    "-"
-                                } else {
-                                    effectsTable[this] ?: run {
-                                        Timber.w(
-                                            "Unknown FX: $this in chn ${j + 1}, row $i, using $currentType. Type:${viewInfo.type}"
-                                        )
-                                        "?"
-                                    }
+                            val fxt = patternInfo.rowFxType[j]
+                            val fx = if (fxt < 0) {
+                                "-"
+                            } else {
+                                effectsTable.getOrElse(fxt) {
+                                    Timber.w(
+                                        "Unknown FX: $fxt in chn ${j + 1}, row $i, " +
+                                            "using $currentType. Type:${viewInfo.type}"
+                                    )
+                                    "?"
                                 }
-                            }.also(::append)
+                            }
+                            append(fx)
                         }
+                        /***** Effects Params *****/
                         withStyle(
                             style = SpanStyle(
                                 color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60)
-                            )
-                        ) {
-                            /***** Effects Params *****/
-                            patternInfo.rowFxParm[j].run {
-                                if (this > -1) {
-                                    instHexByte[this.toInt()]
-                                } else {
-                                    "--"
-                                }
-                            }.also(::append)
-                        }
+                            ),
+                            block = {
+                                append(Util.num(patternInfo.rowFxParm[j].toInt()))
+                            }
+                        )
                     },
                     density = density,
                     style = TextStyle(

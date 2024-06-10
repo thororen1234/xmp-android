@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.player
 
+import android.annotation.SuppressLint
 import org.helllabs.android.xmp.core.PrefManager
 
 object Util {
@@ -14,7 +15,13 @@ object Util {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     )
 
-    val noteName = arrayOf("C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B ")
+    private val noteName = arrayOf("C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B ")
+
+    @SuppressLint("DefaultLocale")
+    fun note(num: Int): String =
+        if (num == 0) "---" else String.format("%s%d", noteName[(num - 1) % 12], (num - 1) / 12)
+
+    fun num(num: Int): String = if (num <= 0) "--" else String.format("%02X", num)
 
     fun to2d(res: CharArray, value: Int) {
         res[0] = if (value < 10) ' ' else digits[value / 10]
