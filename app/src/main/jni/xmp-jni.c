@@ -3,16 +3,20 @@
  * at https://github.com/cmatsuoka/libxmp-java
  */
 
+#include "audio.h"
+#include "common.h"
+#include "xmp.h"
+#include <jni.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
-#include <jni.h>
 #include <sys/stat.h>
-#include "xmp.h"
-#include "common.h"
-#include "audio.h"
 
 #define PERIOD_BASE 13696
+#define MAX_BUFFER_SIZE 256
+
+#define lock()   pthread_mutex_lock(&mutex)
+#define unlock() pthread_mutex_unlock(&mutex)
 
 static xmp_context ctx = NULL;
 static struct xmp_module_info mi;
@@ -20,31 +24,27 @@ static struct xmp_frame_info *fi;
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "bugprone-reserved-identifier"
-static int _playing = 0;
+static int _buffer_num;
 static int _cur_vol[XMP_MAX_CHANNELS];
+static int _decay = 4;
+static int _finalvol[XMP_MAX_CHANNELS];
 static int _hold_vol[XMP_MAX_CHANNELS];
-static int _pan[XMP_MAX_CHANNELS];
 static int _ins[XMP_MAX_CHANNELS];
 static int _key[XMP_MAX_CHANNELS];
-static int _period[XMP_MAX_CHANNELS];
-static int _finalvol[XMP_MAX_CHANNELS];
 static int _last_key[XMP_MAX_CHANNELS];
-static int _pos[XMP_MAX_CHANNELS];
-static int _decay = 4;
-static int _sequence;
+static int _loop_count;
 static int _mod_is_loaded;
 static int _now, _before;
-static int _buffer_num;
-static int _loop_count;
-static pthread_mutex_t mutex;
-
-#define MAX_BUFFER_SIZE 256
+static int _pan[XMP_MAX_CHANNELS];
+static int _period[XMP_MAX_CHANNELS];
+static int _playing = 0;
+static int _pos[XMP_MAX_CHANNELS];
+static int _sequence;
 static jbyte _buffer[MAX_BUFFER_SIZE];
-
+static pthread_mutex_t mutex;
 #pragma clang diagnostic pop
 
-#define lock()   pthread_mutex_lock(&mutex)
-#define unlock() pthread_mutex_unlock(&mutex)
+
 
 /* For ModList */
 JNIEXPORT jboolean JNICALL
@@ -92,7 +92,7 @@ Java_org_helllabs_android_xmp_Xmp_loadModuleFd(JNIEnv *env, jobject obj, jint fd
         fclose(file);
         return -1;
     }
-    off_t size = statbuf.st_size;
+    off_t size = (off_t) statbuf.st_size;
 
     int res = xmp_load_module_from_file(ctx, file, size);
 
@@ -768,16 +768,16 @@ Java_org_helllabs_android_xmp_Xmp_getPatternRow(JNIEnv *env, jobject obj, jint p
 
         // Get the Effect or Secondary Effect type
         if (e->fxt > 0) {
-            row_fxt[i] = e->fxt;
-            row_fxp[i] = e->fxp;
+            row_fxt[i] = (char) e->fxt;
+            row_fxp[i] = (char) e->fxp;
         } else if (e->f2t > 0) {
-            row_fxt[i] = e->f2t;
-            row_fxp[i] = e->f2p;
+            row_fxt[i] = (char) e->f2t;
+            row_fxp[i] = (char) e->f2p;
         } else {
             if (e->fxt == 0 && e->fxp > 0) {
                 // Most likely Arpeggio, good enough.
-                row_fxt[i] = e->fxt;
-                row_fxp[i] = e->fxp;
+                row_fxt[i] = (char) e->fxt;
+                row_fxp[i] = (char) e->fxp;
             } else {
                 row_fxt[i] = -1;
                 row_fxp[i] = -1;

@@ -19,7 +19,7 @@ data class PlayerState(
     val showInfoDialog: Boolean = false,
     val showMessageDialog: Boolean = false,
     val showDeleteDialog: Boolean = false,
-    val currentViewer: Int = 2, // TODO move back to 0 when  ChannelViewer is done
+    val currentViewer: Int = 0,
     val infoTitle: String = "",
     val infoType: String = "",
     val screenOn: Boolean = true,
