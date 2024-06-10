@@ -44,9 +44,11 @@ fun annotatedLinkStringCombined(
             link = LinkAnnotation.Clickable(
                 tag = url,
                 linkInteractionListener = { uriHandler.openUri(url) },
-                style = SpanStyle(
-                    color = MaterialTheme.colorScheme.primary,
-                    textDecoration = TextDecoration.Underline
+                styles = TextLinkStyles(
+                    style = SpanStyle(
+                        color = MaterialTheme.colorScheme.primary,
+                        textDecoration = TextDecoration.Underline
+                    )
                 )
             ),
             block = { append(text) }
@@ -69,9 +71,11 @@ fun annotatedLinkString(
             link = LinkAnnotation.Clickable(
                 tag = url,
                 linkInteractionListener = { uriHandler.openUri("https://$url") },
-                style = SpanStyle(
-                    color = MaterialTheme.colorScheme.primary,
-                    textDecoration = TextDecoration.Underline
+                styles = TextLinkStyles(
+                    style = SpanStyle(
+                        color = MaterialTheme.colorScheme.primary,
+                        textDecoration = TextDecoration.Underline
+                    )
                 )
             ),
             block = { append(url) }
