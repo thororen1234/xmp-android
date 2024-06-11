@@ -24,8 +24,8 @@
         <activity
             android:name=".compose.MainActivity"
             android:configChanges="keyboardHidden|orientation|screenSize"
-            android:windowSoftInputMode="adjustResize"
-            android:exported="true">
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -129,27 +129,23 @@
         <!-- Service -->
         <service
             android:name=".service.PlayerService"
-            android:foregroundServiceType="mediaPlayback" />
-
-        <receiver
-            android:name=".service.receiver.MediaButtonsReceiver"
-            android:enabled="true"
-            android:exported="false">
-            <intent-filter android:priority="2147483647">
-                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+                <action android:name="ACTION_PLAY" />
+                <action android:name="ACTION_PAUSE" />
+                <action android:name="ACTION_STOP" />
             </intent-filter>
-        </receiver>
+        </service>
 
         <receiver
-            android:name=".service.receiver.RemoteControlReceiver"
-            android:enabled="true"
+            android:name="androidx.media.session.MediaButtonReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
-
-        <receiver android:name=".service.receiver.NotificationActionReceiver" />
 
     </application>
 

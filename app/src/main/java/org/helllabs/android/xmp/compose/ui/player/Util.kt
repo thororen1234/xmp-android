@@ -15,11 +15,19 @@ object Util {
         '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
     )
 
-    private val noteName = arrayOf("C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B ")
+    private val noteName =
+        arrayOf("C ", "C#", "D ", "D#", "E ", "F ", "F#", "G ", "G#", "A ", "A#", "B ")
 
     @SuppressLint("DefaultLocale")
-    fun note(num: Int): String =
-        if (num == 0) "---" else String.format("%s%d", noteName[(num - 1) % 12], (num - 1) / 12)
+    fun note(num: Int): String {
+        return if (num > 128) {
+            "==="
+        } else if (num > 0) {
+            String.format("%s%d", noteName[(num - 1) % 12], (num - 1) / 12)
+        } else {
+            "---"
+        }
+    }
 
     fun num(num: Int): String = if (num <= 0) "--" else String.format("%02X", num)
 

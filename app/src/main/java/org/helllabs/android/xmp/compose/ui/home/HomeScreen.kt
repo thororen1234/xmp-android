@@ -25,7 +25,6 @@ import androidx.compose.ui.tooling.preview.*
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.materialkolor.ktx.darken
 import kotlinx.coroutines.launch
@@ -63,6 +62,7 @@ fun HomeScreenImpl(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val player by PlayerService.isAlive.collectAsStateWithLifecycle()
 
     var hasStorage by remember { mutableStateOf(false) }
 
@@ -185,15 +185,15 @@ fun HomeScreenImpl(
         }
     }
 
-    LifecycleStartEffect(Lifecycle.Event.ON_START) {
-        Timber.d("Lifecycle onStart")
-        if (PrefManager.startOnPlayer && PlayerService.isAlive) {
-            Intent(context, PlayerActivity::class.java).also(playerResult::launch)
-        }
-        onStopOrDispose {
-            Timber.d("Lifecycle onStop")
-        }
-    }
+//    LifecycleStartEffect(Lifecycle.Event.ON_START) {
+//        Timber.d("Lifecycle onStart")
+//        if (PrefManager.startOnPlayer && PlayerService.isAlive) {
+//            Intent(context, PlayerActivity::class.java).also(playerResult::launch)
+//        }
+//        onStopOrDispose {
+//            Timber.d("Lifecycle onStop")
+//        }
+//    }
 
     LifecycleResumeEffect(Lifecycle.Event.ON_RESUME) {
         Timber.d("Lifecycle onResume")
@@ -208,6 +208,7 @@ fun HomeScreenImpl(
     HomeScreen(
         state = state,
         snackBarHostState = snackBarHostState,
+        serviceAlive = player,
         permissionState = hasStorage,
         onItemClick = { item ->
             if (item.isSpecial) {
@@ -226,7 +227,7 @@ fun HomeScreenImpl(
         onRefresh = viewModel::updateList,
         onNewPlaylist = { viewModel.newPlaylist(true) },
         onTitleClicked = {
-            if (PrefManager.startOnPlayer && PlayerService.isAlive) {
+            if (PrefManager.startOnPlayer && PlayerService.isAlive.value) {
                 Intent(context, PlayerActivity::class.java).also(playerResult::launch)
             }
         },
@@ -255,6 +256,7 @@ fun HomeScreenImpl(
 private fun HomeScreen(
     state: PlaylistMenuState,
     snackBarHostState: SnackbarHostState,
+    serviceAlive: Boolean,
     permissionState: Boolean,
     onDownload: () -> Unit,
     onItemClick: (item: FileItem) -> Unit,
@@ -536,6 +538,7 @@ private fun Preview_PlaylistMenuScreen() {
                 }
             ),
             snackBarHostState = SnackbarHostState(),
+            serviceAlive = true,
             permissionState = false,
             onItemClick = {},
             onItemLongClick = {},

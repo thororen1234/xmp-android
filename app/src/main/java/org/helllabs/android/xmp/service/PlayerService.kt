@@ -1,41 +1,65 @@
 package org.helllabs.android.xmp.service
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.AudioManager
-import android.media.AudioManager.OnAudioFocusChangeListener
 import android.net.Uri
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
+import android.support.v4.media.MediaDescriptionCompat
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.MediaControllerCompat
 import android.support.v4.media.session.MediaSessionCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import androidx.compose.runtime.*
+import androidx.core.app.NotificationCompat
 import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
+import androidx.media.session.MediaButtonReceiver
 import java.lang.ref.WeakReference
+import java.util.LinkedList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
+import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.core.StorageManager
-import org.helllabs.android.xmp.service.notifier.ModernNotifier
-import org.helllabs.android.xmp.service.utils.QueueManager
-import org.helllabs.android.xmp.service.utils.RemoteControl
-import org.helllabs.android.xmp.service.utils.Watchdog
+import org.helllabs.android.xmp.model.ModInfo
+import org.helllabs.android.xmp.model.ModVars
 import timber.log.Timber
+
+typealias MediaStyle = androidx.media.app.NotificationCompat.MediaStyle
+
+enum class EndPlayback(val code: Int) {
+    OK(0),
+    ERROR_FOCUS(-1),
+    ERROR_AUDIO(-2),
+    ERROR_WATCHDOG(-3),
+    ERROR_INIT(-4)
+}
 
 @Stable
 sealed class PlayerEvent {
-    data object Paused : PlayerEvent()
-    data object NewSequence : PlayerEvent()
-    data object NewMod : PlayerEvent()
-    data object EndMod : PlayerEvent()
-    data class EndPlayCallback(val result: Int) : PlayerEvent()
+    data class EndPlay(val result: EndPlayback) : PlayerEvent()
     data class ErrorMessage(val msg: String) : PlayerEvent()
+    data object EndMod : PlayerEvent()
+    data object NewMod : PlayerEvent()
+    data object NewSequence : PlayerEvent()
+    data object Paused : PlayerEvent()
+    data object Play : PlayerEvent()
 }
 
 class PlayerBinder(playerService: PlayerService) : Binder() {
@@ -44,250 +68,509 @@ class PlayerBinder(playerService: PlayerService) : Binder() {
     fun getService(): PlayerService? = service.get()
 }
 
-class PlayerService : Service(), OnAudioFocusChangeListener {
+class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
 
-    private val job = Job()
-    private val serviceScope = CoroutineScope(Dispatchers.Main + job)
+    companion object {
+        private const val CHANNEL_ID = "xmp"
+
+        private const val CMD_NONE = 0
+        private const val CMD_NEXT = 1
+        private const val CMD_PREV = 2
+        private const val CMD_STOP = 3
+
+        val isAlive = MutableStateFlow(false)
+    }
+
+    private val binder = PlayerBinder(this)
+    private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
 
     private val _playerEvent = MutableSharedFlow<PlayerEvent>()
     val playerEvent = _playerEvent.asSharedFlow()
 
-    private val binder = PlayerBinder(this)
+    private lateinit var audioFocusRequest: AudioFocusRequestCompat
+    private lateinit var audioManager: AudioManager
+    private lateinit var mediaSession: MediaSessionCompat
 
-    internal lateinit var mediaSession: MediaSessionCompat
-    private var notifier: ModernNotifier? = null
-    private var remoteControl: RemoteControl? = null
-
-    private var audioInitialized = false
-    private var audioManager: AudioManager? = null
-    private var focusRequest: AudioFocusRequestCompat? = null
-    private var ducking = false
-    private var hasAudioFocus = false
-
-    private var canRelease = false
-    private var cmd = 0
     private var playThread: Thread? = null
-    private var restart = false
-    private var sampleRate = 0
-    private var volume = 0
-    private var watchdog: Watchdog? = null
+    private lateinit var watchdog: Watchdog
 
-    private var discardBuffer = false // don't play current buffer if changing module while paused
-    private var looped = false
-    private var playerAllSequences = false
-    private var playerFileName: Uri? = null // currently playing file
-    private var previousPaused = false // save previous pause state
-    private var queue: QueueManager? = null
-    private var receiverHelper: ReceiverHelper? = null
-    private var sequenceNumber = 0
-    private var startIndex = 0
-    private var updateData = false
+    lateinit var mediaController: MediaControllerCompat
+        private set
 
-    internal var isPlayerPaused = false
+    private val playlist: LinkedList<MediaSessionCompat.QueueItem> = LinkedList()
+    private var isAudioFocused: Boolean = false
+
+    private var playerRestart = false
+    private var playerSequence: Int = 0
+    private var playerVolume: Int = 0
+    private var playlistPosition: Int = 0
+    private var currentFileUri: Uri = Uri.EMPTY
+
+    var isPlaying: Boolean = false
+        private set
+    var isRepeating: Boolean = false
+        private set
+    var playAllSequences: Boolean = false
+        private set
+
+    private var cmd: Int = 0
+    private var discardBuffer: Boolean = false
+
+    lateinit var logo: Bitmap
 
     override fun onCreate() {
         super.onCreate()
         Timber.i("Create service")
 
+        initializeMediaSession()
+        initializeAudioFocus()
+        createNotificationChannel()
+
+        initializeXmpPlayer()
+
+        logo = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher_foreground)
+
+        mediaController = MediaControllerCompat(this, mediaSession.sessionToken)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Timber.d("onDestroy")
+
+        cmd = CMD_STOP
+
+        mediaController.transportControls.stop()
+
+        watchdog.stop()
+
+        mediaSession.isActive = false
+        mediaSession.release()
+
+        playThread = null
+    }
+
+    override fun onBind(intent: Intent?): IBinder {
+        return binder
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
+            "ACTION_PLAY" -> mediaSession.controller.transportControls.play()
+            "ACTION_PAUSE" -> mediaSession.controller.transportControls.pause()
+            "ACTION_STOP" -> mediaSession.controller.transportControls.stop()
+        }
+        return START_STICKY
+    }
+
+    private fun initializeAudioFocus() {
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
-        remoteControl = RemoteControl(this, audioManager)
-        hasAudioFocus = requestAudioFocus()
 
-        if (!hasAudioFocus) {
-            Timber.e("Can't get audio focus")
+        val audioAttributes = AudioAttributesCompat.Builder()
+            .setUsage(AudioAttributesCompat.USAGE_MEDIA)
+            .setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
+            .build()
+
+        audioFocusRequest = AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(audioAttributes)
+            .setOnAudioFocusChangeListener(this)
+            .build()
+    }
+
+    override fun onAudioFocusChange(focusChange: Int) {
+        Timber.d("onAudioFocusChange: $focusChange")
+        when (focusChange) {
+            AudioManager.AUDIOFOCUS_GAIN -> {
+                // Resume playback
+                Xmp.setVolume(playerVolume)
+                if (!isPlaying) mediaController.transportControls.play()
+            }
+
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
+                // Lower the volume
+                Xmp.setVolume(Xmp.DUCK_VOLUME)
+            }
+
+            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                // Pause playback
+                mediaController.transportControls.pause()
+            }
+
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                // Stop playback
+                mediaController.transportControls.stop()
+            }
+        }
+    }
+
+    private fun initializeMediaSession() {
+        mediaSession = MediaSessionCompat(this, "PlayerService")
+
+        @Suppress("DEPRECATION")
+        mediaSession.setFlags(
+            MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
+                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
+        )
+
+        mediaSession.setCallback(
+            object : MediaSessionCompat.Callback() {
+                override fun onPlay() {
+                    Timber.d("MediaSessionCompat onPlay")
+
+                    startService(Intent(applicationContext, PlayerService::class.java))
+                    mediaSession.isActive = true
+
+                    updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
+                    showNotification()
+
+                    if (!isPlaying) {
+                        Xmp.restartAudio()
+                    }
+
+                    if (!isAudioFocused) {
+                        requestAudioFocus()
+                    }
+
+                    isPlaying = true
+
+                    serviceScope.launch {
+                        _playerEvent.emit(PlayerEvent.Play)
+                    }
+                }
+
+                override fun onPause() {
+                    Timber.d("MediaSessionCompat onPause")
+
+                    updatePlaybackState(PlaybackStateCompat.STATE_PAUSED)
+                    showNotification()
+
+                    if (isAudioFocused) {
+                        abandonAudioFocus()
+                    }
+
+                    if (isPlaying) {
+                        Xmp.stopAudio()
+                    }
+
+                    isPlaying = false
+
+                    serviceScope.launch {
+                        _playerEvent.emit(PlayerEvent.Paused)
+                    }
+                }
+
+                override fun onStop() {
+                    Timber.d("MediaSessionCompat onStop")
+                    cmd = CMD_STOP
+                }
+
+                override fun onSkipToNext() {
+                    Timber.d("MediaSessionCompat onSkipToNext")
+                    Xmp.stopModule()
+                    if (isPlaying) {
+                        discardBuffer = true
+                    }
+                    cmd = CMD_NEXT
+                }
+
+                override fun onSkipToPrevious() {
+                    Timber.d("MediaSessionCompat onSkipToPrevious")
+                    if (Xmp.time() > 3000) {
+                        Xmp.seek(0)
+                    } else {
+                        Xmp.stopModule()
+                        cmd = CMD_PREV
+                    }
+                    if (isPlaying) {
+                        discardBuffer = true
+                    }
+                }
+
+                override fun onSeekTo(pos: Long) {
+                    Timber.d("MediaSessionCompat onSeekTo $pos")
+                    Xmp.seek(pos.toInt())
+                    updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
+                }
+            }
+        )
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val notificationManager = getSystemService(NotificationManager::class.java)
+            NotificationChannel(CHANNEL_ID, "Player", NotificationManager.IMPORTANCE_LOW).apply {
+                description = "Player notification for controls"
+            }.also(notificationManager::createNotificationChannel)
+        }
+    }
+
+    private fun initializeXmpPlayer() {
+        val bufferMs = PrefManager.bufferMs.coerceIn(Xmp.MIN_BUFFER_MS, Xmp.MAX_BUFFER_MS)
+
+        if (!Xmp.init(PrefManager.samplingRate, bufferMs)) {
+            Timber.e("Unable to init Xmp audio (OpenSLES)")
+
+            serviceScope.launch {
+                _playerEvent.emit(PlayerEvent.EndPlay(EndPlayback.ERROR_INIT))
+            }
+
+            stopSelf()
+            return
         }
 
-        receiverHelper = ReceiverHelper(this)
-        receiverHelper!!.registerReceivers()
+        playerVolume = Xmp.getVolume()
+        playAllSequences = PrefManager.allSequences
 
-        var bufferMs = PrefManager.bufferMs
-        if (bufferMs < MIN_BUFFER_MS) {
-            bufferMs = MIN_BUFFER_MS
-        } else if (bufferMs > MAX_BUFFER_MS) {
-            bufferMs = MAX_BUFFER_MS
-        }
+        isAlive.value = false
+        isPlaying = false
 
-        sampleRate = PrefManager.samplingRate
-
-        if (Xmp.init(sampleRate, bufferMs)) {
-            audioInitialized = true
-        } else {
-            Timber.e("error initializing audio")
-        }
-
-        volume = Xmp.getVolume()
-        isAlive = false
-        isLoaded = false
-        isPlayerPaused = false
-        playerAllSequences = PrefManager.allSequences
-
-        mediaSession = MediaSessionCompat(this, packageName)
-        mediaSession.isActive = true
-        notifier = ModernNotifier(this)
+        playAllSequences = PrefManager.allSequences
 
         watchdog = Watchdog(10).apply {
             setOnTimeoutListener {
-                Timber.e("Stopped by watchdog")
-                AudioManagerCompat.abandonAudioFocusRequest(audioManager!!, focusRequest!!)
+                Timber.w("Stopped by watchdog")
 
+                serviceScope.launch {
+                    _playerEvent.emit(PlayerEvent.EndPlay(EndPlayback.ERROR_WATCHDOG))
+                }
+
+                abandonAudioFocus()
                 stopSelf()
             }
             start()
         }
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int = START_NOT_STICKY
-
-    override fun onDestroy() {
-        Timber.d("onDestroy")
-        receiverHelper?.unregisterReceivers()
-        watchdog?.stop()
-        notifier?.cancel()
-
-        mediaSession.isActive = false
-
-        if (audioInitialized) {
-            end(if (hasAudioFocus) RESULT_OK else RESULT_NO_AUDIO_FOCUS)
-        } else {
-            end(RESULT_CANT_OPEN_AUDIO)
-        }
-
-        super.onDestroy()
+    private fun requestAudioFocus() {
+        val result = AudioManagerCompat.requestAudioFocus(audioManager, audioFocusRequest)
+        isAudioFocused = (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
+        Timber.d("Request Audio Focus was: $isAudioFocused")
     }
 
-    override fun onBind(intent: Intent): IBinder = binder
-
-    private fun requestAudioFocus(): Boolean {
-        val playbackAttributes = AudioAttributesCompat.Builder()
-            .setUsage(AudioAttributesCompat.USAGE_MEDIA)
-            .setContentType(AudioAttributesCompat.CONTENT_TYPE_MUSIC)
-            .build()
-
-        focusRequest = AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
-            .setAudioAttributes(playbackAttributes ?: return false)
-            .setWillPauseWhenDucked(false)
-            .setOnAudioFocusChangeListener(this)
-            .build()
-
-        return AudioManagerCompat.requestAudioFocus(
-            audioManager!!,
-            focusRequest!!
-        ) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+    private fun abandonAudioFocus() {
+        AudioManagerCompat.abandonAudioFocusRequest(audioManager, audioFocusRequest)
+        isAudioFocused = false
+        Timber.d("Request Audio Focus Abandoned")
     }
 
-    private fun updateNotification() {
-        // It seems that queue can be null if we're called from PhoneStateListener
-        if (queue != null) {
-            var name = Xmp.getModName()
-            if (name.isEmpty()) {
-                name = StorageManager.getFileName(queue?.filename) ?: "<Unknown Title>"
-            }
-
-            notifier?.notify(
-                name,
-                Xmp.getModType(),
-                queue!!.index,
-                if (isPlayerPaused) ModernNotifier.TYPE_PAUSE else 0
+    private fun updatePlaybackState(state: Int) {
+        val playbackState = PlaybackStateCompat.Builder()
+            .setActions(
+                PlaybackStateCompat.ACTION_PLAY or
+                    PlaybackStateCompat.ACTION_PAUSE or
+                    PlaybackStateCompat.ACTION_PLAY_PAUSE or
+                    PlaybackStateCompat.ACTION_STOP or
+                    PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
+                    PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
+                    PlaybackStateCompat.ACTION_SEEK_TO
             )
-        }
+            .setState(state, Xmp.time().toLong(), 1.0f)
+            .build()
+        mediaSession.setPlaybackState(playbackState)
     }
 
-    private fun doPauseAndNotify() {
-        isPlayerPaused = isPlayerPaused xor true
+    private fun showNotification() {
+        val controller = mediaSession.controller
+        val mediaMetadata = controller.metadata
+        val description = mediaMetadata.description
 
-        updateNotification()
+        fun action(icon: Int, title: String, action: String) =
+            NotificationCompat.Action(
+                icon,
+                title,
+                PendingIntent.getService(
+                    this,
+                    0,
+                    Intent(this, PlayerService::class.java).setAction(action),
+                    PendingIntent.FLAG_IMMUTABLE
+                )
+            )
 
-        if (isPlayerPaused) {
-            Xmp.stopAudio()
-            remoteControl!!.setStatePaused()
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID).apply {
+            setContentTitle(description.title)
+            setContentText(description.subtitle)
+            setSubText(description.description)
+            setLargeIcon(description.iconBitmap)
+            setContentIntent(
+                PendingIntent.getActivity(
+                    this@PlayerService,
+                    0,
+                    Intent(this@PlayerService, PlayerActivity::class.java),
+                    PendingIntent.FLAG_IMMUTABLE
+                )
+            ) /* controller.sessionActivity */
+            setCategory(NotificationCompat.CATEGORY_PROGRESS)
+            setDeleteIntent(
+                MediaButtonReceiver.buildMediaButtonPendingIntent(
+                    this@PlayerService,
+                    PlaybackStateCompat.ACTION_STOP
+                )
+            )
+            setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            setSmallIcon(R.drawable.ic_notification)
+            addAction(action(R.drawable.ic_action_previous, "Previous", "ACTION_PREVIOUS"))
+            addAction(
+                if (controller.playbackState.state == PlaybackStateCompat.STATE_PLAYING) {
+                    action(R.drawable.ic_action_pause, "Pause", "ACTION_PAUSE")
+                } else {
+                    action(R.drawable.ic_action_play, "Play", "ACTION_PLAY")
+                }
+            )
+            addAction(action(R.drawable.ic_action_next, "Next", "ACTION_NEXT"))
+            setStyle(
+                MediaStyle()
+                    .setMediaSession(mediaSession.sessionToken)
+                    .setShowActionsInCompactView(0, 1, 2)
+            )
+        }.build()
+
+        startForeground(1, notification)
+    }
+
+    fun toggleLoop(): Boolean {
+        isRepeating = !isRepeating
+        return isRepeating
+    }
+
+    fun toggleAllSequences(): Boolean {
+        playAllSequences = !playAllSequences
+        return playAllSequences
+    }
+
+    fun setSequence(sequence: Int): Int {
+        val ret = Xmp.setSequence(sequence)
+        if (ret) {
+            playerSequence = sequence
+            serviceScope.launch {
+                _playerEvent.emit(PlayerEvent.NewSequence)
+            }
+        }
+        return playerSequence
+    }
+
+    fun getFileName(): String {
+        return StorageManager.getFileName(currentFileUri) ?: "<Unknown Title>"
+    }
+
+    fun play(
+        fileList: List<Uri>,
+        start: Int,
+        shuffle: Boolean,
+        loopList: Boolean,
+        keepFirst: Boolean
+    ) {
+        if (fileList.isEmpty()) {
+            return
+        }
+
+        add(fileList, false)
+
+        if (shuffle) {
+            if (keepFirst) {
+                Timber.d("KeepFirst")
+                val shuffled = playlist.shuffleWithFirst(start)
+                playlist.clear()
+                playlist.addAll(shuffled)
+            } else {
+                Timber.d("No KeepFirst")
+                playlist.shuffle()
+            }
+        }
+
+        cmd = CMD_NONE
+
+        playlistPosition = start
+
+        Timber.d("Start: $start")
+        Timber.d("Size: ${playlist.size}")
+
+        isRepeating = loopList
+
+        if (isAlive.value) {
+            Timber.i("Use existing player thread")
+            playerRestart = true
         } else {
-            remoteControl!!.setStatePlaying()
-            Xmp.restartAudio()
+            Timber.i("Start player thread")
+            playThread = Thread(PlayRunnable())
+            playThread!!.start()
         }
+
+        isAlive.value = true
     }
 
-    fun actionStop() {
-        Xmp.stopModule()
-
-        if (isPlayerPaused) {
-            doPauseAndNotify()
+    fun add(list: List<Uri>, shuffle: Boolean) {
+        if (list.isEmpty()) {
+            return
         }
 
-        cmd = CMD_STOP
+        var items = list.mapNotNull { item ->
+            val modInfo = ModInfo()
+            if (Xmp.testFromFd(item, modInfo)) {
+                val desc = MediaDescriptionCompat.Builder()
+                    .setTitle(modInfo.name.ifEmpty { item.lastPathSegment })
+                    .setMediaUri(item)
+                    .setSubtitle(modInfo.type)
+                    .build()
+
+                val queueItem = MediaSessionCompat.QueueItem(desc, desc.hashCode().toLong())
+                queueItem
+            } else {
+                Timber.w("Item: $item was not a valid module")
+                null
+            }
+        }
+
+        if (shuffle) {
+            items = items.shuffled()
+        }
+
+        playlist.addAll(items)
     }
 
-    fun actionPlayPause() {
-        doPauseAndNotify()
+    private fun <T> List<T>.shuffleWithFirst(index: Int): List<T> {
+        if (index !in indices) throw IndexOutOfBoundsException("Index out of bounds: $index")
 
-        // Notify clients that we paused
-        serviceScope.launch {
-            _playerEvent.emit(PlayerEvent.Paused)
-        }
-    }
+        val list = toMutableList()
+        val firstItem = list.removeAt(index)
+        list.shuffle()
+        list.add(0, firstItem)
 
-    fun actionPrev() {
-        if (Xmp.time() > 2000) {
-            Xmp.seek(0)
-        } else {
-            Xmp.stopModule()
-            cmd = CMD_PREV
-        }
-
-        if (isPlayerPaused) {
-            doPauseAndNotify()
-            discardBuffer = true
-        }
-    }
-
-    fun actionNext() {
-        Xmp.stopModule()
-
-        if (isPlayerPaused) {
-            doPauseAndNotify()
-            discardBuffer = true
-        }
-
-        cmd = CMD_NEXT
-    }
-
-    private fun notifyNewSequence() {
-        serviceScope.launch {
-            _playerEvent.emit(PlayerEvent.NewSequence)
-        }
+        return list
     }
 
     private inner class PlayRunnable : Runnable {
         override fun run() {
             cmd = CMD_NONE
 
-            val vars = IntArray(8)
-
-            remoteControl!!.setStatePlaying()
-
             var lastRecognized = 0
+            var oldPos = -1
+
+            isPlaying = true
 
             do {
-                playerFileName = queue?.filename // Used in reconnection
+                val queueItem = playlist[playlistPosition]
+
+                currentFileUri = queueItem.description.mediaUri!!
 
                 // If this file is unrecognized, and we're going backwards, go to previous
                 // If we're at the start of the list, go to the last recognized file
-                if (playerFileName == null || !Xmp.testFromFd(playerFileName!!)) {
-                    Timber.w("$playerFileName: unrecognized format")
+                val isValid = queueItem.description.mediaUri?.let { Xmp.testFromFd(it) } ?: false
+                if (!isValid) {
+                    Timber.w("$currentFileUri: unrecognized format")
                     serviceScope.launch {
+                        val module = currentFileUri.lastPathSegment?.ifEmpty { "module was" }
                         _playerEvent.emit(
                             PlayerEvent.ErrorMessage(
-                                "${playerFileName?.lastPathSegment?.ifEmpty { "module was" }} " +
-                                    "unrecognized. Skipping to next module"
+                                "$module unrecognized. Skipping to next module"
                             )
                         )
                     }
                     if (cmd == CMD_PREV) {
-                        if (queue!!.index <= 0) {
+                        if (playlistPosition <= 0) {
                             // -1 because we have queue.next() in the while condition
-                            queue!!.index = lastRecognized - 1
+                            playlistPosition = lastRecognized - 1
                             continue
                         }
-                        queue!!.previous()
+                        playlistPosition.minus(2).coerceAtLeast(0)
                     }
                     continue
                 }
@@ -298,97 +581,107 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                 Xmp.setPlayer(Xmp.PLAYER_DEFPAN, defpan)
 
                 // Ditto if we can't load the module
-                Timber.i("Load $playerFileName")
-                if (Xmp.loadFromFd(playerFileName!!) < 0) {
-                    Timber.e("Error loading $playerFileName")
+                Timber.i("Load  $currentFileUri")
+                if (Xmp.loadFromFd(currentFileUri) < 0) {
+                    Timber.e("Error loading $currentFileUri")
                     if (cmd == CMD_PREV) {
-                        if (queue!!.index <= 0) {
-                            queue!!.index = lastRecognized - 1
+                        if (playlistPosition <= 0) {
+                            playlistPosition = lastRecognized - 1
                             continue
                         }
-                        queue!!.previous()
+                        playlistPosition.minus(2).coerceAtLeast(0)
                     }
                     continue
                 }
-                lastRecognized = queue!!.index
-                cmd = CMD_NONE
-                var name = Xmp.getModName()
-                if (name.isEmpty()) {
-                    name = StorageManager.getFileName(playerFileName) ?: "<Unkown Title>"
-                }
 
-                notifier?.notify(name, Xmp.getModType(), queue!!.index, ModernNotifier.TYPE_TICKER)
-                isLoaded = true
+                lastRecognized = playlistPosition
+                cmd = CMD_NONE
 
                 val volBoost = PrefManager.volumeBoost
-                val interpTypes =
-                    intArrayOf(Xmp.INTERP_NEAREST, Xmp.INTERP_LINEAR, Xmp.INTERP_SPLINE)
-                val temp = PrefManager.interpType
-                var interpType: Int
-                interpType = if (temp in 1..2) {
-                    interpTypes[temp]
-                } else {
-                    Xmp.INTERP_LINEAR
-                }
-                if (!PrefManager.interpolate) {
-                    interpType = Xmp.INTERP_NEAREST
-                }
-                Xmp.startPlayer(sampleRate)
-                synchronized(audioManager!!) {
-                    if (ducking) {
-                        Xmp.setPlayer(Xmp.PLAYER_VOLUME, DUCK_VOLUME)
+
+                val interp = intArrayOf(Xmp.INTERP_NEAREST, Xmp.INTERP_LINEAR, Xmp.INTERP_SPLINE)
+                    .getOrElse(PrefManager.interpType) {
+                        if (!PrefManager.interpolate) {
+                            Xmp.INTERP_NEAREST
+                        } else {
+                            Xmp.INTERP_LINEAR
+                        }
                     }
-                }
+
+                Xmp.startPlayer(PrefManager.samplingRate)
 
                 // Unmute all channels
-                for (i in 0..63) {
+                for (i in 0 until Xmp.MAX_CHANNELS) {
                     Xmp.mute(i, 0)
                 }
+
+                val flags = if (PrefManager.amigaMixer) {
+                    Xmp.getPlayer(Xmp.PLAYER_CFLAGS) or Xmp.FLAGS_A500
+                } else {
+                    Xmp.getPlayer(Xmp.PLAYER_CFLAGS) and Xmp.FLAGS_A500.inv()
+                }
+
+                Xmp.setPlayer(Xmp.PLAYER_AMP, volBoost)
+                Xmp.setPlayer(Xmp.PLAYER_CFLAGS, flags)
+                Xmp.setPlayer(Xmp.PLAYER_DSP, Xmp.DSP_LOWPASS)
+                Xmp.setPlayer(Xmp.PLAYER_INTERP, interp)
+                Xmp.setPlayer(Xmp.PLAYER_MIX, PrefManager.stereoMix)
+                Xmp.setPlayer(Xmp.PLAYER_VOLUME, 100)
+
+                playerSequence = 0
+
+                var playNewSequence: Boolean
+
+                Xmp.setSequence(playerSequence)
+                Xmp.playAudio()
 
                 serviceScope.launch {
                     _playerEvent.emit(PlayerEvent.NewMod)
                 }
 
-                Xmp.setPlayer(Xmp.PLAYER_AMP, volBoost)
-                Xmp.setPlayer(Xmp.PLAYER_MIX, PrefManager.stereoMix)
-                Xmp.setPlayer(Xmp.PLAYER_INTERP, interpType)
-                Xmp.setPlayer(Xmp.PLAYER_DSP, Xmp.DSP_LOWPASS)
-                var flags = Xmp.getPlayer(Xmp.PLAYER_CFLAGS)
-                flags = if (PrefManager.amigaMixer) {
-                    flags or Xmp.FLAGS_A500
-                } else {
-                    flags and Xmp.FLAGS_A500.inv()
-                }
-                Xmp.setPlayer(Xmp.PLAYER_CFLAGS, flags)
-                updateData = true
-                sequenceNumber = 0
-                var playNewSequence: Boolean
-                Xmp.setSequence(sequenceNumber)
-
-                Xmp.playAudio()
-
                 Timber.i("Enter play loop")
                 do {
-                    Xmp.getModVars(vars)
+                    val modVars = ModVars()
+                    Xmp.getModVars(modVars)
 
-                    remoteControl!!.setMetadata(
-                        Xmp.getModName(),
-                        Xmp.getModType(),
-                        vars[0].toLong()
-                    )
+                    val metaData = MediaMetadataCompat.Builder().apply {
+                        putBitmap(
+                            MediaMetadataCompat.METADATA_KEY_ALBUM_ART,
+                            logo
+                        )
+                        putString(
+                            MediaMetadataCompat.METADATA_KEY_MEDIA_ID,
+                            queueItem.description.mediaId
+                        )
+                        putString(
+                            MediaMetadataCompat.METADATA_KEY_TITLE,
+                            queueItem.description.title.toString()
+                        )
+                        putString(
+                            MediaMetadataCompat.METADATA_KEY_ARTIST,
+                            queueItem.description.subtitle.toString()
+                        )
+                        putLong(
+                            MediaMetadataCompat.METADATA_KEY_DURATION,
+                            modVars.seqDuration.toLong()
+                        )
+                    }.build()
+
+                    mediaSession.setMetadata(metaData)
+                    mediaController.transportControls.play()
 
                     while (cmd == CMD_NONE) {
                         discardBuffer = false
 
                         // Wait if paused
-                        while (isPlayerPaused) {
+                        while (!isPlaying) {
                             try {
-                                Thread.sleep(100)
+                                Timber.d("Paused...")
+                                Thread.sleep(1000)
                             } catch (e: InterruptedException) {
                                 break
                             }
-                            watchdog!!.refresh()
-                            receiverHelper!!.checkReceivers()
+                            watchdog.refresh()
                         }
 
                         if (discardBuffer) {
@@ -398,7 +691,7 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                         }
 
                         // Wait if no buffers available
-                        while (!Xmp.hasFreeBuffer() && !isPlayerPaused && cmd == CMD_NONE) {
+                        while (!Xmp.hasFreeBuffer() && isPlaying && cmd == CMD_NONE) {
                             try {
                                 Thread.sleep(40)
                             } catch (e: InterruptedException) {
@@ -407,325 +700,82 @@ class PlayerService : Service(), OnAudioFocusChangeListener {
                         }
 
                         // Fill a new buffer
-                        if (Xmp.fillBuffer(looped) < 0) {
+                        if (Xmp.fillBuffer(isRepeating) < 0) {
                             break
                         }
-                        watchdog!!.refresh()
-                        receiverHelper!!.checkReceivers()
+
+                        watchdog.refresh()
+
+                        // Periodically update notification state
+                        val fi = IntArray(7)
+                        Xmp.getInfo(fi)
+                        if (fi[0] != oldPos) {
+                            oldPos = fi[0]
+                            updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
+                        }
                     }
 
                     // Subsong explorer
                     // Do all this if we've exited normally and explorer is active
                     playNewSequence = false
 
-                    if (playerAllSequences && cmd == CMD_NONE) {
-                        sequenceNumber++
-                        Timber.i("Play sequence $sequenceNumber")
-                        if (Xmp.setSequence(sequenceNumber)) {
+                    if (playAllSequences && cmd == CMD_NONE) {
+                        playerSequence++
+                        Timber.i("Play sequence $playerSequence")
+                        if (Xmp.setSequence(playerSequence)) {
                             playNewSequence = true
-                            notifyNewSequence()
+                            serviceScope.launch {
+                                _playerEvent.emit(PlayerEvent.NewSequence)
+                            }
                         }
                     }
                 } while (playNewSequence)
 
                 Xmp.endPlayer()
-                isLoaded = false
 
                 // notify end of module to our clients
                 serviceScope.launch {
                     _playerEvent.emit(PlayerEvent.EndMod)
                 }
 
-                var timeout = 0
-                try {
-                    while (!canRelease && timeout < 20) {
-                        Thread.sleep(100)
-                        timeout++
-                    }
-                } catch (e: InterruptedException) {
-                    Timber.e("Sleep interrupted: $e")
-                }
-
                 Timber.i("Release module")
                 Xmp.releaseModule()
 
                 // Used when current files are replaced by a new set
-                if (restart) {
+                if (playerRestart) {
                     Timber.i("Restart")
-                    queue!!.index = startIndex - 1
+                    playlistPosition = 0
                     cmd = CMD_NONE
-                    restart = false
+                    playerRestart = false
                 } else if (cmd == CMD_PREV) {
-                    queue!!.previous()
+                    Timber.d("Command: Previous")
+                    playlistPosition = playlistPosition.minus(1).coerceAtLeast(0)
+                } else {
+                    playlistPosition = playlistPosition.plus(1)
                 }
-            } while (cmd != CMD_STOP && queue!!.next())
+            } while (cmd != CMD_STOP && playlistPosition < playlist.size)
 
-            synchronized(playThread!!) {
-                updateData = false // stop getChannelData update
+            Timber.d("Exiting play loop")
+
+            watchdog.stop()
+
+            Thread.sleep(100) // Let the player finish getting data
+
+            Xmp.stopModule()
+            Xmp.deinit()
+
+            updatePlaybackState(PlaybackStateCompat.STATE_STOPPED)
+
+            if (isAudioFocused) {
+                abandonAudioFocus()
             }
 
-            watchdog?.stop()
-            notifier?.cancel()
-            remoteControl!!.setStateStopped()
-            AudioManagerCompat.abandonAudioFocusRequest(audioManager!!, focusRequest!!)
+            serviceScope.launch {
+                _playerEvent.emit(PlayerEvent.EndPlay(EndPlayback.OK))
+            }
 
             Timber.i("Stop service")
             stopSelf()
         }
-    }
-
-    private fun end(result: Int) {
-        Timber.i("End service")
-
-        serviceScope.launch {
-            _playerEvent.emit(PlayerEvent.EndPlayCallback(result))
-        }
-        isAlive = false
-
-        Xmp.stopModule()
-
-        if (isPlayerPaused) {
-            doPauseAndNotify()
-        }
-
-        Xmp.deinit()
-    }
-
-    // region [Region] Was Stub
-    fun play(
-        fileList: List<Uri>,
-        start: Int,
-        shuffle: Boolean,
-        loopList: Boolean,
-        keepFirst: Boolean
-    ) {
-        if (!audioInitialized || !hasAudioFocus) {
-            stopSelf()
-            return
-        }
-
-        queue = QueueManager(fileList, start, shuffle, loopList, keepFirst)
-        notifier?.queueManager = queue!!
-
-        cmd = CMD_NONE
-
-        if (isPlayerPaused) {
-            doPauseAndNotify()
-        }
-        if (isAlive) {
-            Timber.i("Use existing player thread")
-            restart = true
-            startIndex = if (keepFirst) 0 else start
-            nextSong()
-        } else {
-            Timber.i("Start player thread")
-            playThread = Thread(PlayRunnable())
-            playThread!!.start()
-        }
-
-        isAlive = true
-    }
-
-    fun add(fileList: List<Uri>) {
-        queue!!.add(fileList)
-
-        updateNotification()
-    }
-
-    fun stop() {
-        actionStop()
-    }
-
-    fun pause() {
-        doPauseAndNotify()
-
-        receiverHelper!!.isHeadsetPaused = false
-    }
-
-    fun getInfo(values: IntArray) {
-        Xmp.getInfo(values)
-    }
-
-    fun seek(seconds: Int) {
-        Xmp.seek(seconds)
-    }
-
-    fun time(): Int = Xmp.time()
-
-    fun getModVars(vars: IntArray) {
-        Xmp.getModVars(vars)
-    }
-
-    fun getModName(): String = Xmp.getModName()
-
-    fun getModType(): String = Xmp.getModType()
-
-    fun getSampleData(
-        trigger: Boolean,
-        ins: Int,
-        key: Int,
-        period: Int,
-        chn: Int,
-        width: Int,
-        buffer: ByteArray
-    ) {
-        if (updateData) {
-            synchronized(playThread!!) {
-                Xmp.getSampleData(trigger, ins, key, period, chn, width, buffer)
-            }
-        }
-    }
-
-    fun nextSong() {
-        Xmp.stopModule()
-
-        cmd = CMD_NEXT
-
-        if (isPlayerPaused) {
-            doPauseAndNotify()
-        }
-
-        discardBuffer = true
-    }
-
-    fun prevSong() {
-        Xmp.stopModule()
-
-        cmd = CMD_PREV
-
-        if (isPlayerPaused) {
-            doPauseAndNotify()
-        }
-
-        discardBuffer = true
-    }
-
-    fun toggleLoop(): Boolean {
-        looped = looped.xor(true)
-
-        return looped
-    }
-
-    fun toggleAllSequences(): Boolean {
-        playerAllSequences = playerAllSequences.xor(true)
-
-        return playerAllSequences
-    }
-
-    fun getLoop(): Boolean = looped
-
-    fun getAllSequences(): Boolean = playerAllSequences
-
-    fun isPaused(): Boolean = isPlayerPaused
-
-    fun setSequence(seq: Int): Boolean {
-        val ret = Xmp.setSequence(seq)
-        if (ret) {
-            sequenceNumber = seq
-            notifyNewSequence()
-        }
-
-        return ret
-    }
-
-    // TODO is this even needed now that we don't use AIDL?
-    fun allowRelease() {
-        canRelease = true
-    }
-
-    fun getSeqVars(vars: IntArray) {
-        Xmp.getSeqVars(vars)
-    }
-
-    // for Reconnection
-    fun getFileName(): String = StorageManager.getFileName(playerFileName) ?: "<Unknown Title>"
-
-    fun getInstruments(): Array<String> = Xmp.getInstruments()!!
-
-    fun mute(chn: Int, status: Int): Int = Xmp.mute(chn, status)
-
-    // File management
-    fun deleteFile(): Boolean {
-        Timber.i("Delete file ${getFileName()}")
-        return StorageManager.deleteFileOrDirectory(playerFileName)
-    }
-    // endregion
-
-    // for audio focus loss
-    private fun autoPause(pause: Boolean): Boolean {
-        Timber.i("Auto pause changed to $pause, previously ${receiverHelper!!.isAutoPaused}")
-
-        if (pause) {
-            previousPaused = isPlayerPaused
-            receiverHelper!!.isAutoPaused = true
-            isPlayerPaused = false // set to complement, flip on doPause()
-
-            doPauseAndNotify()
-        } else {
-            if (receiverHelper!!.isAutoPaused && !receiverHelper!!.isHeadsetPaused) {
-                receiverHelper!!.isAutoPaused = false
-                isPlayerPaused = !previousPaused // set to complement, flip on doPause()
-
-                doPauseAndNotify()
-            }
-        }
-
-        return receiverHelper!!.isAutoPaused
-    }
-
-    override fun onAudioFocusChange(focusChange: Int) {
-        when (focusChange) {
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                Timber.d("AUDIOFOCUS_LOSS_TRANSIENT")
-                // Pause playback
-                autoPause(true)
-            }
-
-            AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                Timber.d("AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK")
-                // Lower volume
-                synchronized(audioManager!!) {
-                    volume = Xmp.getVolume()
-                    Xmp.setVolume(DUCK_VOLUME)
-                    ducking = true
-                }
-            }
-
-            AudioManager.AUDIOFOCUS_GAIN -> {
-                Timber.d("AUDIOFOCUS_GAIN")
-                // Resume playback/raise volume
-                autoPause(false)
-                synchronized(audioManager!!) {
-                    Xmp.setVolume(volume)
-                    ducking = false
-                }
-            }
-
-            AudioManager.AUDIOFOCUS_LOSS -> {
-                Timber.d("AUDIOFOCUS_LOSS")
-                // Stop playback
-                actionStop()
-            }
-
-            else -> {}
-        }
-    }
-
-    companion object {
-        const val RESULT_OK = 0
-        const val RESULT_CANT_OPEN_AUDIO = 1
-        const val RESULT_NO_AUDIO_FOCUS = 2
-
-        private const val CMD_NONE = 0
-        private const val CMD_NEXT = 1
-        private const val CMD_PREV = 2
-        private const val CMD_STOP = 3
-
-        private const val MIN_BUFFER_MS = 80
-        private const val MAX_BUFFER_MS = 1000
-        private const val DUCK_VOLUME = 0x500
-
-        var isAlive = false
-        var isLoaded = false
     }
 }

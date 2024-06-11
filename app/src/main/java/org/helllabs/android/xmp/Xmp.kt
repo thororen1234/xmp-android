@@ -4,9 +4,18 @@ package org.helllabs.android.xmp
 
 import android.net.Uri
 import org.helllabs.android.xmp.model.ModInfo
+import org.helllabs.android.xmp.model.ModVars
+import org.helllabs.android.xmp.model.SequenceVars
 import timber.log.Timber
 
 object Xmp {
+
+    const val MIN_BUFFER_MS = 80
+
+    const val MAX_BUFFER_MS = 1000
+
+    const val DUCK_VOLUME = 0x500
+
     // Return codes
     const val XMP_END = 1 // End of module reached
 
@@ -60,7 +69,7 @@ object Xmp {
 
     external fun fillBuffer(loop: Boolean): Int
 
-    external fun getInfo(values: IntArray?)
+    external fun getInfo(values: IntArray?) // TODO data class
 
     external fun getPlayer(parm: Int): Int
 
@@ -113,7 +122,7 @@ object Xmp {
 
     external fun getModType(): String
 
-    external fun getModVars(vars: IntArray?)
+    external fun getModVars(vars: ModVars)
 
     external fun getPatternRow(
         pat: Int,
@@ -134,7 +143,7 @@ object Xmp {
         buffer: ByteArray?
     )
 
-    external fun getSeqVars(vars: IntArray?)
+    external fun getSeqVars(vars: SequenceVars)
 
     external fun getVersion(): String
 

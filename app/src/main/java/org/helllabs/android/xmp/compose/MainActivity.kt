@@ -7,7 +7,6 @@ import android.content.ServiceConnection
 import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
-import android.os.RemoteException
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -86,12 +85,10 @@ class MainActivity : ComponentActivity() {
     private val connection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             mModPlayer = (service as PlayerBinder).getService()
-            try {
-                mModPlayer!!.add(mAddList)
-                mAddList = listOf()
-            } catch (e: RemoteException) {
-                showSnack(getString(R.string.error_snack_adding_mod))
-            }
+
+            mModPlayer!!.add(mAddList, PrefManager.shuffleMode)
+            mAddList = listOf()
+
             unbindService(this)
         }
 
@@ -258,11 +255,12 @@ class MainActivity : ComponentActivity() {
                         val playerResult = rememberLauncherForActivityResult(
                             contract = ActivityResultContracts.StartActivityForResult()
                         ) { result ->
-                            if (result.resultCode == 1) {
-                                result.data?.getStringExtra("error")?.let { str ->
-                                    Timber.w("Result with error: $str")
+                            if (result.resultCode == RESULT_OK) {
+                                val msg = result.data?.getStringExtra("message")
+                                if (!msg.isNullOrEmpty()) {
+                                    Timber.w("Result with error: $msg")
                                     scope.launch {
-                                        snackBarHostState.showSnackbar(str)
+                                        snackBarHostState.showSnackbar(msg)
                                     }
                                 }
                             }
@@ -549,7 +547,7 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        if (PlayerService.isAlive) {
+        if (PlayerService.isAlive.value) {
             mAddList = list
             Intent(this, PlayerService::class.java).also {
                 bindService(it, connection, 0)

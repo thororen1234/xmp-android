@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.update
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.ui.player.viewer.PatternInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
+import org.helllabs.android.xmp.model.ModVars
+import org.helllabs.android.xmp.model.SequenceVars
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 
@@ -98,13 +100,13 @@ class PlayerViewModel : ViewModel() {
         get() = _buttonState.value.isPlaying
 
     /** Viewer Variables **/
-    private val seqVars = MutableStateFlow(IntArray(Xmp.maxSeqFromHeader))
+    private val seqVars = MutableStateFlow(SequenceVars())
 
-    val insName = MutableStateFlow(arrayOf<String>())
+    val insName = MutableStateFlow(arrayOf(""))
 
     val isMuted = MutableStateFlow(BooleanArray(0))
 
-    val modVars = MutableStateFlow(IntArray(10))
+    val modVars = MutableStateFlow(ModVars())
 
     val patternInfo = MutableStateFlow(PatternInfo())
 
@@ -142,6 +144,10 @@ class PlayerViewModel : ViewModel() {
         _drawerState.update { it.copy(isPlayAllSequences = value) }
     }
 
+    fun onSequence(value: Int) {
+        _drawerState.update { it.copy(currentSequence = value) }
+    }
+
     /** Viewer Functions **/
     fun changeViewer() {
         val current = (_uiState.value.currentViewer + 1) % 3
@@ -149,16 +155,17 @@ class PlayerViewModel : ViewModel() {
     }
 
     fun setup() {
+        Timber.d("Setup")
         if (_uiState.value.serviceConnected) {
             Xmp.getModVars(modVars.value)
             Xmp.getSeqVars(seqVars.value)
 
             insName.update {
                 Xmp.getInstruments()
-                    ?: Collections.nCopies(modVars.value[4], "").toTypedArray()
+                    ?: Collections.nCopies(modVars.value.numInstruments, "").toTypedArray()
             }
 
-            val chn = modVars.value[3]
+            val chn = modVars.value.numChannels
             val muteArray = BooleanArray(chn)
             for (i in 0 until chn) {
                 muteArray[i] = Xmp.mute(i, -1) == 1
@@ -178,7 +185,7 @@ class PlayerViewModel : ViewModel() {
     }
 
     fun showNewSequence(showSnack: (Int) -> Unit) {
-        val time = modVars.value[0]
+        val time = modVars.value.seqDuration
 
         _activityState.update {
             it.copy(totalTime = time / 1000)
@@ -189,7 +196,7 @@ class PlayerViewModel : ViewModel() {
         }
 
         _drawerState.update {
-            it.copy(currentSequence = modVars.value[7])
+            it.copy(currentSequence = modVars.value.currentSequence)
         }
 
         showSnack(time)
@@ -198,65 +205,57 @@ class PlayerViewModel : ViewModel() {
     fun showNewMod(modPlayer: PlayerService) {
         Timber.i("Show new module")
 
-        val mVars = IntArray(10)
-        modPlayer.getModVars(mVars)
+        val mVars = ModVars()
+        Xmp.getModVars(mVars)
         modVars.update { mVars }
 
-        val sVars = IntArray(Xmp.maxSeqFromHeader)
-        modPlayer.getSeqVars(sVars)
+        val sVars = SequenceVars()
+        Xmp.getSeqVars(sVars)
         seqVars.update { sVars }
-
-        _activityState.update {
-            it.copy(playTime = modPlayer.time().div(100F))
-        }
-
-        var name: String = modPlayer.getModName()
-        val type: String = modPlayer.getModType()
-        val allSeq: Boolean = modPlayer.getAllSequences()
-        val loop: Boolean = modPlayer.getLoop()
-
-        if (name.trim().isEmpty()) {
-            name = modPlayer.getFileName()
-        }
-
-        val time = modVars.value[0]
-        val len = modVars.value[1]
-        val pat = modVars.value[2]
-        val chn = modVars.value[3]
-        val ins = modVars.value[4]
-        val smp = modVars.value[5]
-        val numSeq = modVars.value[6]
-        val sequences = seqVars.value.take(numSeq)
 
         _drawerState.update {
             it.copy(
-                moduleInfo = listOf(pat, ins, smp, chn, len),
-                isPlayAllSequences = allSeq,
+                moduleInfo = listOf(
+                    modVars.value.numPatterns,
+                    modVars.value.numInstruments,
+                    modVars.value.numSamples,
+                    modVars.value.numChannels,
+                    modVars.value.lengthInPatterns
+                ),
+                isPlayAllSequences = modPlayer.playAllSequences,
                 currentSequence = 0,
-                numOfSequences = sequences
+                numOfSequences = seqVars.value.sequence.toList()
             )
         }
 
         _activityState.update {
-            it.copy(totalTime = time / 1000)
+            it.copy(
+                playTime = mVars.seqDuration.div(100F),
+                totalTime = mVars.seqDuration / 1000
+            )
         }
 
         _timeState.update {
-            it.copy(seekPos = _activityState.value.playTime, seekMax = time.div(100F))
+            it.copy(
+                seekPos = _activityState.value.playTime,
+                seekMax = mVars.seqDuration.div(100F)
+            )
         }
 
-        viewInfo.update {
-            it.copy(type = type)
-        }
+        toggleLoop(modPlayer.isRepeating)
 
-        toggleLoop(loop)
-
+        val name: String = Xmp.getModName().trim().ifEmpty { modPlayer.getFileName() }
+        val type: String = Xmp.getModType()
         _uiState.update {
             it.copy(
                 infoTitle = name,
                 infoType = type,
                 skipToPrevious = _activityState.value.skipToPrevious
             )
+        }
+
+        viewInfo.update {
+            it.copy(type = type)
         }
 
         skipToPrevious(false)

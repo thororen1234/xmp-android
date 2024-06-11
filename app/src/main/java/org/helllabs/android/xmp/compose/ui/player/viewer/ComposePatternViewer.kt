@@ -35,6 +35,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.seed
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.player.Util
+import org.helllabs.android.xmp.model.ModVars
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 
@@ -48,7 +49,7 @@ internal fun ComposePatternViewer(
     viewInfo: ViewerInfo,
     patternInfo: PatternInfo,
     isMuted: BooleanArray,
-    modVars: IntArray
+    modVars: ModVars
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
@@ -97,7 +98,9 @@ internal fun ComposePatternViewer(
         }
     }
 
-    val chn = remember(modVars[3]) { modVars[3] }
+    val chn = remember(modVars.numChannels) {
+        modVars.numChannels
+    }
 
     val offsetX = remember {
         Animatable(0f)
@@ -237,7 +240,7 @@ internal fun ComposePatternViewer(
                 // Our variables are latency-compensated but pattern data is current
                 // so caution is needed to avoid retrieving data using old variables
                 // from a module with pattern data from a newly loaded one.
-                if (PlayerService.isAlive && PlayerActivity.canChangeViewer) {
+                if (PlayerService.isAlive.value && PlayerActivity.canChangeViewer) {
                     Xmp.getPatternRow(
                         patternInfo.pat,
                         patternInfo.lineInPattern,
@@ -377,9 +380,8 @@ private fun Preview_PatternViewer() {
     val patternInfo = remember {
         composePatternSampleData()
     }
-    val modVars by remember {
-        val array = intArrayOf(190968, 30, 25, 12, 40, 18, 1, 0, 0, 0)
-        mutableStateOf(array)
+    val modVars = remember {
+        ModVars(190968, 30, 25, 12, 40, 18, 1, 0)
     }
 
     XmpTheme(useDarkTheme = true) {
@@ -387,7 +389,7 @@ private fun Preview_PatternViewer() {
             onTap = { },
             viewInfo = viewInfo,
             patternInfo = patternInfo,
-            isMuted = BooleanArray(modVars[3]) { false },
+            isMuted = BooleanArray(modVars.numChannels) { false },
             modVars = modVars
         )
     }

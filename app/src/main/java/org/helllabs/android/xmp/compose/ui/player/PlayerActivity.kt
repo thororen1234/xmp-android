@@ -7,6 +7,7 @@ import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
+import android.support.v4.media.session.MediaControllerCompat
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -53,6 +54,8 @@ import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.composePatternSampleData
 import org.helllabs.android.xmp.compose.ui.player.viewer.composeViewerSampleData
 import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.model.ModVars
+import org.helllabs.android.xmp.service.EndPlayback
 import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerEvent
 import org.helllabs.android.xmp.service.PlayerService
@@ -85,11 +88,16 @@ class PlayerActivity : ComponentActivity() {
 
     /* Actual mod player (the Service) */
     private var modPlayer: PlayerService? = null
+    private var controls: MediaControllerCompat? = null
 
     private val connection: ServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             Timber.i("Service connected")
             modPlayer = (service as PlayerBinder).getService()
+            controls = modPlayer!!.mediaController
+
+            viewModel.onConnected(true)
+            viewModel.isPlaying(modPlayer!!.isPlaying)
 
             lifecycleScope.launch {
                 modPlayer!!.playerEvent.collect { event ->
@@ -103,11 +111,9 @@ class PlayerActivity : ComponentActivity() {
                     playNewMod(fileList, start)
                 } else {
                     // Reconnect to existing service
-                    modPlayer?.let(viewModel::showNewMod)
+                    modPlayer!!.let(viewModel::showNewMod)
                 }
             }
-            viewModel.onConnected(true)
-            viewModel.isPlaying(!modPlayer!!.isPaused())
         }
 
         override fun onServiceDisconnected(className: ComponentName) {
@@ -183,19 +189,20 @@ class PlayerActivity : ComponentActivity() {
             }
             val deleteDialog: (Boolean) -> Unit = remember {
                 {
-                    if (it) {
-                        if (modPlayer!!.deleteFile()) {
-                            modPlayer?.nextSong()
-                            setResult(2) // Why this?
-                            lifecycleScope.launch {
-                                snackBarHostState.showSnackbar("File Deleted.")
-                            }
-                        } else {
-                            lifecycleScope.launch {
-                                snackBarHostState.showSnackbar("Can't delete file")
-                            }
-                        }
-                    }
+                    // TODO
+                    // if (it) {
+                    //     if (modPlayer!!.deleteFile()) {
+                    //         modPlayer?.nextSong()
+                    //         setResult(2) // Why this?
+                    //         lifecycleScope.launch {
+                    //             snackBarHostState.showSnackbar("File Deleted.")
+                    //         }
+                    //     } else {
+                    //         lifecycleScope.launch {
+                    //             snackBarHostState.showSnackbar("Can't delete file")
+                    //         }
+                    //     }
+                    // }
 
                     viewModel.showDeleteDialog(false)
                 }
@@ -204,8 +211,8 @@ class PlayerActivity : ComponentActivity() {
                 {
                     when (it) {
                         PlayerSheetEvent.OnAllSeq -> {
-                            modPlayer?.toggleAllSequences()
-                            viewModel.onAllSequence(modPlayer!!.getAllSequences())
+                            val res = modPlayer!!.toggleAllSequences()
+                            viewModel.onAllSequence(res)
                         }
 
                         PlayerSheetEvent.OnMessage -> {
@@ -223,44 +230,43 @@ class PlayerActivity : ComponentActivity() {
 
                         is PlayerSheetEvent.OnSequence -> {
                             Timber.i("Set sequence $it")
-                            modPlayer?.setSequence(it.seq)
+                            val res = modPlayer!!.setSequence(it.seq)
+                            viewModel.onSequence(res)
                         }
                     }
                 }
             }
             val onControlsEvent: (PlayerControlsEvent) -> Unit = remember {
                 {
+                    Timber.d("onControlsEvent $it")
                     when (it) {
                         PlayerControlsEvent.OnNext -> {
-                            modPlayer?.nextSong()
+                            controls!!.transportControls.skipToNext()
                             viewModel.isPlaying(true)
                         }
 
                         PlayerControlsEvent.OnPlay -> {
-                            modPlayer?.pause()
-                            viewModel.isPlaying(!modPlayer!!.isPaused())
+                            if (modPlayer!!.isPlaying) {
+                                controls!!.transportControls.pause()
+                            } else {
+                                controls!!.transportControls.play()
+                            }
+                            viewModel.isPlaying(modPlayer!!.isPlaying)
                         }
 
                         PlayerControlsEvent.OnPrev -> {
-                            if (modPlayer!!.time() > 3000) {
-                                modPlayer?.seek(0)
-                                if (!viewModel.isPlaying) {
-                                    modPlayer?.pause()
-                                }
-                            } else {
-                                modPlayer?.prevSong()
-                                viewModel.skipToPrevious(true)
-                            }
-
-                            viewModel.isPlaying(true)
+                            controls!!.transportControls.skipToPrevious()
+                            // TODO is working as intended?
+                            viewModel.isPlaying(modPlayer!!.isPlaying)
                         }
 
                         PlayerControlsEvent.OnRepeat -> {
-                            viewModel.toggleLoop(modPlayer!!.toggleLoop())
+                            val res = modPlayer!!.toggleLoop()
+                            viewModel.toggleLoop(res)
                         }
 
                         PlayerControlsEvent.OnStop -> {
-                            modPlayer?.stop()
+                            controls!!.transportControls.stop()
                         }
                     }
                 }
@@ -272,9 +278,9 @@ class PlayerActivity : ComponentActivity() {
                             if (it.isSeeking) {
                                 viewModel.isSeeking(true)
                             } else {
-                                modPlayer?.seek(it.value.toInt() * 100)
+                                controls!!.transportControls.seekTo(it.value.toLong() * 100)
                                 viewModel.isSeeking(false)
-                                viewModel.setPlayTime(modPlayer!!.time().div(100F))
+                                viewModel.setPlayTime(Xmp.time().div(100F))
                             }
                         }
                     }
@@ -311,13 +317,13 @@ class PlayerActivity : ComponentActivity() {
 
                         // get current frame info
                         val viewInfoValues = IntArray(7)
-                        modPlayer!!.getInfo(viewInfoValues)
+                        Xmp.getInfo(viewInfoValues)
 
                         // Update ViewerInfo()
-                        viewModel.updateViewInfo(viewInfoValues, (modPlayer!!.time() / 1000))
+                        viewModel.updateViewInfo(viewInfoValues, (Xmp.time() / 1000))
 
                         // Get the current playback time
-                        viewModel.setPlayTime(modPlayer!!.time().div(100F))
+                        viewModel.setPlayTime(Xmp.time().div(100F))
 
                         // Update the seekbar for the current time
                         viewModel.updateSeekBar()
@@ -330,8 +336,6 @@ class PlayerActivity : ComponentActivity() {
 
                         delay(frameRate)
                     }
-
-                    modPlayer?.allowRelease()
                 }
             }
 
@@ -387,8 +391,6 @@ class PlayerActivity : ComponentActivity() {
 
         saveAllSeqPreference()
 
-        // viewModel.stopProgress()
-
         modPlayer = null
         unbindService(connection)
 
@@ -398,7 +400,7 @@ class PlayerActivity : ComponentActivity() {
     // TODO ugly! Can it be simplified?
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        Timber.i("onNewIntent")
+        Timber.d("onNewIntent")
 
         var reconnect = false
         var fromHistory = false
@@ -451,6 +453,8 @@ class PlayerActivity : ComponentActivity() {
             Timber.i("Start service")
             startService(service)
         }
+
+        Timber.d("Binding to service")
         if (!bindService(service, connection, 0)) {
             Timber.e("Can't bind to service")
             setResult(RESULT_OK)
@@ -477,8 +481,8 @@ class PlayerActivity : ComponentActivity() {
                     return
                 }
 
-                val modVars = IntArray(10)
-                modPlayer?.getModVars(modVars)
+                val modVars = ModVars()
+                Xmp.getModVars(modVars)
                 viewModel.modVars.update { modVars }
 
                 viewModel.showNewSequence { time ->
@@ -492,26 +496,27 @@ class PlayerActivity : ComponentActivity() {
             }
 
             PlayerEvent.Paused -> {
-                modPlayer?.let { viewModel.isPlaying(!it.isPaused()) }
+                modPlayer?.let { viewModel.isPlaying(false) }
             }
 
-            is PlayerEvent.EndPlayCallback -> {
+            PlayerEvent.Play -> {
+                modPlayer?.let { viewModel.isPlaying(true) }
+            }
+
+            is PlayerEvent.EndPlay -> {
                 Timber.d("endPlayCallback: End progress thread")
                 viewModel.stopUpdate(true)
-                if (event.result != PlayerService.RESULT_OK) {
-                    val resultIntent = Intent().apply {
-                        if (event.result == PlayerService.RESULT_CANT_OPEN_AUDIO) {
-                            putExtra("error", getString(R.string.error_opensl))
-                        } else if (event.result == PlayerService.RESULT_NO_AUDIO_FOCUS) {
-                            putExtra("error", getString(R.string.error_audiofocus))
-                        }
+                val resultIntent = Intent().apply {
+                    val message = when (event.result) {
+                        EndPlayback.ERROR_FOCUS -> "Unable to get Audio Focus"
+                        EndPlayback.ERROR_WATCHDOG -> "Stopped by watchdog"
+                        EndPlayback.ERROR_INIT -> "Unable to initialize native XMP library"
+                        else -> ""
                     }
-                    setResult(1, resultIntent)
-                } else {
-                    setResult(RESULT_OK)
-                }
 
-                // viewModel.stopProgress()
+                    putExtra("message", message)
+                }
+                setResult(RESULT_OK, resultIntent)
 
                 finish()
             }
@@ -525,14 +530,9 @@ class PlayerActivity : ComponentActivity() {
     }
 
     private fun saveAllSeqPreference() {
+        Timber.d("Write all sequences preference")
         // Write our all sequences button status to shared prefs
-        modPlayer?.let {
-            val allSequences = it.getAllSequences()
-            if (allSequences != PrefManager.allSequences) {
-                Timber.d("Write all sequences preference")
-                PrefManager.allSequences = allSequences
-            }
-        }
+        PrefManager.allSequences = modPlayer?.playAllSequences ?: false
     }
 
     private fun playNewMod(fileList: List<Uri>, start: Int) {
@@ -554,7 +554,7 @@ private fun PlayerScreen(
     infoState: PlayerInfoState,
     instrumentNames: Array<String>,
     isMuted: BooleanArray,
-    modVars: IntArray,
+    modVars: ModVars,
     patternInfo: PatternInfo,
     snackBarHostState: SnackbarHostState,
     timeState: PlayerTimeState,
@@ -697,7 +697,7 @@ private fun Preview_PlayerScreen(
     @PreviewParameter(PlayerPreviewProvider::class) sheetValue: Boolean
 ) {
     val modVars = remember {
-        intArrayOf(190968, 30, 25, 12, 40, 18, 1, 0, 0, 0)
+        ModVars(190968, 30, 25, 12, 40, 18, 1, 0)
     }
 
     val sheetVisible = remember(sheetValue) {
@@ -735,13 +735,13 @@ private fun Preview_PlayerScreen(
                 numOfSequences = List(12) { it },
                 currentSequence = 2
             ),
-            instrumentNames = Array(modVars[4]) {
+            instrumentNames = Array(modVars.numInstruments) {
                 String.format("%02X %s", it + 1, "Instrument Name")
             },
             modVars = modVars,
             patternInfo = composePatternSampleData(),
             viewerInfo = composeViewerSampleData(),
-            isMuted = BooleanArray(modVars[3]) { false },
+            isMuted = BooleanArray(modVars.numChannels) { false },
             onControlsEvent = { },
             onSeekEvent = { },
             onSheetEvent = { },

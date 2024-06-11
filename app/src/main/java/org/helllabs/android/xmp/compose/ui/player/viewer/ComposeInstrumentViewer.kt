@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.*
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.seed
+import org.helllabs.android.xmp.model.ModVars
 
 private const val VOLUME_STEPS = 32
 private val barShape = CornerRadius(8f, 8f)
@@ -26,7 +27,7 @@ internal fun InstrumentViewer(
     onTap: () -> Unit,
     viewInfo: ViewerInfo,
     isMuted: BooleanArray,
-    modVars: IntArray,
+    modVars: ModVars,
     insName: Array<String>
 ) {
     val density = LocalDensity.current
@@ -41,8 +42,8 @@ internal fun InstrumentViewer(
         }
         mutableStateOf(list)
     }
-    val measuredText by remember(modVars[4], insName) {
-        val list = (0 until modVars[4]).map {
+    val measuredText by remember(modVars.numInstruments, insName) {
+        val list = (0 until modVars.numInstruments).map {
             textMeasurer.measure(
                 text = AnnotatedString(insName[it]),
                 density = density,
@@ -57,11 +58,11 @@ internal fun InstrumentViewer(
         }
         mutableStateOf(list)
     }
-    val chn by remember(modVars[3]) {
-        mutableIntStateOf(modVars[3])
+    val chn by remember(modVars.numChannels) {
+        mutableIntStateOf(modVars.numChannels)
     }
-    val ins by remember(modVars[4]) {
-        mutableIntStateOf(modVars[4])
+    val ins by remember(modVars.numInstruments) {
+        mutableIntStateOf(modVars.numInstruments)
     }
     val yOffset = remember {
         Animatable(0f)
@@ -79,7 +80,7 @@ internal fun InstrumentViewer(
         delta
     }
 
-    LaunchedEffect(modVars[4], insName) {
+    LaunchedEffect(modVars.numInstruments, insName) {
         // Scroll to the top on song change
         scope.launch {
             yOffset.animateTo(
@@ -133,7 +134,7 @@ internal fun InstrumentViewer(
 
                     totalPadding = (chn - 1) * 2.dp.toPx()
                     availableWidth = size.width - totalPadding
-                    boxWidth = availableWidth / modVars[3]
+                    boxWidth = availableWidth / modVars.numChannels
                     start = j * (boxWidth + 2.dp.toPx())
 
                     if (vol > maxVol) {
@@ -172,18 +173,19 @@ private fun Preview_InstrumentViewer() {
     val viewInfo = remember {
         composeViewerSampleData()
     }
-    val modVars by remember {
-        val array = intArrayOf(190968, 30, 25, 12, 40, 18, 1, 0, 0, 0)
-        mutableStateOf(array)
+    val modVars = remember {
+        ModVars(190968, 30, 25, 12, 40, 18, 1, 0)
     }
 
     XmpTheme(useDarkTheme = true) {
         InstrumentViewer(
             onTap = {},
             viewInfo = viewInfo,
-            isMuted = BooleanArray(modVars[3]) { false },
+            isMuted = BooleanArray(modVars.numChannels) { false },
             modVars = modVars,
-            insName = Array(modVars[4]) { String.format("%02X %s", it + 1, "Instrument Name") }
+            insName = Array(modVars.numInstruments) {
+                String.format("%02X %s", it + 1, "Instrument Name")
+            }
         )
     }
 }

@@ -37,6 +37,7 @@ import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.seed
 import org.helllabs.android.xmp.compose.ui.player.Util
+import org.helllabs.android.xmp.model.ModVars
 import org.helllabs.android.xmp.service.PlayerService
 
 // TODO: 2 Column support on wider screens or in landscape.
@@ -48,7 +49,7 @@ fun ComposeChannelViewer(
     onTap: () -> Unit,
     viewInfo: ViewerInfo,
     isMuted: BooleanArray,
-    modVars: IntArray,
+    modVars: ModVars,
     insName: Array<String>
 ) {
     val density = LocalDensity.current
@@ -81,22 +82,22 @@ fun ComposeChannelViewer(
         val width = xAxisMultiplier.times(3) - xAxisMultiplier.div(2)
         mutableFloatStateOf(width)
     }
-    val numChannels by remember(modVars[3]) {
-        mutableIntStateOf(modVars[3])
+    val numChannels by remember(modVars.numChannels) {
+        mutableIntStateOf(modVars.numChannels)
     }
     val buffer = remember {
         ByteArray(Xmp.MAX_BUFFERS)
     }
-    val holdKey by remember(modVars[3]) {
-        mutableStateOf(IntArray(modVars[3]))
+    val holdKey by remember(modVars.numChannels) {
+        mutableStateOf(IntArray(modVars.numChannels))
     }
     val keyRow by remember {
         mutableStateOf(IntArray(Xmp.MAX_CHANNELS))
     }
-    val channelNumber by remember(modVars[3]) {
-        val list = arrayOfNulls<String?>(modVars[3])
+    val channelNumber by remember(modVars.numChannels) {
+        val list = arrayOfNulls<String?>(modVars.numChannels)
 
-        (0 until modVars[3]).map {
+        (0 until modVars.numChannels).map {
             Util.to2d(c, it + 1)
             list[it] = String(c)
         }
@@ -137,7 +138,7 @@ fun ComposeChannelViewer(
             canvasSize = size
         }
 
-        val numInstruments = modVars[4]
+        val numInstruments = modVars.numInstruments
         // row = viewInfo.values[2]
 
         for (chn in 0 until numChannels) {
@@ -258,7 +259,7 @@ fun ComposeChannelViewer(
             if (isMuted[chn]) {
                 // TODO mute rect
             } else {
-                if (PlayerService.isAlive) {
+                if (PlayerService.isAlive.value) {
                     // Be very careful here!
                     // Our variables are latency-compensated but sample data is current
                     // so caution is needed to avoid retrieving data using old variables
@@ -380,18 +381,19 @@ private fun Preview_ChannelViewer() {
     val viewInfo = remember {
         composeViewerSampleData()
     }
-    val modVars by remember {
-        val array = intArrayOf(190968, 30, 25, 12, 40, 18, 1, 0, 0, 0)
-        mutableStateOf(array)
+    val modVars = remember {
+        ModVars(190968, 30, 25, 12, 40, 18, 1, 0)
     }
 
     XmpTheme(useDarkTheme = true) {
         ComposeChannelViewer(
             onTap = {},
             viewInfo = viewInfo,
-            isMuted = BooleanArray(modVars[3]) { false },
+            isMuted = BooleanArray(modVars.numChannels) { false },
             modVars = modVars,
-            insName = Array(modVars[4]) { String.format("%02X %s", it + 1, "Instrument Name") }
+            insName = Array(
+                modVars.numInstruments
+            ) { String.format("%02X %s", it + 1, "Instrument Name") }
         )
     }
 }
