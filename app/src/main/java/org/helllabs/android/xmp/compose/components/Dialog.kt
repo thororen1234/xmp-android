@@ -23,7 +23,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.*
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -109,7 +108,7 @@ fun MessageDialog(
     }
 
     AlertDialog(
-        modifier = Modifier.heightIn(max = maxDialogHeight),
+        modifier = Modifier.heightIn(max = maxDialogHeight.times(3)),
         onDismissRequest = onDismiss ?: onConfirm,
         icon = { Icon(imageVector = icon, contentDescription = null) },
         title = { Text(text = title) },
@@ -378,6 +377,24 @@ fun Preview_MessageDialog() {
                 isShowing = true,
                 title = stringResource(id = R.string.error),
                 text = stringResource(id = R.string.dialog_message_error_create_playlist),
+                confirmText = stringResource(id = android.R.string.ok),
+                onConfirm = { },
+                onDismiss = { }
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+fun Preview_LongMessageDialog() {
+    val message = Array(20) { "Message Line $it\n" }
+    XmpTheme(useDarkTheme = true) {
+        Box(modifier = Modifier.fillMaxWidth()) {
+            MessageDialog(
+                isShowing = true,
+                title = stringResource(id = R.string.error),
+                text = message.joinToString(","),
                 confirmText = stringResource(id = android.R.string.ok),
                 onConfirm = { },
                 onDismiss = { }

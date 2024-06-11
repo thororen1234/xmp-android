@@ -49,6 +49,12 @@ static pthread_mutex_t mutex;
 #pragma clang diagnostic pop
 
 typedef struct {
+    jfieldID name;
+    jfieldID type;
+} ModInfoIDs;
+static ModInfoIDs modInfoIDs;
+
+typedef struct {
     jfieldID currentSequence;
     jfieldID lengthInPatterns;
     jfieldID numChannels;
@@ -76,6 +82,12 @@ typedef struct {
 } FrameInfoIDs;
 static FrameInfoIDs frameInfoIDs;
 
+void cacheModInfoIDs(JNIEnv *env) {
+    jclass modInfoClass = (*env)->FindClass(env, "org/helllabs/android/xmp/model/ModInfo");
+
+    modInfoIDs.name = (*env)->GetFieldID(env, modInfoClass, "name", "Ljava/lang/String;");
+    modInfoIDs.type = (*env)->GetFieldID(env, modInfoClass, "type", "Ljava/lang/String;");
+}
 
 void cacheModVarsIDs(JNIEnv *env) {
     jclass modVarsClass = (*env)->FindClass(env, "org/helllabs/android/xmp/model/ModVars");
@@ -93,8 +105,7 @@ void cacheModVarsIDs(JNIEnv *env) {
 void cacheSequenceVarsIDs(JNIEnv *env) {
     jclass seqVarsClass = (*env)->FindClass(env, "org/helllabs/android/xmp/model/SequenceVars");
 
-    seqVarsIDs.sequenceField =
-            (*env)->GetFieldID(env, seqVarsClass, "sequence", "[I");
+    seqVarsIDs.sequenceField = (*env)->GetFieldID(env, seqVarsClass, "sequence", "[I");
 }
 
 void cacheFrameInfoIDs(JNIEnv *env) {
@@ -115,19 +126,24 @@ JNI_FUNCTION(init)(JNIEnv *env, jobject obj, jint rate, jint ms) {
     (void) env;
     (void) obj;
 
-    /*if (ctx != NULL)
-        return;*/
-
     ctx = xmp_create_context();
     pthread_mutex_init(&mutex, NULL);
 
-    cacheModVarsIDs(env);
-    cacheSequenceVarsIDs(env);
-    cacheFrameInfoIDs(env);
+    if (ctx == NULL) {
+        return JNI_FALSE;
+    }
 
     if ((_buffer_num = open_audio(rate, ms)) < 0) {
         return JNI_FALSE;
     }
+
+    /**
+     * Cache field id's
+     */
+    cacheModInfoIDs(env);
+    cacheModVarsIDs(env);
+    cacheSequenceVarsIDs(env);
+    cacheFrameInfoIDs(env);
 
     return JNI_TRUE;
 }
@@ -174,28 +190,8 @@ JNI_FUNCTION(loadModuleFd)(JNIEnv *env, jobject obj, jint fd) {
     return res;
 }
 
-//JNIEXPORT jint JNICALL
-//JNI_FUNCTION(loadModule)(JNIEnv *env, jobject obj, jstring name) {
-//    (void) obj;
-//
-//    const char *filename;
-//    int res;
-//
-//    filename = (*env)->GetStringUTFChars(env, name, NULL);
-//    res = xmp_load_module(ctx, (char *) filename);
-//    (*env)->ReleaseStringUTFChars(env, name, filename);
-//
-//    xmp_get_module_info(ctx, &mi);
-//
-//    memset(_pos, 0, XMP_MAX_CHANNELS * sizeof(int));
-//    _sequence = 0;
-//    _mod_is_loaded = 1;
-//
-//    return res;
-//}
-
 JNIEXPORT jboolean JNICALL
-JNI_FUNCTION(testModuleFd)(JNIEnv *env, jobject obj, jint fd, jobject info) {
+JNI_FUNCTION(testModuleFd)(JNIEnv *env, jobject obj, jint fd, jobject modInfo) {
     (void) obj;
 
     FILE *file = fdopen(fd, "rb");
@@ -207,84 +203,25 @@ JNI_FUNCTION(testModuleFd)(JNIEnv *env, jobject obj, jint fd, jobject info) {
     int res = xmp_test_module_from_file(file, &ti);
     fclose(file);
 
-    // Should re-handle getting filename if ti->name is empty.
+    // Sanity
+    if (modInfoIDs.name == NULL || modInfoIDs.type == NULL) {
+        cacheModInfoIDs(env);
+    }
 
-    if (res == 0 && info != NULL) {
-        jclass modInfoClass = (*env)->FindClass(env, "org/helllabs/android/xmp/model/ModInfo");
+    // TODO Should re-handle getting filename if ti->name is empty.
+    if (res == 0) {
+        jstring name = (*env)->NewStringUTF(env, ti.name);
+        jstring type = (*env)->NewStringUTF(env, ti.type);
 
-        if (modInfoClass == NULL)
-            return JNI_FALSE;
+        (*env)->SetObjectField(env, modInfo, modInfoIDs.name, name);
+        (*env)->SetObjectField(env, modInfo, modInfoIDs.type, type);
 
-        jfieldID fieldName = (*env)->GetFieldID(env, modInfoClass, "name", "Ljava/lang/String;");
-        jfieldID fieldType = (*env)->GetFieldID(env, modInfoClass, "type", "Ljava/lang/String;");
-
-        if (fieldName == NULL || fieldType == NULL)
-            return JNI_FALSE;
-
-        (*env)->SetObjectField(env, info, fieldName, (*env)->NewStringUTF(env, ti.name));
-        (*env)->SetObjectField(env, info, fieldType, (*env)->NewStringUTF(env, ti.type));
+        // Clean up local references
+        (*env)->DeleteLocalRef(env, name);
+        (*env)->DeleteLocalRef(env, type);
     }
 
     return res == 0 ? JNI_TRUE : JNI_FALSE;
-}
-
-JNIEXPORT jboolean JNICALL
-JNI_FUNCTION(testModule)(JNIEnv *env, jobject obj, jstring name, jobject info) {
-    (void) obj;
-
-    const char *filename;
-    int i, res;
-    struct xmp_test_info ti;
-
-    filename = (*env)->GetStringUTFChars(env, name, NULL);
-    res = xmp_test_module((char *) filename, &ti);
-
-    /* If the module title is empty, use the file basename */
-    for (i = (int) strlen(ti.name) - 1; i >= 0; i--) {
-        if (ti.name[i] == ' ') {
-            ti.name[i] = 0;
-        } else {
-            break;
-        }
-    }
-
-    if (strlen(ti.name) == 0) {
-        const char *x = strrchr(filename, '/');
-        if (x == NULL) {
-            x = filename;
-        }
-        strncpy(ti.name, x + 1, XMP_NAME_SIZE);
-    }
-
-    (*env)->ReleaseStringUTFChars(env, name, filename);
-
-    if (res == 0) {
-        if (info != NULL) {
-            jclass modInfoClass = (*env)->FindClass(env, "org/helllabs/android/xmp/model/ModInfo");
-            jfieldID field;
-
-            if (modInfoClass == NULL)
-                return JNI_FALSE;
-
-            field = (*env)->GetFieldID(env, modInfoClass, "name", "Ljava/lang/String;");
-
-            if (field == NULL)
-                return JNI_FALSE;
-
-            (*env)->SetObjectField(env, info, field, (*env)->NewStringUTF(env, ti.name));
-
-            field = (*env)->GetFieldID(env, modInfoClass, "type", "Ljava/lang/String;");
-
-            if (field == NULL)
-                return JNI_FALSE;
-
-            (*env)->SetObjectField(env, info, field, (*env)->NewStringUTF(env, ti.type));
-        }
-
-        return JNI_TRUE;
-    }
-
-    return JNI_FALSE;
 }
 
 JNIEXPORT jint JNICALL
@@ -640,67 +577,25 @@ JNI_FUNCTION(getModType)(JNIEnv *env, jobject obj) {
     return (*env)->NewStringUTF(env, s);
 }
 
-// lazy hack to sanitize comments to valid utf-8
-void sanitizeUTF8(char *str) {
-    unsigned char *bytes = (unsigned char *) str;
-    while (*bytes) {
-        if (*bytes < 0x80) {
-            // ASCII byte, move to the next one
-            bytes++;
-        } else if ((*bytes & 0xE0) == 0xC0) {
-            // Possible 2-byte sequence
-            if ((bytes[1] & 0xC0) == 0x80) {
-                bytes += 2; // Valid 2-byte sequence
-            } else {
-                *bytes++ = '?'; // Invalid continuation byte
-            }
-        } else if ((*bytes & 0xF0) == 0xE0) {
-            // Possible 3-byte sequence
-            if ((bytes[1] & 0xC0) == 0x80 && (bytes[2] & 0xC0) == 0x80) {
-                bytes += 3; // Valid 3-byte sequence
-            } else {
-                *bytes++ = '?'; // Invalid sequence, replace and move
-            }
-        } else if ((*bytes & 0xF8) == 0xF0) {
-            // Possible 4-byte sequence
-            if ((bytes[1] & 0xC0) == 0x80 && (bytes[2] & 0xC0) == 0x80 &&
-                (bytes[3] & 0xC0) == 0x80) {
-                bytes += 4; // Valid 4-byte sequence
-            } else {
-                *bytes++ = '?'; // Invalid sequence, replace and move
-            }
-        } else {
-            // For bytes that don't start a valid sequence, replace them
-            *bytes++ = '?';
-        }
-    }
-}
 
-JNIEXPORT jstring JNICALL
+JNIEXPORT jbyteArray JNICALL
 JNI_FUNCTION(getComment)(JNIEnv *env, jobject obj) {
     (void) obj;
 
+    // a_journey_into_sound.far has invalid UTF-8 (maybe CP-437),
+    // so just pass the entire thing as a byte array!
+
+    jbyteArray byteArray = (*env)->NewByteArray(env, 0);
+
     if (mi.comment) {
-        char *comment = strdup(mi.comment);
-        if (!comment) {
-            return NULL;
-        }
+        size_t length = strlen(mi.comment);
 
-        sanitizeUTF8(comment);
+        byteArray = (*env)->NewByteArray(env, (jsize) length);
 
-        jstring result = (*env)->NewStringUTF(env, comment);
-
-        free(comment);
-
-        return result;
-    } else {
-        return NULL;
+        (*env)->SetByteArrayRegion(env, byteArray, 0, (jsize) length, (const jbyte *) mi.comment);
     }
 
-//    if (mi.comment)
-//        return (*env)->NewStringUTF(env, mi.comment);
-//    else
-//        return NULL;
+    return byteArray;
 }
 
 JNIEXPORT jobjectArray JNICALL
@@ -1072,3 +967,83 @@ JNI_FUNCTION(setVolume)(JNIEnv *env, jobject obj, jint vol) {
 
     return set_volume(vol);
 }
+
+
+//JNIEXPORT jint JNICALL
+//JNI_FUNCTION(loadModule)(JNIEnv *env, jobject obj, jstring name) {
+//    (void) obj;
+//
+//    const char *filename;
+//    int res;
+//
+//    filename = (*env)->GetStringUTFChars(env, name, NULL);
+//    res = xmp_load_module(ctx, (char *) filename);
+//    (*env)->ReleaseStringUTFChars(env, name, filename);
+//
+//    xmp_get_module_info(ctx, &mi);
+//
+//    memset(_pos, 0, XMP_MAX_CHANNELS * sizeof(int));
+//    _sequence = 0;
+//    _mod_is_loaded = 1;
+//
+//    return res;
+//}
+
+//JNIEXPORT jboolean JNICALL
+//JNI_FUNCTION(testModule)(JNIEnv *env, jobject obj, jstring name, jobject info) {
+//    (void) obj;
+//
+//    const char *filename;
+//    int i, res;
+//    struct xmp_test_info ti;
+//
+//    filename = (*env)->GetStringUTFChars(env, name, NULL);
+//    res = xmp_test_module((char *) filename, &ti);
+//
+//    /* If the module title is empty, use the file basename */
+//    for (i = (int) strlen(ti.name) - 1; i >= 0; i--) {
+//        if (ti.name[i] == ' ') {
+//            ti.name[i] = 0;
+//        } else {
+//            break;
+//        }
+//    }
+//
+//    if (strlen(ti.name) == 0) {
+//        const char *x = strrchr(filename, '/');
+//        if (x == NULL) {
+//            x = filename;
+//        }
+//        strncpy(ti.name, x + 1, XMP_NAME_SIZE);
+//    }
+//
+//    (*env)->ReleaseStringUTFChars(env, name, filename);
+//
+//    if (res == 0) {
+//        if (info != NULL) {
+//            jclass modInfoClass = (*env)->FindClass(env, "org/helllabs/android/xmp/model/ModInfo");
+//            jfieldID field;
+//
+//            if (modInfoClass == NULL)
+//                return JNI_FALSE;
+//
+//            field = (*env)->GetFieldID(env, modInfoClass, "name", "Ljava/lang/String;");
+//
+//            if (field == NULL)
+//                return JNI_FALSE;
+//
+//            (*env)->SetObjectField(env, info, field, (*env)->NewStringUTF(env, ti.name));
+//
+//            field = (*env)->GetFieldID(env, modInfoClass, "type", "Ljava/lang/String;");
+//
+//            if (field == NULL)
+//                return JNI_FALSE;
+//
+//            (*env)->SetObjectField(env, info, field, (*env)->NewStringUTF(env, ti.type));
+//        }
+//
+//        return JNI_TRUE;
+//    }
+//
+//    return JNI_FALSE;
+//}

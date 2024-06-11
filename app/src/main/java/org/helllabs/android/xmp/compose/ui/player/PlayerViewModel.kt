@@ -23,6 +23,7 @@ data class PlayerState(
     val showMessageDialog: Boolean = false,
     val showDeleteDialog: Boolean = false,
     val currentViewer: Int = 0,
+    val currentMessage: String = "",
     val infoTitle: String = "",
     val infoType: String = "",
     val screenOn: Boolean = true,
@@ -314,9 +315,9 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
-    fun showMessage(value: Boolean) {
+    fun showMessage(value: Boolean, message: String) {
         _uiState.update {
-            it.copy(showMessageDialog = value)
+            it.copy(showMessageDialog = value, currentMessage = message)
         }
     }
 

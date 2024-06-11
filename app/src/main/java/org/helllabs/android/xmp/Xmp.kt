@@ -96,7 +96,7 @@ object Xmp {
 
     external fun stopModule(): Int
 
-    private external fun testModuleFd(fd: Int, info: ModInfo?): Boolean
+    external fun testModuleFd(fd: Int, modInfo: ModInfo): Boolean
 
     external fun time(): Int
 
@@ -109,7 +109,7 @@ object Xmp {
         periods: IntArray?
     )
 
-    external fun getComment(): String?
+    external fun getComment(): ByteArray
 
     external fun getFormats(): Array<String>?
 

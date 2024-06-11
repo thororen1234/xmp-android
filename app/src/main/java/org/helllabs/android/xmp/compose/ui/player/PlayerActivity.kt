@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import java.nio.charset.StandardCharsets
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -185,7 +186,7 @@ class PlayerActivity : ComponentActivity() {
             }
             val closeMessage: (Boolean) -> Unit = remember {
                 {
-                    viewModel.showMessage(it)
+                    viewModel.showMessage(it, "")
                 }
             }
             val deleteDialog: (Boolean) -> Unit = remember {
@@ -217,14 +218,14 @@ class PlayerActivity : ComponentActivity() {
                         }
 
                         PlayerSheetEvent.OnMessage -> {
-                            if (Xmp.getComment().isNullOrEmpty()) {
+                            val comment = String(Xmp.getComment(), StandardCharsets.UTF_8)
+                            if (comment.isEmpty()) {
                                 lifecycleScope.launch {
-                                    snackBarHostState.showSnackbar(
-                                        "No comment to display"
-                                    )
+                                    val msg = "No comment to display"
+                                    snackBarHostState.showSnackbar(msg)
                                 }
                             } else {
-                                viewModel.showMessage(true)
+                                viewModel.showMessage(true, comment.trim())
                             }
                             viewModel.showSheet(false)
                         }
@@ -346,7 +347,7 @@ class PlayerActivity : ComponentActivity() {
                     isShowing = uiState.showMessageDialog,
                     icon = Icons.Default.Info,
                     title = "Comments",
-                    text = Xmp.getComment().orEmpty(),
+                    text = uiState.currentMessage,
                     confirmText = stringResource(id = android.R.string.ok),
                     onConfirm = { closeMessage(false) }
                 )
