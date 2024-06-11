@@ -50,11 +50,10 @@ import org.helllabs.android.xmp.compose.ui.player.components.ViewFlipper
 import org.helllabs.android.xmp.compose.ui.player.viewer.ComposeChannelViewer
 import org.helllabs.android.xmp.compose.ui.player.viewer.ComposePatternViewer
 import org.helllabs.android.xmp.compose.ui.player.viewer.InstrumentViewer
-import org.helllabs.android.xmp.compose.ui.player.viewer.PatternInfo
-import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
-import org.helllabs.android.xmp.compose.ui.player.viewer.composePatternSampleData
-import org.helllabs.android.xmp.compose.ui.player.viewer.composeViewerSampleData
+import org.helllabs.android.xmp.compose.ui.player.viewer.composeChannelInfoSampleData
+import org.helllabs.android.xmp.compose.ui.player.viewer.composeFrameInfoSampleData
 import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.model.ChannelInfo
 import org.helllabs.android.xmp.model.FrameInfo
 import org.helllabs.android.xmp.model.ModVars
 import org.helllabs.android.xmp.service.EndPlayback
@@ -62,8 +61,6 @@ import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerEvent
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
-
-// TODO it seems like putting the "update (runnable)" broke the UI updating. :'(
 
 class PlayerActivity : ComponentActivity() {
 
@@ -168,10 +165,10 @@ class PlayerActivity : ComponentActivity() {
             val instrumentNames by viewModel.insName.collectAsStateWithLifecycle()
             val isMuted by viewModel.isMuted.collectAsStateWithLifecycle()
             val modVars by viewModel.modVars.collectAsStateWithLifecycle()
-            val patternInfo by viewModel.patternInfo.collectAsStateWithLifecycle()
             val timeState by viewModel.timeState.collectAsStateWithLifecycle()
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-            val viewInfo by viewModel.viewInfo.collectAsStateWithLifecycle()
+            val channelInfo by viewModel.channelInfo.collectAsStateWithLifecycle()
+            val frameInfo by viewModel.frameInfo.collectAsStateWithLifecycle()
 
             // Stabilize lambdas, this helps reduce useless recompositions.
             val onChangeViewer: () -> Unit = remember {
@@ -317,12 +314,8 @@ class PlayerActivity : ComponentActivity() {
                             continue
                         }
 
-                        // get current frame info
-                        val fi = FrameInfo()
-                        Xmp.getInfo(fi)
-
                         // Update ViewerInfo()
-                        viewModel.updateViewInfo(fi, (Xmp.time() / 1000))
+                        viewModel.updateViewInfo()
 
                         // Get the current playback time
                         viewModel.setPlayTime(Xmp.time().div(100F))
@@ -334,7 +327,7 @@ class PlayerActivity : ComponentActivity() {
                         viewModel.updateInfoTime()
 
                         // Update Speed, Bpm, Pos, Pat
-                        viewModel.updateFrameInfo()
+                        viewModel.updateInfoState()
 
                         delay(frameRate)
                     }
@@ -359,9 +352,9 @@ class PlayerActivity : ComponentActivity() {
                     drawerState = drawerState,
                     instrumentNames = instrumentNames,
                     modVars = modVars,
-                    patternInfo = patternInfo,
                     buttonState = buttonState,
-                    viewerInfo = viewInfo,
+                    frameInfo = frameInfo,
+                    channelInfo = channelInfo,
                     isMuted = isMuted,
                     infoState = infoState,
                     onControlsEvent = onControlsEvent,
@@ -557,11 +550,11 @@ private fun PlayerScreen(
     instrumentNames: Array<String>,
     isMuted: BooleanArray,
     modVars: ModVars,
-    patternInfo: PatternInfo,
+    channelInfo: ChannelInfo,
+    frameInfo: FrameInfo,
     snackBarHostState: SnackbarHostState,
     timeState: PlayerTimeState,
     uiState: PlayerState,
-    viewerInfo: ViewerInfo,
     onChangeViewer: () -> Unit,
     onDeleteDialog: (Boolean) -> Unit,
     onControlsEvent: (PlayerControlsEvent) -> Unit,
@@ -662,7 +655,7 @@ private fun PlayerScreen(
             when (uiState.currentViewer) {
                 0 -> InstrumentViewer(
                     onTap = onChangeViewer,
-                    viewInfo = viewerInfo,
+                    channelInfo = channelInfo,
                     isMuted = isMuted,
                     modVars = modVars,
                     insName = instrumentNames
@@ -670,15 +663,16 @@ private fun PlayerScreen(
 
                 1 -> ComposePatternViewer(
                     onTap = onChangeViewer,
-                    viewInfo = viewerInfo,
-                    patternInfo = patternInfo,
+                    modType = uiState.infoType,
+                    frameInfo = frameInfo,
                     isMuted = isMuted,
                     modVars = modVars
                 )
 
                 2 -> ComposeChannelViewer(
                     onTap = onChangeViewer,
-                    viewInfo = viewerInfo,
+                    frameInfo = frameInfo,
+                    channelInfo = channelInfo,
                     isMuted = isMuted,
                     modVars = modVars,
                     insName = instrumentNames
@@ -741,8 +735,8 @@ private fun Preview_PlayerScreen(
                 String.format("%02X %s", it + 1, "Instrument Name")
             },
             modVars = modVars,
-            patternInfo = composePatternSampleData(),
-            viewerInfo = composeViewerSampleData(),
+            channelInfo = composeChannelInfoSampleData(),
+            frameInfo = composeFrameInfoSampleData(),
             isMuted = BooleanArray(modVars.numChannels) { false },
             onControlsEvent = { },
             onSeekEvent = { },

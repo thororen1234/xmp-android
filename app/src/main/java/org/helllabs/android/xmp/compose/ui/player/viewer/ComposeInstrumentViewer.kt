@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.*
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.seed
+import org.helllabs.android.xmp.model.ChannelInfo
 import org.helllabs.android.xmp.model.ModVars
 
 private const val VOLUME_STEPS = 32
@@ -25,7 +26,7 @@ private val barShape = CornerRadius(8f, 8f)
 @Composable
 internal fun InstrumentViewer(
     onTap: () -> Unit,
-    viewInfo: ViewerInfo,
+    channelInfo: ChannelInfo,
     isMuted: BooleanArray,
     modVars: ModVars,
     insName: Array<String>
@@ -129,8 +130,8 @@ internal fun InstrumentViewer(
                     continue
                 }
 
-                if (i == viewInfo.instruments[j]) {
-                    vol = (viewInfo.volumes[j] / 2).coerceAtMost(VOLUME_STEPS)
+                if (i == channelInfo.instruments[j]) {
+                    vol = (channelInfo.volumes[j] / 2).coerceAtMost(VOLUME_STEPS)
 
                     totalPadding = (chn - 1) * 2.dp.toPx()
                     availableWidth = size.width - totalPadding
@@ -170,9 +171,6 @@ internal fun InstrumentViewer(
 @Preview(device = "id:pixel_8_pro")
 @Composable
 private fun Preview_InstrumentViewer() {
-    val viewInfo = remember {
-        composeViewerSampleData()
-    }
     val modVars = remember {
         ModVars(190968, 30, 25, 12, 40, 18, 1, 0)
     }
@@ -180,7 +178,7 @@ private fun Preview_InstrumentViewer() {
     XmpTheme(useDarkTheme = true) {
         InstrumentViewer(
             onTap = {},
-            viewInfo = viewInfo,
+            channelInfo = composeChannelInfoSampleData(),
             isMuted = BooleanArray(modVars.numChannels) { false },
             modVars = modVars,
             insName = Array(modVars.numInstruments) {

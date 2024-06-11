@@ -8,8 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import org.helllabs.android.xmp.Xmp
-import org.helllabs.android.xmp.compose.ui.player.viewer.PatternInfo
-import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
+import org.helllabs.android.xmp.model.ChannelInfo
 import org.helllabs.android.xmp.model.FrameInfo
 import org.helllabs.android.xmp.model.ModVars
 import org.helllabs.android.xmp.model.SequenceVars
@@ -110,9 +109,9 @@ class PlayerViewModel : ViewModel() {
 
     val modVars = MutableStateFlow(ModVars())
 
-    val patternInfo = MutableStateFlow(PatternInfo())
+    val frameInfo = MutableStateFlow(FrameInfo())
 
-    val viewInfo = MutableStateFlow(ViewerInfo())
+    val channelInfo = MutableStateFlow(ChannelInfo())
 
     /** Player Functions **/
 
@@ -256,10 +255,6 @@ class PlayerViewModel : ViewModel() {
             )
         }
 
-        viewInfo.update {
-            it.copy(type = type)
-        }
-
         skipToPrevious(false)
 
         setup()
@@ -328,55 +323,47 @@ class PlayerViewModel : ViewModel() {
     }
 
     fun updateInfoTime() {
+        val time = Xmp.time() / 1000
+
         _timeState.update {
             it.copy(
-                timeNow = Util.updateTime(viewInfo.value.time),
+                timeNow = Util.updateTime(time),
                 timeTotal = Util.updateTime(activityState.value.totalTime)
             )
         }
     }
 
-    fun updateFrameInfo() {
-        // Frame Info - Speed
-        val infoSpeed = Util.updateFrameInfo(value = viewInfo.value.frameInfo.speed)
-        // Frame Info - BPM
-        val infoBpm = Util.updateFrameInfo(value = viewInfo.value.frameInfo.bpm)
-        // Frame Info - Position
-        val infoPos = Util.updateFrameInfo(value = viewInfo.value.frameInfo.pos)
-        // Frame Info - Pattern
-        val infoPat = Util.updateFrameInfo(value = viewInfo.value.frameInfo.pattern)
-
+    fun updateInfoState() {
         _infoState.update {
             it.copy(
-                infoPat = infoPat,
-                infoPos = infoPos,
-                infoBpm = infoBpm,
-                infoSpeed = infoSpeed,
+                infoPat = Util.updateFrameInfo(value = frameInfo.value.pattern),
+                infoPos = Util.updateFrameInfo(value = frameInfo.value.pos),
+                infoBpm = Util.updateFrameInfo(value = frameInfo.value.bpm),
+                infoSpeed = Util.updateFrameInfo(value = frameInfo.value.speed),
             )
         }
     }
 
-    fun updateViewInfo(fi: FrameInfo, time: Int) {
-        val info = viewInfo.value
-        Xmp.getChannelData(
-            info.volumes,
-            info.finalVols,
-            info.pans,
-            info.instruments,
-            info.keys,
-            info.periods
-        )
+    private val lock = Any()
+    fun updateViewInfo() {
+        synchronized(lock) {
+            val ci = ChannelInfo()
+            Xmp.getChannelData(ci)
 
-        viewInfo.update {
-            it.copy(
-                frameInfo = fi,
-                finalVols = info.finalVols,
-                pans = info.pans,
-                instruments = info.instruments,
-                keys = info.keys,
-                periods = info.periods,
-                time = time,
-            )
+            val fi = FrameInfo()
+            Xmp.getInfo(fi)
+
+            channelInfo.update {
+                it.copy(
+                    volumes = ci.volumes,
+                    finalVols = ci.finalVols,
+                    pans = ci.pans,
+                    instruments = ci.instruments,
+                    keys = ci.keys,
+                    periods = ci.periods,
+                    holdVols = ci.holdVols,
+                )
+            }
         }
     }
 }

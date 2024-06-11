@@ -55,6 +55,17 @@ typedef struct {
 static ModInfoIDs modInfoIDs;
 
 typedef struct {
+    jfieldID volumes;
+    jfieldID finalVols;
+    jfieldID pans;
+    jfieldID instruments;
+    jfieldID keys;
+    jfieldID periods;
+    jfieldID holdVols;
+} ChannelVarsIDs;
+static ChannelVarsIDs channelVarsIDs;
+
+typedef struct {
     jfieldID currentSequence;
     jfieldID lengthInPatterns;
     jfieldID numChannels;
@@ -87,6 +98,19 @@ void cacheModInfoIDs(JNIEnv *env) {
 
     modInfoIDs.name = (*env)->GetFieldID(env, modInfoClass, "name", "Ljava/lang/String;");
     modInfoIDs.type = (*env)->GetFieldID(env, modInfoClass, "type", "Ljava/lang/String;");
+}
+
+void cacheChannelVarsIDs(JNIEnv *env) {
+    jclass channelVarsClass = (*env)->FindClass(env, "org/helllabs/android/xmp/model/ChannelInfo");
+
+    channelVarsIDs.volumes = (*env)->GetFieldID(env, channelVarsClass, "volumes", "[I");
+    channelVarsIDs.finalVols = (*env)->GetFieldID(env, channelVarsClass, "finalVols", "[I");
+    channelVarsIDs.pans = (*env)->GetFieldID(env, channelVarsClass, "pans", "[I");
+    channelVarsIDs.instruments = (*env)->GetFieldID(env, channelVarsClass, "instruments", "[I");
+    channelVarsIDs.keys = (*env)->GetFieldID(env, channelVarsClass, "keys", "[I");
+    channelVarsIDs.periods = (*env)->GetFieldID(env, channelVarsClass, "periods", "[I");
+    channelVarsIDs.holdVols = (*env)->GetFieldID(env, channelVarsClass, "holdVols", "[I");
+
 }
 
 void cacheModVarsIDs(JNIEnv *env) {
@@ -140,10 +164,11 @@ JNI_FUNCTION(init)(JNIEnv *env, jobject obj, jint rate, jint ms) {
     /**
      * Cache field id's
      */
+    cacheChannelVarsIDs(env);
+    cacheFrameInfoIDs(env);
     cacheModInfoIDs(env);
     cacheModVarsIDs(env);
     cacheSequenceVarsIDs(env);
-    cacheFrameInfoIDs(env);
 
     return JNI_TRUE;
 }
@@ -208,7 +233,6 @@ JNI_FUNCTION(testModuleFd)(JNIEnv *env, jobject obj, jint fd, jobject modInfo) {
         cacheModInfoIDs(env);
     }
 
-    // TODO Should re-handle getting filename if ti->name is empty.
     if (res == 0) {
         jstring name = (*env)->NewStringUTF(env, ti.name);
         jstring type = (*env)->NewStringUTF(env, ti.type);
@@ -643,9 +667,7 @@ static struct xmp_subinstrument *get_subinstrument(int ins, int key) {
 }
 
 JNIEXPORT void JNICALL
-JNI_FUNCTION(getChannelData)(JNIEnv *env, jobject obj, jintArray vol,
-                             jintArray finalvol, jintArray pan, jintArray ins,
-                             jintArray key, jintArray period) {
+JNI_FUNCTION(getChannelData)(JNIEnv *env, jobject obj, jobject channelInfo) {
     (void) obj;
 
     struct xmp_subinstrument *sub;
@@ -658,6 +680,19 @@ JNI_FUNCTION(getChannelData)(JNIEnv *env, jobject obj, jintArray vol,
         unlock();
         return;
     }
+
+    // Sanity
+    if (channelVarsIDs.finalVols == NULL) {
+        cacheChannelVarsIDs(env);
+    }
+
+    jintArray vol = (*env)->GetObjectField(env, channelInfo, channelVarsIDs.volumes);
+    jintArray finalVols = (*env)->GetObjectField(env, channelInfo, channelVarsIDs.finalVols);
+    jintArray pan = (*env)->GetObjectField(env, channelInfo, channelVarsIDs.pans);
+    jintArray ins = (*env)->GetObjectField(env, channelInfo, channelVarsIDs.instruments);
+    jintArray key = (*env)->GetObjectField(env, channelInfo, channelVarsIDs.keys);
+    jintArray period = (*env)->GetObjectField(env, channelInfo, channelVarsIDs.periods);
+    jintArray holdVols = (*env)->GetObjectField(env, channelInfo, channelVarsIDs.holdVols);
 
     for (i = 0; i < chn; i++) {
         struct xmp_channel_info *ci = &fi[_before].channel_info[i];
@@ -694,11 +729,12 @@ JNI_FUNCTION(getChannelData)(JNIEnv *env, jobject obj, jintArray vol,
     }
 
     (*env)->SetIntArrayRegion(env, vol, 0, chn, _cur_vol);
-    (*env)->SetIntArrayRegion(env, finalvol, 0, chn, _finalvol);
+    (*env)->SetIntArrayRegion(env, finalVols, 0, chn, _finalvol);
     (*env)->SetIntArrayRegion(env, pan, 0, chn, _pan);
     (*env)->SetIntArrayRegion(env, ins, 0, chn, _ins);
     (*env)->SetIntArrayRegion(env, key, 0, chn, _key);
     (*env)->SetIntArrayRegion(env, period, 0, chn, _period);
+    (*env)->SetIntArrayRegion(env, holdVols, 0, chn, _hold_vol);
 
     unlock();
 }

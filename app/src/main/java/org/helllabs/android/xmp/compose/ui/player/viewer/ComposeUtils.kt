@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.helllabs.android.xmp.BuildConfig
+import org.helllabs.android.xmp.model.ChannelInfo
 import org.helllabs.android.xmp.model.FrameInfo
 
 @Suppress("unused")
@@ -83,10 +84,7 @@ internal fun composePatternSampleData(): PatternInfo {
     if (!BuildConfig.DEBUG) {
         throw Exception("This function shouldn't be used in non debug builds.")
     }
-
     return PatternInfo(
-        pat = 0,
-        lineInPattern = 0,
         rowNotes = byteArrayOf(
             73, 0, 77, 80, 84, 73, 0, 0, 73, 73, 73, 0, 73, 0, 73, 73, 0, 77, 0, 77, 0, 77,
             0, 0, 77, 80, 84, 77, 80, 84, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -110,14 +108,22 @@ internal fun composePatternSampleData(): PatternInfo {
     )
 }
 
-@Suppress("unused")
-internal fun composeViewerSampleData(): ViewerInfo {
+internal fun composeFrameInfoSampleData(): FrameInfo {
     if (!BuildConfig.DEBUG) {
         throw Exception("This function shouldn't be used in non debug builds.")
     }
-    return ViewerInfo(
-        time = 109,
-        frameInfo = FrameInfo(16, 12, 8, 64, 0, 7, 134),
+    return FrameInfo(16, 12, 8, 64, 0, 7, 134)
+}
+
+@Suppress("unused")
+internal fun composeChannelInfoSampleData(): ChannelInfo {
+    if (!BuildConfig.DEBUG) {
+        throw Exception("This function shouldn't be used in non debug builds.")
+    }
+    return ChannelInfo(
+//        time = 109,
+//        frameInfo = FrameInfo(16, 12, 8, 64, 0, 7, 134),
+//        type = "FastTracker v2.00 XM 1.04",
         volumes = intArrayOf(
             64, 17, 32, 48, 64, 19, 53, 15, 0, 7, 39, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -148,6 +154,5 @@ internal fun composeViewerSampleData(): ViewerInfo {
             3424, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         ),
-        type = "FastTracker v2.00 XM 1.04"
     )
 }

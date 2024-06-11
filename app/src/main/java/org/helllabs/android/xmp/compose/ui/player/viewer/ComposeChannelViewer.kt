@@ -37,6 +37,8 @@ import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.seed
 import org.helllabs.android.xmp.compose.ui.player.Util
+import org.helllabs.android.xmp.model.ChannelInfo
+import org.helllabs.android.xmp.model.FrameInfo
 import org.helllabs.android.xmp.model.ModVars
 import org.helllabs.android.xmp.service.PlayerService
 
@@ -47,7 +49,8 @@ val c = CharArray(2)
 @Composable
 fun ComposeChannelViewer(
     onTap: () -> Unit,
-    viewInfo: ViewerInfo,
+    channelInfo: ChannelInfo,
+    frameInfo: FrameInfo,
     isMuted: BooleanArray,
     modVars: ModVars,
     insName: Array<String>
@@ -142,11 +145,11 @@ fun ComposeChannelViewer(
         // row = viewInfo.values[2]
 
         for (chn in 0 until numChannels) {
-            val ins = if (isMuted[chn]) -1 else viewInfo.instruments[chn]
-            val pan = viewInfo.pans[chn]
-            val period = viewInfo.periods[chn]
-            val row = viewInfo.frameInfo.row
-            var key = viewInfo.keys[chn]
+            val ins = if (isMuted[chn]) -1 else channelInfo.instruments[chn]
+            val pan = channelInfo.pans[chn]
+            val period = channelInfo.periods[chn]
+            val row = frameInfo.row
+            var key = channelInfo.keys[chn]
 
             // IDK what this does, but it was in the legacy viewer
             if (key >= 0) {
@@ -209,7 +212,7 @@ fun ComposeChannelViewer(
             )
 
             /***** Volume Bars *****/
-            val vol = if (isMuted[chn]) 0 else viewInfo.volumes[chn]
+            val vol = if (isMuted[chn]) 0 else channelInfo.volumes[chn]
             val volSize = xAxisMultiplier.times(5) * (vol.toFloat() / 64)
             drawRect(
                 color = seed.copy(alpha = .35f),
@@ -219,7 +222,7 @@ fun ComposeChannelViewer(
                 ),
                 size = Size(volSize, 16f)
             )
-            val fVol = if (isMuted[chn]) 0 else viewInfo.finalVols[chn]
+            val fVol = if (isMuted[chn]) 0 else channelInfo.finalVols[chn]
             val fVolSize = xAxisMultiplier.times(5) * (fVol.toFloat() / 64)
             drawRect(
                 color = seed,
@@ -325,7 +328,7 @@ fun ComposeChannelViewer(
                 val halfHeight = (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
                 val maxVal = buffer.maxOrNull() ?: 127
                 val minVal = buffer.minOrNull() ?: -128
-                val volumeScale = viewInfo.finalVols[chn].coerceIn(0, 64) / 64f
+                val volumeScale = channelInfo.finalVols[chn].coerceIn(0, 64) / 64f
                 val yScale = halfHeight / (maxVal - minVal)
                 val widthScale = scopeWidth / buffer.size
                 val xValues = FloatArray(buffer.size) { index -> scopeXOffset + widthScale * index }
@@ -378,9 +381,6 @@ fun ComposeChannelViewer(
 @Preview
 @Composable
 private fun Preview_ChannelViewer() {
-    val viewInfo = remember {
-        composeViewerSampleData()
-    }
     val modVars = remember {
         ModVars(190968, 30, 25, 12, 40, 18, 1, 0)
     }
@@ -388,7 +388,8 @@ private fun Preview_ChannelViewer() {
     XmpTheme(useDarkTheme = true) {
         ComposeChannelViewer(
             onTap = {},
-            viewInfo = viewInfo,
+            channelInfo = composeChannelInfoSampleData(),
+            frameInfo = composeFrameInfoSampleData(),
             isMuted = BooleanArray(modVars.numChannels) { false },
             modVars = modVars,
             insName = Array(

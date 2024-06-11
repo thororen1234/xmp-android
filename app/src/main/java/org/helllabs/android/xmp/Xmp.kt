@@ -3,6 +3,7 @@
 package org.helllabs.android.xmp
 
 import android.net.Uri
+import org.helllabs.android.xmp.model.ChannelInfo
 import org.helllabs.android.xmp.model.FrameInfo
 import org.helllabs.android.xmp.model.ModInfo
 import org.helllabs.android.xmp.model.ModVars
@@ -100,14 +101,7 @@ object Xmp {
 
     external fun time(): Int
 
-    external fun getChannelData(
-        volumes: IntArray?,
-        finalvols: IntArray?,
-        pans: IntArray?,
-        instruments: IntArray?,
-        keys: IntArray?,
-        periods: IntArray?
-    )
+    external fun getChannelData(ci: ChannelInfo)
 
     external fun getComment(): ByteArray
 

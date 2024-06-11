@@ -13,6 +13,48 @@ data class ModInfo(
 )
 
 /**
+ * @see [org.helllabs.android.xmp.Xmp.getChannelData]
+ */
+@Stable
+data class ChannelInfo(
+    val volumes: IntArray = IntArray(64),
+    val finalVols: IntArray = IntArray(64),
+    val pans: IntArray = IntArray(64),
+    val instruments: IntArray = IntArray(64),
+    val keys: IntArray = IntArray(64),
+    val periods: IntArray = IntArray(64),
+    val holdVols: IntArray = IntArray(64)
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ChannelInfo
+
+        if (!volumes.contentEquals(other.volumes)) return false
+        if (!finalVols.contentEquals(other.finalVols)) return false
+        if (!pans.contentEquals(other.pans)) return false
+        if (!instruments.contentEquals(other.instruments)) return false
+        if (!keys.contentEquals(other.keys)) return false
+        if (!periods.contentEquals(other.periods)) return false
+        if (!holdVols.contentEquals(other.holdVols)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = volumes.contentHashCode()
+        result = 31 * result + finalVols.contentHashCode()
+        result = 31 * result + pans.contentHashCode()
+        result = 31 * result + instruments.contentHashCode()
+        result = 31 * result + keys.contentHashCode()
+        result = 31 * result + periods.contentHashCode()
+        result = 31 * result + holdVols.contentHashCode()
+        return result
+    }
+}
+
+/**
  * @see [org.helllabs.android.xmp.Xmp.getModVars]
  */
 data class ModVars(

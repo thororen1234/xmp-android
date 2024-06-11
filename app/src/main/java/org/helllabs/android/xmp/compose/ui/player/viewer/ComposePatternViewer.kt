@@ -35,6 +35,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.seed
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.player.Util
+import org.helllabs.android.xmp.model.FrameInfo
 import org.helllabs.android.xmp.model.ModVars
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
@@ -46,8 +47,8 @@ import timber.log.Timber
 @Composable
 internal fun ComposePatternViewer(
     onTap: () -> Unit,
-    viewInfo: ViewerInfo,
-    patternInfo: PatternInfo,
+    modType: String,
+    frameInfo: FrameInfo,
     isMuted: BooleanArray,
     modVars: ModVars
 ) {
@@ -71,15 +72,14 @@ internal fun ComposePatternViewer(
     val rowTextSize = remember { 14.sp }
 
     var currentType by remember { mutableStateOf("") }
-    val effectsTable = remember(viewInfo.type) {
-        val infoType = viewInfo.type
-        val type = Effects.getEffectList(infoType)
+    val effectsTable = remember(modType) {
+        val type = Effects.getEffectList(modType)
         currentType = type.name
         type.table
     }
 
-    val numRows = remember(viewInfo.frameInfo.numRows) {
-        viewInfo.frameInfo.numRows
+    val numRows = remember(frameInfo.numRows) {
+        frameInfo.numRows
     }
 
     val rowText = remember(numRows) {
@@ -228,13 +228,10 @@ internal fun ComposePatternViewer(
             size = Size(canvasSize.width, yAxisMultiplier)
         )
 
-        currentRow = viewInfo.frameInfo.row.toFloat()
+        currentRow = frameInfo.row.toFloat()
         rowYOffset = barLineY - (currentRow * yAxisMultiplier)
-        patternInfo.pat = viewInfo.frameInfo.pattern
 
         for (i in 0 until numRows) {
-            patternInfo.lineInPattern = i
-
             for (j in 0 until chn) {
                 // Be very careful here!
                 // Our variables are latency-compensated but pattern data is current
@@ -242,8 +239,8 @@ internal fun ComposePatternViewer(
                 // from a module with pattern data from a newly loaded one.
                 if (PlayerService.isAlive.value && PlayerActivity.canChangeViewer) {
                     Xmp.getPatternRow(
-                        patternInfo.pat,
-                        patternInfo.lineInPattern,
+                        frameInfo.pattern,
+                        i,
                         patternInfo.rowNotes,
                         patternInfo.rowInsts,
                         patternInfo.rowFxType,
@@ -284,7 +281,7 @@ internal fun ComposePatternViewer(
                                 effectsTable.getOrElse(fxt) {
                                     Timber.w(
                                         "Unknown FX: $fxt in chn ${j + 1}, row $i, " +
-                                            "using $currentType. Type:${viewInfo.type}"
+                                            "using $currentType. Type:$modType"
                                     )
                                     "?"
                                 }
@@ -374,21 +371,14 @@ internal fun ComposePatternViewer(
 @Preview(device = "spec:parent=pixel_8_pro,orientation=landscape")
 @Composable
 private fun Preview_PatternViewer() {
-    val viewInfo = remember {
-        composeViewerSampleData()
-    }
-    val patternInfo = remember {
-        composePatternSampleData()
-    }
     val modVars = remember {
         ModVars(190968, 30, 25, 12, 40, 18, 1, 0)
     }
-
     XmpTheme(useDarkTheme = true) {
         ComposePatternViewer(
             onTap = { },
-            viewInfo = viewInfo,
-            patternInfo = patternInfo,
+            modType = "FastTracker v2.00 XM 1.04",
+            frameInfo = composeFrameInfoSampleData(),
             isMuted = BooleanArray(modVars.numChannels) { false },
             modVars = modVars
         )
