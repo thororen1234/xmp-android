@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.update
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.ui.player.viewer.PatternInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
+import org.helllabs.android.xmp.model.FrameInfo
 import org.helllabs.android.xmp.model.ModVars
 import org.helllabs.android.xmp.model.SequenceVars
 import org.helllabs.android.xmp.service.PlayerService
@@ -336,13 +337,13 @@ class PlayerViewModel : ViewModel() {
 
     fun updateFrameInfo() {
         // Frame Info - Speed
-        val infoSpeed = Util.updateFrameInfo(value = viewInfo.value.values[5])
+        val infoSpeed = Util.updateFrameInfo(value = viewInfo.value.frameInfo.speed)
         // Frame Info - BPM
-        val infoBpm = Util.updateFrameInfo(value = viewInfo.value.values[6])
+        val infoBpm = Util.updateFrameInfo(value = viewInfo.value.frameInfo.bpm)
         // Frame Info - Position
-        val infoPos = Util.updateFrameInfo(value = viewInfo.value.values[0])
+        val infoPos = Util.updateFrameInfo(value = viewInfo.value.frameInfo.pos)
         // Frame Info - Pattern
-        val infoPat = Util.updateFrameInfo(value = viewInfo.value.values[1])
+        val infoPat = Util.updateFrameInfo(value = viewInfo.value.frameInfo.pattern)
 
         _infoState.update {
             it.copy(
@@ -354,7 +355,7 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
-    fun updateViewInfo(viewInfoValues: IntArray, time: Int) {
+    fun updateViewInfo(fi: FrameInfo, time: Int) {
         val info = viewInfo.value
         Xmp.getChannelData(
             info.volumes,
@@ -367,7 +368,7 @@ class PlayerViewModel : ViewModel() {
 
         viewInfo.update {
             it.copy(
-                values = viewInfoValues,
+                frameInfo = fi,
                 finalVols = info.finalVols,
                 pans = info.pans,
                 instruments = info.instruments,

@@ -65,6 +65,17 @@ typedef struct {
 } SeqVarsIDs;
 static SeqVarsIDs seqVarsIDs;
 
+typedef struct {
+    jfieldID posField;
+    jfieldID patternField;
+    jfieldID rowField;
+    jfieldID numRowsField;
+    jfieldID frameField;
+    jfieldID speedField;
+    jfieldID bpmField;
+} FrameInfoIDs;
+static FrameInfoIDs frameInfoIDs;
+
 
 void cacheModVarsIDs(JNIEnv *env) {
     jclass modVarsClass = (*env)->FindClass(env, "org/helllabs/android/xmp/model/ModVars");
@@ -86,6 +97,18 @@ void cacheSequenceVarsIDs(JNIEnv *env) {
             (*env)->GetFieldID(env, seqVarsClass, "sequence", "[I");
 }
 
+void cacheFrameInfoIDs(JNIEnv *env) {
+    jclass frameInfoClass = (*env)->FindClass(env, "org/helllabs/android/xmp/model/FrameInfo");
+
+    frameInfoIDs.posField = (*env)->GetFieldID(env, frameInfoClass, "pos", "I");
+    frameInfoIDs.patternField = (*env)->GetFieldID(env, frameInfoClass, "pattern", "I");
+    frameInfoIDs.rowField = (*env)->GetFieldID(env, frameInfoClass, "row", "I");
+    frameInfoIDs.numRowsField = (*env)->GetFieldID(env, frameInfoClass, "numRows", "I");
+    frameInfoIDs.frameField = (*env)->GetFieldID(env, frameInfoClass, "frame", "I");
+    frameInfoIDs.speedField = (*env)->GetFieldID(env, frameInfoClass, "speed", "I");
+    frameInfoIDs.bpmField = (*env)->GetFieldID(env, frameInfoClass, "bpm", "I");
+}
+
 /* For ModList */
 JNIEXPORT jboolean JNICALL
 JNI_FUNCTION(init)(JNIEnv *env, jobject obj, jint rate, jint ms) {
@@ -100,6 +123,7 @@ JNI_FUNCTION(init)(JNIEnv *env, jobject obj, jint rate, jint ms) {
 
     cacheModVarsIDs(env);
     cacheSequenceVarsIDs(env);
+    cacheFrameInfoIDs(env);
 
     if ((_buffer_num = open_audio(rate, ms)) < 0) {
         return JNI_FALSE;
@@ -481,23 +505,27 @@ JNI_FUNCTION(mute)(JNIEnv *env, jobject obj, jint chn, jint status) {
 }
 
 JNIEXPORT void JNICALL
-JNI_FUNCTION(getInfo)(JNIEnv *env, jobject obj, jintArray values) {
+JNI_FUNCTION(getInfo)(JNIEnv *env, jobject obj, jobject frameInfo) {
     (void) obj;
 
-    int v[7];
+    if (!_mod_is_loaded)
+        return;
+
+    // Sanity
+    if (frameInfoIDs.posField == NULL) {
+        cacheFrameInfoIDs(env);
+    }
 
     lock();
 
     if (_playing) {
-        v[0] = fi[_before].pos;
-        v[1] = fi[_before].pattern;
-        v[2] = fi[_before].row;
-        v[3] = fi[_before].num_rows;
-        v[4] = fi[_before].frame;
-        v[5] = fi[_before].speed;
-        v[6] = fi[_before].bpm;
-
-        (*env)->SetIntArrayRegion(env, values, 0, 7, v);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.posField, fi[_before].pos);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.patternField, fi[_before].pattern);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.rowField, fi[_before].row);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.numRowsField, fi[_before].num_rows);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.frameField, fi[_before].frame);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.speedField, fi[_before].speed);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.bpmField, fi[_before].bpm);
     }
 
     unlock();
@@ -1011,6 +1039,7 @@ JNI_FUNCTION(getSeqVars)(JNIEnv *env, jobject obj, jobject seqVars) {
         num = 16;
     }
 
+    // Sanity
     if (seqVarsIDs.sequenceField == NULL) {
         cacheSequenceVarsIDs(env);
     }

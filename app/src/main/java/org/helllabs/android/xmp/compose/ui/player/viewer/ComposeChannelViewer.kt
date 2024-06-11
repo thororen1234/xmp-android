@@ -145,7 +145,7 @@ fun ComposeChannelViewer(
             val ins = if (isMuted[chn]) -1 else viewInfo.instruments[chn]
             val pan = viewInfo.pans[chn]
             val period = viewInfo.periods[chn]
-            val row = viewInfo.values[2]
+            val row = viewInfo.frameInfo.row
             var key = viewInfo.keys[chn]
 
             // IDK what this does, but it was in the legacy viewer

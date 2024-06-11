@@ -78,8 +78,8 @@ internal fun ComposePatternViewer(
         type.table
     }
 
-    val numRows = remember(viewInfo.values[3]) {
-        viewInfo.values[3]
+    val numRows = remember(viewInfo.frameInfo.numRows) {
+        viewInfo.frameInfo.numRows
     }
 
     val rowText = remember(numRows) {
@@ -228,9 +228,9 @@ internal fun ComposePatternViewer(
             size = Size(canvasSize.width, yAxisMultiplier)
         )
 
-        currentRow = viewInfo.values[2].toFloat()
+        currentRow = viewInfo.frameInfo.row.toFloat()
         rowYOffset = barLineY - (currentRow * yAxisMultiplier)
-        patternInfo.pat = viewInfo.values[1]
+        patternInfo.pat = viewInfo.frameInfo.pattern
 
         for (i in 0 until numRows) {
             patternInfo.lineInPattern = i

@@ -1,6 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.player.viewer
 
 import androidx.compose.runtime.*
+import org.helllabs.android.xmp.model.FrameInfo
 
 @Immutable // I think
 data class ViewerInfo(
@@ -11,7 +12,7 @@ data class ViewerInfo(
     val periods: IntArray = IntArray(64),
     val time: Int = 0,
     val type: String = "",
-    val values: IntArray = IntArray(7), // order pattern row num_rows frame speed bpm
+    val frameInfo: FrameInfo = FrameInfo(),
     val volumes: IntArray = IntArray(64)
 ) {
     override fun toString(): String {
@@ -23,7 +24,7 @@ data class ViewerInfo(
             "periods=${periods.contentToString()}, " +
             "time=$time, " +
             "type='$type', " +
-            "values=${values.contentToString()}, " +
+            "frameInfo=$frameInfo" +
             "volumes=${volumes.contentToString()}" +
             ")"
     }

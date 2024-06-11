@@ -3,6 +3,7 @@
 package org.helllabs.android.xmp
 
 import android.net.Uri
+import org.helllabs.android.xmp.model.FrameInfo
 import org.helllabs.android.xmp.model.ModInfo
 import org.helllabs.android.xmp.model.ModVars
 import org.helllabs.android.xmp.model.SequenceVars
@@ -69,7 +70,7 @@ object Xmp {
 
     external fun fillBuffer(loop: Boolean): Int
 
-    external fun getInfo(values: IntArray?) // TODO data class
+    external fun getInfo(values: FrameInfo)
 
     external fun getPlayer(parm: Int): Int
 

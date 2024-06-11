@@ -37,6 +37,7 @@ import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.core.StorageManager
+import org.helllabs.android.xmp.model.FrameInfo
 import org.helllabs.android.xmp.model.ModInfo
 import org.helllabs.android.xmp.model.ModVars
 import timber.log.Timber
@@ -707,10 +708,10 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
                         watchdog.refresh()
 
                         // Periodically update notification state
-                        val fi = IntArray(7)
+                        val fi = FrameInfo()
                         Xmp.getInfo(fi)
-                        if (fi[0] != oldPos) {
-                            oldPos = fi[0]
+                        if (fi.pos != oldPos) {
+                            oldPos = fi.pos
                             updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
                         }
                     }

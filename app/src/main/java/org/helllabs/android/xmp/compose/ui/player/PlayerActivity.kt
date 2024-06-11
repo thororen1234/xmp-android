@@ -54,6 +54,7 @@ import org.helllabs.android.xmp.compose.ui.player.viewer.ViewerInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.composePatternSampleData
 import org.helllabs.android.xmp.compose.ui.player.viewer.composeViewerSampleData
 import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.model.FrameInfo
 import org.helllabs.android.xmp.model.ModVars
 import org.helllabs.android.xmp.service.EndPlayback
 import org.helllabs.android.xmp.service.PlayerBinder
@@ -316,11 +317,11 @@ class PlayerActivity : ComponentActivity() {
                         }
 
                         // get current frame info
-                        val viewInfoValues = IntArray(7)
-                        Xmp.getInfo(viewInfoValues)
+                        val fi = FrameInfo()
+                        Xmp.getInfo(fi)
 
                         // Update ViewerInfo()
-                        viewModel.updateViewInfo(viewInfoValues, (Xmp.time() / 1000))
+                        viewModel.updateViewInfo(fi, (Xmp.time() / 1000))
 
                         // Get the current playback time
                         viewModel.setPlayTime(Xmp.time().div(100F))

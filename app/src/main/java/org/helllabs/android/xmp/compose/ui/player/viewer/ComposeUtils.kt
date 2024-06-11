@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.helllabs.android.xmp.BuildConfig
+import org.helllabs.android.xmp.model.FrameInfo
 
 @Suppress("unused")
 internal fun DrawScope.debugPatternViewColumns(
@@ -116,7 +117,7 @@ internal fun composeViewerSampleData(): ViewerInfo {
     }
     return ViewerInfo(
         time = 109,
-        values = intArrayOf(16, 12, 8, 64, 0, 7, 134),
+        frameInfo = FrameInfo(16, 12, 8, 64, 0, 7, 134),
         volumes = intArrayOf(
             64, 17, 32, 48, 64, 19, 53, 15, 0, 7, 39, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
