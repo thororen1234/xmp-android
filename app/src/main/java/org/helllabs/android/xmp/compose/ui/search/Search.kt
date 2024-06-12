@@ -1,6 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.search
 
 import android.content.res.Configuration
+import androidx.annotation.StringRes
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.*
@@ -26,17 +27,25 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 @Serializable
 object NavSearch
 
+@Stable
+data class SearchSegmentedButton(
+    val index: Int,
+    @StringRes val string: Int
+)
+
 @Composable
 fun SearchScreen(
     onBack: () -> Unit,
-    onSearch: (String, Boolean) -> Unit,
+    onSearch: (String, Int) -> Unit,
     onRandom: () -> Unit,
     onHistory: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     var searchText by rememberSaveable { mutableStateOf("") }
-    var isArtistSearch by rememberSaveable { mutableStateOf(true) }
+    var currentSelection by rememberSaveable {
+        mutableIntStateOf(0)
+    }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -94,7 +103,7 @@ fun SearchScreen(
                     keyboardActions = KeyboardActions(
                         onSearch = {
                             if (searchText.isNotEmpty()) {
-                                onSearch(searchText, isArtistSearch)
+                                onSearch(searchText, currentSelection)
                             }
 
                             focusManager.clearFocus()
@@ -111,15 +120,15 @@ fun SearchScreen(
                 Spacer(modifier = Modifier.height(32.dp))
 
                 SegmentedButtons(
-                    isArtistSearch = isArtistSearch,
-                    onSearchType = { isArtistSearch = it }
+                    onSearchType = { currentSelection = it },
+                    currentSelection = currentSelection,
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
 
                 SearchButtons(
                     searchText = searchText,
-                    onSearch = { onSearch(it, isArtistSearch) },
+                    onSearch = { onSearch(it, currentSelection) },
                     onRandom = onRandom
                 )
 
@@ -137,9 +146,12 @@ fun SearchScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SegmentedButtons(isArtistSearch: Boolean, onSearchType: (Boolean) -> Unit) {
-    val searchOptions = remember {
-        listOf(R.string.artist, R.string.title_or_filename)
+private fun SegmentedButtons(onSearchType: (Int) -> Unit, currentSelection: Int) {
+    val buttonOptions = remember {
+        listOf(
+            SearchSegmentedButton(0, R.string.title_or_filename),
+            SearchSegmentedButton(1, R.string.artist)
+        )
     }
 
     SingleChoiceSegmentedButtonRow(
@@ -148,18 +160,18 @@ private fun SegmentedButtons(isArtistSearch: Boolean, onSearchType: (Boolean) ->
             .fillMaxWidth()
     ) {
         val activeColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = .75f)
-        searchOptions.forEachIndexed { index, label ->
+        buttonOptions.forEach { item ->
             SegmentedButton(
                 colors = SegmentedButtonDefaults.colors(
                     activeContainerColor = activeColor
                 ),
                 shape = SegmentedButtonDefaults.itemShape(
-                    index = index,
-                    count = searchOptions.size
+                    index = item.index,
+                    count = buttonOptions.size
                 ),
-                onClick = { onSearchType(index == 0) },
-                selected = index == 0 && isArtistSearch,
-                label = { Text(text = stringResource(id = label)) }
+                onClick = { onSearchType(item.index) },
+                selected = currentSelection == item.index,
+                label = { Text(text = stringResource(id = item.string)) }
             )
         }
     }

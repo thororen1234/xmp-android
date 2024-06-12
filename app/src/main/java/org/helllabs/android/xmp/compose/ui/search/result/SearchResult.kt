@@ -27,12 +27,12 @@ import org.helllabs.android.xmp.model.SponsorDetails
 import timber.log.Timber
 
 @Serializable
-data class NavSearchTitleResult(val searchQuery: String, val isArtistSearch: Boolean)
+data class NavSearchTitleResult(val searchQuery: String, val searchSelection: Int)
 
 @Composable
 fun TitleResultScreenImpl(
     viewModel: SearchResultViewModel,
-    isArtistSearch: Boolean,
+    searchSelection: Int,
     searchQuery: String,
     onBack: () -> Unit,
     onClick: (Int) -> Unit,
@@ -42,7 +42,7 @@ fun TitleResultScreenImpl(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        if (isArtistSearch) {
+        if (searchSelection == 1) {
             val title = context.getString(R.string.screen_title_artist)
             viewModel.getArtists(title, searchQuery)
         } else {

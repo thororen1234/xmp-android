@@ -314,8 +314,8 @@ class MainActivity : ComponentActivity() {
                     composable<NavSearch> {
                         SearchScreen(
                             onBack = navController::popBackStack,
-                            onSearch = { query, type ->
-                                navController.navigate(NavSearchTitleResult(query, type))
+                            onSearch = { query, selection ->
+                                navController.navigate(NavSearchTitleResult(query, selection))
                             },
                             onRandom = { navController.navigate(NavSearchResult(-1)) },
                             onHistory = { navController.navigate(NavSearchHistory) }
@@ -351,7 +351,7 @@ class MainActivity : ComponentActivity() {
                         )
                         TitleResultScreenImpl(
                             viewModel = viewModel,
-                            isArtistSearch = args.isArtistSearch,
+                            searchSelection = args.searchSelection,
                             searchQuery = args.searchQuery,
                             onBack = navController::popBackStack,
                             onClick = { id -> navController.navigate(NavSearchResult(id)) },
