@@ -381,15 +381,12 @@ fun ComposeChannelViewer(
 @Preview
 @Composable
 private fun Preview_ChannelViewer() {
-    val modVars = remember {
-        ModVars(190968, 30, 25, 12, 40, 18, 1, 0)
-    }
-
+    val modVars = composeSampleModVars()
     XmpTheme(useDarkTheme = true) {
         ComposeChannelViewer(
             onTap = {},
-            channelInfo = composeChannelInfoSampleData(),
-            frameInfo = composeFrameInfoSampleData(),
+            channelInfo = composeSampleChannelInfo(),
+            frameInfo = composeSampleFrameInfo(),
             isMuted = BooleanArray(modVars.numChannels) { false },
             modVars = modVars,
             insName = Array(

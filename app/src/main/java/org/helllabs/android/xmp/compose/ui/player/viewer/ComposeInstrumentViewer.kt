@@ -171,14 +171,11 @@ internal fun InstrumentViewer(
 @Preview(device = "id:pixel_8_pro")
 @Composable
 private fun Preview_InstrumentViewer() {
-    val modVars = remember {
-        ModVars(190968, 30, 25, 12, 40, 18, 1, 0)
-    }
-
+    val modVars = composeSampleModVars()
     XmpTheme(useDarkTheme = true) {
         InstrumentViewer(
             onTap = {},
-            channelInfo = composeChannelInfoSampleData(),
+            channelInfo = composeSampleChannelInfo(),
             isMuted = BooleanArray(modVars.numChannels) { false },
             modVars = modVars,
             insName = Array(modVars.numInstruments) {

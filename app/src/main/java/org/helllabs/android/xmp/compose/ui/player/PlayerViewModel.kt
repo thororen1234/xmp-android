@@ -344,20 +344,19 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
-    private val lock = Any()
+    private val lock = Any() // Meh
     fun updateViewInfo() {
         synchronized(lock) {
             val ci = ChannelInfo()
             Xmp.getChannelData(ci)
+            channelInfo.update {
+                ci
+            }
 
             val fi = FrameInfo()
             Xmp.getInfo(fi)
-
             frameInfo.update {
                 fi
-            }
-            channelInfo.update {
-                ci
             }
         }
     }

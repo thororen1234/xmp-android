@@ -369,14 +369,12 @@ internal fun ComposePatternViewer(
 @Preview(device = "spec:parent=pixel_8_pro,orientation=landscape")
 @Composable
 private fun Preview_PatternViewer() {
-    val modVars = remember {
-        ModVars(190968, 30, 25, 12, 40, 18, 1, 0)
-    }
+    val modVars = composeSampleModVars()
     XmpTheme(useDarkTheme = true) {
         ComposePatternViewer(
             onTap = { },
             modType = "FastTracker v2.00 XM 1.04",
-            fi = composeFrameInfoSampleData(),
+            fi = composeSampleFrameInfo(),
             isMuted = BooleanArray(modVars.numChannels) { false },
             modVars = modVars
         )

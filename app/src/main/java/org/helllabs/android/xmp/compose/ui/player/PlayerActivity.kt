@@ -50,8 +50,8 @@ import org.helllabs.android.xmp.compose.ui.player.components.ViewFlipper
 import org.helllabs.android.xmp.compose.ui.player.viewer.ComposeChannelViewer
 import org.helllabs.android.xmp.compose.ui.player.viewer.ComposePatternViewer
 import org.helllabs.android.xmp.compose.ui.player.viewer.InstrumentViewer
-import org.helllabs.android.xmp.compose.ui.player.viewer.composeChannelInfoSampleData
-import org.helllabs.android.xmp.compose.ui.player.viewer.composeFrameInfoSampleData
+import org.helllabs.android.xmp.compose.ui.player.viewer.composeSampleChannelInfo
+import org.helllabs.android.xmp.compose.ui.player.viewer.composeSampleFrameInfo
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.ChannelInfo
 import org.helllabs.android.xmp.model.FrameInfo
@@ -61,6 +61,7 @@ import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerEvent
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
+import kotlin.time.Duration.Companion.milliseconds
 
 class PlayerActivity : ComponentActivity() {
 
@@ -310,7 +311,7 @@ class PlayerActivity : ComponentActivity() {
                                     "isPlaying: ${viewModel.isPlaying}, " +
                                     "modPlayer null: ${(modPlayer == null)}"
                             )
-                            delay(1.seconds)
+                            delay(500.milliseconds)
                             continue
                         }
 
@@ -735,8 +736,8 @@ private fun Preview_PlayerScreen(
                 String.format("%02X %s", it + 1, "Instrument Name")
             },
             modVars = modVars,
-            channelInfo = composeChannelInfoSampleData(),
-            frameInfo = composeFrameInfoSampleData(),
+            channelInfo = composeSampleChannelInfo(),
+            frameInfo = composeSampleFrameInfo(),
             isMuted = BooleanArray(modVars.numChannels) { false },
             onControlsEvent = { },
             onSeekEvent = { },

@@ -25,6 +25,18 @@ data class ChannelInfo(
     val periods: IntArray = IntArray(64),
     val holdVols: IntArray = IntArray(64)
 ) {
+    override fun toString(): String {
+        return "ChannelInfo(" +
+            "volumes=${volumes.contentToString()}, " +
+            "finalVols=${finalVols.contentToString()}, " +
+            "pans=${pans.contentToString()}, " +
+            "instruments=${instruments.contentToString()}, " +
+            "keys=${keys.contentToString()}, " +
+            "periods=${periods.contentToString()}, " +
+            "holdVols=${holdVols.contentToString()}" +
+            ")"
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -66,7 +78,20 @@ data class ModVars(
     val numSamples: Int = 0,
     val numSequence: Int = 0,
     val currentSequence: Int = 0
-)
+) {
+    override fun toString(): String {
+        return "ModVars(" +
+            "seqDuration=$seqDuration, " +
+            "lengthInPatterns=$lengthInPatterns, " +
+            "numPatterns=$numPatterns, " +
+            "numChannels=$numChannels, " +
+            "numInstruments=$numInstruments, " +
+            "numSamples=$numSamples, " +
+            "numSequence=$numSequence, " +
+            "currentSequence=$currentSequence" +
+            ")"
+    }
+}
 
 /**
  * @see [org.helllabs.android.xmp.Xmp.getInfo]
@@ -82,7 +107,15 @@ data class FrameInfo(
     val bpm: Int = 0
 ) {
     override fun toString(): String {
-        return "FrameInfo(pos=$pos, pattern=$pattern, row=$row, numRows=$numRows, frame=$frame, speed=$speed, bpm=$bpm)"
+        return "FrameInfo(" +
+            "pos=$pos, " +
+            "pattern=$pattern, " +
+            "row=$row, " +
+            "numRows=$numRows, " +
+            "frame=$frame, " +
+            "speed=$speed, " +
+            "bpm=$bpm" +
+            ")"
     }
 }
 

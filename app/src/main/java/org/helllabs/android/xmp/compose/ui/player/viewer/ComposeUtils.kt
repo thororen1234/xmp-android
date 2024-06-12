@@ -1,5 +1,6 @@
 package org.helllabs.android.xmp.compose.ui.player.viewer
 
+import androidx.compose.runtime.*
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -14,6 +15,8 @@ import androidx.compose.ui.unit.sp
 import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.model.ChannelInfo
 import org.helllabs.android.xmp.model.FrameInfo
+import org.helllabs.android.xmp.model.ModVars
+import org.helllabs.android.xmp.model.SequenceVars
 
 @Suppress("unused")
 internal fun DrawScope.debugPatternViewColumns(
@@ -79,80 +82,100 @@ internal fun DrawScope.debugScreen(
     }
 }
 
-// @Suppress("unused")
-// internal fun composePatternSampleData(): PatternInfo {
-//    if (!BuildConfig.DEBUG) {
-//        throw Exception("This function shouldn't be used in non debug builds.")
-//    }
-//    return PatternInfo(
-//        rowNotes = byteArrayOf(
-//            73, 0, 77, 80, 84, 73, 0, 0, 73, 73, 73, 0, 73, 0, 73, 73, 0, 77, 0, 77, 0, 77,
-//            0, 0, 77, 80, 84, 77, 80, 84, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-//        ),
-//        rowInsts = byteArrayOf(
-//            25, 0, 1, 1, 1, 25, 0, 0, 3, 3, 3, 0, 5, 0, 7, 7, 0, 9, 0, 9, 0, 10, 0, 0, 11,
-//            11, 11, 12, 12, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-//        ),
-//        rowFxType = byteArrayOf(
-//            -1, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-//            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-//        ),
-//        rowFxParm = byteArrayOf(
-//            -1, 5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-//            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-//            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-//        )
-//    )
-// }
-
-internal fun composeFrameInfoSampleData(): FrameInfo {
-    if (!BuildConfig.DEBUG) {
-        throw Exception("This function shouldn't be used in non debug builds.")
-    }
-    return FrameInfo(16, 12, 8, 64, 0, 7, 134)
-}
-
-@Suppress("unused")
-internal fun composeChannelInfoSampleData(): ChannelInfo {
+@Composable
+internal fun composeSampleChannelInfo(): ChannelInfo {
     if (!BuildConfig.DEBUG) {
         throw Exception("This function shouldn't be used in non debug builds.")
     }
     return ChannelInfo(
-//        time = 109,
-//        frameInfo = FrameInfo(16, 12, 8, 64, 0, 7, 134),
-//        type = "FastTracker v2.00 XM 1.04",
         volumes = intArrayOf(
-            64, 17, 32, 48, 64, 19, 53, 15, 0, 7, 39, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            64, 33, 44, 64, 33, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0
         ),
         finalVols = intArrayOf(
-            64, 16, 32, 48, 64, 19, 3, 15, 0, 26, 16, 22, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            64, 32, 44, 64, 32, 64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0
         ),
         pans = intArrayOf(
-            128, 128, 135, 128, 112, 112, 128, 160, 208, 148, 200, 128, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            128, 128, 128, 128, 128, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         ),
         instruments = intArrayOf(
-            1, 1, 3, 14, 10, 12, 17, 11, 18, 20, 20, 15, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            2, 2, 6, 8, 8, 9, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0
         ),
         keys = intArrayOf(
-            72, 69, 67, 72, 72, 72, 77, 77, -1, -1, 74, -1, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            60, 72, 60, 60, 79, 71, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0
         ),
         periods = intArrayOf(
-            3424, 4071, 4570, 1298, 1227, 3424, 1225, 2565, 6848, 762, 762,
-            3424, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            5670, 2835, 2733, 2572, 858, 3543, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ),
+        holdVols = intArrayOf(
+            21, 33, 31, 5, 33, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0
         ),
     )
 }
+
+@Composable
+internal fun composeSampleModVars(): ModVars {
+    if (!BuildConfig.DEBUG) {
+        throw Exception("This function shouldn't be used in non debug builds.")
+    }
+    return ModVars(
+        seqDuration = 158677,
+        lengthInPatterns = 42,
+        numPatterns = 37,
+        numChannels = 6,
+        numInstruments = 18,
+        numSamples = 18,
+        numSequence = 1,
+        currentSequence = 0
+    )
+}
+
+@Composable
+internal fun composeSampleFrameInfo(): FrameInfo {
+    if (!BuildConfig.DEBUG) {
+        throw Exception("This function shouldn't be used in non debug builds.")
+    }
+    return FrameInfo(pos = 11, pattern = 5, row = 10, numRows = 64, frame = 0, speed = 3, bpm = 121)
+}
+
+@Composable
+internal fun composeSampleSeqVars(): SequenceVars {
+    if (!BuildConfig.DEBUG) {
+        throw Exception("This function shouldn't be used in non debug builds.")
+    }
+    return SequenceVars(sequence = intArrayOf(1111, 2222, 3333, 4444, 5555, 6666))
+}
+
+internal val composePreviewRowFxParm = intArrayOf(
+    -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0
+)
+internal val composePreviewRowFxType = intArrayOf(
+    -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0
+)
+internal val composePreviewRowInsts = intArrayOf(
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0
+)
+internal val composePreviewRowNotes = intArrayOf(
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0
+)
