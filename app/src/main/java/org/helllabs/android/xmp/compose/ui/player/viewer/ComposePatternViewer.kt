@@ -33,6 +33,7 @@ import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.seed
+import org.helllabs.android.xmp.compose.ui.player.ChannelMuteState
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.player.Util
 import org.helllabs.android.xmp.model.FrameInfo
@@ -49,7 +50,7 @@ internal fun ComposePatternViewer(
     onTap: () -> Unit,
     modType: String,
     fi: FrameInfo,
-    isMuted: BooleanArray,
+    isMuted: ChannelMuteState,
     modVars: ModVars
 ) {
     val density = LocalDensity.current
@@ -251,7 +252,11 @@ internal fun ComposePatternViewer(
                         /****** Notes *****/
                         withStyle(
                             style = SpanStyle(
-                                color = if (isMuted[j]) Color.LightGray else Color(140, 140, 160)
+                                color = if (isMuted.isMuted[j]) {
+                                    Color.LightGray
+                                } else {
+                                    Color(140, 140, 160)
+                                }
                             ),
                             block = {
                                 append(Util.note(rowNotes[j].toInt()))
@@ -260,7 +265,15 @@ internal fun ComposePatternViewer(
                         /***** Instruments *****/
                         withStyle(
                             style = SpanStyle(
-                                color = if (isMuted[j]) Color(80, 40, 40) else Color(160, 80, 80)
+                                color = if (isMuted.isMuted[j]) {
+                                    Color(
+                                        80,
+                                        40,
+                                        40
+                                    )
+                                } else {
+                                    Color(160, 80, 80)
+                                }
                             ),
                             block = {
                                 append(Util.num(rowInsts[j].toInt()))
@@ -269,7 +282,15 @@ internal fun ComposePatternViewer(
                         /***** Effects *****/
                         withStyle(
                             style = SpanStyle(
-                                color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60)
+                                color = if (isMuted.isMuted[j]) {
+                                    Color(
+                                        16,
+                                        75,
+                                        28
+                                    )
+                                } else {
+                                    Color(34, 158, 60)
+                                }
                             )
                         ) {
                             val fxt = rowFxType[j]
@@ -289,7 +310,15 @@ internal fun ComposePatternViewer(
                         /***** Effects Params *****/
                         withStyle(
                             style = SpanStyle(
-                                color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60)
+                                color = if (isMuted.isMuted[j]) {
+                                    Color(
+                                        16,
+                                        75,
+                                        28
+                                    )
+                                } else {
+                                    Color(34, 158, 60)
+                                }
                             ),
                             block = {
                                 append(Util.num(rowFxParm[j].toInt()))
@@ -375,7 +404,7 @@ private fun Preview_PatternViewer() {
             onTap = { },
             modType = "FastTracker v2.00 XM 1.04",
             fi = composeSampleFrameInfo(),
-            isMuted = BooleanArray(modVars.numChannels) { false },
+            isMuted = ChannelMuteState(isMuted = BooleanArray(modVars.numChannels) { false }),
             modVars = modVars
         )
     }

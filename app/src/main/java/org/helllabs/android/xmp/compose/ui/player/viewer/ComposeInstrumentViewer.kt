@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.*
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.seed
+import org.helllabs.android.xmp.compose.ui.player.ChannelMuteState
 import org.helllabs.android.xmp.model.ChannelInfo
 import org.helllabs.android.xmp.model.ModVars
 
@@ -27,7 +28,7 @@ private val barShape = CornerRadius(8f, 8f)
 internal fun InstrumentViewer(
     onTap: () -> Unit,
     channelInfo: ChannelInfo,
-    isMuted: BooleanArray,
+    isMuted: ChannelMuteState,
     modVars: ModVars,
     insName: Array<String>
 ) {
@@ -126,7 +127,7 @@ internal fun InstrumentViewer(
             }
 
             for (j in 0 until chn) {
-                if (isMuted[j]) {
+                if (isMuted.isMuted[j]) {
                     continue
                 }
 
@@ -176,7 +177,7 @@ private fun Preview_InstrumentViewer() {
         InstrumentViewer(
             onTap = {},
             channelInfo = composeSampleChannelInfo(),
-            isMuted = BooleanArray(modVars.numChannels) { false },
+            isMuted = ChannelMuteState(isMuted = BooleanArray(modVars.numChannels) { false }),
             modVars = modVars,
             insName = Array(modVars.numInstruments) {
                 String.format("%02X %s", it + 1, "Instrument Name")

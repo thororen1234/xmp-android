@@ -76,6 +76,22 @@ data class PlayerActivitySate(
 )
 
 @Stable
+data class ChannelMuteState(val isMuted: BooleanArray = BooleanArray(Xmp.MAX_CHANNELS)) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ChannelMuteState
+
+        return isMuted.contentEquals(other.isMuted)
+    }
+
+    override fun hashCode(): Int {
+        return isMuted.contentHashCode()
+    }
+}
+
+@Stable
 class PlayerViewModel : ViewModel() {
 
     private val _activityState = MutableStateFlow(PlayerActivitySate())
@@ -105,7 +121,8 @@ class PlayerViewModel : ViewModel() {
 
     val insName = MutableStateFlow(arrayOf(""))
 
-    val isMuted = MutableStateFlow(BooleanArray(0))
+    private val _isMuted = MutableStateFlow(ChannelMuteState())
+    val isMuted = _isMuted.asStateFlow()
 
     val modVars = MutableStateFlow(ModVars())
 
@@ -166,14 +183,8 @@ class PlayerViewModel : ViewModel() {
                     ?: Collections.nCopies(modVars.value.numInstruments, "").toTypedArray()
             }
 
-            val chn = modVars.value.numChannels
-            val muteArray = BooleanArray(chn)
-            for (i in 0 until chn) {
-                muteArray[i] = Xmp.mute(i, -1) == 1
-            }
-            isMuted.update {
-                muteArray
-            }
+            val muteArray = BooleanArray(modVars.value.numChannels) { i -> Xmp.mute(i, -1) == 1 }
+            _isMuted.update { it.copy(isMuted = muteArray) }
         }
     }
 
@@ -358,6 +369,11 @@ class PlayerViewModel : ViewModel() {
             frameInfo.update {
                 fi
             }
+
+            val muteArray = BooleanArray(modVars.value.numChannels) {
+                Xmp.mute(it, -1) == 1
+            }
+            _isMuted.update { it.copy(isMuted = muteArray) }
         }
     }
 }
