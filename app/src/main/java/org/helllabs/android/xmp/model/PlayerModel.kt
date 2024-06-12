@@ -80,7 +80,11 @@ data class FrameInfo(
     val frame: Int = 0,
     val speed: Int = 0,
     val bpm: Int = 0
-)
+) {
+    override fun toString(): String {
+        return "FrameInfo(pos=$pos, pattern=$pattern, row=$row, numRows=$numRows, frame=$frame, speed=$speed, bpm=$bpm)"
+    }
+}
 
 /**
  * @see [org.helllabs.android.xmp.Xmp.getSeqVars]

@@ -664,7 +664,7 @@ private fun PlayerScreen(
                 1 -> ComposePatternViewer(
                     onTap = onChangeViewer,
                     modType = uiState.infoType,
-                    frameInfo = frameInfo,
+                    fi = frameInfo,
                     isMuted = isMuted,
                     modVars = modVars
                 )

@@ -48,7 +48,7 @@ import timber.log.Timber
 internal fun ComposePatternViewer(
     onTap: () -> Unit,
     modType: String,
-    frameInfo: FrameInfo,
+    fi: FrameInfo,
     isMuted: BooleanArray,
     modVars: ModVars
 ) {
@@ -78,8 +78,8 @@ internal fun ComposePatternViewer(
         type.table
     }
 
-    val numRows = remember(frameInfo.numRows) {
-        frameInfo.numRows
+    val numRows = remember(fi.numRows) {
+        fi.numRows
     }
 
     val rowText = remember(numRows) {
@@ -148,6 +148,11 @@ internal fun ComposePatternViewer(
         }
         delta
     }
+
+    val rowFxParm = remember { ByteArray(64) }
+    val rowFxType = remember { ByteArray(64) }
+    val rowInsts = remember { ByteArray(64) }
+    val rowNotes = remember { ByteArray(64) }
 
     LaunchedEffect(chn) {
         // Scroll to the beginning if the channel number changes
@@ -228,7 +233,7 @@ internal fun ComposePatternViewer(
             size = Size(canvasSize.width, yAxisMultiplier)
         )
 
-        currentRow = frameInfo.row.toFloat()
+        currentRow = fi.row.toFloat()
         rowYOffset = barLineY - (currentRow * yAxisMultiplier)
 
         for (i in 0 until numRows) {
@@ -238,14 +243,7 @@ internal fun ComposePatternViewer(
                 // so caution is needed to avoid retrieving data using old variables
                 // from a module with pattern data from a newly loaded one.
                 if (PlayerService.isAlive.value && PlayerActivity.canChangeViewer) {
-                    Xmp.getPatternRow(
-                        frameInfo.pattern,
-                        i,
-                        patternInfo.rowNotes,
-                        patternInfo.rowInsts,
-                        patternInfo.rowFxType,
-                        patternInfo.rowFxParm
-                    )
+                    Xmp.getPatternRow(fi.pattern, i, rowNotes, rowInsts, rowFxType, rowFxParm)
                 }
 
                 val info = textMeasurer.measure(
@@ -256,7 +254,7 @@ internal fun ComposePatternViewer(
                                 color = if (isMuted[j]) Color.LightGray else Color(140, 140, 160)
                             ),
                             block = {
-                                append(Util.note(patternInfo.rowNotes[j].toInt()))
+                                append(Util.note(rowNotes[j].toInt()))
                             }
                         )
                         /***** Instruments *****/
@@ -265,7 +263,7 @@ internal fun ComposePatternViewer(
                                 color = if (isMuted[j]) Color(80, 40, 40) else Color(160, 80, 80)
                             ),
                             block = {
-                                append(Util.num(patternInfo.rowInsts[j].toInt()))
+                                append(Util.num(rowInsts[j].toInt()))
                             }
                         )
                         /***** Effects *****/
@@ -274,7 +272,7 @@ internal fun ComposePatternViewer(
                                 color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60)
                             )
                         ) {
-                            val fxt = patternInfo.rowFxType[j]
+                            val fxt = rowFxType[j]
                             val fx = if (fxt < 0) {
                                 "-"
                             } else {
@@ -294,7 +292,7 @@ internal fun ComposePatternViewer(
                                 color = if (isMuted[j]) Color(16, 75, 28) else Color(34, 158, 60)
                             ),
                             block = {
-                                append(Util.num(patternInfo.rowFxParm[j].toInt()))
+                                append(Util.num(rowFxParm[j].toInt()))
                             }
                         )
                     },
@@ -378,7 +376,7 @@ private fun Preview_PatternViewer() {
         ComposePatternViewer(
             onTap = { },
             modType = "FastTracker v2.00 XM 1.04",
-            frameInfo = composeFrameInfoSampleData(),
+            fi = composeFrameInfoSampleData(),
             isMuted = BooleanArray(modVars.numChannels) { false },
             modVars = modVars
         )

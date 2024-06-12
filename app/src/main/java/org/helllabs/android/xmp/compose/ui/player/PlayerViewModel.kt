@@ -353,16 +353,11 @@ class PlayerViewModel : ViewModel() {
             val fi = FrameInfo()
             Xmp.getInfo(fi)
 
+            frameInfo.update {
+                fi
+            }
             channelInfo.update {
-                it.copy(
-                    volumes = ci.volumes,
-                    finalVols = ci.finalVols,
-                    pans = ci.pans,
-                    instruments = ci.instruments,
-                    keys = ci.keys,
-                    periods = ci.periods,
-                    holdVols = ci.holdVols,
-                )
+                ci
             }
         }
     }
