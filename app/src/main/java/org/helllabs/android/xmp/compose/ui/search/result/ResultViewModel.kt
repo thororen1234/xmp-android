@@ -59,7 +59,6 @@ class ResultViewModelFactory : ViewModelProvider.Factory {
     }
 }
 
-// @Stable
 class ResultViewModel(
     private val okHttpClient: OkHttpClient,
     private val repository: Repository
@@ -68,7 +67,6 @@ class ResultViewModel(
     private val _uiState = MutableStateFlow(ModuleResultState())
     val uiState = _uiState.asStateFlow()
 
-    // TODO does this mess with compose stability?
     private var currentDownloadJob: Job? = null
 
     override fun onCleared() {

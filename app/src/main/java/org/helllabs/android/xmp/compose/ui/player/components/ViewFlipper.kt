@@ -164,6 +164,7 @@ private fun Preview_Demo_ViewFlipper() {
     XmpTheme(useDarkTheme = true) {
         var infoName by remember { mutableIntStateOf(0) }
         var infoType by remember { mutableIntStateOf(0) }
+        var skipToPrevious by remember { mutableStateOf(false) }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             ViewFlipper(
                 actions = {
@@ -176,7 +177,7 @@ private fun Preview_Demo_ViewFlipper() {
                         Icon(imageVector = Icons.Default.Menu, contentDescription = null)
                     }
                 },
-                skipToPrevious = false,
+                skipToPrevious = skipToPrevious,
                 info = Pair(
                     "Some Super Very Long Name: $infoName",
                     "Some Super Duper Very Long Type: $infoType"
@@ -188,6 +189,7 @@ private fun Preview_Demo_ViewFlipper() {
                     onClick = {
                         infoName -= 1
                         infoType -= 1
+                        skipToPrevious = true
                     },
                     content = {
                         Text("Previous")
@@ -198,6 +200,7 @@ private fun Preview_Demo_ViewFlipper() {
                     onClick = {
                         infoName += 1
                         infoType += 1
+                        skipToPrevious = false
                     },
                     content = {
                         Text("Forward")

@@ -110,7 +110,7 @@ class PlayerActivity : ComponentActivity() {
                     playNewMod(fileList, start)
                 } else {
                     // Reconnect to existing service
-                    modPlayer!!.let(viewModel::showNewMod)
+                    viewModel.showNewMod(modPlayer!!, false)
                 }
             }
         }
@@ -255,7 +255,6 @@ class PlayerActivity : ComponentActivity() {
 
                         PlayerControlsEvent.OnPrev -> {
                             controls!!.transportControls.skipToPrevious()
-                            // TODO is working as intended?
                             viewModel.isPlaying(modPlayer!!.isPlaying)
                         }
 
@@ -465,9 +464,9 @@ class PlayerActivity : ComponentActivity() {
                 canChangeViewer = false
             }
 
-            PlayerEvent.NewMod -> {
+            is PlayerEvent.NewMod -> {
                 Timber.d("newModCallback: show module data")
-                modPlayer?.let(viewModel::showNewMod)
+                viewModel.showNewMod(modPlayer!!, event.isPrevious)
                 canChangeViewer = true
             }
 

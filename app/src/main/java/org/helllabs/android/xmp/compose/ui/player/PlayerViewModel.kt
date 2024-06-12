@@ -69,7 +69,6 @@ data class PlayerActivitySate(
     val loopListMode: Boolean = false,
     val playTime: Float = 0F,
     val shuffleMode: Boolean = false,
-    val skipToPrevious: Boolean = false,
     val start: Int = 0,
     val totalTime: Int = 0,
     val stopUpdate: Boolean = false
@@ -172,22 +171,6 @@ class PlayerViewModel : ViewModel() {
         _uiState.update { it.copy(currentViewer = current) }
     }
 
-    fun setup() {
-        Timber.d("Setup")
-        if (_uiState.value.serviceConnected) {
-            Xmp.getModVars(modVars.value)
-            Xmp.getSeqVars(seqVars.value)
-
-            insName.update {
-                Xmp.getInstruments()
-                    ?: Collections.nCopies(modVars.value.numInstruments, "").toTypedArray()
-            }
-
-            val muteArray = BooleanArray(modVars.value.numChannels) { i -> Xmp.mute(i, -1) == 1 }
-            _isMuted.update { it.copy(isMuted = muteArray) }
-        }
-    }
-
     fun updateSeekBar() {
         if (!timeState.value.isSeeking && activityState.value.playTime >= 0) {
             _timeState.update {
@@ -214,8 +197,8 @@ class PlayerViewModel : ViewModel() {
         showSnack(time)
     }
 
-    fun showNewMod(modPlayer: PlayerService) {
-        Timber.i("Show new module")
+    fun showNewMod(modPlayer: PlayerService, skipToPrevious: Boolean) {
+        Timber.i("Show new module | Previous: $skipToPrevious")
 
         val mVars = ModVars()
         Xmp.getModVars(mVars)
@@ -262,15 +245,24 @@ class PlayerViewModel : ViewModel() {
             it.copy(
                 infoTitle = name,
                 infoType = type,
-                skipToPrevious = _activityState.value.skipToPrevious
+                skipToPrevious = skipToPrevious
             )
         }
 
-        skipToPrevious(false)
+        if (_uiState.value.serviceConnected) {
+            Xmp.getModVars(modVars.value)
+            Xmp.getSeqVars(seqVars.value)
 
-        setup()
+            insName.update {
+                Xmp.getInstruments()
+                    ?: Collections.nCopies(modVars.value.numInstruments, "").toTypedArray()
+            }
 
-        // startProgress(modPlayer)
+            val muteArray = BooleanArray(modVars.value.numChannels) { i ->
+                Xmp.mute(i, -1) == 1
+            }
+            _isMuted.update { it.copy(isMuted = muteArray) }
+        }
     }
 
     fun resetPlayTime() {
@@ -294,12 +286,6 @@ class PlayerViewModel : ViewModel() {
                 keepFirst = keepFirst,
                 start = start,
             )
-        }
-    }
-
-    fun skipToPrevious(value: Boolean) {
-        _uiState.update {
-            it.copy(skipToPrevious = value)
         }
     }
 

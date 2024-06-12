@@ -56,8 +56,8 @@ enum class EndPlayback(val code: Int) {
 sealed class PlayerEvent {
     data class EndPlay(val result: EndPlayback) : PlayerEvent()
     data class ErrorMessage(val msg: String) : PlayerEvent()
+    data class NewMod(val isPrevious: Boolean) : PlayerEvent()
     data object EndMod : PlayerEvent()
-    data object NewMod : PlayerEvent()
     data object NewSequence : PlayerEvent()
     data object Paused : PlayerEvent()
     data object Play : PlayerEvent()
@@ -267,10 +267,11 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
                 override fun onSkipToNext() {
                     Timber.d("MediaSessionCompat onSkipToNext")
                     Xmp.stopModule()
-                    if (isPlaying) {
-                        discardBuffer = true
-                    }
                     cmd = CMD_NEXT
+                    discardBuffer = true
+                    if (!isPlaying) {
+                        mediaController.transportControls.play()
+                    }
                 }
 
                 override fun onSkipToPrevious() {
@@ -281,8 +282,9 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
                         Xmp.stopModule()
                         cmd = CMD_PREV
                     }
-                    if (isPlaying) {
-                        discardBuffer = true
+                    discardBuffer = true
+                    if (!isPlaying) {
+                        mediaController.transportControls.play()
                     }
                 }
 
@@ -544,6 +546,7 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
 
             var lastRecognized = 0
             var oldPos = -1
+            var skipToPrevious = false
 
             isPlaying = true
 
@@ -637,7 +640,8 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
                 Xmp.playAudio()
 
                 serviceScope.launch {
-                    _playerEvent.emit(PlayerEvent.NewMod)
+                    _playerEvent.emit(PlayerEvent.NewMod(isPrevious = skipToPrevious))
+                    skipToPrevious = false
                 }
 
                 Timber.i("Enter play loop")
@@ -751,6 +755,7 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
                 } else if (cmd == CMD_PREV) {
                     Timber.d("Command: Previous")
                     playlistPosition = playlistPosition.minus(1).coerceAtLeast(0)
+                    skipToPrevious = true
                 } else {
                     playlistPosition = playlistPosition.plus(1)
                 }
