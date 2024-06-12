@@ -1,40 +1,25 @@
 package org.helllabs.android.xmp.compose.ui.player.viewer
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.rememberScrollableState
-import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.*
+import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.*
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.input.pointer.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.*
+import androidx.compose.ui.text.font.*
+import androidx.compose.ui.text.style.*
+import androidx.compose.ui.tooling.preview.*
+import androidx.compose.ui.unit.*
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.seed
 import org.helllabs.android.xmp.compose.ui.player.Util
 import org.helllabs.android.xmp.model.ChannelInfo
@@ -141,11 +126,8 @@ fun ComposeChannelViewer(
             canvasSize = size
         }
 
-        val numInstruments = modVars.numInstruments
-        // row = viewInfo.values[2]
-
         for (chn in 0 until numChannels) {
-            val ins = if (isMuted[chn]) -1 else channelInfo.instruments[chn]
+            val ins = channelInfo.instruments[chn]
             val pan = channelInfo.pans[chn]
             val period = channelInfo.periods[chn]
             val row = frameInfo.row
@@ -180,9 +162,9 @@ fun ComposeChannelViewer(
             )
 
             /***** Instrument Name *****/
-            if (ins in 0..<numInstruments) {
+            if (ins in 0..<modVars.numInstruments) {
                 val chnNameText = textMeasurer.measure(
-                    text = AnnotatedString(insName[ins]),
+                    text = AnnotatedString(if (isMuted[chn]) "---" else insName[ins]),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = TextStyle(
@@ -258,9 +240,41 @@ fun ComposeChannelViewer(
                 size = Size(panRectWidth, 16f)
             )
 
+            /***** Scope or Mute Background X/Y *****/
+            val scopeXOffset = xAxisMultiplier + xAxisMultiplier.div(4)
+            val scopeYOffset =
+                yAxisMultiplier.times(chn) + yAxisMultiplier.div(6) + yOffset.value
+            val scopeHeight = yAxisMultiplier - yAxisMultiplier.div(3)
+
             /***** Waveform *****/
             if (isMuted[chn]) {
-                // TODO mute rect
+                drawRect(
+                    color = Color(60, 0, 0, 255),
+                    size = Size(
+                        width = scopeWidth,
+                        height = scopeHeight
+                    ),
+                    topLeft = Offset(
+                        x = scopeXOffset,
+                        y = scopeYOffset
+                    )
+                )
+                val muteText = textMeasurer.measure(
+                    text = AnnotatedString("MUTE"),
+                    style = TextStyle(
+                        color = Color.White,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = michromaFontFamily,
+                    )
+                )
+                drawText(
+                    textLayoutResult = muteText,
+                    topLeft = Offset(
+                        x = scopeXOffset + (scopeWidth - muteText.size.width) / 2,
+                        y = scopeYOffset + (scopeHeight - muteText.size.height) / 2
+                    )
+                )
             } else {
                 if (PlayerService.isAlive.value) {
                     // Be very careful here!
@@ -279,10 +293,6 @@ fun ComposeChannelViewer(
                 }
 
                 /***** Channel Scope Background *****/
-                val scopeXOffset = xAxisMultiplier + xAxisMultiplier.div(4)
-                val scopeYOffset =
-                    yAxisMultiplier.times(chn) + yAxisMultiplier.div(6) + yOffset.value
-                val scopeHeight = yAxisMultiplier - yAxisMultiplier.div(3)
                 drawRect(
                     color = Color(40, 40, 40, 255),
                     size = Size(
@@ -386,7 +396,7 @@ private fun Preview_ChannelViewer() {
             onTap = {},
             channelInfo = composeSampleChannelInfo(),
             frameInfo = composeSampleFrameInfo(),
-            isMuted = BooleanArray(modVars.numChannels) { false },
+            isMuted = BooleanArray(modVars.numChannels) { it % 2 == 0 },
             modVars = modVars,
             insName = Array(
                 modVars.numInstruments
