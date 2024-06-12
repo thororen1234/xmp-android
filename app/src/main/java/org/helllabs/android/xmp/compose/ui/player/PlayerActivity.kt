@@ -28,7 +28,7 @@ import androidx.compose.ui.window.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import java.nio.charset.StandardCharsets
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
@@ -61,7 +61,6 @@ import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerEvent
 import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
-import kotlin.time.Duration.Companion.milliseconds
 
 class PlayerActivity : ComponentActivity() {
 

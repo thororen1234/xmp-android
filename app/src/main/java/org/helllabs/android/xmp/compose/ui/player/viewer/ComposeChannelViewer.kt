@@ -282,11 +282,12 @@ fun ComposeChannelViewer(
                 val scopeXOffset = xAxisMultiplier + xAxisMultiplier.div(4)
                 val scopeYOffset =
                     yAxisMultiplier.times(chn) + yAxisMultiplier.div(6) + yOffset.value
+                val scopeHeight = yAxisMultiplier - yAxisMultiplier.div(3)
                 drawRect(
                     color = Color(40, 40, 40, 255),
                     size = Size(
                         width = scopeWidth,
-                        height = yAxisMultiplier - yAxisMultiplier.div(3)
+                        height = scopeHeight
                     ),
                     topLeft = Offset(
                         x = scopeXOffset,
@@ -294,52 +295,50 @@ fun ComposeChannelViewer(
                     )
                 )
 
-//                Timber.d(
-//                    "Channel: $chn, Buffer: \n ${buffer.joinToString(" ") { it.toString() }}"
-//                    "Channel $chn, Final Vol: ${viewInfo.finalVols[chn]}"
-//                )
-
-                // Sine wave to draw over the above rectangle.
-//                val centerY = scopeYOffset + (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
-//                val halfHeight = (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
-//                val maxVal = buffer.maxOrNull() ?: 127
-//                val minVal = buffer.minOrNull() ?: -128
-//                val volumeScale = viewInfo.finalVols[chn].coerceIn(0, 64) / 64f
-//                val yScale = halfHeight / (maxVal - minVal)
-//                buffer.forEachIndexed { index, byteValue ->
-//                    val x = scopeXOffset + (scopeWidth / buffer.size) * index
-//                    val y = if (byteValue == 0.toByte()) {
-//                        centerY
-//                    } else {
-//                        val scaledByteValue = byteValue * (halfHeight / 256f) * volumeScale
-//                        (centerY - scaledByteValue) - (byteValue * yScale * volumeScale)
-//                    }
+                // Waveform testing
+//                val buffer = ByteArray(Xmp.MAX_BUFFERS) { i ->
+//                    val minValue = -128
+//                    val maxValue = 127
 //
-//                    if (index == 0) {
-//                        waveformPath.moveTo(x, y)
-//                    } else {
-//                        waveformPath.lineTo(x, y)
-//                    }
+//                    // PI
+//                    // val amplitude = (maxValue - minValue) / 2
+//                    // val offset = (maxValue + minValue) / 2
+//                    // val angle = 2 * PI * i / Xmp.MAX_BUFFERS
+//                    // val value = sin(angle) * amplitude + offset
+//                    // value.toInt().toByte()
+//
+//                    // Random
+//                    // Random.nextInt(minValue, maxValue + 1).toByte()
+//
+//                    // Sawtooth
+//                    val range = maxValue - minValue + 1
+//                    val stepsPerRepeat = Xmp.MAX_BUFFERS / 24 // Tooth Steps
+//                    val value = ((i % stepsPerRepeat) * range / stepsPerRepeat + minValue).toByte()
+//                    value
+//
+//                    // Square
+//                    // val stepsPerRepeat = Xmp.MAX_BUFFERS / 8
+//                    // val halfPeriod = stepsPerRepeat / 2
+//                    // if (i % stepsPerRepeat < halfPeriod) maxValue.toByte() else minValue.toByte()
 //                }
+//                channelInfo.finalVols[chn] = 96
 
-                // TODO some wave forms are out of grid on some modules
-                // TODO some wave forms peek outside the scope background
-                val centerY = scopeYOffset + (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
-                val halfHeight = (yAxisMultiplier - yAxisMultiplier.div(3)) / 2
-                val maxVal = buffer.maxOrNull() ?: 127
-                val minVal = buffer.minOrNull() ?: -128
+                val centerY = scopeYOffset + (scopeHeight / 2)
+                val halfHeight = scopeHeight.div(2)
+                val maxVal = buffer.maxOrNull()?.toFloat() ?: 127f
+                val minVal = buffer.minOrNull()?.toFloat() ?: -128f
+                val range = maxVal - minVal
                 val volumeScale = channelInfo.finalVols[chn].coerceIn(0, 64) / 64f
-                val yScale = halfHeight / (maxVal - minVal)
                 val widthScale = scopeWidth / buffer.size
                 val xValues = FloatArray(buffer.size) { index -> scopeXOffset + widthScale * index }
                 buffer.forEachIndexed { index, byteValue ->
                     val x = xValues[index]
-                    val y = if (byteValue == 0.toByte()) {
-                        centerY
+                    val normalizedValue = if (byteValue == 0.toByte()) {
+                        0f
                     } else {
-                        val scaledByteValue = byteValue * (halfHeight / 256f) * volumeScale
-                        (centerY - scaledByteValue) - (byteValue * yScale * volumeScale)
+                        ((byteValue - minVal) / range - 0.5f) * 2f
                     }
+                    val y = centerY - (normalizedValue * halfHeight * volumeScale)
 
                     if (index == 0) {
                         waveformPath.moveTo(x, y)
