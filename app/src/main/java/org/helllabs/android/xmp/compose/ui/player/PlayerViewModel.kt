@@ -17,6 +17,7 @@ import timber.log.Timber
 
 @Stable
 data class PlayerState(
+    val allowUpdate: Boolean = false,
     val currentMessage: String = "",
     val currentViewer: Int = 0,
     val infoTitle: String = "",
@@ -62,15 +63,14 @@ data class PlayerSheetState(
 )
 
 @Stable
-data class PlayerActivitySate(
+data class PlayerActivityState(
     val fileList: List<Uri> = listOf(),
     val keepFirst: Boolean = false,
     val loopListMode: Boolean = false,
     val playTime: Float = 0F,
     val shuffleMode: Boolean = false,
     val start: Int = 0,
-    val totalTime: Int = 0,
-    val stopUpdate: Boolean = false
+    val totalTime: Int = 0
 )
 
 @Stable
@@ -92,7 +92,7 @@ data class ChannelMuteState(val isMuted: BooleanArray = BooleanArray(Xmp.MAX_CHA
 @Stable
 class PlayerViewModel : ViewModel() {
 
-    private val _activityState = MutableStateFlow(PlayerActivitySate())
+    private val _activityState = MutableStateFlow(PlayerActivityState())
     val activityState = _activityState.asStateFlow()
 
     /** Player Variables **/
@@ -294,9 +294,9 @@ class PlayerViewModel : ViewModel() {
         }
     }
 
-    fun stopUpdate(value: Boolean) {
-        _activityState.update {
-            it.copy(stopUpdate = value)
+    fun allowUpdate(value: Boolean) {
+        _uiState.update {
+            it.copy(allowUpdate = value)
         }
     }
 
