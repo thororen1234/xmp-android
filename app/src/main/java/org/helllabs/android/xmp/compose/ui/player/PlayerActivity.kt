@@ -71,11 +71,6 @@ class PlayerActivity : ComponentActivity() {
         const val PARM_START = "start"
 
         var canChangeViewer: Boolean = false // TODO
-
-        // Phone CPU's are more than capable enough to do more work with drawing.
-        // With android O+, we can use hardware rendering on the canvas, if supported.
-        private val newWaveform: Boolean by lazy { PrefManager.useBetterWaveform }
-        private val frameRate: Long = 1000L.div(if (newWaveform) 50 else 30)
     }
 
     private val viewModel by viewModels<PlayerViewModel>()
@@ -184,26 +179,6 @@ class PlayerActivity : ComponentActivity() {
             val closeMessage: (Boolean) -> Unit = remember {
                 {
                     viewModel.showMessage(it, "")
-                }
-            }
-            val deleteDialog: (Boolean) -> Unit = remember {
-                {
-                    // TODO
-                    // if (it) {
-                    //     if (modPlayer!!.deleteFile()) {
-                    //         modPlayer?.nextSong()
-                    //         setResult(2) // Why this?
-                    //         lifecycleScope.launch {
-                    //             snackBarHostState.showSnackbar("File Deleted.")
-                    //         }
-                    //     } else {
-                    //         lifecycleScope.launch {
-                    //             snackBarHostState.showSnackbar("Can't delete file")
-                    //         }
-                    //     }
-                    // }
-
-                    viewModel.showDeleteDialog(false)
                 }
             }
             val onSheetEvent: (PlayerSheetEvent) -> Unit = remember {
@@ -328,7 +303,7 @@ class PlayerActivity : ComponentActivity() {
                         // Update Speed, Bpm, Pos, Pat
                         viewModel.updateInfoState()
 
-                        delay(frameRate)
+                        delay(33.milliseconds)
                     }
                 }
             }
@@ -361,7 +336,6 @@ class PlayerActivity : ComponentActivity() {
                     onSeekEvent = onSeekEvent,
                     onChangeViewer = onChangeViewer,
                     onSheetVisibleDialog = showSheet,
-                    onDeleteDialog = deleteDialog
                 )
             }
         }
@@ -555,7 +529,6 @@ private fun PlayerScreen(
     timeState: PlayerTimeState,
     uiState: PlayerState,
     onChangeViewer: () -> Unit,
-    onDeleteDialog: (Boolean) -> Unit,
     onControlsEvent: (PlayerControlsEvent) -> Unit,
     onSeekEvent: (SeekEvent) -> Unit,
     onSheetEvent: (PlayerSheetEvent) -> Unit,
@@ -564,17 +537,6 @@ private fun PlayerScreen(
     val viewFlipperText by remember(uiState.infoTitle, uiState.infoType) {
         mutableStateOf(Pair(uiState.infoTitle, uiState.infoType))
     }
-
-    // Not implemented in view flipper
-    MessageDialog(
-        isShowing = uiState.showDeleteDialog,
-        icon = Icons.Default.DeleteForever,
-        title = "Delete",
-        text = "Are you sure to delete this file?",
-        confirmText = stringResource(id = R.string.delete),
-        onConfirm = { onDeleteDialog(true) },
-        onDismiss = { onDeleteDialog(false) }
-    )
 
     if (uiState.showInfoDialog) {
         Dialog(
@@ -744,7 +706,6 @@ private fun Preview_PlayerScreen(
             onSheetVisibleDialog = {
                 sheetVisible.value = it
             },
-            onDeleteDialog = { }
         )
     }
 }

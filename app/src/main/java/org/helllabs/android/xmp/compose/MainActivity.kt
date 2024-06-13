@@ -209,9 +209,7 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel,
                             snackBarHostState = snackBarHostState,
                             onBackPressedDispatcher = onBackPressedDispatcher,
-                            onBack = {
-                                navController.popBackStack()
-                            },
+                            onBack = navController::navigateUp,
                             onPlayAll = { modList, isShuffleMode, isLoopMode ->
                                 onPlayAll(
                                     modList = modList,
@@ -272,7 +270,7 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel,
                             snackBarHostState = snackBarHostState,
                             playlist = args.playlist,
-                            onBack = navController::popBackStack,
+                            onBack = navController::navigateUp,
                             onPlayAll = { modList, isShuffleMode, isLoopMode ->
                                 onPlayAll(
                                     modList = modList,
@@ -313,7 +311,7 @@ class MainActivity : ComponentActivity() {
                     /** Search and Download **/
                     composable<NavSearch> {
                         SearchScreen(
-                            onBack = navController::popBackStack,
+                            onBack = navController::navigateUp,
                             onSearch = { query, selection ->
                                 navController.navigate(NavSearchTitleResult(query, selection))
                             },
@@ -325,7 +323,7 @@ class MainActivity : ComponentActivity() {
                         var historyList = remember { PrefManager.searchHistory }
                         SearchHistoryScreen(
                             historyList = historyList,
-                            onBack = navController::popBackStack,
+                            onBack = navController::navigateUp,
                             onClear = {
                                 PrefManager.searchHistory = listOf()
                                 historyList = listOf()
@@ -353,7 +351,7 @@ class MainActivity : ComponentActivity() {
                             viewModel = viewModel,
                             searchSelection = args.searchSelection,
                             searchQuery = args.searchQuery,
-                            onBack = navController::popBackStack,
+                            onBack = navController::navigateUp,
                             onClick = { id -> navController.navigate(NavSearchResult(id)) },
                             onError = { err -> navController.navigate(NavSearchError(err)) }
                         )
@@ -368,7 +366,7 @@ class MainActivity : ComponentActivity() {
                             snackBarHostState = snackBarHostState,
                             moduleID = args.moduleID,
                             onShare = ::shareLink,
-                            onBack = navController::popBackStack,
+                            onBack = navController::navigateUp,
                             onError = { err -> navController.navigate(NavSearchError(err)) }
                         )
                     }
@@ -376,7 +374,7 @@ class MainActivity : ComponentActivity() {
                     composable<NavPreferences> {
                         PreferencesScreen(
                             snackBarHostState = snackBarHostState,
-                            onBack = navController::popBackStack,
+                            onBack = navController::navigateUp,
                             onFormats = { navController.navigate(NavPreferenceFormats) },
                             onAbout = { navController.navigate(NavPreferenceAbout) }
                         )
@@ -387,7 +385,7 @@ class MainActivity : ComponentActivity() {
                         AboutScreen(
                             buildVersion = buildVersion,
                             libVersion = xmpVersion,
-                            onBack = navController::popBackStack
+                            onBack = navController::navigateUp
                         )
                     }
                     composable<NavPreferenceFormats> {
@@ -395,7 +393,7 @@ class MainActivity : ComponentActivity() {
                         FormatsScreen(
                             snackBarHostState = snackBarHostState,
                             formatsList = formats,
-                            onBack = navController::popBackStack
+                            onBack = navController::navigateUp
                         )
                     }
                 }

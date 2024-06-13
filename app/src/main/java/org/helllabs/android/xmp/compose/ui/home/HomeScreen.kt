@@ -227,7 +227,7 @@ fun HomeScreenImpl(
         onRefresh = viewModel::updateList,
         onNewPlaylist = { viewModel.newPlaylist(true) },
         onTitleClicked = {
-            if (PrefManager.startOnPlayer && PlayerService.isAlive.value) {
+            if (PlayerService.isAlive.value) {
                 Intent(context, PlayerActivity::class.java).also(playerResult::launch)
             }
         },

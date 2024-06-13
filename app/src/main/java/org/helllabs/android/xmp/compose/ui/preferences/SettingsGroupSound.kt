@@ -210,26 +210,6 @@ fun SettingsGroupSound() {
             }
         )
 
-        val headset by remember { mutableStateOf(PrefManager.headsetPause) }
-        SettingsSwitch(
-            title = { Text(text = stringResource(id = R.string.pref_headset_pause_title)) },
-            subtitle = { Text(text = stringResource(id = R.string.pref_headset_pause_summary)) },
-            state = headset,
-            onCheckedChange = {
-                PrefManager.headsetPause = it
-            }
-        )
-
-        val bluetooth by remember { mutableStateOf(PrefManager.bluetoothPause) }
-        SettingsSwitch(
-            title = { Text(text = stringResource(id = R.string.pref_bluetooth_pause_title)) },
-            subtitle = { Text(text = stringResource(id = R.string.pref_bluetooth_pause_summary)) },
-            state = bluetooth,
-            onCheckedChange = {
-                PrefManager.bluetoothPause = it
-            }
-        )
-
         val allSequence by remember { mutableStateOf(PrefManager.allSequences) }
         SettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_all_sequences_title)) },

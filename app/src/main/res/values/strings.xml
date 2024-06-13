@@ -128,8 +128,6 @@
     <string name="pref_default_pan_dialog">Set the default pan separation: %s</string>
     <string name="pref_default_pan_summary">Set the default pan separation in old modules with hard L—R channels</string>
     <string name="pref_default_pan_title">Default pan separation</string>
-    <string name="pref_draw_lines_summary">Smoother and nicer looking waveforms.\n(Uses more CPU!)</string>
-    <string name="pref_draw_lines_title">Use better waveform</string>-->
     <string name="pref_enable_delete_summary">Display a menu option to delete the currently playing file</string>
     <string name="pref_enable_delete_title">Enable file delete</string>
     <string name="pref_examples_summary">Install example music files when creating modules directory</string>

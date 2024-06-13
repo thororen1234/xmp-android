@@ -59,13 +59,6 @@ object PrefManager {
             setPref(SAF_PATH, value)
         }
 
-    private val START_ON_PLAYER = booleanPreferencesKey("start_on_player")
-    var startOnPlayer: Boolean
-        get() = getPref(START_ON_PLAYER, true)
-        set(value) {
-            setPref(START_ON_PLAYER, value)
-        }
-
     /**
      * 1. Start playing at selection
      * 2. Play selected file
@@ -77,13 +70,6 @@ object PrefManager {
         get() = getPref(PLAYLIST_MODE, 1)
         set(value) {
             setPref(PLAYLIST_MODE, value)
-        }
-
-    private val ENABLE_DELETE = booleanPreferencesKey("enable_delete")
-    var enableDelete: Boolean
-        get() = getPref(ENABLE_DELETE, false)
-        set(value) {
-            setPref(ENABLE_DELETE, value)
         }
 
     private val ALL_SEQUENCES = booleanPreferencesKey("all_sequences")
@@ -217,34 +203,6 @@ object PrefManager {
         get() = getPref(AMIGA_MIXER, false)
         set(value) {
             setPref(AMIGA_MIXER, value)
-        }
-
-    private val HEADSET_PAUSE = booleanPreferencesKey("headset_pause")
-    var headsetPause: Boolean
-        get() = getPref(HEADSET_PAUSE, true)
-        set(value) {
-            setPref(HEADSET_PAUSE, value)
-        }
-
-    private val BLUETOOTH_PAUSE = booleanPreferencesKey("bluetooth_pause")
-    var bluetoothPause: Boolean
-        get() = getPref(BLUETOOTH_PAUSE, true)
-        set(value) {
-            setPref(BLUETOOTH_PAUSE, value)
-        }
-
-    private val BETTER_WAVEFORM = booleanPreferencesKey("new_waveform")
-    var useBetterWaveform: Boolean
-        get() = getPref(BETTER_WAVEFORM, true)
-        set(value) {
-            setPref(BETTER_WAVEFORM, value)
-        }
-
-    private val MEDIA_STYLE = booleanPreferencesKey("use_media_style")
-    var useMediaStyle: Boolean
-        get() = getPref(MEDIA_STYLE, true)
-        set(value) {
-            setPref(MEDIA_STYLE, value)
         }
 
     private val SEARCH_HISTORY = stringPreferencesKey("search_history")

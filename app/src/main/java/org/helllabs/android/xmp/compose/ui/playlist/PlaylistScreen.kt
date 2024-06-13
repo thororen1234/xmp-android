@@ -25,6 +25,7 @@ import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.playlist.components.PlaylistCardItem
 import org.helllabs.android.xmp.compose.ui.playlist.components.PlaylistInfo
+import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.Playlist
 import org.helllabs.android.xmp.model.PlaylistItem
@@ -52,6 +53,7 @@ fun PlaylistScreenImpl(
     LifecycleResumeEffect(Lifecycle.Event.ON_RESUME) {
         Timber.d("Lifecycle onResume")
         viewModel.onRefresh(playlist)
+        viewModel.useFileName(PrefManager.useFileName)
 
         onPauseOrDispose {
             Timber.d("Lifecycle onPause")
@@ -227,6 +229,7 @@ private fun PlaylistScreen(
                             scope = this,
                             elevation = elevation,
                             item = item,
+                            useFileName = state.useFileName,
                             onItemClick = { onItemClick(index) },
                             onMenuClick = { onMenuClick(item, index, it) },
                             onDragStopped = onDragStopped

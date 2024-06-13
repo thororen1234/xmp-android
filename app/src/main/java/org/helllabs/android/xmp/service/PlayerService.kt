@@ -514,8 +514,7 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
                     .setSubtitle(modInfo.type)
                     .build()
 
-                val queueItem = MediaSessionCompat.QueueItem(desc, desc.hashCode().toLong())
-                queueItem
+                MediaSessionCompat.QueueItem(desc, desc.hashCode().toLong())
             } else {
                 Timber.w("Item: $item was not a valid module")
                 null

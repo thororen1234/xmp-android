@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import me.saket.cascade.CascadeDropdownMenu
 import org.helllabs.android.xmp.compose.components.XmpDropdownMenuHeader
 import org.helllabs.android.xmp.compose.theme.XmpTheme
+import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.DropDownItem
 import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.PlaylistItem
@@ -53,6 +54,7 @@ fun PlaylistCardItem(
     scope: ReorderableCollectionItemScope,
     elevation: Dp,
     item: PlaylistItem,
+    useFileName: Boolean,
     onItemClick: () -> Unit,
     onMenuClick: (DropDownSelection) -> Unit,
     onDragStopped: () -> Unit
@@ -87,7 +89,12 @@ fun PlaylistCardItem(
                     )
                 },
                 headlineContent = {
-                    Text(text = item.name)
+                    val text = if (useFileName) {
+                        StorageManager.getFileName(item.uri) ?: item.name
+                    } else {
+                        item.name
+                    }
+                    Text(text = text)
                 },
                 supportingContent = {
                     Text(text = item.type)
@@ -161,6 +168,7 @@ private fun Preview_PlaylistCardItem() {
                                 type = "Playlist comment",
                                 uri = Uri.EMPTY
                             ),
+                            useFileName = false,
                             onItemClick = { },
                             onMenuClick = { },
                             onDragStopped = { }

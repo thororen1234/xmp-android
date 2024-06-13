@@ -79,4 +79,10 @@ class PlaylistViewModel : ViewModel() {
         _uiState.update { it.copy(list = list) }
         save() // Save just in-case
     }
+
+    fun useFileName(useFileName: Boolean) {
+        _uiState.update {
+            it.copy(useFileName = useFileName)
+        }
+    }
 }

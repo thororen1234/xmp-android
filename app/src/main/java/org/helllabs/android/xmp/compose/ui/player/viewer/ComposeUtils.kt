@@ -35,7 +35,6 @@ internal fun DrawScope.debugPatternViewColumns(
     }
 }
 
-@Suppress("unused")
 internal fun DrawScope.debugScreen(
     textMeasurer: TextMeasurer,
     xValue: Float = 24.dp.toPx(),

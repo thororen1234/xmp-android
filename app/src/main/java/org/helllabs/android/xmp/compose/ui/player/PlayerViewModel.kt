@@ -17,15 +17,14 @@ import timber.log.Timber
 
 @Stable
 data class PlayerState(
-    val serviceConnected: Boolean = false,
-    val showInfoDialog: Boolean = false,
-    val showMessageDialog: Boolean = false,
-    val showDeleteDialog: Boolean = false,
-    val currentViewer: Int = 0,
     val currentMessage: String = "",
+    val currentViewer: Int = 0,
     val infoTitle: String = "",
     val infoType: String = "",
     val screenOn: Boolean = true,
+    val serviceConnected: Boolean = false,
+    val showInfoDialog: Boolean = false,
+    val showMessageDialog: Boolean = false,
     val skipToPrevious: Boolean = false
 )
 
@@ -310,12 +309,6 @@ class PlayerViewModel : ViewModel() {
     fun showMessage(value: Boolean, message: String) {
         _uiState.update {
             it.copy(showMessageDialog = value, currentMessage = message)
-        }
-    }
-
-    fun showDeleteDialog(value: Boolean) {
-        _uiState.update {
-            it.copy(showDeleteDialog = value)
         }
     }
 

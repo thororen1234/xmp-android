@@ -6,12 +6,13 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class Playlist(
-    var name: String = "",
     var comment: String = "",
     var isLoop: Boolean = false,
     var isShuffle: Boolean = false,
+    var list: List<PlaylistItem> = listOf(),
+    var name: String = "",
     var uri: Uri = Uri.EMPTY,
-    var list: List<PlaylistItem> = listOf()
+    var useFileName: Boolean = false
 ) {
     companion object {
         const val SUFFIX = ".json"

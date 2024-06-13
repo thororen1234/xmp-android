@@ -33,37 +33,6 @@ fun SettingsGroupInterface() {
                 PrefManager.keepScreenOn = it
             }
         )
-        var betterWaveform by remember { mutableStateOf(PrefManager.useBetterWaveform) }
-        SettingsSwitch(
-            title = { Text(text = stringResource(id = R.string.pref_draw_lines_title)) },
-            subtitle = { Text(text = stringResource(id = R.string.pref_draw_lines_summary)) },
-            state = betterWaveform,
-            onCheckedChange = {
-                betterWaveform = it
-                PrefManager.useBetterWaveform = it
-            }
-        )
-        var startOnPlayer by remember { mutableStateOf(PrefManager.startOnPlayer) }
-        SettingsSwitch(
-            title = { Text(text = stringResource(id = R.string.pref_start_on_player_title)) },
-            subtitle = { Text(text = stringResource(id = R.string.pref_start_on_player_summary)) },
-            state = startOnPlayer,
-            onCheckedChange = {
-                startOnPlayer = it
-                PrefManager.startOnPlayer = it
-            }
-        )
-        var enableDelete by remember { mutableStateOf(PrefManager.enableDelete) }
-        SettingsSwitch(
-            title = { Text(text = stringResource(id = R.string.pref_enable_delete_title)) },
-            subtitle = { Text(text = stringResource(id = R.string.pref_enable_delete_summary)) },
-            state = enableDelete,
-            onCheckedChange = {
-                enableDelete = it
-                PrefManager.enableDelete = it
-            }
-        )
-
         var showHex by remember { mutableStateOf(PrefManager.showHex) }
         SettingsSwitch(
             title = { Text(text = "Show hex values") },
@@ -72,19 +41,6 @@ fun SettingsGroupInterface() {
             onCheckedChange = {
                 showHex = it
                 PrefManager.showHex = it
-            }
-        )
-
-        var useMediaStyle by remember { mutableStateOf(PrefManager.useMediaStyle) }
-        SettingsSwitch(
-            title = { Text(text = "Use media style notification") },
-            subtitle = {
-                Text(text = "Use a standard notification for media controls if disabled")
-            },
-            state = useMediaStyle,
-            onCheckedChange = {
-                useMediaStyle = it
-                PrefManager.useMediaStyle = it
             }
         )
     }
