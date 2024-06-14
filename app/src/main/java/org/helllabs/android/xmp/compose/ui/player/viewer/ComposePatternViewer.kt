@@ -34,7 +34,6 @@ import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.seed
 import org.helllabs.android.xmp.compose.ui.player.ChannelMuteState
-import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.player.Util
 import org.helllabs.android.xmp.model.FrameInfo
 import org.helllabs.android.xmp.model.ModVars
@@ -44,13 +43,15 @@ import timber.log.Timber
 // Maybe keep the row numbers in view at all times, and move the channel columns instead?
 
 // TODO: Lag when there are many channels, is it culling right?
+//  many calls to textMeasure seems to tank performance.
 
 @Composable
 internal fun ComposePatternViewer(
     onTap: () -> Unit,
-    modType: String,
+    allowUpdate: Boolean,
     fi: FrameInfo,
     isMuted: ChannelMuteState,
+    modType: String,
     modVars: ModVars
 ) {
     val density = LocalDensity.current
@@ -243,8 +244,15 @@ internal fun ComposePatternViewer(
                 // Our variables are latency-compensated but pattern data is current
                 // so caution is needed to avoid retrieving data using old variables
                 // from a module with pattern data from a newly loaded one.
-                if (PlayerService.isAlive.value && PlayerActivity.canChangeViewer) {
-                    Xmp.getPatternRow(fi.pattern, i, rowNotes, rowInsts, rowFxType, rowFxParm)
+                if (PlayerService.isAlive.value && allowUpdate) {
+                    Xmp.getPatternRow(
+                        pat = fi.pattern,
+                        row = i,
+                        rowNotes = rowNotes,
+                        rowInstruments = rowInsts,
+                        rowFxType = rowFxType,
+                        rowFxParm = rowFxParm
+                    )
                 }
 
                 val info = textMeasurer.measure(
@@ -405,7 +413,8 @@ private fun Preview_PatternViewer() {
             modType = "FastTracker v2.00 XM 1.04",
             fi = composeSampleFrameInfo(),
             isMuted = ChannelMuteState(isMuted = BooleanArray(modVars.numChannels) { false }),
-            modVars = modVars
+            modVars = modVars,
+            allowUpdate = false,
         )
     }
 }

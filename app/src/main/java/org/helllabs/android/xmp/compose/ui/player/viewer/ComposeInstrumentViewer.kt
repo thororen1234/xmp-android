@@ -28,9 +28,9 @@ private val barShape = CornerRadius(8f, 8f)
 internal fun InstrumentViewer(
     onTap: () -> Unit,
     channelInfo: ChannelInfo,
+    insName: Array<String>,
     isMuted: ChannelMuteState,
-    modVars: ModVars,
-    insName: Array<String>
+    modVars: ModVars
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()

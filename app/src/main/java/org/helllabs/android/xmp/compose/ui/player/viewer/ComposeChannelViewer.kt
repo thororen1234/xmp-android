@@ -37,9 +37,9 @@ fun ComposeChannelViewer(
     onTap: () -> Unit,
     channelInfo: ChannelInfo,
     frameInfo: FrameInfo,
+    insName: Array<String>,
     isMuted: ChannelMuteState,
-    modVars: ModVars,
-    insName: Array<String>
+    modVars: ModVars
 ) {
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()

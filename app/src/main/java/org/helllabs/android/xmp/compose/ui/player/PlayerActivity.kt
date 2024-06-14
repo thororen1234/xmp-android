@@ -1,6 +1,7 @@
 package org.helllabs.android.xmp.compose.ui.player
 
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.res.Configuration
@@ -69,8 +70,6 @@ class PlayerActivity : ComponentActivity() {
         const val PARM_LOOP = "loop"
         const val PARM_SHUFFLE = "shuffle"
         const val PARM_START = "start"
-
-        var canChangeViewer: Boolean = false // TODO
     }
 
     private val viewModel by viewModels<PlayerViewModel>()
@@ -115,7 +114,7 @@ class PlayerActivity : ComponentActivity() {
 
             saveAllSeqPreference()
             viewModel.onConnected(false)
-            viewModel.stopUpdate(true)
+            viewModel.allowUpdate(false)
 
             modPlayer = null
 
@@ -268,7 +267,7 @@ class PlayerActivity : ComponentActivity() {
                     viewModel.resetPlayTime()
 
                     while (true) {
-                        if (viewModel.activityState.value.stopUpdate &&
+                        if (!viewModel.uiState.value.allowUpdate &&
                             viewModel.activityState.value.playTime < 0
                         ) {
                             Timber.i("Stop update")
@@ -365,65 +364,65 @@ class PlayerActivity : ComponentActivity() {
         screenReceiver.unregister(this)
     }
 
-    // TODO ugly! Can it be simplified?
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        Timber.d("onNewIntent")
-
-        var reconnect = false
-        var fromHistory = false
+        Timber.i("onNewIntent")
 
         if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) {
             Timber.i("Player started from history")
-            fromHistory = true
-        }
 
-        val path: Uri? = intent.data
-
-        if (path != null) {
-            // from intent filter
-            Timber.i("Player started from intent filter")
-            viewModel.setActivityState(
-                fileList = listOf(path),
-                shuffleMode = false,
-                loopListMode = false,
-                keepFirst = false,
-                start = 0,
-            )
-        } else if (fromHistory) {
-            // Oops. We don't want to start service if launched from history and service is not running
-            // so run the browser instead.
-            Timber.i("Start file browser")
-
-            setResult(RESULT_OK)
-            finish()
-
-            return
+            val path: Uri? = intent.data
+            if (path != null) {
+                Timber.i("Player started from intent filter")
+                startPlayerFromIntentFilter(path)
+            } else {
+                Timber.i("Start file browser")
+                setResult(RESULT_OK)
+                finish()
+            }
         } else {
+            val path: Uri? = intent.data
             val extras = intent.extras
-            if (extras != null) {
+
+            if (path != null) {
+                Timber.i("Player started from intent filter")
+                startPlayerFromIntentFilter(path)
+            } else if (extras != null) {
                 val app = XmpApplication.instance!!
                 viewModel.setActivityState(
                     fileList = app.fileListUri.orEmpty(),
                     shuffleMode = extras.getBoolean(PARM_SHUFFLE),
                     loopListMode = extras.getBoolean(PARM_LOOP),
                     keepFirst = extras.getBoolean(PARM_KEEPFIRST),
-                    start = extras.getInt(PARM_START),
+                    start = extras.getInt(PARM_START)
                 )
                 app.clearFileList()
+                startAndBindService(reconnect = false)
             } else {
-                reconnect = true
+                startAndBindService(reconnect = true)
             }
         }
+    }
 
+    private fun startPlayerFromIntentFilter(path: Uri) {
+        viewModel.setActivityState(
+            fileList = listOf(path),
+            shuffleMode = false,
+            loopListMode = false,
+            keepFirst = false,
+            start = 0
+        )
+    }
+
+    private fun startAndBindService(reconnect: Boolean) {
         val service = Intent(this, PlayerService::class.java)
+
         if (!reconnect) {
             Timber.i("Start service")
             startService(service)
         }
 
-        Timber.d("Binding to service")
-        if (!bindService(service, connection, 0)) {
+        if (!bindService(service, connection, Context.BIND_AUTO_CREATE)) {
             Timber.e("Can't bind to service")
             setResult(RESULT_OK)
             finish()
@@ -434,14 +433,13 @@ class PlayerActivity : ComponentActivity() {
         when (event) {
             PlayerEvent.EndMod -> {
                 Timber.d("endModCallback: end of module")
-                viewModel.stopUpdate(true)
-                canChangeViewer = false
+                viewModel.allowUpdate(false)
             }
 
             is PlayerEvent.NewMod -> {
                 Timber.d("newModCallback: show module data")
                 viewModel.showNewMod(modPlayer!!, event.isPrevious)
-                canChangeViewer = true
+                viewModel.allowUpdate(true)
             }
 
             PlayerEvent.NewSequence -> {
@@ -452,6 +450,8 @@ class PlayerActivity : ComponentActivity() {
                 val modVars = ModVars()
                 Xmp.getModVars(modVars)
                 viewModel.modVars.update { modVars }
+
+                viewModel.allowUpdate(true)
 
                 viewModel.showNewSequence { time ->
                     val minutes = time / 60000
@@ -465,15 +465,17 @@ class PlayerActivity : ComponentActivity() {
 
             PlayerEvent.Paused -> {
                 modPlayer?.let { viewModel.isPlaying(false) }
+                viewModel.allowUpdate(false)
             }
 
             PlayerEvent.Play -> {
                 modPlayer?.let { viewModel.isPlaying(true) }
+                viewModel.allowUpdate(true)
             }
 
             is PlayerEvent.EndPlay -> {
                 Timber.d("endPlayCallback: End progress thread")
-                viewModel.stopUpdate(true)
+                viewModel.allowUpdate(false)
                 val resultIntent = Intent().apply {
                     val message = when (event.result) {
                         EndPlayback.ERROR_FOCUS -> "Unable to get Audio Focus"
@@ -617,26 +619,27 @@ private fun PlayerScreen(
                 0 -> InstrumentViewer(
                     onTap = onChangeViewer,
                     channelInfo = channelInfo,
+                    insName = instrumentNames,
                     isMuted = isMuted,
                     modVars = modVars,
-                    insName = instrumentNames
                 )
 
                 1 -> ComposePatternViewer(
                     onTap = onChangeViewer,
-                    modType = uiState.infoType,
+                    allowUpdate = uiState.allowUpdate,
                     fi = frameInfo,
                     isMuted = isMuted,
-                    modVars = modVars
+                    modType = uiState.infoType,
+                    modVars = modVars,
                 )
 
                 2 -> ComposeChannelViewer(
                     onTap = onChangeViewer,
-                    frameInfo = frameInfo,
                     channelInfo = channelInfo,
+                    frameInfo = frameInfo,
+                    insName = instrumentNames,
                     isMuted = isMuted,
                     modVars = modVars,
-                    insName = instrumentNames
                 )
             }
         }
