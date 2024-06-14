@@ -103,6 +103,15 @@ fun ComposeChannelViewer(
         }
         delta
     }
+    LaunchedEffect(modVars.numInstruments, modVars.numChannels) {
+        // Scroll to the top on song change
+        scope.launch {
+            yOffset.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = 300)
+            )
+        }
+    }
     val waveformPath = remember { Path() }
 
     Canvas(
