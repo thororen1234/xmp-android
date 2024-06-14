@@ -1,8 +1,9 @@
-#include <stdlib.h>
+#include "audio.h"
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 #include <pthread.h>
-#include "audio.h"
+#include <stdatomic.h>
+#include <stdlib.h>
 #include <time.h>
 
 /* #include <android/log.h> */
@@ -19,12 +20,13 @@ static SLObjectItf output_mix_obj;
 static SLObjectItf player_obj;
 static SLPlayItf player_play;
 static SLVolumeItf player_vol;
+static atomic_int first_free;
+static atomic_int last_free;
 static char *buffer;
 static int buffer_num;
 static int buffer_size;
 static int playing;
 static pthread_mutex_t mutex;
-static volatile int first_free, last_free;
 
 #define TAG "Xmp"
 #define BUFFER_TIME 40

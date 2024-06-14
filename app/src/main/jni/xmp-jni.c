@@ -14,8 +14,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
-#define PERIOD_BASE 13696
 #define MAX_BUFFER_SIZE 256
+#define PERIOD_BASE 13696
 
 #define lock()   pthread_mutex_lock(&mutex)
 #define unlock() pthread_mutex_unlock(&mutex)
@@ -26,27 +26,25 @@ static xmp_context ctx = NULL;
 static struct xmp_module_info mi;
 static struct xmp_frame_info *fi;
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "bugprone-reserved-identifier"
-static int _buffer_num;
-static int _cur_vol[XMP_MAX_CHANNELS];
-static int _decay = 4;
-static int _finalvol[XMP_MAX_CHANNELS];
-static int _hold_vol[XMP_MAX_CHANNELS];
-static int _ins[XMP_MAX_CHANNELS];
-static int _key[XMP_MAX_CHANNELS];
-static int _last_key[XMP_MAX_CHANNELS];
-static int _loop_count;
-static int _mod_is_loaded;
-static int _now, _before;
-static int _pan[XMP_MAX_CHANNELS];
-static int _period[XMP_MAX_CHANNELS];
-static int _playing = 0;
-static int _pos[XMP_MAX_CHANNELS];
-static int _sequence;
-static jbyte _buffer[MAX_BUFFER_SIZE];
+static int g_before;
+static int g_buffer_num;
+static int g_cur_vol[XMP_MAX_CHANNELS];
+static int g_decay = 4;
+static int g_final_vol[XMP_MAX_CHANNELS];
+static int g_hold_vol[XMP_MAX_CHANNELS];
+static int g_ins[XMP_MAX_CHANNELS];
+static int g_key[XMP_MAX_CHANNELS];
+static int g_last_key[XMP_MAX_CHANNELS];
+static int g_loop_count;
+static int g_mod_is_loaded;
+static int g_now;
+static int g_pan[XMP_MAX_CHANNELS];
+static int g_period[XMP_MAX_CHANNELS];
+static int g_playing = 0;
+static int g_pos[XMP_MAX_CHANNELS];
+static int g_sequence;
+static jbyte g_buffer[MAX_BUFFER_SIZE];
 static pthread_mutex_t mutex;
-#pragma clang diagnostic pop
 
 typedef struct {
     jfieldID name;
@@ -157,7 +155,7 @@ JNI_FUNCTION(init)(JNIEnv *env, jobject obj, jint rate, jint ms) {
         return JNI_FALSE;
     }
 
-    if ((_buffer_num = open_audio(rate, ms)) < 0) {
+    if ((g_buffer_num = open_audio(rate, ms)) < 0) {
         return JNI_FALSE;
     }
 
@@ -206,9 +204,9 @@ JNI_FUNCTION(loadModuleFd)(JNIEnv *env, jobject obj, jint fd) {
 
     xmp_get_module_info(ctx, &mi);
 
-    memset(_pos, 0, XMP_MAX_CHANNELS * sizeof(int));
-    _sequence = 0;
-    _mod_is_loaded = 1;
+    memset(g_pos, 0, XMP_MAX_CHANNELS * sizeof(int));
+    g_sequence = 0;
+    g_mod_is_loaded = 1;
 
     fclose(file);
 
@@ -255,8 +253,8 @@ JNI_FUNCTION(releaseModule)(JNIEnv *env, jobject obj) {
 
     lock();
 
-    if (_mod_is_loaded) {
-        _mod_is_loaded = 0;
+    if (g_mod_is_loaded) {
+        g_mod_is_loaded = 0;
         xmp_release_module(ctx);
     }
 
@@ -274,20 +272,20 @@ JNI_FUNCTION(startPlayer)(JNIEnv *env, jobject obj, jint rate) {
 
     lock();
 
-    fi = calloc(1, _buffer_num * sizeof(struct xmp_frame_info));
+    fi = calloc(1, g_buffer_num * sizeof(struct xmp_frame_info));
     if (fi == NULL) {
         unlock();
         return -101;
     }
 
     for (i = 0; i < XMP_MAX_CHANNELS; i++) {
-        _key[i] = -1;
-        _last_key[i] = -1;
+        g_key[i] = -1;
+        g_last_key[i] = -1;
     }
 
-    _now = _before = 0;
-    _loop_count = 0;
-    _playing = 1;
+    g_now = g_before = 0;
+    g_loop_count = 0;
+    g_playing = 1;
     ret = xmp_start_player(ctx, rate, 0);
 
     unlock();
@@ -302,8 +300,8 @@ JNI_FUNCTION(endPlayer)(JNIEnv *env, jobject obj) {
 
     lock();
 
-    if (_playing) {
-        _playing = 0;
+    if (g_playing) {
+        g_playing = 0;
         xmp_end_player(ctx);
         free(fi);
         fi = NULL;
@@ -320,13 +318,13 @@ int play_buffer(void *buffer, int size, int looped) {
 
     lock();
 
-    if (_playing) {
-        num_loop = looped ? 0 : _loop_count + 1;
+    if (g_playing) {
+        num_loop = looped ? 0 : g_loop_count + 1;
         ret = xmp_play_buffer(ctx, buffer, size, num_loop);
-        xmp_get_frame_info(ctx, &fi[_now]);
-        INC(_before, _buffer_num);
-        _now = (_before + _buffer_num - 1) % _buffer_num;
-        _loop_count = fi[_now].loop_count;
+        xmp_get_frame_info(ctx, &fi[g_now]);
+        INC(g_before, g_buffer_num);
+        g_now = (g_before + g_buffer_num - 1) % g_buffer_num;
+        g_loop_count = fi[g_now].loop_count;
     }
 
     unlock();
@@ -438,8 +436,8 @@ JNI_FUNCTION(seek)(JNIEnv *env, jobject obj, jint time) {
 
     ret = xmp_seek_time(ctx, time);
 
-    if (_playing) {
-        for (i = 0; i < _buffer_num; i++) {
+    if (g_playing) {
+        for (i = 0; i < g_buffer_num; i++) {
             fi[i].time = time;
         }
     }
@@ -454,7 +452,7 @@ JNI_FUNCTION(time)(JNIEnv *env, jobject obj) {
     (void) env;
     (void) obj;
 
-    return _playing ? fi[_before].time : -1;
+    return g_playing ? fi[g_before].time : -1;
 }
 
 JNIEXPORT jint JNICALL
@@ -469,7 +467,7 @@ JNIEXPORT void JNICALL
 JNI_FUNCTION(getInfo)(JNIEnv *env, jobject obj, jobject frameInfo) {
     (void) obj;
 
-    if (!_mod_is_loaded)
+    if (!g_mod_is_loaded)
         return;
 
     // Sanity
@@ -479,14 +477,14 @@ JNI_FUNCTION(getInfo)(JNIEnv *env, jobject obj, jobject frameInfo) {
 
     lock();
 
-    if (_playing) {
-        (*env)->SetIntField(env, frameInfo, frameInfoIDs.posField, fi[_before].pos);
-        (*env)->SetIntField(env, frameInfo, frameInfoIDs.patternField, fi[_before].pattern);
-        (*env)->SetIntField(env, frameInfo, frameInfoIDs.rowField, fi[_before].row);
-        (*env)->SetIntField(env, frameInfo, frameInfoIDs.numRowsField, fi[_before].num_rows);
-        (*env)->SetIntField(env, frameInfo, frameInfoIDs.frameField, fi[_before].frame);
-        (*env)->SetIntField(env, frameInfo, frameInfoIDs.speedField, fi[_before].speed);
-        (*env)->SetIntField(env, frameInfo, frameInfoIDs.bpmField, fi[_before].bpm);
+    if (g_playing) {
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.posField, fi[g_before].pos);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.patternField, fi[g_before].pattern);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.rowField, fi[g_before].row);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.numRowsField, fi[g_before].num_rows);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.frameField, fi[g_before].frame);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.speedField, fi[g_before].speed);
+        (*env)->SetIntField(env, frameInfo, frameInfoIDs.bpmField, fi[g_before].bpm);
     }
 
     unlock();
@@ -513,7 +511,7 @@ JNI_FUNCTION(getLoopCount)(JNIEnv *env, jobject obj) {
     (void) env;
     (void) obj;
 
-    return fi[_before].loop_count;
+    return fi[g_before].loop_count;
 }
 
 JNIEXPORT void JNICALL
@@ -522,7 +520,7 @@ JNI_FUNCTION(getModVars)(JNIEnv *env, jobject obj, jobject modVars) {
 
     lock();
 
-    if (!_mod_is_loaded) {
+    if (!g_mod_is_loaded) {
         unlock();
         return;
     }
@@ -532,14 +530,14 @@ JNI_FUNCTION(getModVars)(JNIEnv *env, jobject obj, jobject modVars) {
         cacheModVarsIDs(env);
     }
 
-    (*env)->SetIntField(env, modVars, modVarsIDs.seqDuration, mi.seq_data[_sequence].duration);
+    (*env)->SetIntField(env, modVars, modVarsIDs.seqDuration, mi.seq_data[g_sequence].duration);
     (*env)->SetIntField(env, modVars, modVarsIDs.lengthInPatterns, mi.mod->len);
     (*env)->SetIntField(env, modVars, modVarsIDs.numPatterns, mi.mod->pat);
     (*env)->SetIntField(env, modVars, modVarsIDs.numChannels, mi.mod->chn);
     (*env)->SetIntField(env, modVars, modVarsIDs.numInstruments, mi.mod->ins);
     (*env)->SetIntField(env, modVars, modVarsIDs.numSamples, mi.mod->smp);
     (*env)->SetIntField(env, modVars, modVarsIDs.numSequence, mi.num_sequences);
-    (*env)->SetIntField(env, modVars, modVarsIDs.currentSequence, _sequence);
+    (*env)->SetIntField(env, modVars, modVarsIDs.currentSequence, g_sequence);
 
     unlock();
 }
@@ -587,7 +585,7 @@ JNIEXPORT jstring JNICALL
 JNI_FUNCTION(getModName)(JNIEnv *env, jobject obj) {
     (void) obj;
 
-    char *s = _mod_is_loaded ? mi.mod->name : "";
+    char *s = g_mod_is_loaded ? mi.mod->name : "";
 
     return (*env)->NewStringUTF(env, s);
 }
@@ -596,7 +594,7 @@ JNIEXPORT jstring JNICALL
 JNI_FUNCTION(getModType)(JNIEnv *env, jobject obj) {
     (void) obj;
 
-    char *s = _mod_is_loaded ? mi.mod->type : "";
+    char *s = g_mod_is_loaded ? mi.mod->type : "";
 
     return (*env)->NewStringUTF(env, s);
 }
@@ -633,7 +631,7 @@ JNI_FUNCTION(getInstruments)(JNIEnv *env, jobject obj) {
     char buf[80];
     // int ins;
 
-    if (!_mod_is_loaded)
+    if (!g_mod_is_loaded)
         return NULL;
 
     stringClass = (*env)->FindClass(env, "java/lang/String");
@@ -676,7 +674,7 @@ JNI_FUNCTION(getChannelData)(JNIEnv *env, jobject obj, jobject channelInfo) {
 
     lock();
 
-    if (!_mod_is_loaded || !_playing) {
+    if (!g_mod_is_loaded || !g_playing) {
         unlock();
         return;
     }
@@ -695,46 +693,46 @@ JNI_FUNCTION(getChannelData)(JNIEnv *env, jobject obj, jobject channelInfo) {
     jintArray holdVols = (*env)->GetObjectField(env, channelInfo, channelVarsIDs.holdVols);
 
     for (i = 0; i < chn; i++) {
-        struct xmp_channel_info *ci = &fi[_before].channel_info[i];
+        struct xmp_channel_info *ci = &fi[g_before].channel_info[i];
 
         if (ci->event.vol > 0) {
-            _hold_vol[i] = ci->event.vol * 0x40 / mi.vol_base;
+            g_hold_vol[i] = ci->event.vol * 0x40 / mi.vol_base;
         }
 
-        _cur_vol[i] -= _decay;
-        if (_cur_vol[i] < 0) {
-            _cur_vol[i] = 0;
+        g_cur_vol[i] -= g_decay;
+        if (g_cur_vol[i] < 0) {
+            g_cur_vol[i] = 0;
         }
 
         if (ci->event.note > 0 && ci->event.note <= 0x80) {
-            _key[i] = ci->event.note - 1;
-            _last_key[i] = _key[i];
-            sub = get_subinstrument(ci->instrument, _key[i]);
+            g_key[i] = ci->event.note - 1;
+            g_last_key[i] = g_key[i];
+            sub = get_subinstrument(ci->instrument, g_key[i]);
             if (sub != NULL) {
-                _cur_vol[i] = sub->vol * 0x40 / mi.vol_base;
+                g_cur_vol[i] = sub->vol * 0x40 / mi.vol_base;
             }
         } else {
-            _key[i] = -1;
+            g_key[i] = -1;
         }
 
         if (ci->event.vol > 0) {
-            _key[i] = _last_key[i];
-            _cur_vol[i] = ci->event.vol * 0x40 / mi.vol_base;
+            g_key[i] = g_last_key[i];
+            g_cur_vol[i] = ci->event.vol * 0x40 / mi.vol_base;
         }
 
-        _ins[i] = (int) (unsigned char) ci->instrument;
-        _finalvol[i] = ci->volume;
-        _pan[i] = ci->pan;
-        _period[i] = (int) ci->period >> 8;
+        g_ins[i] = (int) (unsigned char) ci->instrument;
+        g_final_vol[i] = ci->volume;
+        g_pan[i] = ci->pan;
+        g_period[i] = (int) ci->period >> 8;
     }
 
-    (*env)->SetIntArrayRegion(env, vol, 0, chn, _cur_vol);
-    (*env)->SetIntArrayRegion(env, finalVols, 0, chn, _finalvol);
-    (*env)->SetIntArrayRegion(env, pan, 0, chn, _pan);
-    (*env)->SetIntArrayRegion(env, ins, 0, chn, _ins);
-    (*env)->SetIntArrayRegion(env, key, 0, chn, _key);
-    (*env)->SetIntArrayRegion(env, period, 0, chn, _period);
-    (*env)->SetIntArrayRegion(env, holdVols, 0, chn, _hold_vol);
+    (*env)->SetIntArrayRegion(env, vol, 0, chn, g_cur_vol);
+    (*env)->SetIntArrayRegion(env, finalVols, 0, chn, g_final_vol);
+    (*env)->SetIntArrayRegion(env, pan, 0, chn, g_pan);
+    (*env)->SetIntArrayRegion(env, ins, 0, chn, g_ins);
+    (*env)->SetIntArrayRegion(env, key, 0, chn, g_key);
+    (*env)->SetIntArrayRegion(env, period, 0, chn, g_period);
+    (*env)->SetIntArrayRegion(env, holdVols, 0, chn, g_hold_vol);
 
     unlock();
 }
@@ -753,7 +751,7 @@ JNI_FUNCTION(getPatternRow)(JNIEnv *env, jobject obj, jint pat, jint row,
     int chn;
     int i;
 
-    if (!_mod_is_loaded)
+    if (!g_mod_is_loaded)
         return;
 
     if (pat > mi.mod->pat || row > mi.mod->xxp[pat]->rows)
@@ -808,7 +806,7 @@ JNI_FUNCTION(getSampleData)(JNIEnv *env, jobject obj, jboolean trigger,
 
     lock();
 
-    if (!_mod_is_loaded)
+    if (!g_mod_is_loaded)
         goto err;
 
     if (width > MAX_BUFFER_SIZE) {
@@ -838,7 +836,7 @@ JNI_FUNCTION(getSampleData)(JNIEnv *env, jobject obj, jboolean trigger,
     lps = xxs->lps << 5;
     lpe = xxs->lpe << 5;
 
-    pos = _pos[chn];
+    pos = g_pos[chn];
 
     /* In case of new keypress, reset sample */
     if (trigger == JNI_TRUE || (pos >> 5) >= xxs->len) {
@@ -866,7 +864,7 @@ JNI_FUNCTION(getSampleData)(JNIEnv *env, jobject obj, jboolean trigger,
     if (xxs->flg & XMP_SAMPLE_16BIT) {
         /* transient */
         for (i = 0; i < limit; i++) {
-            _buffer[i] = (jbyte) (((short *) xxs->data)[pos >> 5] >> 8);
+            g_buffer[i] = (jbyte) (((short *) xxs->data)[pos >> 5] >> 8);
             pos += step;
         }
 
@@ -874,7 +872,7 @@ JNI_FUNCTION(getSampleData)(JNIEnv *env, jobject obj, jboolean trigger,
         if (xxs->flg & XMP_SAMPLE_LOOP) {
             for (i = limit; i < width; i++) {
 
-                _buffer[i] = (jbyte) (((short *) xxs->data)[pos >> 5] >> 8);
+                g_buffer[i] = (jbyte) (((short *) xxs->data)[pos >> 5] >> 8);
                 pos += step;
                 if (pos >= lpe)
                     pos = lps + pos - lpe;
@@ -883,20 +881,20 @@ JNI_FUNCTION(getSampleData)(JNIEnv *env, jobject obj, jboolean trigger,
             }
         } else {
             for (i = limit; i < width; i++) {
-                _buffer[i] = 0;
+                g_buffer[i] = 0;
             }
         }
     } else {
         /* transient */
         for (i = 0; i < limit; i++) {
-            _buffer[i] = (jbyte) xxs->data[pos >> 5];
+            g_buffer[i] = (jbyte) xxs->data[pos >> 5];
             pos += step;
         }
 
         /* loop */
         if (xxs->flg & XMP_SAMPLE_LOOP) {
             for (i = limit; i < width; i++) {
-                _buffer[i] = (jbyte) xxs->data[pos >> 5];
+                g_buffer[i] = (jbyte) xxs->data[pos >> 5];
                 pos += step;
                 if (pos >= lpe)
                     pos = lps + pos - lpe;
@@ -905,22 +903,22 @@ JNI_FUNCTION(getSampleData)(JNIEnv *env, jobject obj, jboolean trigger,
             }
         } else {
             for (i = limit; i < width; i++) {
-                _buffer[i] = 0;
+                g_buffer[i] = 0;
             }
         }
     }
 
-    _pos[chn] = pos;
+    g_pos[chn] = pos;
 
-    (*env)->SetByteArrayRegion(env, buffer, 0, width, _buffer);
+    (*env)->SetByteArrayRegion(env, buffer, 0, width, g_buffer);
 
     unlock();
 
     return;
 
     err:
-    memset(_buffer, 0, width);
-    (*env)->SetByteArrayRegion(env, buffer, 0, width, _buffer);
+    memset(g_buffer, 0, width);
+    (*env)->SetByteArrayRegion(env, buffer, 0, width, g_buffer);
 
     unlock();
 }
@@ -933,16 +931,16 @@ JNI_FUNCTION(setSequence)(JNIEnv *env, jobject obj, jint seq) {
     if (seq >= mi.num_sequences)
         return JNI_FALSE;
 
-    if (mi.seq_data[_sequence].duration <= 0)
+    if (mi.seq_data[g_sequence].duration <= 0)
         return JNI_FALSE;
 
-    if (_sequence == seq)
+    if (g_sequence == seq)
         return JNI_FALSE;
 
-    _sequence = seq;
-    _loop_count = 0;
+    g_sequence = seq;
+    g_loop_count = 0;
 
-    xmp_set_position(ctx, mi.seq_data[_sequence].entry_point);
+    xmp_set_position(ctx, mi.seq_data[g_sequence].entry_point);
     xmp_play_buffer(ctx, NULL, 0, 0);
 
     return JNI_TRUE;
@@ -962,7 +960,7 @@ JNI_FUNCTION(getSeqVars)(JNIEnv *env, jobject obj, jobject seqVars) {
 
     int num;
 
-    if (!_mod_is_loaded)
+    if (!g_mod_is_loaded)
         return;
 
     num = mi.num_sequences;
