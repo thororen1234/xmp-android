@@ -22,7 +22,6 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.theme.michromaFontFamily
 import org.helllabs.android.xmp.compose.theme.seed
 import org.helllabs.android.xmp.compose.ui.player.ChannelMuteState
-import org.helllabs.android.xmp.compose.ui.player.Util
 import org.helllabs.android.xmp.model.ChannelInfo
 import org.helllabs.android.xmp.model.FrameInfo
 import org.helllabs.android.xmp.model.ModVars
@@ -46,20 +45,16 @@ fun ComposeChannelViewer(
     val textMeasurer = rememberTextMeasurer()
     val view = LocalView.current
 
-    val xMultiplier by remember {
-        mutableFloatStateOf(
-            with(density) {
-                24.dp.toPx()
-            }
-        )
+    val xMultiplier = remember {
+        with(density) {
+            24.dp.toPx()
+        }
     }
-    val yMultiplier by remember {
+    val yMultiplier = remember {
         // https://m3.material.io/components/lists/specs
-        mutableFloatStateOf(
-            with(density) {
-                56.dp.toPx()
-            }
-        )
+        with(density) {
+            56.dp.toPx()
+        }
     }
     var canvasSize by remember {
         mutableStateOf(Size.Zero)
@@ -67,32 +62,26 @@ fun ComposeChannelViewer(
     val yOffset = remember {
         Animatable(0f)
     }
-    val scopeWidth by remember {
-        val width = xMultiplier.times(3) - xMultiplier.div(2)
-        mutableFloatStateOf(width)
+    val scopeWidth = remember {
+        xMultiplier.times(3) - xMultiplier.div(2)
     }
     val buffer = remember {
         ByteArray(Xmp.MAX_BUFFERS)
     }
-    val isChnMuted by remember(isMuted) {
+    val isChnMuted = remember(isMuted) {
         // Need this to keep pointerInput updated for any changes.
-        mutableStateOf(isMuted.isMuted)
+        isMuted.isMuted
     }
-    val holdKey by remember(modVars.numChannels) {
-        mutableStateOf(IntArray(modVars.numChannels))
+    val holdKey = remember(modVars.numChannels) {
+        IntArray(modVars.numChannels)
     }
-    val keyRow by remember {
-        mutableStateOf(IntArray(Xmp.MAX_CHANNELS))
+    val keyRow = remember {
+        IntArray(Xmp.MAX_CHANNELS)
     }
-    val channelNumber by remember(modVars.numChannels) {
-        val list = arrayOfNulls<String?>(modVars.numChannels)
-
+    val channelNumber = remember(modVars.numChannels) {
         (0 until modVars.numChannels).map {
-            Util.to2d(c, it + 1)
-            list[it] = String(c)
+            "${it + 1}"
         }
-
-        mutableStateOf(list)
     }
     val scrollState = rememberScrollableState { delta ->
         scope.launch {
@@ -199,7 +188,7 @@ fun ComposeChannelViewer(
 
             /***** Channel Number *****/
             val chnText = textMeasurer.measure(
-                text = AnnotatedString(channelNumber[chn].toString()),
+                text = AnnotatedString(channelNumber[chn]),
                 style = TextStyle(
                     color = Color(200, 200, 200, 255),
                     fontSize = 14.sp,

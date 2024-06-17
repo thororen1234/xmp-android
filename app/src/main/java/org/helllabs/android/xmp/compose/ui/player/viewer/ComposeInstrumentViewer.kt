@@ -23,6 +23,10 @@ import org.helllabs.android.xmp.model.ModVars
 
 private const val VOLUME_STEPS = 32
 private val barShape = CornerRadius(8f, 8f)
+private val textColor = (0..VOLUME_STEPS).map {
+    val fraction = it.coerceIn(0, VOLUME_STEPS) / VOLUME_STEPS.toFloat()
+    lerp(Color.Gray, Color.White, fraction)
+}
 
 @Composable
 internal fun InstrumentViewer(
@@ -37,15 +41,8 @@ internal fun InstrumentViewer(
     val textMeasurer = rememberTextMeasurer()
     val view = LocalView.current
 
-    val textColor by remember {
-        val list = (0..VOLUME_STEPS).map {
-            val fraction = it.coerceIn(0, VOLUME_STEPS) / VOLUME_STEPS.toFloat()
-            lerp(Color.Gray, Color.White, fraction)
-        }
-        mutableStateOf(list)
-    }
-    val measuredText by remember(modVars.numInstruments, insName) {
-        val list = (0 until modVars.numInstruments).map {
+    val measuredText = remember(modVars.numInstruments, insName) {
+        (0 until modVars.numInstruments).map {
             textMeasurer.measure(
                 text = AnnotatedString(insName[it]),
                 density = density,
@@ -58,24 +55,17 @@ internal fun InstrumentViewer(
                 )
             )
         }
-        mutableStateOf(list)
-    }
-    val chn by remember(modVars.numChannels) {
-        mutableIntStateOf(modVars.numChannels)
-    }
-    val ins by remember(modVars.numInstruments) {
-        mutableIntStateOf(modVars.numInstruments)
     }
     val yOffset = remember {
         Animatable(0f)
     }
-    val canvasSize = remember {
+    var canvasSize by remember {
         mutableStateOf(Size.Zero)
     }
     val scrollState = rememberScrollableState { delta ->
         scope.launch {
-            val totalContentHeight = with(density) { 24.dp.toPx() * ins }
-            val maxOffset = (totalContentHeight - canvasSize.value.height).coerceAtLeast(0f)
+            val totalContentHeight = with(density) { 24.dp.toPx() * modVars.numInstruments }
+            val maxOffset = (totalContentHeight - canvasSize.height).coerceAtLeast(0f)
             val newOffset = (yOffset.value + delta).coerceIn(-maxOffset, 0f)
             yOffset.snapTo(newOffset)
         }
@@ -103,8 +93,8 @@ internal fun InstrumentViewer(
                 detectTapGestures(onTap = { onTap() })
             }
     ) {
-        if (canvasSize.value != size) {
-            canvasSize.value = size
+        if (canvasSize != size) {
+            canvasSize = size
         }
 
         var maxVol: Int
@@ -116,7 +106,7 @@ internal fun InstrumentViewer(
         var boxWidth: Float
         var start: Float
 
-        for (i in 0 until ins) {
+        for (i in 0 until modVars.numInstruments) {
             maxVol = 0
             yPos = yOffset.value + (24.dp.toPx() * i)
 
@@ -126,7 +116,7 @@ internal fun InstrumentViewer(
                 continue
             }
 
-            for (j in 0 until chn) {
+            for (j in 0 until modVars.numChannels) {
                 if (isMuted.isMuted[j]) {
                     continue
                 }
@@ -134,7 +124,7 @@ internal fun InstrumentViewer(
                 if (i == channelInfo.instruments[j]) {
                     vol = (channelInfo.volumes[j] / 2).coerceAtMost(VOLUME_STEPS)
 
-                    totalPadding = (chn - 1) * 2.dp.toPx()
+                    totalPadding = (modVars.numChannels - 1) * 2.dp.toPx()
                     availableWidth = size.width - totalPadding
                     boxWidth = availableWidth / modVars.numChannels
                     start = j * (boxWidth + 2.dp.toPx())
@@ -166,10 +156,7 @@ internal fun InstrumentViewer(
     }
 }
 
-@Preview(device = "id:Nexus One")
-@Preview(device = "id:pixel_xl")
-@Preview(device = "id:pixel_4a")
-@Preview(device = "id:pixel_8_pro")
+@Preview
 @Composable
 private fun Preview_InstrumentViewer() {
     val modVars = composeSampleModVars()
