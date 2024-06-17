@@ -22,7 +22,7 @@ reorderable = "2.1.1" # https://mvnrepository.com/artifact/sh.calvin.reorderable
 retrofit = "2.11.0" # https://mvnrepository.com/artifact/com.squareup.retrofit2/retrofit
 settings = "2.4.0" # https://github.com/alorma/Compose-Settings/releases
 timber = "5.0.1" # https://mvnrepository.com/artifact/com.jakewharton.timber/timber
-xmlUtil = "0.86.3" # https://mvnrepository.com/artifact/io.github.pdvrieze.xmlutil/core-android
+xmlUtil = "0.90.1" # https://mvnrepository.com/artifact/io.github.pdvrieze.xmlutil/core-android
 
 [libraries]
 compose-activity = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -58,7 +58,7 @@ reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reo
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 retrofit-serialization = { module = "com.squareup.retrofit2:converter-kotlinx-serialization", version.ref = "retrofit" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
-xmlutil-android-core = { module = "io.github.pdvrieze.xmlutil:core-android", version.ref = "xmlUtil" }
+xmlutil-android-core = { module = "io.github.pdvrieze.xmlutil:core", version.ref = "xmlUtil" }
 xmlutil-android-serialization = { module = "io.github.pdvrieze.xmlutil:serialization-android", version.ref = "xmlUtil" }
 
 [bundles]
