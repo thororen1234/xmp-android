@@ -18,6 +18,8 @@ jobs:
     steps:
       - name: Checking out branch
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -43,9 +45,6 @@ jobs:
 
       # This is quite an old solution, and im sure there is a better way to do this.
       - name: Restore gradle.properties
-        env:
-          GRADLE_PROPERTIES: ${{ secrets.GRADLE_PROPERTIES }}
-        shell: bash
         run: |
           mkdir -p ~/.gradle/
           echo "modArchiveApiKey=\"${{ secrets.MOD_ARCHIVE_API_KEY }}\"" >> ~/.gradle/gradle.properties
