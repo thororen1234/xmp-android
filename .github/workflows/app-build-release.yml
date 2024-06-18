@@ -69,5 +69,5 @@ jobs:
       - name: Upload Release Build to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: app-release.apk
+          name: XmpAndroid.apk
           path: /app/build/outputs/apk/GHA/XmpAndroid.apk

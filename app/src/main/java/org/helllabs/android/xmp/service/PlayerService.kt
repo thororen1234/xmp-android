@@ -159,6 +159,8 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
             "ACTION_PLAY" -> mediaSession.controller.transportControls.play()
             "ACTION_PAUSE" -> mediaSession.controller.transportControls.pause()
             "ACTION_STOP" -> mediaSession.controller.transportControls.stop()
+            "ACTION_NEXT" -> mediaSession.controller.transportControls.skipToNext()
+            "ACTION_PREVIOUS" -> mediaSession.controller.transportControls.skipToPrevious()
         }
         return START_STICKY
     }
