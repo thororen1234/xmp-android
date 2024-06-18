@@ -1,4 +1,4 @@
-# References: 
+# References:
 # https://www.droidcon.com/2023/04/04/securely-create-android-release-using-github-actions/
 # https://github.com/Dcosta2205/GitHubActionsAndroidSample/blob/master/.github/workflows/release.yml
 
@@ -34,13 +34,14 @@ jobs:
       - name: Decode Keystore
         env:
           ENCODED_STRING: ${{ secrets.SIGNING_KEY_STORE_BASE64 }}
+          ENCODED_STRING_PATH: ${{ secrets.SIGNING_KEY_STORE_PATH }}
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.SIGNING_STORE_PASSWORD }}
           RELEASE_KEYSTORE_ALIAS: ${{ secrets.SIGNING_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.SIGNING_KEY_PASSWORD }}
 
         run: |
           echo $ENCODED_STRING > keystore-b64.txt
-          base64 -d keystore-b64.txt > $SIGNING_KEY_STORE_PATH
+          base64 -d keystore-b64.txt > $ENCODED_STRING_PATH
 
       - name: Build Release apk
         env:
