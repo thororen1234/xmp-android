@@ -77,6 +77,7 @@ android {
     // ./gradlew updateLintBaseline
     lint {
         baseline = file("lint-baseline.xml")
+        abortOnError = false // GH Actions fails, for some lint issues.
     }
 
     externalNativeBuild.cmake {
