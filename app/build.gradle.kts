@@ -47,7 +47,7 @@ android {
         create("GHA") {
             keyAlias = System.getenv("RELEASE_KEYSTORE_ALIAS")
             keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
-            storeFile = file("../keystore.jks")
+            storeFile = file("keystore.jks")
             storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
         }
     }
