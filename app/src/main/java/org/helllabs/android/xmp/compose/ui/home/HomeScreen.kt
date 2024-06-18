@@ -50,6 +50,8 @@ import timber.log.Timber
 @Serializable
 object NavigationHome
 
+// TODO have some sort of animation over "Xmp Mod Player" when service is active
+
 @Composable
 fun HomeScreenImpl(
     viewModel: PlaylistMenuViewModel,
@@ -63,8 +65,6 @@ fun HomeScreenImpl(
     val scope = rememberCoroutineScope()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val player by PlayerService.isAlive.collectAsStateWithLifecycle()
-
-    var hasStorage by remember { mutableStateOf(false) }
 
     val appSettings = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -113,22 +113,41 @@ fun HomeScreenImpl(
         }
 
         if (savedUri == null || !hasAccess) {
-            documentTreeResult.launch(null)
+            viewModel.askForStorage(true)
         } else {
             viewModel.setDefaultPath()
         }
     }
 
-    LaunchedEffect(state.mediaPath) {
-        hasStorage = StorageManager.checkPermissions()
-    }
+    /**
+     * Prompt and Explain Storage
+     */
+    MessageDialog(
+        isShowing = state.askForStorage,
+        title = "Storage Request",
+        text = "Xmp needs access to its own directory via Storage Access Framework.\n" +
+            "Create or reuse an existing directory for 'mods' and 'playlists'.",
+        confirmText = "Create",
+        onConfirm = {
+            documentTreeResult.launch(null)
+        },
+        dismissText = stringResource(id = android.R.string.cancel),
+        onDismiss = {
+            viewModel.askForStorage(false)
+            viewModel.showError(null)
+            viewModel.updateList()
+        }
+    )
 
     /**
      * Error message Dialog
      */
     MenuErrorDialog(
         state = state,
-        onConfirm = { viewModel.showError("") }
+        onConfirm = {
+            viewModel.showError(null)
+            viewModel.updateList()
+        }
     )
 
     /**
@@ -185,16 +204,6 @@ fun HomeScreenImpl(
         }
     }
 
-//    LifecycleStartEffect(Lifecycle.Event.ON_START) {
-//        Timber.d("Lifecycle onStart")
-//        if (PrefManager.startOnPlayer && PlayerService.isAlive) {
-//            Intent(context, PlayerActivity::class.java).also(playerResult::launch)
-//        }
-//        onStopOrDispose {
-//            Timber.d("Lifecycle onStop")
-//        }
-//    }
-
     LifecycleResumeEffect(Lifecycle.Event.ON_RESUME) {
         Timber.d("Lifecycle onResume")
         if (PrefManager.safStoragePath.isNotEmpty()) {
@@ -209,7 +218,6 @@ fun HomeScreenImpl(
         state = state,
         snackBarHostState = snackBarHostState,
         serviceAlive = player,
-        permissionState = hasStorage,
         onItemClick = { item ->
             if (item.isSpecial) {
                 onNavFileList()
@@ -257,7 +265,6 @@ private fun HomeScreen(
     state: PlaylistMenuState,
     snackBarHostState: SnackbarHostState,
     serviceAlive: Boolean,
-    permissionState: Boolean,
     onDownload: () -> Unit,
     onItemClick: (item: FileItem) -> Unit,
     onItemLongClick: (item: FileItem) -> Unit,
@@ -273,6 +280,10 @@ private fun HomeScreen(
         derivedStateOf {
             scrollState.firstVisibleItemIndex > 0
         }
+    }
+
+    val hasStorage = remember(state) {
+        StorageManager.checkPermissions()
     }
 
     Scaffold(
@@ -291,14 +302,14 @@ private fun HomeScreen(
                 ),
                 actions = {
                     IconButton(
-                        enabled = permissionState,
+                        enabled = hasStorage,
                         onClick = onDownload,
                         content = {
                             Icon(imageVector = Icons.Default.Download, contentDescription = null)
                         }
                     )
                     IconButton(
-                        enabled = permissionState,
+                        enabled = hasStorage,
                         onClick = onSettings,
                         content = {
                             Icon(imageVector = Icons.Default.Settings, contentDescription = null)
@@ -307,7 +318,7 @@ private fun HomeScreen(
                 },
                 title = {
                     TextButton(
-                        enabled = permissionState,
+                        enabled = hasStorage,
                         onClick = onTitleClicked
                     ) {
                         ProvideTextStyle(
@@ -329,7 +340,7 @@ private fun HomeScreen(
             )
         },
         floatingActionButton = {
-            if (permissionState) {
+            if (hasStorage) {
                 ExtendedFloatingActionButton(
                     text = { Text(text = stringResource(id = R.string.menu_new_playlist)) },
                     icon = { Icon(imageVector = Icons.Default.Add, contentDescription = null) },
@@ -385,8 +396,8 @@ private fun HomeScreen(
                 }
             }
 
-            if (!state.isLoading && !permissionState) {
-                ErrorScreen(text = "Unable to access storage for Xmp to use") {
+            if (!state.isLoading && !hasStorage) {
+                ErrorScreen(text = "Unable to access files for playlist or file browser") {
                     Button(
                         onClick = onRequestStorage,
                         content = { Text(text = "Set Directory") }
@@ -539,7 +550,6 @@ private fun Preview_PlaylistMenuScreen() {
             ),
             snackBarHostState = SnackbarHostState(),
             serviceAlive = true,
-            permissionState = false,
             onItemClick = {},
             onItemLongClick = {},
             onRefresh = {},

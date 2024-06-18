@@ -78,7 +78,7 @@ object StorageManager {
     fun setPlaylistDirectory(uri: Uri?): Result<Unit> {
         return runCatching {
             if (uri == null) {
-                throw XmpException("Setting playlist directory uri was null")
+                throw XmpException("Unable to set default Playlist directory")
             }
 
             val context = XmpApplication.instance?.applicationContext

@@ -21,7 +21,8 @@ data class PlaylistMenuState(
     val mediaPath: String = "",
     val playlistItems: List<FileItem> = listOf(),
     val editPlaylist: FileItem? = null,
-    val newPlaylist: Boolean = false
+    val newPlaylist: Boolean = false,
+    val askForStorage: Boolean = false
 )
 
 @Stable
@@ -30,7 +31,7 @@ class PlaylistMenuViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(PlaylistMenuState())
     val uiState = _uiState.asStateFlow()
 
-    fun showError(message: String) {
+    fun showError(message: String?) {
         _uiState.update { it.copy(errorText = message) }
     }
 
@@ -62,11 +63,11 @@ class PlaylistMenuViewModel : ViewModel() {
 
     fun setDefaultPath() {
         StorageManager.getDefaultPathName().onSuccess { name ->
-            _uiState.update { it.copy(mediaPath = name) }
+            _uiState.update { it.copy(mediaPath = name, askForStorage = false) }
             updateList()
         }.onFailure { err ->
             showError(err.message ?: "Error setting default path")
-            _uiState.update { it.copy(mediaPath = "") }
+            _uiState.update { it.copy(mediaPath = "", askForStorage = false) }
         }
     }
 
@@ -111,5 +112,11 @@ class PlaylistMenuViewModel : ViewModel() {
 
     fun newPlaylist(show: Boolean) {
         _uiState.update { it.copy(newPlaylist = show) }
+    }
+
+    fun askForStorage(value: Boolean) {
+        _uiState.update {
+            it.copy(askForStorage = value)
+        }
     }
 }
