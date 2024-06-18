@@ -39,3 +39,6 @@ app/release/output-metadata.json
 # Kotlin 2.0
 .kotlin/sessions
 *.salive
+
+# Signing Configs
+*.jks
