@@ -5,7 +5,7 @@ name: Signed Release
 
 on:
   push:
-    branches: 2023
+    branches: [ 2023 ]
     paths-ignore:
       - '**.md'
     tags:
@@ -64,12 +64,8 @@ jobs:
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew bundleRelease
 
-      - name: Get release file apk path
-        id: releaseApk
-        run: echo "apkfile=$(find app/build/outputs/apk/release/*.apk)" >> $GITHUB_OUTPUT
-
       - name: Upload Release Build to Artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-           name: release-artifacts
-           path: ${{ steps.releaseApk.outputs.apkfile }}
+           name: app-release.apk
+           path: app/build/outputs/apk/release/app-release.apk
