@@ -1,5 +1,4 @@
 # References:
-# https://www.droidcon.com/2023/04/04/securely-create-android-release-using-github-actions/
 # https://github.com/Dcosta2205/GitHubActionsAndroidSample/blob/master/.github/workflows/release.yml
 
 name: Signed Release
@@ -41,6 +40,16 @@ jobs:
         run: |
           echo $ENCODED_STRING > keystore-b64.txt
           base64 -d keystore-b64.txt > keystore.jks
+
+      # This is quite an old solution, and im sure there is a better way to do this.
+      - name: Restore gradle.properties
+        env:
+          GRADLE_PROPERTIES: ${{ secrets.GRADLE_PROPERTIES }}
+        shell: bash
+        run: |
+          mkdir -p ~/.gradle/
+          echo "GRADLE_USER_HOME=${HOME}/.gradle" >> $GITHUB_ENV
+          echo "${GRADLE_PROPERTIES}" > ~/.gradle/gradle.properties
 
       - name: Build Release apk
         env:
