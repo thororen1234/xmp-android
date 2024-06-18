@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.5.0" type="baseline" client="gradle" dependencies="false" name="AGP (8.5.0)" variant="all" version="8.5.0">
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.ic_action_stop` appears to be unused"
+        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
+        errorLine2="^">
+        <location
+            file="src/main/res/drawable/ic_action_stop.xml"
+            line="1"
+            column="1"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.error_audiofocus` appears to be unused"
+        errorLine1="    &lt;string name=&quot;error_audiofocus&quot;>Audio focus request failed&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="40"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.error_opensl` appears to be unused"
+        errorLine1="    &lt;string name=&quot;error_opensl&quot;>Can\&apos;t open audio device&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="45"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.error_snack_adding_mod` appears to be unused"
+        errorLine1="    &lt;string name=&quot;error_snack_adding_mod&quot;>Error adding files&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="46"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.msg_file_exists_message` appears to be unused"
+        errorLine1="    &lt;string name=&quot;msg_file_exists_message&quot;>This module already exists. Do you want to overwrite?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="50"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.msg_file_exists_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;msg_file_exists_title&quot;>File Exists&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="51"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.notif_channel_desc` appears to be unused"
+        errorLine1="    &lt;string name=&quot;notif_channel_desc&quot;>Current module and player controls&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="52"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.notif_channel_name` appears to be unused"
+        errorLine1="    &lt;string name=&quot;notif_channel_name&quot;>Player Service&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="53"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.search_error` appears to be unused"
+        errorLine1="    &lt;string name=&quot;search_error&quot;>Something wrong happened.&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="56"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.sidebar_button_allseqs` appears to be unused"
+        errorLine1="    &lt;string name=&quot;sidebar_button_allseqs&quot;>Play all subsongs&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="77"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.sidebar_button_loopseq` appears to be unused"
+        errorLine1="    &lt;string name=&quot;sidebar_button_loopseq&quot;>Loop subsong&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="78"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_about_formats` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_about_formats&quot;>Formats&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="96"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_bluetooth_pause_summary` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_bluetooth_pause_summary&quot;>Automatically pause replay when bluetooth is disconnected&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="107"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_bluetooth_pause_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_bluetooth_pause_title&quot;>Pause on bluetooth disconnection&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="108"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_buffer_ms_summary` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_buffer_ms_summary&quot;>Sound buffer duration&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="110"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_category_download` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_category_download&quot;>Download location&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="112"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_category_experimental` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_category_experimental&quot;>Experimental (be careful)&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="113"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_category_file_general` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_category_file_general&quot;>General&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="114"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_category_file_playlists` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_category_file_playlists&quot;>Playlists&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="115"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_category_iface_info` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_category_iface_info&quot;>Information&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="117"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_category_iface_screen` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_category_iface_screen&quot;>Screen&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="118"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_category_mixer_control` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_category_mixer_control&quot;>Mixer control&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="121"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_category_player_control` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_category_player_control&quot;>Player control&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="123"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_category_preferences` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_category_preferences&quot;>Preferences&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="124"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_clear_cache_summary` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_clear_cache_summary&quot;>Clear module information cache&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="126"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_clear_cache_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_clear_cache_title&quot;>Clear cache&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="127"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_default_pan_summary` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_default_pan_summary&quot;>Set the default pan separation in old modules with hard L—R channels&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="129"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_enable_delete_summary` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_enable_delete_summary&quot;>Display a menu option to delete the currently playing file&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="131"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_enable_delete_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_enable_delete_title&quot;>Enable file delete&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="132"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_headset_pause_summary` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_headset_pause_summary&quot;>Automatically pause replay when headset is disconnected&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="135"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_headset_pause_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_headset_pause_title&quot;>Pause on headset unplug&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="136"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_pan_separation_summary` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_pan_separation_summary&quot;>Set the mixer stereo separation&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="150"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_start_on_player_summary` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_start_on_player_summary&quot;>If a module is playing, launch in the player screen&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="158"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.pref_start_on_player_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;pref_start_on_player_title&quot;>Launch in player screen&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="159"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseTomlInstead"
+        message="Use version catalog instead"
+        errorLine1="    implementation(&quot;io.github.theapache64:rebugger:1.0.0-rc03&quot;)"
+        errorLine2="                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="114"
+            column="20"/>
+    </issue>
+
+</issues>
