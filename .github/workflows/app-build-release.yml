@@ -1,5 +1,6 @@
 # References:
 # https://github.com/Dcosta2205/GitHubActionsAndroidSample/blob/master/.github/workflows/release.yml
+# https://github.com/microservicer/flutter-pipelines/blob/main/.github/workflows/03b-build-android.yml
 
 name: Signed Release APK
 
@@ -18,7 +19,7 @@ jobs:
 
     steps:
       # Checkout
-      - name: Checking out branch
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -36,14 +37,18 @@ jobs:
         uses: android-actions/setup-android@v3
 
       # Keystore
-      - name: Decode Keystore
+      - name: Configure Keystore
         env:
-          ENCODED_STRING: ${{ secrets.KEYSTORE_BASE_64 }}
-          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-          RELEASE_KEYSTORE_ALIAS: ${{ secrets.RELEASE_KEYSTORE_ALIAS }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          PLAY_STORE_UPLOAD_KEY: ${{ secrets.PLAY_STORE_UPLOAD_KEY }}
+          KEYSTORE_KEY_ALIAS: ${{ secrets.KEYSTORE_KEY_ALIAS }}
+          KEYSTORE_KEY_PASSWORD: ${{ secrets.KEYSTORE_KEY_PASSWORD }}
+          KEYSTORE_STORE_PASSWORD: ${{ secrets.KEYSTORE_STORE_PASSWORD }}
         run: |
-          echo -n $ENCODED_STRING | base64 -d > keystore.jks
+          echo "$PLAY_STORE_UPLOAD_KEY" | base64 --decode > app/upload-keystore.jks
+          echo "storeFile=upload-keystore.jks" >> key.properties
+          echo "keyAlias=$KEYSTORE_KEY_ALIAS" >> key.properties
+          echo "storePassword=$KEYSTORE_STORE_PASSWORD" >> key.properties
+          echo "keyPassword=$KEYSTORE_KEY_PASSWORD" >> key.properties
 
       # Gradle Properties
       - name: Restore gradle.properties
@@ -53,16 +58,11 @@ jobs:
 
       # Build APK
       - name: Build Release apk
-        env:
-          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-          RELEASE_KEYSTORE_ALIAS: ${{ secrets.RELEASE_KEYSTORE_ALIAS }}
-          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: ./gradlew assembleGHA
 
       # Rename APK
       - name: Rename APK
-        run:
-          mv "./app/build/outputs/apk/GHA/app-GHA.apk" "./app/build/outputs/apk/GHA/XmpAndroid.apk"
+        run: mv "./app/build/outputs/apk/GHA/app-GHA.apk" "./app/build/outputs/apk/GHA/XmpAndroid.apk"
 
       # Upload Artifact
       - name: Upload Release Build to Artifacts
