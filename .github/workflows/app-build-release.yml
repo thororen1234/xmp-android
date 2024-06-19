@@ -69,4 +69,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: XmpAndroid.apk
-          path: /app/build/outputs/apk/GHA/XmpAndroid.apk
+          path: ${{ github.workspace }}/app/build/outputs/apk/GHA/XmpAndroid.apk
