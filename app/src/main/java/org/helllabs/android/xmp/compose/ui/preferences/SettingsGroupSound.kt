@@ -19,10 +19,10 @@ fun SettingsGroupSound() {
     SettingsGroup(
         title = { Text(text = stringResource(id = R.string.pref_category_sound)) }
     ) {
-        val samplingRateDialog = remember { mutableStateOf(false) }
+        var samplingRateDialog by remember { mutableStateOf(false) }
         var samplingRate by remember { mutableIntStateOf(0) }
         val samplingRateValues = stringArrayResource(id = R.array.sampling_rate_values)
-        LaunchedEffect(Unit) {
+        LaunchedEffect(samplingRateDialog) {
             samplingRateValues.forEachIndexed { index, s ->
                 if (PrefManager.samplingRate == s.toInt()) {
                     samplingRate = index
@@ -33,24 +33,24 @@ fun SettingsGroupSound() {
             title = { Text(text = stringResource(id = R.string.pref_sampling_rate_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_sampling_rate_summary)) },
             onClick = {
-                samplingRateDialog.value = true
+                samplingRateDialog = true
             }
         )
         SingleChoiceListDialog(
-            isShowing = samplingRateDialog.value,
-            title = stringResource(id = R.string.pref_playlist_mode_title),
+            isShowing = samplingRateDialog,
+            title = stringResource(id = R.string.pref_sampling_rate_title),
             icon = Icons.Filled.CheckCircle,
             list = stringArrayResource(id = R.array.sampling_rate_array).toList(),
             selectedIndex = samplingRate,
             onConfirm = {
-                PrefManager.samplingRate = it
-                samplingRateDialog.value = false
+                PrefManager.samplingRate = samplingRateValues[it].toInt()
+                samplingRateDialog = false
             },
             onDismiss = {
-                samplingRateDialog.value = false
+                samplingRateDialog = false
             },
             onEmpty = {
-                samplingRateDialog.value = false
+                samplingRateDialog = false
             }
         )
 
@@ -76,10 +76,10 @@ fun SettingsGroupSound() {
             }
         )
 
-        val volBoostDialog = remember { mutableStateOf(false) }
+        var volBoostDialog by remember { mutableStateOf(false) }
         var volBoost by remember { mutableIntStateOf(0) }
         val volBoostValues = stringArrayResource(id = R.array.vol_boost_values)
-        LaunchedEffect(Unit) {
+        LaunchedEffect(volBoostDialog) {
             volBoostValues.forEachIndexed { index, s ->
                 if (PrefManager.volumeBoost == s.toInt()) {
                     volBoost = index
@@ -90,24 +90,24 @@ fun SettingsGroupSound() {
             title = { Text(text = stringResource(id = R.string.pref_vol_boost_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_vol_boost_summary)) },
             onClick = {
-                volBoostDialog.value = true
+                volBoostDialog = true
             }
         )
         SingleChoiceListDialog(
-            isShowing = volBoostDialog.value,
-            title = stringResource(id = R.string.pref_playlist_mode_title),
+            isShowing = volBoostDialog,
+            title = stringResource(id = R.string.pref_vol_boost_title),
             icon = Icons.Filled.CheckCircle,
             list = stringArrayResource(id = R.array.vol_boost_array).toList(),
             selectedIndex = volBoost,
             onConfirm = {
-                PrefManager.volumeBoost = it
-                volBoostDialog.value = false
+                PrefManager.volumeBoost = it + 1
+                volBoostDialog = false
             },
             onDismiss = {
-                volBoostDialog.value = false
+                volBoostDialog = false
             },
             onEmpty = {
-                volBoostDialog.value = false
+                volBoostDialog = false
             }
         )
 
@@ -131,10 +131,10 @@ fun SettingsGroupSound() {
             }
         )
 
-        val interpTypeDialog = remember { mutableStateOf(false) }
+        var interpTypeDialog by remember { mutableStateOf(false) }
         var interpType by remember { mutableIntStateOf(0) }
         val interpTypeValues = stringArrayResource(id = R.array.interp_type_values)
-        LaunchedEffect(Unit) {
+        LaunchedEffect(interpTypeDialog) {
             interpTypeValues.forEachIndexed { index, s ->
                 if (PrefManager.interpType == s.toInt()) {
                     interpType = index
@@ -145,24 +145,24 @@ fun SettingsGroupSound() {
             title = { Text(text = stringResource(id = R.string.pref_interp_type_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_interp_type_summary)) },
             onClick = {
-                interpTypeDialog.value = true
+                interpTypeDialog = true
             }
         )
         SingleChoiceListDialog(
-            isShowing = interpTypeDialog.value,
+            isShowing = interpTypeDialog,
             icon = Icons.Filled.CheckCircle,
-            title = stringResource(id = R.string.pref_playlist_mode_title),
+            title = stringResource(id = R.string.pref_interp_type_title),
             list = stringArrayResource(id = R.array.interp_type_array).toList(),
-            selectedIndex = samplingRate,
+            selectedIndex = interpType,
             onConfirm = {
-                PrefManager.interpType = it
-                interpTypeDialog.value = false
+                PrefManager.interpType = it + 1
+                interpTypeDialog = false
             },
             onDismiss = {
-                interpTypeDialog.value = false
+                interpTypeDialog = false
             },
             onEmpty = {
-                interpTypeDialog.value = false
+                interpTypeDialog = false
             }
         )
 

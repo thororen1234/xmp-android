@@ -33,6 +33,12 @@ object PrefManager {
         dataStore = context.dataStore
     }
 
+    fun clearPreferences() {
+        runBlocking {
+            dataStore.edit { it.clear() }
+        }
+    }
+
     private fun <T> getPref(key: Preferences.Key<T>, defaultValue: T): T {
         return runBlocking {
             dataStore.data.first()[key] ?: defaultValue
@@ -60,11 +66,10 @@ object PrefManager {
         }
 
     /**
-     * 1. Start playing at selection
-     * 2. Play selected file
-     * 3. Enqueue selected file
+     * 1: Start playing at selection
+     * 2: Play selected file
+     * 3: Enqueue selected file
      */
-
     private val PLAYLIST_MODE = intPreferencesKey("playlist_mode")
     var playlistMode: Int
         get() = getPref(PLAYLIST_MODE, 1)
@@ -177,6 +182,10 @@ object PrefManager {
             setPref(VOLUME_BOOST, value)
         }
 
+    /**
+     * 1: Linear
+     * 2: Cubic spline
+     */
     private val INTERP_TYPE = intPreferencesKey("interp_type")
     var interpType: Int
         get() = getPref(INTERP_TYPE, 1)

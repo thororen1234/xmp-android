@@ -118,6 +118,13 @@ fun PreferencesScreen(
                             (context as ComponentActivity).finishAffinity()
                         }
                     )
+                    SettingsMenuLink(
+                        title = { Text(text = "Clear Preferences") },
+                        onClick = {
+                            PrefManager.clearPreferences()
+                            (context as ComponentActivity).finishAffinity()
+                        }
+                    )
                 }
             }
         }

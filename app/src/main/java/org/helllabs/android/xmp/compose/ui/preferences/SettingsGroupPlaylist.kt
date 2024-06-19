@@ -43,10 +43,11 @@ fun SettingsGroupPlaylist(
 
         var playlistMode by remember { mutableIntStateOf(0) }
         val playlistModeValues = stringArrayResource(id = R.array.playlist_mode_values)
-        val playlistModeDialog = remember { mutableStateOf(false) }
-        LaunchedEffect(Unit) {
+        var playlistModeDialog by remember { mutableStateOf(false) }
+        LaunchedEffect(playlistModeDialog) {
+            val mode = PrefManager.playlistMode
             playlistModeValues.forEachIndexed { index, s ->
-                if (PrefManager.playlistMode == s.toInt()) {
+                if (mode == s.toInt()) {
                     playlistMode = index
                 }
             }
@@ -55,25 +56,25 @@ fun SettingsGroupPlaylist(
             title = { Text(text = stringResource(id = R.string.pref_playlist_mode_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_playlist_mode_summary)) },
             onClick = {
-                playlistModeDialog.value = true
+                playlistModeDialog = true
             }
         )
         SingleChoiceListDialog(
-            isShowing = playlistModeDialog.value,
+            isShowing = playlistModeDialog,
             icon = Icons.Filled.CheckCircle,
             title = stringResource(id = R.string.pref_playlist_mode_title),
             selectedIndex = playlistMode,
             list = stringArrayResource(id = R.array.playlist_mode_array).toList(),
             onConfirm = {
-                PrefManager.playlistMode = it
-                playlistModeDialog.value = false
+                PrefManager.playlistMode = it + 1
+                playlistModeDialog = false
             },
             onDismiss = {
-                playlistModeDialog.value = false
+                playlistModeDialog = false
             },
             onEmpty = {
                 Timber.e("Playlist modes was empty")
-                playlistModeDialog.value = false
+                playlistModeDialog = false
             }
         )
 
