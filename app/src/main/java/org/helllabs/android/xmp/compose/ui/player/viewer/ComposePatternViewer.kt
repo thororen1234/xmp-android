@@ -242,7 +242,7 @@ internal fun ComposePatternViewer(
                         withStyle(
                             style = SpanStyle(
                                 color = if (isMuted.isMuted[chn]) {
-                                    Color.LightGray
+                                    Color(60, 60, 60)
                                 } else {
                                     Color(140, 140, 160)
                                 }
