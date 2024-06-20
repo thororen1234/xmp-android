@@ -225,60 +225,64 @@ fun ComposeChannelViewer(
                 )
             }
 
+            val barY = yMultiplier.times(chn + 1) - yMultiplier.div(3) + yOffset.value
+            val barWidth: Float = if (density.density >= 3.0) {
+                // xxhdpi | 480dpi
+                xMultiplier.times(4)
+            } else {
+                xMultiplier.times(5)
+            }
+
             /***** Volume Bar Background *****/
-            val volY = yMultiplier.times(chn + 1) - yMultiplier.div(3) + yOffset.value
             drawRect(
                 color = Color(40, 40, 40, 255),
                 topLeft = Offset(
                     x = xMultiplier.times(4),
-                    y = volY
+                    y = barY
                 ),
-                size = Size(xMultiplier.times(5), 16f)
+                size = Size(barWidth, 16f)
             )
 
             /***** Volume Bars *****/
             val vol = if (isChnMuted[chn]) 0 else channelInfo.volumes[chn]
-            val volSize = xMultiplier.times(5) * (vol.toFloat() / 64)
             drawRect(
                 color = seed.copy(alpha = .35f),
                 topLeft = Offset(
                     x = xMultiplier.times(4),
-                    y = volY
+                    y = barY
                 ),
-                size = Size(volSize, 16f)
+                size = Size((barWidth * (vol.toFloat() / 64)), 16f)
             )
+
             val fVol = if (isChnMuted[chn]) 0 else channelInfo.finalVols[chn]
-            val fVolSize = xMultiplier.times(5) * (fVol.toFloat() / 64)
             drawRect(
                 color = seed,
                 topLeft = Offset(
                     x = xMultiplier.times(4),
-                    y = volY
+                    y = barY
                 ),
-                size = Size(fVolSize, 16f)
+                size = Size((barWidth * (fVol.toFloat() / 64)), 16f)
             )
 
             /***** Pan Bar Background *****/
-            val panY = yMultiplier.times(chn + 1) - yMultiplier.div(3) + yOffset.value
             drawRect(
                 color = Color(40, 40, 40, 255),
                 topLeft = Offset(
                     x = xMultiplier.times(10),
-                    y = panY
+                    y = barY
                 ),
-                size = Size(xMultiplier.times(5), 16f)
+                size = Size(barWidth, 16f)
             )
 
             /***** Pan Bar *****/
             val panRectWidth = 8.dp.toPx()
-            val panMaxOffset = xMultiplier.times(5) - panRectWidth
+            val panMaxOffset = barWidth - panRectWidth
             val panOffset = if (isChnMuted[chn]) 0f else panMaxOffset * (pan.toFloat() / 255)
-            val panX = xMultiplier.times(10) + panOffset
             drawRect(
                 color = seed,
                 topLeft = Offset(
-                    x = panX,
-                    y = panY
+                    x = xMultiplier.times(10) + panOffset,
+                    y = barY
                 ),
                 size = Size(panRectWidth, 16f)
             )
@@ -411,13 +415,6 @@ fun ComposeChannelViewer(
                 )
                 waveformPath.reset()
             }
-
-            if (view.isInEditMode) {
-                // DEBUG: Make sure the bars are equal in size
-                if (volY != panY) {
-                    throw Exception("Bar backgrounds not equal")
-                }
-            }
         }
 
         if (view.isInEditMode) {
@@ -431,6 +428,7 @@ fun ComposeChannelViewer(
 }
 
 @Preview
+@Preview(name = "Huawei P20 lite", device = "spec:width=1080px,height=2280px,dpi=480")
 @Composable
 private fun Preview_ChannelViewer() {
     val modVars = composeSampleModVars()

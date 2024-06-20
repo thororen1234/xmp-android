@@ -33,10 +33,8 @@ android {
         minSdk = 23 // Android 6 - Marshmallow
         targetSdk = 34 // Android 14 - Upside Down Cake
 
-        versionCode = 104
+        versionCode = 105
         versionName = "5.0-SNAPSHOT"
-
-        vectorDrawables.useSupportLibrary = true
 
         ndk.abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         externalNativeBuild.cmake.arguments += listOf(

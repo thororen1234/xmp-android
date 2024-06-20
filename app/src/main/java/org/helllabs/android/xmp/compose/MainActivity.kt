@@ -66,6 +66,7 @@ import org.helllabs.android.xmp.compose.ui.search.result.ResultViewModelFactory
 import org.helllabs.android.xmp.compose.ui.search.result.SearchResultViewModel
 import org.helllabs.android.xmp.compose.ui.search.result.SearchResultViewModelFactory
 import org.helllabs.android.xmp.compose.ui.search.result.TitleResultScreenImpl
+import org.helllabs.android.xmp.core.Constants
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.service.PlayerBinder
 import org.helllabs.android.xmp.service.PlayerService
@@ -185,7 +186,7 @@ class MainActivity : ComponentActivity() {
                             onNavPlaylist = { navController.navigate(NavPlaylist(it)) },
                             onNavPreferences = { navController.navigate(NavPreferences) },
                             onNavSearch = {
-                                if (BuildConfig.API_KEY.isEmpty()) {
+                                if (Constants.APIKEY.isEmpty()) {
                                     scope.launch {
                                         snackBarHostState.showSnackbar(
                                             message = "No API key found to use this feature",
