@@ -34,7 +34,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.XmpApplication
 import org.helllabs.android.xmp.compose.components.MessageDialog
@@ -388,6 +387,8 @@ class PlayerActivity : ComponentActivity() {
                 Timber.i("Player started from intent filter")
                 startPlayerFromIntentFilter(path)
             } else if (extras != null) {
+                // TODO this should restart the player entirely with a new list from anywhere.
+                Timber.i("Player started from intent extras")
                 val app = XmpApplication.instance!!
                 viewModel.setActivityState(
                     fileList = app.fileListUri.orEmpty(),
@@ -399,6 +400,7 @@ class PlayerActivity : ComponentActivity() {
                 app.clearFileList()
                 startAndBindService(reconnect = false)
             } else {
+                Timber.d("Just reconnecting")
                 startAndBindService(reconnect = true)
             }
         }

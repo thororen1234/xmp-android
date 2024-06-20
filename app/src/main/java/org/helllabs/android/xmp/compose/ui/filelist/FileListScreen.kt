@@ -44,6 +44,9 @@ import org.helllabs.android.xmp.model.DropDownSelection
 import org.helllabs.android.xmp.model.FileItem
 import timber.log.Timber
 
+// TODO: Folders offset the start position when clicking on an item
+// TODO: Keep first is not working when clicking on an item with shuffle enabled.
+
 @Serializable
 object NavFileList
 
