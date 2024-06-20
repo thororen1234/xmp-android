@@ -7,8 +7,9 @@ name: Signed Release APK
 on:
   push:
     branches: [ 2023 ]
-    paths-ignore:
-      - '**.md'
+    paths:
+      - 'app/build.gradle.kts'
+      # - '.github/workflows/**'
     tags:
       - v*
   workflow_dispatch:
