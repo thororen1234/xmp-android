@@ -184,7 +184,18 @@ class MainActivity : ComponentActivity() {
                             onNavFileList = { navController.navigate(NavFileList) },
                             onNavPlaylist = { navController.navigate(NavPlaylist(it)) },
                             onNavPreferences = { navController.navigate(NavPreferences) },
-                            onNavSearch = { navController.navigate(NavSearch) },
+                            onNavSearch = {
+                                if (BuildConfig.API_KEY.isEmpty()) {
+                                    scope.launch {
+                                        snackBarHostState.showSnackbar(
+                                            message = "No API key found to use this feature",
+                                            actionLabel = "Dismiss"
+                                        )
+                                    }
+                                } else {
+                                    navController.navigate(NavSearch)
+                                }
+                            },
                         )
                     }
                     composable<NavFileList> {

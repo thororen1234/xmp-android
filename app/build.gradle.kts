@@ -3,18 +3,21 @@
 import java.io.FileInputStream
 import java.util.Properties
 
-val keyProperties = Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
-    keyProperties.load(FileInputStream(keystorePropertiesFile))
-}
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.android.kotlin)
     alias(libs.plugins.gradle.kotlinter)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.compiler)
+}
+
+/**
+ * For GitHub Actions, using 'GHA' build variant
+ */
+val keyProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keyProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
@@ -30,7 +33,7 @@ android {
         minSdk = 23 // Android 6 - Marshmallow
         targetSdk = 34 // Android 14 - Upside Down Cake
 
-        versionCode = 103
+        versionCode = 104
         versionName = "5.0-SNAPSHOT"
 
         vectorDrawables.useSupportLibrary = true
