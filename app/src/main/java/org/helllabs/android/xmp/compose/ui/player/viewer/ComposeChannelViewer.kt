@@ -56,6 +56,13 @@ fun ComposeChannelViewer(
             56.dp.toPx()
         }
     }
+    val barWidth = remember(density.density) {
+        if (density.density <= 3.0) {
+            xMultiplier.times(4)
+        } else {
+            xMultiplier.times(5)
+        }
+    }
     var canvasSize by remember {
         mutableStateOf(Size.Zero)
     }
@@ -226,12 +233,6 @@ fun ComposeChannelViewer(
             }
 
             val barY = yMultiplier.times(chn + 1) - yMultiplier.div(3) + yOffset.value
-            val barWidth: Float = if (density.density >= 3.0) {
-                // xxhdpi | 480dpi
-                xMultiplier.times(4)
-            } else {
-                xMultiplier.times(5)
-            }
 
             /***** Volume Bar Background *****/
             drawRect(
@@ -427,7 +428,7 @@ fun ComposeChannelViewer(
     }
 }
 
-@Preview
+@Preview(device = "id:pixel_6_pro")
 @Preview(name = "Huawei P20 lite", device = "spec:width=1080px,height=2280px,dpi=480")
 @Composable
 private fun Preview_ChannelViewer() {
