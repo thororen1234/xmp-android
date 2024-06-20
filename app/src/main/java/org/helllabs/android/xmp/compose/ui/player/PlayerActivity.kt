@@ -405,6 +405,7 @@ class PlayerActivity : ComponentActivity() {
     }
 
     private fun startPlayerFromIntentFilter(path: Uri) {
+        Timber.d("startPlayerFromIntentFilter: $path")
         viewModel.setActivityState(
             fileList = listOf(path),
             shuffleMode = false,
@@ -412,6 +413,7 @@ class PlayerActivity : ComponentActivity() {
             keepFirst = false,
             start = 0
         )
+        startAndBindService(reconnect = false)
     }
 
     private fun startAndBindService(reconnect: Boolean) {
