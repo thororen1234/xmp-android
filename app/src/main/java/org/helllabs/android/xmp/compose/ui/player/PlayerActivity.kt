@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.helllabs.android.xmp.Xmp
 import org.helllabs.android.xmp.XmpApplication
+import org.helllabs.android.xmp.compose.MainActivity
 import org.helllabs.android.xmp.compose.components.MessageDialog
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.player.components.PlayerBottomAppBar
@@ -127,7 +128,7 @@ class PlayerActivity : ComponentActivity() {
 
         Timber.d("onCreate")
 
-        onNewIntent(intent)
+        handleIntent(intent)
 
         // Enable Edge-to-Edge coloring
         enableEdgeToEdge(
@@ -363,68 +364,67 @@ class PlayerActivity : ComponentActivity() {
         screenReceiver.unregister(this)
     }
 
-    // TODO Ugly
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         Timber.i("onNewIntent")
-
-        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) {
-            Timber.i("Player started from history")
-
-            val path: Uri? = intent.data
-            if (path != null) {
-                Timber.i("Player started from intent filter")
-                viewModel.setActivityState(
-                    fileList = listOf(path),
-                    shuffleMode = false,
-                    loopListMode = false,
-                    keepFirst = false,
-                    start = 0
-                )
-                startAndBindService(reconnect = true)
-            } else {
-                Timber.i("Start file browser")
-                setResult(RESULT_OK)
-                finish()
-            }
-        } else {
-            val path: Uri? = intent.data
-            val extras = intent.extras
-
-            if (path != null) {
-                Timber.i("Player started from intent filter")
-                viewModel.setActivityState(
-                    fileList = listOf(path),
-                    shuffleMode = false,
-                    loopListMode = false,
-                    keepFirst = false,
-                    start = 0
-                )
-                startAndBindService(reconnect = true)
-            } else if (extras != null) {
-                Timber.i("Player started from intent extras")
-                val app = XmpApplication.instance!!
-                viewModel.setActivityState(
-                    fileList = app.fileListUri.orEmpty(),
-                    shuffleMode = extras.getBoolean(PARM_SHUFFLE),
-                    loopListMode = extras.getBoolean(PARM_LOOP),
-                    keepFirst = extras.getBoolean(PARM_KEEPFIRST),
-                    start = extras.getInt(PARM_START)
-                )
-                app.clearFileList()
-                startAndBindService(reconnect = false)
-            } else {
-                Timber.d("Just reconnecting")
-                startAndBindService(reconnect = true)
-            }
-        }
+        handleIntent(intent)
     }
 
+    // TODO test more.
+    private fun handleIntent(intent: Intent?) {
+        Timber.d("handleIntent: $intent")
 
-    private fun startAndBindService(reconnect: Boolean) {
+        if (intent == null) {
+            Timber.w("Intent was null")
+            setResult(RESULT_OK)
+            finish()
+            return
+        }
+
+        // -- Does this still work? --
+        // Oops. We don't want to start service if launched from history and service is not running
+        // so run the browser instead.
+        if ((intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) {
+            Timber.i("Player started from history")
+            Intent(this, MainActivity::class.java).apply {
+                setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            }.also(::startActivity)
+            finish()
+            return
+        }
+
+        intent.data?.let { uri ->
+            Timber.i("Player started from intent filter")
+            viewModel.setActivityState(
+                fileList = listOf(uri),
+                shuffleMode = false,
+                loopListMode = false,
+                keepFirst = false,
+                start = 0
+            )
+        }
+
+        intent.extras?.let { extras ->
+            // Sanity, because i can't brain
+            if (intent.data != null) {
+                return@let
+            }
+
+            Timber.i("Player started from intent extras")
+            val app = XmpApplication.instance!!
+            viewModel.setActivityState(
+                fileList = app.fileListUri.orEmpty(),
+                shuffleMode = extras.getBoolean(PARM_SHUFFLE),
+                loopListMode = extras.getBoolean(PARM_LOOP),
+                keepFirst = extras.getBoolean(PARM_KEEPFIRST),
+                start = extras.getInt(PARM_START)
+            )
+            app.clearFileList()
+        }
+
         val service = Intent(this, PlayerService::class.java)
 
-        if (!reconnect) {
+        if (!viewModel.uiState.value.serviceConnected) {
             Timber.i("Start service")
             startService(service)
         }
