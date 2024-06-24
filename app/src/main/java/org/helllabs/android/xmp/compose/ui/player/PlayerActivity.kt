@@ -363,6 +363,7 @@ class PlayerActivity : ComponentActivity() {
         screenReceiver.unregister(this)
     }
 
+    // TODO Ugly
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         Timber.i("onNewIntent")
@@ -373,7 +374,14 @@ class PlayerActivity : ComponentActivity() {
             val path: Uri? = intent.data
             if (path != null) {
                 Timber.i("Player started from intent filter")
-                startPlayerFromIntentFilter(path)
+                viewModel.setActivityState(
+                    fileList = listOf(path),
+                    shuffleMode = false,
+                    loopListMode = false,
+                    keepFirst = false,
+                    start = 0
+                )
+                startAndBindService(reconnect = true)
             } else {
                 Timber.i("Start file browser")
                 setResult(RESULT_OK)
@@ -385,9 +393,15 @@ class PlayerActivity : ComponentActivity() {
 
             if (path != null) {
                 Timber.i("Player started from intent filter")
-                startPlayerFromIntentFilter(path)
+                viewModel.setActivityState(
+                    fileList = listOf(path),
+                    shuffleMode = false,
+                    loopListMode = false,
+                    keepFirst = false,
+                    start = 0
+                )
+                startAndBindService(reconnect = true)
             } else if (extras != null) {
-                // TODO this should restart the player entirely with a new list from anywhere.
                 Timber.i("Player started from intent extras")
                 val app = XmpApplication.instance!!
                 viewModel.setActivityState(
@@ -406,17 +420,6 @@ class PlayerActivity : ComponentActivity() {
         }
     }
 
-    private fun startPlayerFromIntentFilter(path: Uri) {
-        Timber.d("startPlayerFromIntentFilter: $path")
-        viewModel.setActivityState(
-            fileList = listOf(path),
-            shuffleMode = false,
-            loopListMode = false,
-            keepFirst = false,
-            start = 0
-        )
-        startAndBindService(reconnect = false)
-    }
 
     private fun startAndBindService(reconnect: Boolean) {
         val service = Intent(this, PlayerService::class.java)

@@ -467,6 +467,7 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
             return
         }
 
+        playlist.clear() // Replace the list
         add(fileList, false)
 
         if (shuffle) {
@@ -493,6 +494,7 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
         if (isAlive.value) {
             Timber.i("Use existing player thread")
             playerRestart = true
+            mediaController.transportControls.skipToNext()
         } else {
             Timber.i("Start player thread")
             playThread = Thread(PlayRunnable())
@@ -586,7 +588,7 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
                 Xmp.setPlayer(Xmp.PLAYER_DEFPAN, defpan)
 
                 // Ditto if we can't load the module
-                Timber.i("Load  $currentFileUri")
+                Timber.i("Load $currentFileUri")
                 if (Xmp.loadFromFd(currentFileUri) < 0) {
                     Timber.e("Error loading $currentFileUri")
                     if (cmd == CMD_PREV) {
@@ -751,8 +753,8 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
                 if (playerRestart) {
                     Timber.i("Restart")
                     playlistPosition = 0
-                    cmd = CMD_NONE
                     playerRestart = false
+                    cmd = CMD_NONE
                 } else if (cmd == CMD_PREV) {
                     Timber.d("Command: Previous")
                     playlistPosition = playlistPosition.minus(1).coerceAtLeast(0)
