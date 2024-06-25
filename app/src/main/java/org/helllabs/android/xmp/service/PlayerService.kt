@@ -674,6 +674,9 @@ class PlayerService :
                         // Wait if paused
                         while (!isPlaying.value) {
                             try {
+                                if (cmd == CMD_STOP) {
+                                    break
+                                }
                                 Timber.d("Paused...")
                                 Thread.sleep(1000)
                             } catch (e: InterruptedException) {
