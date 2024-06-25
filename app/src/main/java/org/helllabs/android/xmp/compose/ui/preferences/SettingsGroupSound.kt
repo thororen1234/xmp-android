@@ -5,6 +5,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.res.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alorma.compose.settings.ui.SettingsGroup
 import com.alorma.compose.settings.ui.SettingsMenuLink
 import com.alorma.compose.settings.ui.SettingsSlider
@@ -12,10 +13,13 @@ import com.alorma.compose.settings.ui.SettingsSwitch
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.SingleChoiceListDialog
 import org.helllabs.android.xmp.core.PrefManager
+import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 
 @Composable
 fun SettingsGroupSound() {
+    val isAlive by PlayerService.isAlive.collectAsStateWithLifecycle()
+
     SettingsGroup(
         title = { Text(text = stringResource(id = R.string.pref_category_sound)) }
     ) {
@@ -32,6 +36,7 @@ fun SettingsGroupSound() {
         SettingsMenuLink(
             title = { Text(text = stringResource(id = R.string.pref_sampling_rate_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_sampling_rate_summary)) },
+            enabled = !isAlive,
             onClick = {
                 samplingRateDialog = true
             }
@@ -56,6 +61,7 @@ fun SettingsGroupSound() {
 
         var bufferSize by remember { mutableFloatStateOf(PrefManager.bufferMs.toFloat()) }
         SettingsSlider(
+            enabled = !isAlive,
             title = { Text(text = stringResource(id = R.string.pref_buffer_ms_title)) },
             subtitle = {
                 Text(
