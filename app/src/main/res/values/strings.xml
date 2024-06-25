@@ -28,7 +28,8 @@
     <string name="unsupported">Unsupported</string>
 
     <string name="about_author">Written by Claudio Matsuoka</string>
-    <string name="about_version">Version %s</string>
+    <string name="about_version">Version: %s</string>
+    <string name="about_version_code">Build: %s</string>
     <string name="about_xmp">Using libxmp %s written by Claudio Matsuoka and Hipolito Carraro Jr.</string>
     <string name="copied">Copied to clipboard</string>
     <string name="delete_file_message">Are you sure you want to delete %s?</string>

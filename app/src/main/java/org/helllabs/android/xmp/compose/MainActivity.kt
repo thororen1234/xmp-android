@@ -392,10 +392,12 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     composable<NavPreferenceAbout> {
-                        val buildVersion = remember { BuildConfig.VERSION_NAME }
+                        val versionName = remember { BuildConfig.VERSION_NAME }
+                        val versionCode = remember { BuildConfig.VERSION_CODE }
                         val xmpVersion = remember { Xmp.getVersion() }
                         AboutScreen(
-                            buildVersion = buildVersion,
+                            buildVersionName = versionName,
+                            buildVersionCode = versionCode,
                             libVersion = xmpVersion,
                             onBack = navController::navigateUp
                         )

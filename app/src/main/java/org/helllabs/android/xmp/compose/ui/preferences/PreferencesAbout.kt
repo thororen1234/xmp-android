@@ -25,7 +25,8 @@ object NavPreferenceAbout
 
 @Composable
 fun AboutScreen(
-    buildVersion: String,
+    buildVersionName: String,
+    buildVersionCode: Int,
     libVersion: String,
     onBack: () -> Unit
 ) {
@@ -77,7 +78,16 @@ fun AboutScreen(
                 fontWeight = FontWeight.Bold,
                 style = TextStyle(baselineShift = BaselineShift(.3f))
             )
-            AboutText(string = stringResource(id = R.string.about_version, buildVersion))
+            AboutText(
+                string = stringResource(id = R.string.about_version, buildVersionName),
+                bottomPadding = 0.dp,
+                fontSize = 18.sp
+            )
+            AboutText(
+                string = stringResource(id = R.string.about_version_code, buildVersionCode),
+                topPadding = 0.dp,
+                fontSize = 12.sp
+            )
             AboutText(string = stringResource(id = R.string.about_author))
             AboutText(string = stringResource(id = R.string.about_xmp, libVersion))
             Spacer(modifier = Modifier.height(8.dp))
@@ -103,13 +113,20 @@ fun AboutScreen(
 }
 
 @Composable
-private fun AboutText(string: String, textAlign: TextAlign = TextAlign.Center) {
+private fun AboutText(
+    string: String,
+    textAlign: TextAlign = TextAlign.Center,
+    topPadding: Dp = 4.dp,
+    bottomPadding: Dp = 4.dp,
+    fontSize: TextUnit = TextUnit.Unspecified
+) {
     Text(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 4.dp, bottom = 4.dp),
+            .padding(top = topPadding, bottom = bottomPadding),
         text = string,
-        textAlign = textAlign
+        textAlign = textAlign,
+        fontSize = fontSize,
     )
 }
 
@@ -118,7 +135,8 @@ private fun AboutText(string: String, textAlign: TextAlign = TextAlign.Center) {
 private fun Preview_AboutScreen() {
     XmpTheme(useDarkTheme = true) {
         AboutScreen(
-            buildVersion = "1.2.3",
+            buildVersionName = "1.2.3",
+            buildVersionCode = 669,
             libVersion = "4.5.6",
             onBack = { }
         )
