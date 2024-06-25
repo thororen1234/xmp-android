@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.input.nestedscroll.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
@@ -27,8 +28,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.materialkolor.ktx.darken
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import me.saket.extendedspans.ExtendedSpans
+import me.saket.extendedspans.SquigglyUnderlineSpanPainter
+import me.saket.extendedspans.drawBehind
+import me.saket.extendedspans.rememberSquigglyUnderlineAnimator
 import org.helllabs.android.xmp.BuildConfig
 import org.helllabs.android.xmp.R
 import org.helllabs.android.xmp.compose.components.EditPlaylistDialog
@@ -50,8 +56,6 @@ import timber.log.Timber
 @Serializable
 object NavigationHome
 
-// TODO have some sort of animation over "Xmp Mod Player" when service is active
-
 @Composable
 fun HomeScreenImpl(
     viewModel: PlaylistMenuViewModel,
@@ -64,7 +68,8 @@ fun HomeScreenImpl(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val player by PlayerService.isAlive.collectAsStateWithLifecycle()
+    val isPlayerAlive by PlayerService.isAlive.collectAsStateWithLifecycle()
+    val isPlayerPlaying by PlayerService.isPlaying.collectAsStateWithLifecycle()
 
     val appSettings = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.StartActivityForResult()
@@ -217,7 +222,8 @@ fun HomeScreenImpl(
     HomeScreen(
         state = state,
         snackBarHostState = snackBarHostState,
-        serviceAlive = player,
+        serviceAlive = isPlayerAlive,
+        servicePlaying = isPlayerPlaying,
         onItemClick = { item ->
             if (item.isSpecial) {
                 onNavFileList()
@@ -265,6 +271,7 @@ private fun HomeScreen(
     state: PlaylistMenuState,
     snackBarHostState: SnackbarHostState,
     serviceAlive: Boolean,
+    servicePlaying: Boolean,
     onDownload: () -> Unit,
     onItemClick: (item: FileItem) -> Unit,
     onItemLongClick: (item: FileItem) -> Unit,
@@ -275,6 +282,18 @@ private fun HomeScreen(
     onSettings: () -> Unit,
     onTitleClicked: () -> Unit
 ) {
+    val underlineAnimator = rememberSquigglyUnderlineAnimator(2.seconds)
+    val extendedSpans = remember {
+        ExtendedSpans(
+            SquigglyUnderlineSpanPainter(
+                wavelength = 32.sp,
+                amplitude = 2.sp,
+                bottomOffset = 4.sp,
+                animator = underlineAnimator
+            )
+        )
+    }
+
     val scrollState = rememberLazyListState()
     val isScrolled by remember {
         derivedStateOf {
@@ -282,8 +301,13 @@ private fun HomeScreen(
         }
     }
 
+    val view = LocalView.current
     val hasStorage = remember(state) {
-        StorageManager.checkPermissions()
+        if (view.isInEditMode) {
+            true
+        } else {
+            StorageManager.checkPermissions()
+        }
     }
 
     Scaffold(
@@ -328,8 +352,21 @@ private fun HomeScreen(
                                 )
                             )
                         ) {
+                            val text = themedText(
+                                text = stringResource(id = R.string.app_name),
+                                isAlive = serviceAlive,
+                                isPlaying = servicePlaying
+
+                            )
+
                             Text(
-                                text = themedText(text = stringResource(id = R.string.app_name)),
+                                modifier = Modifier.drawBehind(extendedSpans),
+                                text = remember(text, serviceAlive, servicePlaying) {
+                                    extendedSpans.extend(text)
+                                },
+                                onTextLayout = { result ->
+                                    extendedSpans.onTextLayout(result)
+                                },
                                 fontFamily = michromaFontFamily,
                                 fontSize = 18.sp,
                                 fontWeight = FontWeight.Bold
@@ -550,6 +587,7 @@ private fun Preview_PlaylistMenuScreen() {
             ),
             snackBarHostState = SnackbarHostState(),
             serviceAlive = true,
+            servicePlaying = false,
             onItemClick = {},
             onItemLongClick = {},
             onRefresh = {},

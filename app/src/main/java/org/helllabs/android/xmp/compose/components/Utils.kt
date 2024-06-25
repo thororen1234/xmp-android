@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.res.*
 import androidx.compose.ui.text.*
@@ -18,13 +19,32 @@ import org.helllabs.android.xmp.compose.theme.seed
  * Accent the "Xmp" part of the text.
  */
 @Composable
-fun themedText(text: String): AnnotatedString = buildAnnotatedString {
-    withStyle(style = SpanStyle(color = seed)) {
-        append(text.substring(0, 3))
-    }
-
-    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground)) {
-        append(text.substring(3, text.length))
+fun themedText(
+    text: String,
+    isAlive: Boolean = false,
+    isPlaying: Boolean = false
+): AnnotatedString = buildAnnotatedString {
+    if (isAlive) {
+        withStyle(
+            SpanStyle(
+                textDecoration = TextDecoration.Underline,
+                color = if (isPlaying) seed else Color.Gray
+            )
+        ) {
+            withStyle(style = SpanStyle(color = seed)) {
+                append(text.substring(0, 3))
+            }
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground)) {
+                append(text.substring(3, text.length))
+            }
+        }
+    } else {
+        withStyle(style = SpanStyle(color = seed)) {
+            append(text.substring(0, 3))
+        }
+        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground)) {
+            append(text.substring(3, text.length))
+        }
     }
 }
 

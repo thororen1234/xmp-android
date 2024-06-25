@@ -82,6 +82,7 @@ class PlayerService :
         private const val CMD_STOP = 3
 
         val isAlive = MutableStateFlow(false)
+        val isPlaying = MutableStateFlow(false)
     }
 
     private val binder = PlayerBinder(this)
@@ -109,8 +110,6 @@ class PlayerService :
     private var playlistPosition: Int = 0
     private var currentFileUri: Uri = Uri.EMPTY
 
-    var isPlaying: Boolean = false
-        private set
     var isRepeating: Boolean = false
         private set
     var playAllSequences: Boolean = false
@@ -185,7 +184,7 @@ class PlayerService :
             AudioManager.AUDIOFOCUS_GAIN -> {
                 // Resume playback
                 Xmp.setVolume(playerVolume)
-                if (!isPlaying) mediaController.transportControls.play()
+                if (!isPlaying.value) mediaController.transportControls.play()
             }
 
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
@@ -225,7 +224,7 @@ class PlayerService :
                     updatePlaybackState(PlaybackStateCompat.STATE_PLAYING)
                     showNotification()
 
-                    if (!isPlaying) {
+                    if (!isPlaying.value) {
                         Xmp.restartAudio()
                     }
 
@@ -233,7 +232,7 @@ class PlayerService :
                         requestAudioFocus()
                     }
 
-                    isPlaying = true
+                    isPlaying.value = true
 
                     serviceScope.launch {
                         _playerEvent.emit(PlayerEvent.Play)
@@ -250,11 +249,11 @@ class PlayerService :
                         abandonAudioFocus()
                     }
 
-                    if (isPlaying) {
+                    if (isPlaying.value) {
                         Xmp.stopAudio()
                     }
 
-                    isPlaying = false
+                    isPlaying.value = false
 
                     serviceScope.launch {
                         _playerEvent.emit(PlayerEvent.Paused)
@@ -271,7 +270,7 @@ class PlayerService :
                     Xmp.stopModule()
                     cmd = CMD_NEXT
                     discardBuffer = true
-                    if (!isPlaying) {
+                    if (!isPlaying.value) {
                         mediaController.transportControls.play()
                     }
                 }
@@ -285,7 +284,7 @@ class PlayerService :
                         cmd = CMD_PREV
                     }
                     discardBuffer = true
-                    if (!isPlaying) {
+                    if (!isPlaying.value) {
                         mediaController.transportControls.play()
                     }
                 }
@@ -326,7 +325,7 @@ class PlayerService :
         playAllSequences = PrefManager.allSequences
 
         isAlive.value = false
-        isPlaying = false
+        isPlaying.value = false
 
         playAllSequences = PrefManager.allSequences
 
@@ -549,7 +548,7 @@ class PlayerService :
             var oldPos = -1
             var skipToPrevious = false
 
-            isPlaying = true
+            isPlaying.value = true
 
             do {
                 val queueItem = playlist[playlistPosition]
@@ -680,7 +679,7 @@ class PlayerService :
                         discardBuffer = false
 
                         // Wait if paused
-                        while (!isPlaying) {
+                        while (!isPlaying.value) {
                             try {
                                 Timber.d("Paused...")
                                 Thread.sleep(1000)
@@ -697,7 +696,7 @@ class PlayerService :
                         }
 
                         // Wait if no buffers available
-                        while (!Xmp.hasFreeBuffer() && isPlaying && cmd == CMD_NONE) {
+                        while (!Xmp.hasFreeBuffer() && isPlaying.value && cmd == CMD_NONE) {
                             try {
                                 Thread.sleep(40)
                             } catch (e: InterruptedException) {
@@ -780,6 +779,8 @@ class PlayerService :
             serviceScope.launch {
                 _playerEvent.emit(PlayerEvent.EndPlay(EndPlayback.OK))
             }
+
+            isAlive.value = false
 
             Timber.i("Stop service")
             stopSelf()

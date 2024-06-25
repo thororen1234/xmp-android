@@ -90,7 +90,7 @@ class PlayerActivity : ComponentActivity() {
             controls = modPlayer!!.mediaController
 
             viewModel.onConnected(true)
-            viewModel.isPlaying(modPlayer!!.isPlaying)
+            viewModel.isPlaying(PlayerService.isPlaying.value)
 
             lifecycleScope.launch {
                 modPlayer!!.playerEvent.collect { event ->
@@ -219,17 +219,17 @@ class PlayerActivity : ComponentActivity() {
                         }
 
                         PlayerControlsEvent.OnPlay -> {
-                            if (modPlayer!!.isPlaying) {
+                            if (PlayerService.isPlaying.value) {
                                 controls!!.transportControls.pause()
                             } else {
                                 controls!!.transportControls.play()
                             }
-                            viewModel.isPlaying(modPlayer!!.isPlaying)
+                            viewModel.isPlaying(PlayerService.isPlaying.value)
                         }
 
                         PlayerControlsEvent.OnPrev -> {
                             controls!!.transportControls.skipToPrevious()
-                            viewModel.isPlaying(modPlayer!!.isPlaying)
+                            viewModel.isPlaying(PlayerService.isPlaying.value)
                         }
 
                         PlayerControlsEvent.OnRepeat -> {
