@@ -111,23 +111,25 @@ fun SettingsGroupSound() {
             }
         )
 
-        val amigaMixer by remember { mutableStateOf(PrefManager.amigaMixer) }
+        var amigaMixer by remember { mutableStateOf(PrefManager.amigaMixer) }
         SettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_amiga_mixer_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_amiga_mixer_summary)) },
             state = amigaMixer,
             onCheckedChange = {
                 PrefManager.amigaMixer = it
+                amigaMixer = it
             }
         )
 
-        val interpolate by remember { mutableStateOf(PrefManager.interpolate) }
+        var interpolate by remember { mutableStateOf(PrefManager.interpolate) }
         SettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_interpolate_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_interpolate_summary)) },
             state = interpolate,
             onCheckedChange = {
                 PrefManager.interpolate = it
+                interpolate = it
             }
         )
 
@@ -210,13 +212,14 @@ fun SettingsGroupSound() {
             }
         )
 
-        val allSequence by remember { mutableStateOf(PrefManager.allSequences) }
+        var allSequence by remember { mutableStateOf(PrefManager.allSequences) }
         SettingsSwitch(
             title = { Text(text = stringResource(id = R.string.pref_all_sequences_title)) },
             subtitle = { Text(text = stringResource(id = R.string.pref_all_sequences_summary)) },
             state = allSequence,
             onCheckedChange = {
                 PrefManager.allSequences = it
+                allSequence = it
             }
         )
     }
