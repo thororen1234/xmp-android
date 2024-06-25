@@ -464,26 +464,26 @@ class PlayerService :
             return
         }
 
-        playlist.clear() // Replace the list
-        add(fileList, false)
+        playlist.clear()
+        add(fileList)
 
         if (shuffle) {
             if (keepFirst) {
-                Timber.d("KeepFirst")
-                val shuffled = playlist.shuffleWithFirst(start)
-                playlist.clear()
-                playlist.addAll(shuffled)
+                Timber.d("play: Shuffle + KeepFirst")
+                playlist.shuffleWithFirst(start)
+                playlistPosition = 0
             } else {
-                Timber.d("No KeepFirst")
+                Timber.d("play: Shuffle + No KeepFirst ")
                 playlist.shuffle()
             }
+        } else {
+            Timber.d("play: No Shuffle")
+            playlistPosition = start
         }
 
         cmd = CMD_NONE
 
-        playlistPosition = start
-
-        Timber.d("Start: $start")
+        Timber.d("Start: $playlistPosition")
         Timber.d("Size: ${playlist.size}")
 
         isRepeating = loopList
@@ -501,12 +501,12 @@ class PlayerService :
         isAlive.value = true
     }
 
-    fun add(list: List<Uri>, shuffle: Boolean) {
+    fun add(list: List<Uri>) {
         if (list.isEmpty()) {
             return
         }
 
-        var items = list.mapNotNull { item ->
+        val items = list.mapNotNull { item ->
             val modInfo = ModInfo()
             if (Xmp.testFromFd(item, modInfo)) {
                 val desc = MediaDescriptionCompat.Builder()
@@ -522,22 +522,15 @@ class PlayerService :
             }
         }
 
-        if (shuffle) {
-            items = items.shuffled()
-        }
-
         playlist.addAll(items)
     }
 
-    private fun <T> List<T>.shuffleWithFirst(index: Int): List<T> {
+    private fun <T> MutableList<T>.shuffleWithFirst(index: Int) {
         if (index !in indices) throw IndexOutOfBoundsException("Index out of bounds: $index")
 
-        val list = toMutableList()
-        val firstItem = list.removeAt(index)
-        list.shuffle()
-        list.add(0, firstItem)
-
-        return list
+        val firstItem = removeAt(index)
+        shuffle()
+        add(0, firstItem)
     }
 
     private inner class PlayRunnable : Runnable {

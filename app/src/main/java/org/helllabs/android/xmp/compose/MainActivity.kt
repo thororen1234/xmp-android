@@ -87,7 +87,7 @@ class MainActivity : ComponentActivity() {
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             mModPlayer = (service as PlayerBinder).getService()
 
-            mModPlayer!!.add(mAddList, PrefManager.shuffleMode)
+            mModPlayer!!.add(mAddList)
             mAddList = listOf()
 
             unbindService(this)

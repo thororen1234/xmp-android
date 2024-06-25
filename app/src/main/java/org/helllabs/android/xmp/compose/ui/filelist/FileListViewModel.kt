@@ -256,6 +256,13 @@ class FileListViewModel : ViewModel() {
 
     fun getItems(): List<Uri> = _uiState.value.list.map { it.docFile!!.uri }
 
+    // Get non directory items and count the number of directories
+    fun getFileItems(): Pair<Int, List<Uri>> {
+        val (files, dirs) = _uiState.value.list.partition { it.isFile }
+
+        return Pair(dirs.size, files.map { it.docFile!!.uri })
+    }
+
     fun dropDownAddToPlaylist(docFile: DocumentFileCompat? = null) {
         playlistList.value = PlaylistManager.listPlaylists()
         playlistChoice.value = docFile ?: currentPath
