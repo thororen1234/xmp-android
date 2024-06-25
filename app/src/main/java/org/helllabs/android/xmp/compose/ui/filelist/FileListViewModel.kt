@@ -284,13 +284,13 @@ class FileListViewModel : ViewModel() {
         deleteFileChoice.value = null
     }
 
-    fun deleteFile(): Boolean = StorageManager.deleteFileOrDirectory(deleteFileChoice.value)
+    fun deleteFile(): Boolean = StorageManager.deleteFileOrDirectory(deleteFileChoice.value?.uri)
 
-    fun deleteDir(): Boolean = StorageManager.deleteFileOrDirectory(deleteDirChoice.value)
+    fun deleteDir(): Boolean = StorageManager.deleteFileOrDirectory(deleteDirChoice.value?.uri)
 
-    fun getFileName(): String = StorageManager.getFileName(deleteFileChoice.value).orEmpty()
+    fun getFileName(): String = StorageManager.getFileName(deleteFileChoice.value?.uri).orEmpty()
 
-    fun getDirName(): String = StorageManager.getFileName(deleteDirChoice.value).orEmpty()
+    fun getDirName(): String = StorageManager.getFileName(deleteDirChoice.value?.uri).orEmpty()
 
     fun clearPlaylist() {
         playlistChoice.value = null

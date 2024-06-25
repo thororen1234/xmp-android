@@ -3,6 +3,7 @@ package org.helllabs.android.xmp.core
 import android.content.Intent
 import android.net.Uri
 import android.provider.DocumentsContract
+import android.provider.OpenableColumns
 import com.lazygeniouz.dfc.file.DocumentFileCompat
 import java.util.Locale
 import org.helllabs.android.xmp.XmpApplication
@@ -115,9 +116,7 @@ object StorageManager {
      * Attempt to install sample modules in our assets folder. Skip if it exists
      */
     private fun installExampleMod(modPath: DocumentFileCompat?): Boolean {
-        if (!PrefManager.examples) {
-            return true
-        }
+        if (!PrefManager.examples) return true
 
         if (modPath == null) {
             Timber.w("modDir is null")
@@ -125,7 +124,7 @@ object StorageManager {
         }
 
         val context = XmpApplication.instance!!.applicationContext
-        runCatching {
+        return runCatching {
             val assets = context.resources.assets
             assets.list("mod")?.forEach { asset ->
                 val mod = modPath.findFile(asset) ?: return@forEach
@@ -144,9 +143,7 @@ object StorageManager {
         }.onFailure { exception ->
             Timber.e(exception)
             return false
-        }
-
-        return true
+        }.isSuccess
     }
 
     /**
@@ -155,7 +152,7 @@ object StorageManager {
      * @see [PrefManager.modArchiveFolder] if the pref was set to download
      * @see [PrefManager.artistFolder]
      */
-    fun getDownloadPath(module: Module): Result<DocumentFileCompat> =
+    private fun getDownloadPath(module: Module): Result<DocumentFileCompat> =
         getModDirectory().mapCatching { modDir ->
             if (!modDir.isDirectory()) {
                 throw XmpException("Unable to access the mod directory.")
@@ -164,47 +161,26 @@ object StorageManager {
             var targetDir = modDir
 
             if (PrefManager.modArchiveFolder) {
-                val modArchiveDir = targetDir.findFile(DEFAULT_DOWNLOAD_DIR)
-                    ?: targetDir.createDirectory(DEFAULT_DOWNLOAD_DIR)
+                targetDir = targetDir.findFile(DEFAULT_DOWNLOAD_DIR) ?: targetDir.createDirectory(
+                    DEFAULT_DOWNLOAD_DIR
+                )
                     ?: throw XmpException("Failed to access or create TMA directory.")
-
-                if (!modArchiveDir.isDirectory()) {
+                if (!targetDir.isDirectory()) {
                     throw IllegalArgumentException("TMA directory is not a directory.")
                 }
-
-                targetDir = modArchiveDir
             }
 
             if (PrefManager.artistFolder) {
                 val artistName = module.getArtist()
-                val artistDir = targetDir.findFile(artistName)
-                    ?: targetDir.createDirectory(artistName)
+                targetDir = targetDir.findFile(artistName) ?: targetDir.createDirectory(artistName)
                     ?: throw XmpException("Failed to access or create the artist directory.")
-
-                if (!artistDir.isDirectory()) {
+                if (!targetDir.isDirectory()) {
                     throw IllegalArgumentException("Artist directory is not a directory.")
                 }
-
-                targetDir = artistDir
             }
 
             targetDir
         }
-
-    /**
-     * Delete a File or Directory
-     *
-     * @param docFile the [DocumentFileCompat] to be deleted
-     *
-     * @return true if successful, otherwise false
-     */
-    fun deleteFileOrDirectory(docFile: DocumentFileCompat?): Boolean {
-        if (docFile == null) {
-            return false
-        }
-
-        return deleteFileOrDirectory(docFile.uri)
-    }
 
     /**
      * Delete a File or Directory
@@ -292,9 +268,9 @@ object StorageManager {
             DocumentsContract.Document.COLUMN_MIME_TYPE,
         )
 
-        val items = mutableListOf<Pair<String, Uri>>()
+        val directories = mutableListOf<Uri>()
+        val files = mutableListOf<Uri>()
 
-        // Couldn't figure out sortOrder
         context.contentResolver.query(childDocUri, projection, null, null, null)?.use { cursor ->
             val idCol = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
             val mimeCol = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_MIME_TYPE)
@@ -304,43 +280,26 @@ object StorageManager {
                 val mimeType = cursor.getString(mimeCol)
                 val childUri = DocumentsContract.buildDocumentUriUsingTree(uri, childDocumentId)
 
-                items.add(Pair(mimeType, childUri))
+                if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                    directories.add(childUri)
+                } else {
+                    files.add(childUri)
+                }
             }
         }
-
-        val sortedItems = items.sortedWith(
-            compareBy(
-                { it.first != DocumentsContract.Document.MIME_TYPE_DIR },
-                { it.second.toString().lowercase(Locale.getDefault()) }
-            )
-        )
 
         val sortedUris = mutableListOf<Uri>()
-        sortedItems.forEach { (mimeType, uri) ->
-            if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                if (includeDirectories) {
-                    sortedUris.add(uri)
-                }
-                sortedUris.addAll(walkDownDirectory(uri, includeDirectories))
-            } else {
-                sortedUris.add(uri)
+
+        directories.sortedBy { it.toString().lowercase(Locale.getDefault()) }.forEach { dirUri ->
+            if (includeDirectories) {
+                sortedUris.add(dirUri)
             }
+            sortedUris.addAll(walkDownDirectory(dirUri, includeDirectories))
         }
+
+        sortedUris.addAll(files.sortedBy { it.toString().lowercase(Locale.getDefault()) })
 
         return sortedUris
-    }
-
-    /**
-     * Gets the filename from a [DocumentFileCompat].
-     *
-     * @return the name of the DocumentFile file
-     */
-    fun getFileName(docFile: DocumentFileCompat?): String? {
-        if (docFile == null) {
-            return null
-        }
-
-        return getFileName(docFile.uri)
     }
 
     /**
@@ -354,6 +313,15 @@ object StorageManager {
         }
 
         val context = XmpApplication.instance!!.applicationContext
-        return DocumentFileCompat.fromSingleUri(context, uri)?.name
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        cursor?.moveToFirst()
+        val idx = cursor?.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (idx == null || idx < 0) {
+            return null
+        }
+        val fileName = cursor.getString(idx)
+        cursor.close()
+
+        return fileName // DocumentFileCompat.fromSingleUri(context, uri)?.name
     }
 }

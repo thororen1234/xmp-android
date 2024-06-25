@@ -232,7 +232,7 @@ class ResultViewModel(private val okHttpClient: OkHttpClient, private val reposi
 
     fun deleteModule() {
         val result = StorageManager.deleteModule(_uiState.value.module?.module)
-        Timber.d("Module deleted was: $result")
+        Timber.d("Module deleted was: ${result.isSuccess}")
         update()
     }
 
