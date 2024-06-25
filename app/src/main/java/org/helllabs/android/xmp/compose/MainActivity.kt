@@ -532,10 +532,10 @@ class MainActivity : ComponentActivity() {
 
         XmpApplication.instance!!.fileListUri = modList
         Intent(this, PlayerActivity::class.java).apply {
-            putExtra(PlayerActivity.PARM_SHUFFLE, isShuffleMode)
-            putExtra(PlayerActivity.PARM_LOOP, isLoopMode)
-            putExtra(PlayerActivity.PARM_START, start)
-            putExtra(PlayerActivity.PARM_KEEPFIRST, keepFirst)
+            putExtra(Constants.PARM_SHUFFLE, isShuffleMode)
+            putExtra(Constants.PARM_LOOP, isLoopMode)
+            putExtra(Constants.PARM_START, start)
+            putExtra(Constants.PARM_KEEPFIRST, keepFirst)
         }.also { intent ->
             Timber.i("Start Player activity")
             result.launch(intent)

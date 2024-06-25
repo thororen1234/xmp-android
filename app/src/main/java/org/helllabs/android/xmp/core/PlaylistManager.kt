@@ -59,16 +59,16 @@ class PlaylistManager {
 
     fun save(): Result<Boolean> = StorageManager.getPlaylistDirectory().mapCatching { dir ->
         if (!oldName.isNullOrEmpty()) {
-            val oldFile = dir.findFile(oldName + Playlist.SUFFIX)
+            val oldFile = dir.findFile(oldName + Constants.SUFFIX)
             if (oldFile != null && !oldFile.delete()) {
                 throw XmpException("Failed to delte old file.")
             }
         } else {
-            dir.findFile(playlist.name + Playlist.SUFFIX)?.delete()
+            dir.findFile(playlist.name + Constants.SUFFIX)?.delete()
         }
 
         val mimeType = "application/octet-stream"
-        val newFile = dir.createFile(mimeType, playlist.name + Playlist.SUFFIX)
+        val newFile = dir.createFile(mimeType, playlist.name + Constants.SUFFIX)
             ?: throw IllegalStateException("Failed to create new file")
 
         playlist.uri = newFile.uri
@@ -156,7 +156,7 @@ class PlaylistManager {
 
         fun delete(name: String): Boolean =
             StorageManager.getPlaylistDirectory().mapCatching { dir ->
-                val playlist = dir.findFile(name + Playlist.SUFFIX)
+                val playlist = dir.findFile(name + Constants.SUFFIX)
                     ?: throw XmpException("Unable to find playlist: $name")
 
                 playlist.delete()

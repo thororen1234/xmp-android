@@ -17,7 +17,6 @@ import timber.log.Timber
 
 @Stable
 data class PlayerState(
-    val allowUpdate: Boolean = false,
     val currentMessage: String = "",
     val currentViewer: Int = 0,
     val infoTitle: String = "",
@@ -286,12 +285,6 @@ class PlayerViewModel : ViewModel() {
     fun setPlayTime(time: Float) {
         _activityState.update {
             it.copy(playTime = time)
-        }
-    }
-
-    fun allowUpdate(value: Boolean) {
-        _uiState.update {
-            it.copy(allowUpdate = value)
         }
     }
 

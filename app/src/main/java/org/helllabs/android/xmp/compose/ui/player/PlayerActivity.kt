@@ -53,6 +53,7 @@ import org.helllabs.android.xmp.compose.ui.player.viewer.ComposePatternViewer
 import org.helllabs.android.xmp.compose.ui.player.viewer.InstrumentViewer
 import org.helllabs.android.xmp.compose.ui.player.viewer.composeSampleChannelInfo
 import org.helllabs.android.xmp.compose.ui.player.viewer.composeSampleFrameInfo
+import org.helllabs.android.xmp.core.Constants
 import org.helllabs.android.xmp.core.PrefManager
 import org.helllabs.android.xmp.model.ChannelInfo
 import org.helllabs.android.xmp.model.FrameInfo
@@ -64,13 +65,6 @@ import org.helllabs.android.xmp.service.PlayerService
 import timber.log.Timber
 
 class PlayerActivity : ComponentActivity() {
-
-    companion object {
-        const val PARM_KEEPFIRST = "keepFirst"
-        const val PARM_LOOP = "loop"
-        const val PARM_SHUFFLE = "shuffle"
-        const val PARM_START = "start"
-    }
 
     private val viewModel by viewModels<PlayerViewModel>()
 
@@ -100,10 +94,10 @@ class PlayerActivity : ComponentActivity() {
 
             with(viewModel.activityState.value) {
                 if (fileList.isNotEmpty()) {
-                    // Start new queue
+                    Timber.d("Start new queue")
                     playNewMod(fileList, start)
                 } else {
-                    // Reconnect to existing service
+                    Timber.d("Reconnect to existing service")
                     viewModel.showNewMod(modPlayer!!, false)
                 }
             }
@@ -114,7 +108,6 @@ class PlayerActivity : ComponentActivity() {
 
             saveAllSeqPreference()
             viewModel.onConnected(false)
-            viewModel.allowUpdate(false)
 
             modPlayer = null
 
@@ -267,9 +260,7 @@ class PlayerActivity : ComponentActivity() {
                     viewModel.resetPlayTime()
 
                     while (true) {
-                        if (!viewModel.uiState.value.allowUpdate &&
-                            viewModel.activityState.value.playTime < 0
-                        ) {
+                        if (viewModel.activityState.value.playTime < 0) {
                             Timber.i("Stop update")
                             break
                         }
@@ -414,10 +405,10 @@ class PlayerActivity : ComponentActivity() {
             val app = XmpApplication.instance!!
             viewModel.setActivityState(
                 fileList = app.fileListUri.orEmpty(),
-                shuffleMode = extras.getBoolean(PARM_SHUFFLE),
-                loopListMode = extras.getBoolean(PARM_LOOP),
-                keepFirst = extras.getBoolean(PARM_KEEPFIRST),
-                start = extras.getInt(PARM_START)
+                shuffleMode = extras.getBoolean(Constants.PARM_SHUFFLE),
+                loopListMode = extras.getBoolean(Constants.PARM_LOOP),
+                keepFirst = extras.getBoolean(Constants.PARM_KEEPFIRST),
+                start = extras.getInt(Constants.PARM_START)
             )
             app.clearFileList()
         }
@@ -440,16 +431,15 @@ class PlayerActivity : ComponentActivity() {
         when (event) {
             PlayerEvent.EndMod -> {
                 Timber.d("endModCallback: end of module")
-                viewModel.allowUpdate(false)
             }
 
             is PlayerEvent.NewMod -> {
                 Timber.d("newModCallback: show module data")
                 viewModel.showNewMod(modPlayer!!, event.isPrevious)
-                viewModel.allowUpdate(true)
             }
 
             PlayerEvent.NewSequence -> {
+                Timber.d("newSequenceCallback: ")
                 if (modPlayer == null) {
                     return
                 }
@@ -457,8 +447,6 @@ class PlayerActivity : ComponentActivity() {
                 val modVars = ModVars()
                 Xmp.getModVars(modVars)
                 viewModel.modVars.update { modVars }
-
-                viewModel.allowUpdate(true)
 
                 viewModel.showNewSequence { time ->
                     val minutes = time / 60000
@@ -472,17 +460,14 @@ class PlayerActivity : ComponentActivity() {
 
             PlayerEvent.Paused -> {
                 modPlayer?.let { viewModel.isPlaying(false) }
-                viewModel.allowUpdate(false)
             }
 
             PlayerEvent.Play -> {
                 modPlayer?.let { viewModel.isPlaying(true) }
-                viewModel.allowUpdate(true)
             }
 
             is PlayerEvent.EndPlay -> {
                 Timber.d("endPlayCallback: End progress thread")
-                viewModel.allowUpdate(false)
                 val resultIntent = Intent().apply {
                     val message = when (event.result) {
                         EndPlayback.ERROR_FOCUS -> "Unable to get Audio Focus"
@@ -633,7 +618,6 @@ private fun PlayerScreen(
 
                 1 -> ComposePatternViewer(
                     onTap = onChangeViewer,
-                    allowUpdate = uiState.allowUpdate,
                     fi = frameInfo,
                     isMuted = isMuted,
                     modType = uiState.infoType,

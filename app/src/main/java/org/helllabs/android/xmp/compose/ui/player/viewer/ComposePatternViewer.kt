@@ -48,7 +48,6 @@ import timber.log.Timber
 @Composable
 internal fun ComposePatternViewer(
     onTap: () -> Unit,
-    allowUpdate: Boolean,
     fi: FrameInfo,
     isMuted: ChannelMuteState,
     modType: String,
@@ -186,6 +185,22 @@ internal fun ComposePatternViewer(
             topLeft = Offset(0f, 0f)
         )
 
+        /***** Line Bar *****/
+        barLineY = canvasSize.height.div(2).div(yAxisMultiplier).toInt().times(yAxisMultiplier)
+        drawRect(
+            color = Color.DarkGray,
+            topLeft = Offset(0f, barLineY),
+            size = Size(canvasSize.width, yAxisMultiplier)
+        )
+
+        /***** Row Numbers Background *****/
+        drawRect(
+            color = Color.DarkGray,
+            alpha = 1f,
+            topLeft = Offset(0f, yAxisMultiplier),
+            size = Size(xAxisMultiplier, canvasSize.height)
+        )
+
         if (fi.numRows == 0) {
             // If row numbers is 0, let's stop drawing for now. (Song change)
             return@Canvas
@@ -208,14 +223,6 @@ internal fun ComposePatternViewer(
             )
         }
 
-        /***** Line Bar *****/
-        barLineY = canvasSize.height.div(2).div(yAxisMultiplier).toInt().times(yAxisMultiplier)
-        drawRect(
-            color = Color.DarkGray,
-            topLeft = Offset(0f, barLineY),
-            size = Size(canvasSize.width, yAxisMultiplier)
-        )
-
         currentRow = fi.row.toFloat()
         rowYOffset = barLineY - (currentRow * yAxisMultiplier)
 
@@ -225,7 +232,7 @@ internal fun ComposePatternViewer(
                 // Our variables are latency-compensated but pattern data is current
                 // so caution is needed to avoid retrieving data using old variables
                 // from a module with pattern data from a newly loaded one.
-                if (PlayerService.isAlive.value && allowUpdate) {
+                if (PlayerService.isAlive.value) {
                     Xmp.getPatternRow(
                         pat = fi.pattern,
                         row = row,
@@ -338,14 +345,6 @@ internal fun ComposePatternViewer(
             }
         }
 
-        /***** Row Numbers Background *****/
-        drawRect(
-            color = Color.DarkGray,
-            alpha = 1f,
-            topLeft = Offset(0f, yAxisMultiplier),
-            size = Size(xAxisMultiplier, canvasSize.height)
-        )
-
         for (i in 0 until fi.numRows) {
             /***** Row numbers *****/
             textCenterX = xAxisMultiplier.div(2).minus(rowText[i].size.width.div(2))
@@ -385,7 +384,6 @@ private fun Preview_PatternViewer() {
             fi = composeSampleFrameInfo(),
             isMuted = ChannelMuteState(isMuted = BooleanArray(modVars.numChannels) { false }),
             modVars = modVars,
-            allowUpdate = false,
         )
     }
 }

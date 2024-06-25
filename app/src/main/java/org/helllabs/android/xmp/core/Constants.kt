@@ -8,6 +8,16 @@ object Constants {
 
     const val DEFAULT_DOWNLOAD_DIR = "TheModArchive"
 
+    /* Playlist */
+    const val SUFFIX = ".json"
+
+    /* Player */
+    const val PARM_KEEPFIRST = "keepFirst"
+    const val PARM_LOOP = "loop"
+    const val PARM_SHUFFLE = "shuffle"
+    const val PARM_START = "start"
+
+    /* Search */
     const val BASE_URL: String = "https://api.modarchive.org"
     const val BY_ARTIST: String = "search_artist"
     const val BY_ARTIST_ID: String = "view_modules_by_artistid"

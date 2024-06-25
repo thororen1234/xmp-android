@@ -27,6 +27,7 @@ import org.helllabs.android.xmp.compose.components.XmpTopBar
 import org.helllabs.android.xmp.compose.theme.XmpTheme
 import org.helllabs.android.xmp.compose.ui.player.PlayerActivity
 import org.helllabs.android.xmp.compose.ui.search.components.ModuleLayout
+import org.helllabs.android.xmp.core.Constants
 import org.helllabs.android.xmp.core.StorageManager
 import org.helllabs.android.xmp.model.Artist
 import org.helllabs.android.xmp.model.ArtistInfo
@@ -97,7 +98,7 @@ fun ModuleResultScreenImpl(
 
                         Timber.i("Play ${dfc.uri.path}")
                         Intent(context, PlayerActivity::class.java).apply {
-                            putExtra(PlayerActivity.PARM_START, 0)
+                            putExtra(Constants.PARM_START, 0)
                         }.also(playerResult::launch)
                     } else {
                         viewModel.downloadModule(module, dfc)
