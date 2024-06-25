@@ -742,7 +742,7 @@ class PlayerService :
                 // Used when current files are replaced by a new set
                 if (playerRestart) {
                     Timber.i("Restart")
-                    playlistPosition = 0
+                    // playlistPosition = 0
                     playerRestart = false
                     cmd = CMD_NONE
                 } else if (cmd == CMD_PREV) {
