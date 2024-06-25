@@ -26,11 +26,7 @@ import timber.log.Timber
 
 // Bread crumbs are the back bone of the file explorer. :)
 @Stable
-data class BreadCrumb(
-    val name: String,
-    val path: DocumentFileCompat?,
-    val enabled: Boolean = false
-)
+data class BreadCrumb(val name: String, val path: DocumentFileCompat?, val enabled: Boolean = false)
 
 // State class for UI related stuff
 @Stable
@@ -101,18 +97,16 @@ class FileListViewModel : ViewModel() {
     /**
      * Play all valid files
      */
-    suspend fun onAllFiles(): List<Uri> {
-        return withContext(Dispatchers.IO) {
-            _uiState.update { it.copy(isLoading = true) }
+    suspend fun onAllFiles(): List<Uri> = withContext(Dispatchers.IO) {
+        _uiState.update { it.copy(isLoading = true) }
 
-            val list = StorageManager
-                .walkDownDirectory(currentPath!!.uri, false)
-            // .filter(Xmp::testFromFd)
+        val list = StorageManager
+            .walkDownDirectory(currentPath!!.uri, false)
+        // .filter(Xmp::testFromFd)
 
-            _uiState.update { it.copy(isLoading = false) }
+        _uiState.update { it.copy(isLoading = false) }
 
-            list
-        }
+        list
     }
 
     fun onLoop(value: Boolean) {
@@ -283,21 +277,13 @@ class FileListViewModel : ViewModel() {
         deleteFileChoice.value = null
     }
 
-    fun deleteFile(): Boolean {
-        return StorageManager.deleteFileOrDirectory(deleteFileChoice.value)
-    }
+    fun deleteFile(): Boolean = StorageManager.deleteFileOrDirectory(deleteFileChoice.value)
 
-    fun deleteDir(): Boolean {
-        return StorageManager.deleteFileOrDirectory(deleteDirChoice.value)
-    }
+    fun deleteDir(): Boolean = StorageManager.deleteFileOrDirectory(deleteDirChoice.value)
 
-    fun getFileName(): String {
-        return StorageManager.getFileName(deleteFileChoice.value).orEmpty()
-    }
+    fun getFileName(): String = StorageManager.getFileName(deleteFileChoice.value).orEmpty()
 
-    fun getDirName(): String {
-        return StorageManager.getFileName(deleteDirChoice.value).orEmpty()
-    }
+    fun getDirName(): String = StorageManager.getFileName(deleteDirChoice.value).orEmpty()
 
     fun clearPlaylist() {
         playlistChoice.value = null

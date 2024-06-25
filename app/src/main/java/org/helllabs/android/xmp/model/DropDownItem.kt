@@ -8,10 +8,7 @@ import androidx.compose.runtime.*
  *  that provides a text string and it's index
  */
 @Stable
-data class DropDownItem(
-    val text: String,
-    val selection: DropDownSelection
-)
+data class DropDownItem(val text: String, val selection: DropDownSelection)
 
 enum class DropDownSelection {
     DELETE,

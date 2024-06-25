@@ -18,15 +18,13 @@ import org.helllabs.android.xmp.compose.theme.seed
  * Accent the "Xmp" part of the text.
  */
 @Composable
-fun themedText(text: String): AnnotatedString {
-    return buildAnnotatedString {
-        withStyle(style = SpanStyle(color = seed)) {
-            append(text.substring(0, 3))
-        }
+fun themedText(text: String): AnnotatedString = buildAnnotatedString {
+    withStyle(style = SpanStyle(color = seed)) {
+        append(text.substring(0, 3))
+    }
 
-        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground)) {
-            append(text.substring(3, text.length))
-        }
+    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.onBackground)) {
+        append(text.substring(3, text.length))
     }
 }
 

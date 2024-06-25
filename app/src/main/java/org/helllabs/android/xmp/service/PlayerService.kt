@@ -69,7 +69,9 @@ class PlayerBinder(playerService: PlayerService) : Binder() {
     fun getService(): PlayerService? = service.get()
 }
 
-class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
+class PlayerService :
+    Service(),
+    AudioManager.OnAudioFocusChangeListener {
 
     companion object {
         private const val CHANNEL_ID = "xmp"
@@ -150,9 +152,7 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
         playThread = null
     }
 
-    override fun onBind(intent: Intent?): IBinder {
-        return binder
-    }
+    override fun onBind(intent: Intent?): IBinder = binder
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
@@ -452,9 +452,7 @@ class PlayerService : Service(), AudioManager.OnAudioFocusChangeListener {
         return playerSequence
     }
 
-    fun getFileName(): String {
-        return StorageManager.getFileName(currentFileUri) ?: "<Unknown Title>"
-    }
+    fun getFileName(): String = StorageManager.getFileName(currentFileUri) ?: "<Unknown Title>"
 
     fun play(
         fileList: List<Uri>,

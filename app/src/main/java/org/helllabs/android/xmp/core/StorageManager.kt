@@ -54,21 +54,18 @@ object StorageManager {
     /**
      * Get the playlist directory that was set
      */
-    fun getPlaylistDirectory(): Result<DocumentFileCompat> {
-        return getParentDirectory().mapCatching { parent ->
+    fun getPlaylistDirectory(): Result<DocumentFileCompat> =
+        getParentDirectory().mapCatching { parent ->
             parent.findFile("playlists") ?: throw XmpException("Playlist directory not found")
         }
-    }
 
     /**
      * Get the mod directory
      * This will be where modules are downloaded,
      * and where File Explorer should start
      */
-    fun getModDirectory(): Result<DocumentFileCompat> {
-        return getParentDirectory().mapCatching { parent ->
-            parent.findFile("mods") ?: throw XmpException("Mods directory not found")
-        }
+    fun getModDirectory(): Result<DocumentFileCompat> = getParentDirectory().mapCatching { parent ->
+        parent.findFile("mods") ?: throw XmpException("Mods directory not found")
     }
 
     /**
@@ -110,10 +107,8 @@ object StorageManager {
     /**
      * Get the name of the default path we're allowed to work in.
      */
-    fun getDefaultPathName(): Result<String> {
-        return getParentDirectory().mapCatching { parent ->
-            parent.name.ifEmpty { throw XmpException("Couldn't get default path name") }
-        }
+    fun getDefaultPathName(): Result<String> = getParentDirectory().mapCatching { parent ->
+        parent.name.ifEmpty { throw XmpException("Couldn't get default path name") }
     }
 
     /**
@@ -160,8 +155,8 @@ object StorageManager {
      * @see [PrefManager.modArchiveFolder] if the pref was set to download
      * @see [PrefManager.artistFolder]
      */
-    fun getDownloadPath(module: Module): Result<DocumentFileCompat> {
-        return getModDirectory().mapCatching { modDir ->
+    fun getDownloadPath(module: Module): Result<DocumentFileCompat> =
+        getModDirectory().mapCatching { modDir ->
             if (!modDir.isDirectory()) {
                 throw XmpException("Unable to access the mod directory.")
             }
@@ -195,7 +190,6 @@ object StorageManager {
 
             targetDir
         }
-    }
 
     /**
      * Delete a File or Directory
@@ -237,22 +231,20 @@ object StorageManager {
      *
      *  @param module the [Module] in question
      */
-    fun doesModuleExist(module: Module?): Result<DocumentFileCompat> {
-        return runCatching {
-            if (module == null || module.url.isBlank()) {
-                throw XmpException("Module or module URL is null or blank.")
-            }
-
-            getDownloadPath(module).mapCatching { dir ->
-                val moduleFilename = module.url.substringAfterLast('#')
-                val file = dir.findFile(moduleFilename)
-                if (file != null && file.exists() && file.isFile()) {
-                    file
-                } else {
-                    dir
-                }
-            }.getOrElse { throw it }
+    fun doesModuleExist(module: Module?): Result<DocumentFileCompat> = runCatching {
+        if (module == null || module.url.isBlank()) {
+            throw XmpException("Module or module URL is null or blank.")
         }
+
+        getDownloadPath(module).mapCatching { dir ->
+            val moduleFilename = module.url.substringAfterLast('#')
+            val file = dir.findFile(moduleFilename)
+            if (file != null && file.exists() && file.isFile()) {
+                file
+            } else {
+                dir
+            }
+        }.getOrElse { throw it }
     }
 
     /**

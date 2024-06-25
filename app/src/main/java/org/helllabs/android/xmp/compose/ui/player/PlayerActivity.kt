@@ -359,7 +359,9 @@ class PlayerActivity : ComponentActivity() {
         saveAllSeqPreference()
 
         modPlayer = null
-        unbindService(connection)
+        if (viewModel.uiState.value.serviceConnected) {
+            unbindService(connection)
+        }
 
         screenReceiver.unregister(this)
     }
@@ -370,7 +372,6 @@ class PlayerActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    // TODO test more.
     private fun handleIntent(intent: Intent?) {
         Timber.d("handleIntent: $intent")
 
@@ -381,7 +382,6 @@ class PlayerActivity : ComponentActivity() {
             return
         }
 
-        // -- Does this still work? --
         // Oops. We don't want to start service if launched from history and service is not running
         // so run the browser instead.
         if ((intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0) {

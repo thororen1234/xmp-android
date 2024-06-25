@@ -7,10 +7,7 @@ import androidx.compose.runtime.*
  * @see [org.helllabs.android.xmp.Xmp.testModuleFd]
  */
 @Stable
-data class ModInfo(
-    val name: String = "",
-    val type: String = ""
-)
+data class ModInfo(val name: String = "", val type: String = "")
 
 /**
  * @see [org.helllabs.android.xmp.Xmp.getChannelData]
@@ -25,18 +22,6 @@ data class ChannelInfo(
     val periods: IntArray = IntArray(64),
     val holdVols: IntArray = IntArray(64)
 ) {
-    override fun toString(): String {
-        return "ChannelInfo(" +
-            "volumes=${volumes.contentToString()}, " +
-            "finalVols=${finalVols.contentToString()}, " +
-            "pans=${pans.contentToString()}, " +
-            "instruments=${instruments.contentToString()}, " +
-            "keys=${keys.contentToString()}, " +
-            "periods=${periods.contentToString()}, " +
-            "holdVols=${holdVols.contentToString()}" +
-            ")"
-    }
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -78,20 +63,7 @@ data class ModVars(
     val numSamples: Int = 0,
     val numSequence: Int = 0,
     val currentSequence: Int = 0
-) {
-    override fun toString(): String {
-        return "ModVars(" +
-            "seqDuration=$seqDuration, " +
-            "lengthInPatterns=$lengthInPatterns, " +
-            "numPatterns=$numPatterns, " +
-            "numChannels=$numChannels, " +
-            "numInstruments=$numInstruments, " +
-            "numSamples=$numSamples, " +
-            "numSequence=$numSequence, " +
-            "currentSequence=$currentSequence" +
-            ")"
-    }
-}
+)
 
 /**
  * @see [org.helllabs.android.xmp.Xmp.getInfo]
@@ -105,19 +77,7 @@ data class FrameInfo(
     val frame: Int = 0,
     val speed: Int = 0,
     val bpm: Int = 0
-) {
-    override fun toString(): String {
-        return "FrameInfo(" +
-            "pos=$pos, " +
-            "pattern=$pattern, " +
-            "row=$row, " +
-            "numRows=$numRows, " +
-            "frame=$frame, " +
-            "speed=$speed, " +
-            "bpm=$bpm" +
-            ")"
-    }
-}
+)
 
 /**
  * @see [org.helllabs.android.xmp.Xmp.getSeqVars]
@@ -133,7 +93,5 @@ data class SequenceVars(val sequence: IntArray = intArrayOf()) {
         return sequence.contentEquals(other.sequence)
     }
 
-    override fun hashCode(): Int {
-        return sequence.contentHashCode()
-    }
+    override fun hashCode(): Int = sequence.contentHashCode()
 }

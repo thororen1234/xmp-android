@@ -20,11 +20,7 @@ data class Playlist(
 }
 
 @JsonClass(generateAdapter = true)
-data class PlaylistItem(
-    val name: String,
-    val type: String,
-    val uri: Uri
-) {
+data class PlaylistItem(val name: String, val type: String, val uri: Uri) {
     @field:Json(ignore = true)
     var id = 0
 }

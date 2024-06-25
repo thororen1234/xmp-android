@@ -39,10 +39,8 @@ object PrefManager {
         }
     }
 
-    private fun <T> getPref(key: Preferences.Key<T>, defaultValue: T): T {
-        return runBlocking {
-            dataStore.data.first()[key] ?: defaultValue
-        }
+    private fun <T> getPref(key: Preferences.Key<T>, defaultValue: T): T = runBlocking {
+        dataStore.data.first()[key] ?: defaultValue
     }
 
     private fun <T> setPref(key: Preferences.Key<T>, value: T) {

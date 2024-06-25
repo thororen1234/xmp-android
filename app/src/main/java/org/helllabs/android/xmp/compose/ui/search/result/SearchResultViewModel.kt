@@ -26,15 +26,12 @@ class SearchResultViewModelFactory : ViewModelProvider.Factory {
     private val repository = Repository(XmpApplication.modArchiveModule.apiHelper)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return SearchResultViewModel(repository) as T
-    }
+    override fun <T : ViewModel> create(modelClass: Class<T>): T =
+        SearchResultViewModel(repository) as T
 }
 
 @Stable
-class SearchResultViewModel(
-    private val repository: Repository
-) : ViewModel() {
+class SearchResultViewModel(private val repository: Repository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchResultState())
     val uiState = _uiState.asStateFlow()

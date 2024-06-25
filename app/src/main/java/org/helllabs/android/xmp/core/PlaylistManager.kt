@@ -57,33 +57,31 @@ class PlaylistManager {
         return true
     }
 
-    fun save(): Result<Boolean> {
-        return StorageManager.getPlaylistDirectory().mapCatching { dir ->
-            if (!oldName.isNullOrEmpty()) {
-                val oldFile = dir.findFile(oldName + Playlist.SUFFIX)
-                if (oldFile != null && !oldFile.delete()) {
-                    throw XmpException("Failed to delte old file.")
-                }
-            } else {
-                dir.findFile(playlist.name + Playlist.SUFFIX)?.delete()
+    fun save(): Result<Boolean> = StorageManager.getPlaylistDirectory().mapCatching { dir ->
+        if (!oldName.isNullOrEmpty()) {
+            val oldFile = dir.findFile(oldName + Playlist.SUFFIX)
+            if (oldFile != null && !oldFile.delete()) {
+                throw XmpException("Failed to delte old file.")
             }
-
-            val mimeType = "application/octet-stream"
-            val newFile = dir.createFile(mimeType, playlist.name + Playlist.SUFFIX)
-                ?: throw IllegalStateException("Failed to create new file")
-
-            playlist.uri = newFile.uri
-
-            val jsonString = adapter.toJson(playlist)
-            val context = XmpApplication.instance?.applicationContext
-                ?: throw IllegalStateException("Application context is null")
-
-            context.contentResolver.openOutputStream(playlist.uri)?.use { outputStream ->
-                outputStream.writer().use { it.write(jsonString) }
-            } ?: throw IllegalStateException("Failed to open output stream")
-
-            true
+        } else {
+            dir.findFile(playlist.name + Playlist.SUFFIX)?.delete()
         }
+
+        val mimeType = "application/octet-stream"
+        val newFile = dir.createFile(mimeType, playlist.name + Playlist.SUFFIX)
+            ?: throw IllegalStateException("Failed to create new file")
+
+        playlist.uri = newFile.uri
+
+        val jsonString = adapter.toJson(playlist)
+        val context = XmpApplication.instance?.applicationContext
+            ?: throw IllegalStateException("Application context is null")
+
+        context.contentResolver.openOutputStream(playlist.uri)?.use { outputStream ->
+            outputStream.writer().use { it.write(jsonString) }
+        } ?: throw IllegalStateException("Failed to open output stream")
+
+        true
     }
 
     fun rename(newName: String, newComment: String): Result<Boolean> {
@@ -123,8 +121,8 @@ class PlaylistManager {
     }
 
     companion object {
-        fun listPlaylistsDF(): List<DocumentFileCompat> {
-            return StorageManager.getPlaylistDirectory().mapCatching { dir ->
+        fun listPlaylistsDF(): List<DocumentFileCompat> =
+            StorageManager.getPlaylistDirectory().mapCatching { dir ->
                 if (dir.isFile()) {
                     throw XmpException("Playlist dir is a file.")
                 }
@@ -133,10 +131,9 @@ class PlaylistManager {
                 Timber.e("Unable to query playlist dir")
                 emptyList()
             }
-        }
 
-        fun listPlaylists(): List<Playlist> {
-            return StorageManager.getPlaylistDirectory().mapCatching { dir ->
+        fun listPlaylists(): List<Playlist> =
+            StorageManager.getPlaylistDirectory().mapCatching { dir ->
                 if (dir.isFile()) {
                     throw XmpException("Playlist dir is a file")
                 }
@@ -156,10 +153,9 @@ class PlaylistManager {
                 Timber.e("Unable to query playlist dir")
                 emptyList()
             }
-        }
 
-        fun delete(name: String): Boolean {
-            return StorageManager.getPlaylistDirectory().mapCatching { dir ->
+        fun delete(name: String): Boolean =
+            StorageManager.getPlaylistDirectory().mapCatching { dir ->
                 val playlist = dir.findFile(name + Playlist.SUFFIX)
                     ?: throw XmpException("Unable to find playlist: $name")
 
@@ -168,6 +164,5 @@ class PlaylistManager {
                 Timber.e("Deleting playlist failed: ${it.message}")
                 false
             }
-        }
     }
 }

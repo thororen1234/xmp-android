@@ -6,9 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import timber.log.Timber
 
-class ScreenReceiver(
-    private val onScreenEvent: (Boolean) -> Unit
-) : BroadcastReceiver() {
+class ScreenReceiver(private val onScreenEvent: (Boolean) -> Unit) : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Timber.d("Screen event was: ${intent.action}")
         when (intent.action) {

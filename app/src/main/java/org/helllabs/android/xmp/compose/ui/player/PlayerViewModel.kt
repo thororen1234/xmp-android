@@ -39,10 +39,7 @@ data class PlayerInfoState(
 )
 
 @Stable
-data class PlayerButtonsState(
-    val isPlaying: Boolean = false,
-    val isRepeating: Boolean = false
-)
+data class PlayerButtonsState(val isPlaying: Boolean = false, val isRepeating: Boolean = false)
 
 @Stable
 data class PlayerTimeState(
@@ -84,9 +81,7 @@ data class ChannelMuteState(val isMuted: BooleanArray = BooleanArray(Xmp.MAX_CHA
         return isMuted.contentEquals(other.isMuted)
     }
 
-    override fun hashCode(): Int {
-        return isMuted.contentHashCode()
-    }
+    override fun hashCode(): Int = isMuted.contentHashCode()
 }
 
 @Stable

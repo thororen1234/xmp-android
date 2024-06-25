@@ -54,15 +54,12 @@ class ResultViewModelFactory : ViewModelProvider.Factory {
     private val repository = Repository(XmpApplication.modArchiveModule.apiHelper)
 
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return ResultViewModel(XmpApplication.modArchiveModule.okHttpClient, repository) as T
-    }
+    override fun <T : ViewModel> create(modelClass: Class<T>): T =
+        ResultViewModel(XmpApplication.modArchiveModule.okHttpClient, repository) as T
 }
 
-class ResultViewModel(
-    private val okHttpClient: OkHttpClient,
-    private val repository: Repository
-) : ViewModel() {
+class ResultViewModel(private val okHttpClient: OkHttpClient, private val repository: Repository) :
+    ViewModel() {
 
     private val _uiState = MutableStateFlow(ModuleResultState())
     val uiState = _uiState.asStateFlow()

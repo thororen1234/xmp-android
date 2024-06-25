@@ -28,10 +28,7 @@ import org.helllabs.android.xmp.compose.theme.XmpTheme
 object NavSearch
 
 @Stable
-data class SearchSegmentedButton(
-    val index: Int,
-    @StringRes val string: Int
-)
+data class SearchSegmentedButton(val index: Int, @StringRes val string: Int)
 
 @Composable
 fun SearchScreen(

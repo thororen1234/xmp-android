@@ -24,9 +24,7 @@ data class ModuleResult(
 
 @Serializable
 @SerialName("sponsor")
-data class Sponsor(
-    @XmlElement val details: SponsorDetails = SponsorDetails()
-)
+data class Sponsor(@XmlElement val details: SponsorDetails = SponsorDetails())
 
 @Serializable
 @SerialName("details")
@@ -121,10 +119,7 @@ data class Featured(
 
 @Serializable
 @SerialName("favourites")
-data class Favourites(
-    @XmlElement val favoured: Int = 0,
-    @XmlElement val myfav: Int = 0
-)
+data class Favourites(@XmlElement val favoured: Int = 0, @XmlElement val myfav: Int = 0)
 
 @Serializable
 @SerialName("overall_ratings")
@@ -163,9 +158,7 @@ data class ArtistInfo(
 // NOTE: I'm not sure of this is correct, rare to see multiple guest artists.
 @Serializable
 @SerialName("guessed_artist")
-data class GuessedArtists(
-    @XmlSerialName("alias", "", "") val alias: List<String> = emptyList()
-)
+data class GuessedArtists(@XmlSerialName("alias", "", "") val alias: List<String> = emptyList())
 
 @Serializable
 @SerialName("artist")
@@ -181,9 +174,7 @@ data class Artist(
 
 @Serializable
 @SerialName("module_data")
-data class ModuleData(
-    @XmlElement val module_description: String = ""
-)
+data class ModuleData(@XmlElement val module_description: String = "")
 
 @Serializable
 @SerialName("modarchive")
@@ -211,9 +202,7 @@ data class ArtistResult(
 
 @Serializable
 @SerialName("items")
-data class Items(
-    @XmlSerialName("item", "", "") val item: List<Item> = emptyList()
-)
+data class Items(@XmlSerialName("item", "", "") val item: List<Item> = emptyList())
 
 @Serializable
 @SerialName("item")

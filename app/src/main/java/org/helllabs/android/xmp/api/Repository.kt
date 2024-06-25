@@ -13,23 +13,17 @@ import org.helllabs.android.xmp.model.SearchListResult
 
 class Repository(private val apiHelper: ApiHelper) {
 
-    suspend fun getModuleById(query: Int): ModuleResult {
-        return apiHelper.getModuleById(APIKEY, BY_MODULE_ID, query)
-    }
+    suspend fun getModuleById(query: Int): ModuleResult =
+        apiHelper.getModuleById(APIKEY, BY_MODULE_ID, query)
 
-    suspend fun getArtistSearch(query: String): ArtistResult {
-        return apiHelper.getArtistSearch(APIKEY, BY_ARTIST, query)
-    }
+    suspend fun getArtistSearch(query: String): ArtistResult =
+        apiHelper.getArtistSearch(APIKEY, BY_ARTIST, query)
 
-    suspend fun getArtistById(query: Int): SearchListResult {
-        return apiHelper.getArtistById(APIKEY, BY_ARTIST_ID, query)
-    }
+    suspend fun getArtistById(query: Int): SearchListResult =
+        apiHelper.getArtistById(APIKEY, BY_ARTIST_ID, query)
 
-    suspend fun getFileNameOrTitle(query: String): SearchListResult {
-        return apiHelper.getSearchByFileNameOrTitle(APIKEY, BY_SEARCH, TYPE_FILE_OR_TITLE, query)
-    }
+    suspend fun getFileNameOrTitle(query: String): SearchListResult =
+        apiHelper.getSearchByFileNameOrTitle(APIKEY, BY_SEARCH, TYPE_FILE_OR_TITLE, query)
 
-    suspend fun getRandomModule(): ModuleResult {
-        return apiHelper.getRandomModule(APIKEY, BY_RANDOM)
-    }
+    suspend fun getRandomModule(): ModuleResult = apiHelper.getRandomModule(APIKEY, BY_RANDOM)
 }

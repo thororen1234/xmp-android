@@ -25,19 +25,16 @@ data class PermissionState(
 )
 
 @Stable
-class PermissionViewModelFactory(
-    private val permissions: List<PermissionModel>
-) : ViewModelProvider.Factory {
+class PermissionViewModelFactory(private val permissions: List<PermissionModel>) :
+    ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return PermissionViewModel(permissions = permissions) as T
-    }
+    override fun <T : ViewModel> create(
+        modelClass: Class<T>
+    ): T = PermissionViewModel(permissions = permissions) as T
 }
 
 @Stable
-class PermissionViewModel(
-    private val permissions: List<PermissionModel>
-) : ViewModel() {
+class PermissionViewModel(private val permissions: List<PermissionModel>) : ViewModel() {
     private val _state = MutableStateFlow(
         PermissionState(permissions = permissions.map { it.permission }, askPermission = true)
     )
